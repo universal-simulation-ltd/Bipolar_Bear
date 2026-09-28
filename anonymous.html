@@ -45,6 +45,18 @@
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/user-count.js"></script>
 <script src="js/shared/anon-push.js"></script>
+  <!-- Theme before first paint (must stay inline): Appearance is 'auto'
+       (follow the phone), 'light' or 'dark' in localStorage.bbAnonTheme —
+       deliberately outside the bbAnon_* prefix so signing out keeps it.
+       applyTheme() in js/anonymous.js re-runs this when it changes. -->
+  <script>
+    (function () {
+      var pref = 'auto';
+      try { pref = localStorage.getItem('bbAnonTheme') || 'auto'; } catch (e) {}
+      var dark = pref === 'dark' || (pref === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+      if (dark) document.documentElement.classList.add('theme-dark');
+    })();
+  </script>
   <link rel="preload" href="fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/theme.css">
@@ -229,6 +241,7 @@
           <div class="board-logo-sub">BipolarBear</div>
         </div>
       </button>
+      <button id="board-help-btn" class="help-btn" title="Need help now?" data-i18n-title="anon.ux.helpBtn"><span>🛟</span><span class="help-label" data-i18n="anon.ux.helpShort">Help</span></button>
       <button id="board-user-pill" onclick="openMonikaSettings()" title="Your moniker settings" data-i18n-title="anon.tips.moniker" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:20px;transition:background 0.15s;" onmouseenter="this.style.background='rgba(255,255,255,0.15)'" onmouseleave="this.style.background='none'"></button>
     </div>
     <!-- Community size. Hidden until js/anonymous.js resolves
@@ -241,8 +254,11 @@
     </div>
   </div>
 
+  <!-- Pull-to-refresh indicator, grown by setupPullToRefresh() -->
+  <div id="ptr" class="ptr"><div class="ptr-inner"><span class="ptr-ico">⬇️</span><span id="ptr-label"></span></div></div>
+
   <div id="post-list">
-    <div class="empty-state" data-i18n="anon.board.loading">Loading posts…</div>
+    <div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div><div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div><div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div>
   </div>
 
   <!-- Wiki tab content. Populated in Phase 3. -->
@@ -344,6 +360,59 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- OVERLAY: E2EE info                                             -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OVERLAY: Post / comment actions (the ⋯ menu, or press and hold) -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="ov-actions" class="overlay hidden">
+  <div class="sheet">
+    <div id="actions-preview" class="action-preview"></div>
+    <div id="actions-list"></div>
+    <button class="btn-secondary" id="actions-cancel" style="width:100%;margin-top:4px;" data-i18n="common.cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OVERLAY: Need help now                                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="ov-help" class="overlay hidden">
+  <div class="sheet">
+    <div class="sheet-icon">🛟</div>
+    <div class="sheet-title" data-i18n="anon.ux.helpTitle">Need to talk to someone now?</div>
+    <div class="sheet-sub" data-i18n="anon.ux.helpSub">If you are in danger, or might act on thoughts of harming yourself, call 999 or go to A&amp;E now.</div>
+    <a class="help-row" href="tel:116123">
+      <span class="help-ico">📞</span>
+      <span><span class="help-name" data-i18n="anon.ux.samaritans">Samaritans</span><span class="help-sub" data-i18n="anon.ux.samaritansSub">Call 116 123 · free, day or night</span></span>
+    </a>
+    <a class="help-row" href="sms:85258?&amp;body=SHOUT" id="help-shout">
+      <span class="help-ico">💬</span>
+      <span><span class="help-name" data-i18n="anon.ux.shout">Shout</span><span class="help-sub" data-i18n="anon.ux.shoutSub">Text SHOUT to 85258 · free, 24/7</span></span>
+    </a>
+    <a class="help-row" href="tel:111">
+      <span class="help-ico">🩺</span>
+      <span><span class="help-name" data-i18n="anon.ux.nhs111">NHS 111</span><span class="help-sub" data-i18n="anon.ux.nhs111Sub">Call 111 and choose the mental health option</span></span>
+    </a>
+    <a class="help-row help-urgent" href="tel:999">
+      <span class="help-ico">🚑</span>
+      <span><span class="help-name" data-i18n="anon.ux.emergency">Emergency</span><span class="help-sub" data-i18n="anon.ux.emergencySub">Call 999</span></span>
+    </a>
+    <a class="help-link" href="https://findahelpline.com" target="_blank" rel="noopener" data-i18n="anon.ux.abroad">Outside the UK? Find a helpline near you →</a>
+    <button class="btn-secondary" id="help-close" style="width:100%;" data-i18n="common.close">Close</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- OVERLAY: Saved posts (this device only)                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div id="ov-saved" class="overlay hidden">
+  <div class="sheet">
+    <div class="sheet-icon">🔖</div>
+    <div class="sheet-title" data-i18n="anon.ux.savedTitle">Saved posts</div>
+    <div class="sheet-sub" data-i18n="anon.ux.savedSub">Kept on this device only, even after a post leaves the board.</div>
+    <div id="saved-list"></div>
+    <button class="btn-secondary" id="saved-close" style="width:100%;" data-i18n="common.close">Close</button>
+  </div>
+</div>
+
 <div id="ov-e2ee" class="overlay hidden">
   <div class="sheet">
     <div class="sheet-icon">🔒</div>
@@ -417,6 +486,26 @@
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.monikaSettings.medication">Medication</div>
         <div id="ms-med-status" style="font-size:11px;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
+      </div>
+      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+    </button>
+
+    <!-- Saved posts -->
+    <button id="ms-saved-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
+      <span style="font-size:20px;">🔖</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.savedTitle">Saved posts</div>
+        <div id="ms-saved-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+      </div>
+      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+    </button>
+
+    <!-- Appearance: tap to cycle automatic → light → dark -->
+    <button id="ms-theme-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
+      <span style="font-size:20px;">🌗</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.theme">Appearance</div>
+        <div id="ms-theme-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
       </div>
       <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
     </button>
@@ -735,7 +824,8 @@
         🙈 &nbsp;<strong>Mute</strong> — hide everything from a user, just on your device<br>
         🗑️ &nbsp;<strong>Remove</strong> — delete one of your own posts (shown faintly on your posts)
       </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);">
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6;" data-i18n="anon.ux.aboutMore">Tap ⋯ on a post, or press and hold it, for Save, SOS, Report and Mute. Swipe a reply to the right to answer it.</div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.about.moderatorsTitle">Moderators only</div>
         <div style="font-size:13px;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.moderatorsList">
           📌 &nbsp;<strong>Pin</strong> — pin a post to the top of the tab (tap again to unpin)<br>
@@ -750,12 +840,12 @@
       <div id="about-muted-list" style="font-size:13px;color:var(--dark);"></div>
     </div>
 
-    <div style="border-top:1px solid #f0f0f0;padding-top:16px;margin-bottom:16px;">
+    <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px;">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.poweredTitle">Powered by BipolarBear</div>
       <p style="font-size:13px;color:var(--dark);line-height:1.6;margin-bottom:12px;" data-i18n="anon.about.poweredBody">
         BipolarBear is a free mood journal and survival kit for people with bipolar disorder — track mood, energy, sleep and medication daily.
       </p>
-      <a href="https://bipolarbear.app" target="_blank" rel="noopener" style="display:block;background:var(--yellow);color:var(--dark);font-weight:700;font-size:13px;border-radius:10px;padding:11px;text-align:center;text-decoration:none;" data-i18n="anon.about.discover">🐻 Discover BipolarBear →</a>
+      <a href="https://bipolarbear.app" target="_blank" rel="noopener" style="display:block;background:var(--yellow);color:var(--on-yellow);font-weight:700;font-size:13px;border-radius:10px;padding:11px;text-align:center;text-decoration:none;" data-i18n="anon.about.discover">🐻 Discover BipolarBear →</a>
     </div>
 
     <button id="about-close" class="btn-secondary" style="width:100%;" data-i18n="anon.about.close">Close</button>

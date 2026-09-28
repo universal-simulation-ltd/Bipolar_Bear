@@ -4,6 +4,19 @@
 > `CACHE_NAME` notes in `service-worker.js` (v179 – v199) are the record for
 > that stretch.
 
+## Unreleased — web live on push; the store apps get it with the next build
+- ✨ **Bipolar Anonymous UX pass.** The web board has all of this now; the phones get it with the next store build (which also brings in haptics).
+  - **⋯ on every post and reply.** The feed used to show 🆘 🚨 🙈 (plus the admin tools) under every post. They now sit behind one ⋯ button, and pressing and holding a post opens the same sheet. The sheet shows the post's first lines so it's clear which one you're acting on. The original buttons are still rendered, hidden, and the sheet clicks them, so the SOS, report, mute and moderation paths haven't changed.
+  - **Saved posts 🔖.** Save from ⋯, and find them again under Your Moniker → Saved posts. It's a snapshot on this device only, so a saved reply stays after the post leaves the board at 7 days. It's cleared on sign-out with the rest of `bbAnon_*`.
+  - **Pull to refresh** re-opens the feed listeners. Grey **skeleton cards** replace "Loading posts…".
+  - **Author chips.** `🔥 12d 🧘 40d 🎂 2y 💊 Lithium` moves off the name line into small chips, and each one says what it means when tapped.
+  - **Dark mode.** It follows the phone by default, and Your Moniker → Appearance switches between automatic, light and dark. It's set before first paint by a new inline `<head>` script and stored in `localStorage.bbAnonTheme`, which is outside `bbAnon_*` so signing out keeps it. The greeting card drops to amber at night.
+  - **🛟 Help button in the header.** It opens tap-to-call and tap-to-text links for Samaritans (116 123), Shout (text SHOUT to 85258), NHS 111 (mental health option) and 999, plus findahelpline.com for anyone outside the UK. The numbers are UK services, so they're left as they are in every language.
+  - **Swipe a reply to the right to answer it.** The composer gets `@Name`. ⋯ on a reply also has Reply.
+  - **The bear on empty screens** (no posts, no replies, no wiki results, nothing saved), a coloured banner and accent for each **wiki section**, and **haptics** on likes, sends, the ⋯ menu, pull to refresh and the swipe threshold. Haptics use `@capacitor/haptics` in both native shells (added in `bipolarbear-native` and `bipolaranonymous-native`) and fall back to `navigator.vibrate` on Android web.
+  - The report, SOS, mute and delete sheets now stack above the comment thread. Before, they had the same z-index as the thread and could open hidden behind it.
+  - New `anon.ux.*` strings in all ten languages. Touches `anonymous.html`, `css/anonymous.css`, `js/anonymous.js`, `js/shared/i18n.js`, `icons/anon-bear-256.png` (new) (`CACHE_NAME` v238).
+
 ## v1.38
 - Version bump: `_APP_VERSION` 1.38, iOS (app + widget) and Android build 38 for both apps (Bipolar Anonymous 1.38 (38)), `service-worker.js` `CACHE_NAME` v237. In-app changelog: a v1.38 block; no What's New popup, as there is nothing new to point at. Store What's New in all 11 languages.
 - 📊 **The suite counter knows web from phone.** The beat to `app_presence_beat` now sends `p_platform` — `ios` / `android` inside the Capacitor shells, `web` on bipolarbear.app — so both apps' users count in the suite's "web · native" split (Supabase migration 0187). Before this they sent the old two-argument call and sat in neither column. Still only a random install id and the app's name besides; nothing about the person. The web side is live on push; the store apps get it with build 38. Touches `js/shared/user-count.js` (`CACHE_NAME` v235).

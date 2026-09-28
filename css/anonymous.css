@@ -7,6 +7,14 @@
       --cream:       #FFFBF5;
       --dark:        #1a1500;
       --muted:       #5c5018;
+      /* Surfaces and lines. Light values here; html.theme-dark swaps them
+         (see "Dark mode" at the end of this file). */
+      --surface:     #fff;
+      --surface-2:   #f5f5f5;
+      --line:        #eee;
+      --header-bg:   var(--yellow);
+      /* Text on a yellow fill stays dark in both themes. */
+      --on-yellow:   #1a1500;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
     input, textarea { user-select: text; -webkit-user-select: text; }
@@ -253,7 +261,7 @@
     .onboard-logo h1 { font-size: 24px; font-weight: 800; color: var(--dark); letter-spacing: -0.5px; }
     .onboard-logo p  { font-size: 12px; color: var(--dark); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
 
-    .card { background: #fff; border-radius: 24px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+    .card { background: var(--surface); border-radius: 24px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
     .card-icon  { font-size: 36px; text-align: center; margin-bottom: 10px; }
     .card-title { font-size: 20px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
     .card-sub   { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
@@ -261,9 +269,9 @@
 
     /* ── Inputs ── */
     .bb-input {
-      width: 100%; border: 1.5px solid #ddd; border-radius: 12px;
+      width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
       padding: 12px 14px; font-size: 15px; outline: none; color: var(--dark);
-      font-family: inherit; background: #fff; transition: border-color 0.2s; margin-bottom: 12px;
+      font-family: inherit; background: var(--surface); transition: border-color 0.2s; margin-bottom: 12px;
     }
     .bb-input:focus, .bb-input.valid { border-color: var(--yellow); }
     .input-wrap { position: relative; margin-bottom: 12px; }
@@ -274,7 +282,7 @@
     .code-boxes { display: flex; gap: 6px; margin-bottom: 12px; }
     .code-box {
       flex: 1; min-width: 0; height: 52px; border-radius: 12px;
-      background: #f5f5f5; border: 2px solid #eee;
+      background: var(--surface-2); border: 2px solid var(--line);
       text-align: center; font-size: 20px; font-weight: 800; color: var(--dark);
       outline: none; transition: all 0.15s; font-family: inherit;
       padding: 0;
@@ -283,14 +291,14 @@
 
     /* ── Buttons ── */
     .btn-primary {
-      width: 100%; background: var(--yellow); color: var(--dark);
+      width: 100%; background: var(--yellow); color: var(--on-yellow);
       border: none; border-radius: 12px; padding: 14px;
       font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
       transition: opacity 0.15s;
     }
     .btn-primary:disabled { background: #d8d8d8; color: #495057; cursor: default; }
     .btn-secondary {
-      background: #f0f0f0; color: var(--muted); border: none;
+      background: var(--surface-2); color: var(--muted); border: none;
       border-radius: 10px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit;
     }
     .btn-outline {
@@ -337,7 +345,7 @@
     .med-input-row .bb-input { flex: 1; margin: 0; }
     .med-toggle-btn {
       flex: 1; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 700;
-      border: 2px solid #e9ecef; background: #f8f9fa; color: #495057; cursor: pointer;
+      border: 2px solid var(--line); background: var(--surface-2); color: var(--muted); cursor: pointer;
       font-family: inherit; transition: border-color 0.15s, background 0.15s, color 0.15s;
     }
     .med-toggle-btn.active {
@@ -348,7 +356,7 @@
     #screen-board { background: var(--cream); position: relative; height: 100%; }
 
     .board-header {
-      background: var(--yellow);
+      background: var(--header-bg);
       /* Match the main app pattern: no fixed floor on web (env resolves to 0
          in mobile Safari tabs and on desktop), but still clears the
          translucent iOS status bar in the Capacitor shell and PWA standalone. */
@@ -430,7 +438,7 @@
     /* Posts */
     #post-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 110px; }
 
-    .post-card { background: #fff; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .post-card { background: var(--surface); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
     .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .post-avatar { display: flex; align-items: center; gap: 8px; }
     .post-av-circle { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,200,0,0.3); }
@@ -462,7 +470,7 @@
     .topic-text + .tt-bar { margin: -2px 0 8px; }
     .like-btn {
       display: flex; align-items: center; gap: 5px;
-      background: #f5f5f5; border: 1px solid transparent; border-radius: 20px;
+      background: var(--surface-2); border: 1px solid transparent; border-radius: 20px;
       padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--muted);
       font-family: inherit; transition: all 0.15s;
     }
@@ -472,8 +480,8 @@
     /* System message */
     .sys-card { background: linear-gradient(135deg, var(--yellow), var(--yellow-dark)); border-radius: 16px; padding: 16px; margin-bottom: 10px; text-align: center; }
     .sys-card .sys-emoji { font-size: 22px; margin-bottom: 4px; }
-    .sys-card .sys-text  { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
-    .sys-card .sys-meta  { font-size: 11px; color: var(--dark); }
+    .sys-card .sys-text  { font-size: 14px; font-weight: 700; color: var(--on-yellow); margin-bottom: 2px; }
+    .sys-card .sys-meta  { font-size: 11px; color: var(--on-yellow); }
 
     /* Daily discussion topic — an inline, tappable prompt card */
     .topic-card { background: rgba(245,200,0,0.10); border: 1.5px dashed rgba(245,200,0,0.55); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: background .15s ease, transform .1s ease; }
@@ -496,12 +504,12 @@
       color: var(--dark); font-family: inherit;
       -webkit-tap-highlight-color: transparent;
     }
-    .ann-wiki-link:active { background: var(--yellow); }
+    .ann-wiki-link:active { background: var(--yellow); color: var(--on-yellow); }
     /* Suggested announcement awaiting the admin. Deliberately faded and
        dashed — it is not on the board yet, and must never read as one that is.
        Seen only by its author and by the admin (see visibleSuggestions). */
     .sugg-card {
-      background: #fff; border: 1.5px dashed rgba(245,200,0,0.55); border-radius: 16px;
+      background: var(--surface); border: 1.5px dashed rgba(245,200,0,0.55); border-radius: 16px;
       padding: 12px 16px 14px; margin-bottom: 10px; opacity: 0.62;
     }
     .sugg-card.sugg-rejected { border-color: rgba(220,53,69,0.35); opacity: 0.5; }
@@ -551,10 +559,10 @@
     .notif-row.on .notif-sw::after { transform: translateX(16px); }
     .sugg-btn {
       flex: 1; padding: 8px 10px; border-radius: 10px; border: 1.5px solid rgba(0,0,0,0.12);
-      background: #fff; color: var(--dark); font-size: 12px; font-weight: 700;
+      background: var(--surface); color: var(--dark); font-size: 12px; font-weight: 700;
       font-family: inherit; cursor: pointer;
     }
-    .sugg-btn.sugg-yes { background: var(--yellow); border-color: var(--yellow-dark); }
+    .sugg-btn.sugg-yes { background: var(--yellow); border-color: var(--yellow-dark); color: var(--on-yellow); }
     .sugg-btn.sugg-no  { color: #b71c1c; border-color: rgba(183,28,28,0.3); }
 
     /* ── FAB Footer ── */
@@ -570,7 +578,7 @@
       opacity: 0; transition: opacity 0.2s; pointer-events: none;
     }
     .fab-hint.show { opacity: 1; }
-    .fab-bar { background: #fff; border-radius: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.14); display: flex; align-items: center; gap: 6px; padding: 8px 14px; pointer-events: all; }
+    .fab-bar { background: var(--surface); border-radius: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.14); display: flex; align-items: center; gap: 6px; padding: 8px 14px; pointer-events: all; }
     .fab-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(245,200,0,0.13); transition: all 0.15s; }
     .fab-btn.active { background: var(--yellow); box-shadow: 0 2px 8px rgba(245,200,0,0.4); }
     .fab-btn-compose { width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; font-size: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); box-shadow: 0 4px 12px rgba(245,200,0,0.5); }
@@ -582,7 +590,11 @@
        thread, after a reply). Every overlay shares z-index 100 and the thread
        comes later in the DOM, so without this it opens hidden behind it. */
     #ov-notif-ask { z-index: 110; }
-    .sheet { background: #fff; border-radius: 24px 24px 0 0; padding: 24px 24px calc(40px + env(safe-area-inset-bottom, 0px)); width: 100%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    /* Sheets that can open over the comment thread (the ⋯ menu and what it
+       leads to) or over the settings sheet sit above both. */
+    #ov-actions, #ov-mute, #ov-sos, #ov-report, #ov-self-delete,
+    #ov-admin-delete, #ov-admin-ban, #ov-saved, #ov-help { z-index: 105; }
+    .sheet { background: var(--surface); color: var(--dark); border-radius: 24px 24px 0 0; padding: 24px 24px calc(40px + env(safe-area-inset-bottom, 0px)); width: 100%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
     .sheet-icon  { font-size: 36px; text-align: center; margin-bottom: 12px; }
     .sheet-title { font-size: 18px; font-weight: 700; color: var(--dark); text-align: center; margin-bottom: 8px; }
     .sheet-sub   { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 20px; }
@@ -592,7 +604,7 @@
     .report-opt { display: block; width: 100%; background: var(--yellow-bg); border: none; border-radius: 10px; padding: 12px 14px; font-size: 14px; text-align: left; cursor: pointer; margin-bottom: 8px; color: var(--dark); font-family: inherit; }
     .sheet-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; }
 
-    .compose-ta { width: 100%; border: 1.5px solid var(--yellow); border-radius: 14px; padding: 10px 12px; font-size: 14px; resize: none; outline: none; font-family: inherit; min-height: 100px; margin-bottom: 10px; }
+    .compose-ta { background: var(--surface); color: var(--dark); width: 100%; border: 1.5px solid var(--yellow); border-radius: 14px; padding: 10px 12px; font-size: 14px; resize: none; outline: none; font-family: inherit; min-height: 100px; margin-bottom: 10px; }
 
     .notif-box { background: var(--yellow-bg); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
     .notif-box-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
@@ -606,14 +618,14 @@
     .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; line-height: 1.7; }
 
     /* ── Pinned posts ── */
-    .post-pinned { background: #fffde7; border: 1.5px solid rgba(245,200,0,0.45); }
+    .post-pinned { background: var(--yellow-bg); border: 1.5px solid rgba(245,200,0,0.45); }
     .pinned-badge { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.2px; }
     .pin-active { opacity: 1 !important; color: var(--yellow-dark); }
 
     /* ── Comment button ── */
     .comment-btn {
       display: flex; align-items: center; gap: 4px;
-      background: #f5f5f5; border: 1px solid transparent; border-radius: 20px;
+      background: var(--surface-2); border: 1px solid transparent; border-radius: 20px;
       padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--muted);
       font-family: inherit; transition: all 0.15s;
     }
@@ -659,10 +671,10 @@
     }
     .thread-header {
       display: flex; align-items: center; gap: 12px;
-      padding-bottom: 14px; border-bottom: 1px solid #f0f0f0; margin-bottom: 14px; flex-shrink: 0;
+      padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 14px; flex-shrink: 0;
     }
     .thread-close-btn {
-      background: #f0f0f0; border: none; border-radius: 50%;
+      background: var(--surface-2); color: var(--dark); border: none; border-radius: 50%;
       width: 32px; height: 32px; font-size: 14px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
@@ -677,12 +689,12 @@
     }
     .thread-compose {
       flex-shrink: 0; padding: 10px 0 calc(20px + env(safe-area-inset-bottom, 0px));
-      border-top: 1px solid #f0f0f0;
+      border-top: 1px solid var(--line);
     }
     .thread-compose .compose-ta { margin-bottom: 8px; min-height: 56px; }
 
     /* ── Comment cards ── */
-    .comment-card { padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+    .comment-card { padding: 10px 0; border-bottom: 1px solid var(--line); }
     .comment-card:last-child { border-bottom: none; }
     .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
     .comment-text { font-size: 13px; color: var(--dark); line-height: 1.55; padding-left: 36px; }
@@ -697,11 +709,11 @@
     .wiki-pill-row, .wiki-pill-track { display: contents; }
     .wiki-pill {
       flex-shrink: 0;
-      background: #f5f5f5; border: 1.5px solid transparent;
+      background: var(--surface-2); border: 1.5px solid transparent;
       border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 600;
       color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s;
     }
-    .wiki-pill.active { background: var(--yellow); border-color: var(--yellow-dark); color: var(--dark); }
+    .wiki-pill.active { background: var(--yellow); border-color: var(--yellow-dark); color: var(--on-yellow); }
     .wiki-pill:active { transform: scale(0.96); }
     @media (max-width: 519px) {
       .wiki-pills {
@@ -764,7 +776,7 @@
       display: inline-block; margin-top: 4px; font-size: 11px; opacity: 0.85;
     }
     .wiki-card {
-      background: #fff; border: 1px solid #eee; border-radius: 12px;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
       margin-bottom: 8px; overflow: hidden;
     }
     .wiki-card summary {
@@ -795,7 +807,7 @@
       border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600;
       color: var(--dark); text-decoration: none;
     }
-    .wiki-link-btn:active { background: var(--yellow); }
+    .wiki-link-btn:active { background: var(--yellow); color: var(--on-yellow); }
     .wiki-source-meta {
       display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
       margin-top: 10px; font-size: 11px; line-height: 1.4; color: var(--muted);
@@ -848,7 +860,7 @@
       border: 1px solid rgba(245,200,0,0.3);
     }
     .wiki-wisdom-topic {
-      display: inline-block; background: var(--yellow); color: var(--dark);
+      display: inline-block; background: var(--yellow); color: var(--on-yellow);
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.5px; padding: 2px 8px; border-radius: 10px; margin-bottom: 8px;
     }
@@ -861,11 +873,206 @@
     .wiki-search-bar input[type="search"] {
       flex: 1; border: 1.5px solid var(--yellow); border-radius: 12px;
       padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none;
-      background: #fff;
+      background: var(--surface); color: var(--dark);
     }
     .wiki-search-bar input[type="search"]:focus { border-color: var(--yellow-dark); }
     .wiki-search-close {
-      background: #f0f0f0; border: none; border-radius: 50%;
+      background: var(--surface-2); color: var(--dark); border: none; border-radius: 50%;
       width: 32px; height: 32px; font-size: 12px; cursor: pointer; flex-shrink: 0;
     }
     .wiki-search-close:active { background: var(--yellow-bg); }
+
+    /* ── Post "⋯" menu ──
+       The feed used to show 🆘 🚨 🙈 (and the admin tools) under every post.
+       They now sit behind one ⋯ button; the original buttons are still
+       rendered, hidden, inside .post-more-items so their existing handlers
+       keep working — the action sheet just clicks them. */
+    .post-more-items { display: none; }
+    .more-btn {
+      background: none; border: none; cursor: pointer; font-family: inherit;
+      font-size: 18px; font-weight: 800; line-height: 1; letter-spacing: 1px;
+      color: var(--muted); padding: 4px 8px; border-radius: 14px; flex-shrink: 0;
+    }
+    .more-btn:active { background: var(--surface-2); }
+    .comment-actions .more-btn { font-size: 15px; padding: 2px 6px; }
+    .action-row {
+      width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
+      background: var(--yellow-bg); border: none; border-radius: 12px;
+      padding: 13px 14px; margin-bottom: 8px; cursor: pointer;
+      font-family: inherit; font-size: 14px; font-weight: 700; color: var(--dark);
+    }
+    .action-row .action-ico { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+    .action-row.action-danger { color: #c62828; }
+    .action-preview {
+      font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* ── Author chips (streak / stable / birthday / medication) ── */
+    .post-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: var(--yellow-bg); color: var(--muted);
+      border: none; border-radius: 999px; padding: 1px 7px;
+      font-size: 10.5px; font-weight: 700; line-height: 1.6;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ── Loading skeletons ── */
+    .skel-card { background: var(--surface); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+    .skel-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .skel { background: var(--surface-2); border-radius: 8px; position: relative; overflow: hidden; }
+    .skel::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+      transform: translateX(-100%); animation: skel-shine 1.3s ease-in-out infinite;
+    }
+    @keyframes skel-shine { to { transform: translateX(100%); } }
+    .skel-av   { width: 36px; height: 36px; border-radius: 50%; }
+    .skel-line { height: 10px; margin-bottom: 8px; }
+
+    /* ── Pull to refresh ── */
+    .ptr {
+      height: 0; overflow: hidden; display: flex; align-items: flex-end; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--muted);
+    }
+    .ptr-inner { display: flex; align-items: center; gap: 6px; padding-bottom: 8px; }
+    .ptr-ico { display: inline-block; transition: transform 0.15s; }
+    .ptr.ready .ptr-ico { transform: rotate(180deg); }
+    .ptr.busy .ptr-ico { animation: ptr-spin 0.8s linear infinite; }
+    @keyframes ptr-spin { to { transform: rotate(360deg); } }
+
+    /* ── Illustrated empty states ── */
+    .empty-illus { text-align: center; padding: 36px 24px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .empty-illus img { width: 96px; height: 96px; display: block; margin: 0 auto 12px; opacity: 0.9; }
+    .empty-illus.compact { padding: 20px 12px 12px; }
+    .empty-illus.compact img { width: 64px; height: 64px; margin-bottom: 8px; }
+
+    /* ── Need help now ── */
+    .help-btn {
+      flex-shrink: 0; border: none; cursor: pointer; font-family: inherit;
+      background: rgba(0,0,0,0.1); color: var(--dark);
+      border-radius: 20px; padding: 6px 10px; font-size: 12px; font-weight: 800;
+      display: flex; align-items: center; gap: 4px; white-space: nowrap;
+    }
+    /* Pushed right, beside the identity pill, rather than floating mid-row. */
+    .board-header-top .help-btn { margin-left: auto; }
+    .help-btn .help-label { display: inline; }
+    @media (max-width: 340px) { .help-btn .help-label { display: none; } }
+    .help-row {
+      display: flex; align-items: center; gap: 12px; text-decoration: none;
+      background: var(--yellow-bg); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+      color: var(--dark);
+    }
+    .help-row .help-ico { font-size: 22px; flex-shrink: 0; }
+    .help-row .help-name { display: block; font-size: 14px; font-weight: 800; }
+    .help-row .help-sub  { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .help-row.help-urgent { background: rgba(229,57,53,0.10); }
+    .help-link { display: block; text-align: center; font-size: 13px; font-weight: 700; color: var(--yellow-dark); margin: 6px 0 14px; }
+
+    /* ── Saved posts ── */
+    .saved-card { background: var(--yellow-bg); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; text-align: left; }
+    .saved-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .saved-head .post-av-circle { width: 26px; height: 26px; font-size: 10px; box-shadow: none; }
+    .saved-name { font-size: 12px; font-weight: 700; color: var(--dark); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .saved-when { font-size: 11px; color: var(--muted); }
+    .saved-text { font-size: 13px; color: var(--dark); line-height: 1.55; white-space: pre-wrap; }
+    .saved-actions { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+    .saved-actions .sugg-btn { flex: 0 0 auto; padding: 6px 12px; }
+    .saved-gone { font-size: 11px; color: var(--muted); font-style: italic; }
+
+    /* ── Swipe a reply to answer it ── */
+    .comment-card { position: relative; transition: transform 0.18s ease; }
+    .comment-card.swiping { transition: none; }
+    .comment-card .swipe-cue {
+      position: absolute; left: -30px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; opacity: 0; transition: opacity 0.1s;
+    }
+    .comment-card.swipe-ready .swipe-cue { opacity: 1; }
+    .thread-scroll { overflow-x: hidden; }
+    .post-card.pressing, .comment-card.pressing { opacity: 0.75; }
+
+    /* ── Wiki: a colour and banner per section ── */
+    #wiki-section { --wiki-accent: var(--yellow); }
+    #wiki-section[data-section="meds"]         { --wiki-accent: #e57373; }
+    #wiki-section[data-section="conditions"]   { --wiki-accent: #9575cd; }
+    #wiki-section[data-section="therapies"]    { --wiki-accent: #4db6ac; }
+    #wiki-section[data-section="sideEffects"]  { --wiki-accent: #ff8a65; }
+    #wiki-section[data-section="lifestyle"]    { --wiki-accent: #81c784; }
+    #wiki-section[data-section="warningSigns"] { --wiki-accent: #ffb300; }
+    #wiki-section[data-section="hospital"]     { --wiki-accent: #64b5f6; }
+    #wiki-section[data-section="twelveSteps"]  { --wiki-accent: #a1887f; }
+    #wiki-section[data-section="workplace"]    { --wiki-accent: #7986cb; }
+    #wiki-section[data-section="pregnancy"]    { --wiki-accent: #f06292; }
+    #wiki-section[data-section="media"]        { --wiki-accent: #ba68c8; }
+    #wiki-section[data-section="lovedOnes"]    { --wiki-accent: #e91e63; }
+    #wiki-section[data-section="groups"]       { --wiki-accent: #26a69a; }
+    #wiki-section[data-section="wisdom"]       { --wiki-accent: #f5c800; }
+    #wiki-section .wiki-card { border-left: 4px solid var(--wiki-accent); }
+    #wiki-body .wiki-card[open] summary { color: var(--dark); background: color-mix(in srgb, var(--wiki-accent) 12%, transparent); }
+    .wiki-hero {
+      display: flex; align-items: center; gap: 12px;
+      background: color-mix(in srgb, var(--wiki-accent) 16%, var(--surface));
+      border-radius: 14px; padding: 12px 14px; margin-bottom: 12px;
+    }
+    .wiki-hero-ico {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      background: color-mix(in srgb, var(--wiki-accent) 30%, var(--surface));
+    }
+    .wiki-hero-title { font-size: 16px; font-weight: 800; color: var(--dark); }
+    .wiki-hero-count { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .skel::after, .ptr.busy .ptr-ico { animation: none; }
+      .comment-card { transition: none; }
+    }
+
+    /* ── Dark mode ──
+       html.theme-dark is set before first paint by the inline script in
+       anonymous.html's <head>, from the Appearance setting (automatic follows
+       the phone). Tokens do most of the work; the rules after them fix the
+       places that paint a light colour directly. */
+    html.theme-dark {
+      --yellow-dark: #e6bd1f;
+      --yellow-bg:   #2a2410;
+      --cream:       #14120c;
+      --dark:        #f3ecd6;
+      --muted:       #b9ae88;
+      --surface:     #1f1c13;
+      --surface-2:   #2c281b;
+      --line:        #363020;
+      --header-bg:   #1c190f;
+      color-scheme: dark;
+    }
+    html.theme-dark body,
+    html.theme-dark #app-shell,
+    html.theme-dark .onboard-bg { background: var(--cream); }
+    html.theme-dark .board-tab { background: rgba(255,255,255,0.06); }
+    html.theme-dark .board-tab.active { background: var(--cream); }
+    html.theme-dark .board-back-btn,
+    html.theme-dark .help-btn { background: rgba(255,255,255,0.08); }
+    html.theme-dark .card,
+    html.theme-dark .post-card,
+    html.theme-dark .skel-card { box-shadow: none; border: 1px solid var(--line); }
+    html.theme-dark .skel::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); }
+    html.theme-dark .btn-primary:disabled { background: var(--surface-2); color: var(--muted); }
+    html.theme-dark .fab-bar { box-shadow: 0 4px 24px rgba(0,0,0,0.6); border: 1px solid var(--line); }
+    html.theme-dark .overlay { background: rgba(0,0,0,0.65); }
+    html.theme-dark .code-box.filled { color: var(--dark); }
+    html.theme-dark .wiki-source-badge--direct { background: #1d3324; color: #9fd8ac; border-color: #2d5037; }
+    html.theme-dark .topic-card,
+    html.theme-dark .ann-card { background: rgba(245,200,0,0.07); }
+    html.theme-dark .action-row.action-danger { color: #ff8a80; }
+    /* The greeting card is the one full-yellow block on the board — too bright
+       at night, so it drops to a deep amber. */
+    html.theme-dark .sys-card { background: linear-gradient(135deg, #5c4a05, #3a2f06); }
+    html.theme-dark .sys-card .sys-text,
+    html.theme-dark .sys-card .sys-meta { color: var(--dark); }
+    html.theme-dark #board-user-pill .pill-name,
+    html.theme-dark #board-user-pill .pill-badge { color: var(--dark) !important; }
+    @media (min-width: 520px) {
+      html.theme-dark body { background: #0b0b0b; }
+      html.theme-dark.is-native body,
+      html.theme-dark.is-native #iphone-frame { background: var(--cream) !important; }
+    }

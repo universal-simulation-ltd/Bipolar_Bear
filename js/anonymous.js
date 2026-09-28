@@ -618,6 +618,394 @@ function showHint(msg) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Feel: haptics, empty states, loading skeletons
+// ─────────────────────────────────────────────────────────────────
+// A light tap on the phone for likes, sends, the ⋯ menu and pull-to-refresh.
+// Native shells use @capacitor/haptics when the build carries it; Android's
+// web view falls back to navigator.vibrate; iOS Safari has neither, so the
+// web build on an iPhone stays silent. Never throws.
+function _haptic(kind) {
+  try {
+    const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+    if (H) {
+      if (kind === 'success') H.notification({ type: 'SUCCESS' });
+      else H.impact({ style: kind === 'medium' ? 'MEDIUM' : 'LIGHT' });
+      return;
+    }
+    if (navigator.vibrate) navigator.vibrate(kind === 'success' ? [12, 40, 12] : 10);
+  } catch (e) {}
+}
+
+// The bear over a line of copy, for "nothing here" moments. `text` is plain
+// text (escaped here).
+function _emptyHtml(text, compact) {
+  return `<div class="empty-illus${compact ? ' compact' : ''}">`
+       + `<img src="icons/anon-bear-256.png" alt="" loading="lazy">`
+       + `<div>${esc(text)}</div></div>`;
+}
+
+function _skeletonHtml(n) {
+  const card = `<div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div>`
+    + `<div style="flex:1"><div class="skel skel-line" style="width:40%"></div>`
+    + `<div class="skel skel-line" style="width:25%;margin:0"></div></div></div>`
+    + `<div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div>`;
+  return card.repeat(n || 3);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Appearance (automatic / light / dark)
+// ─────────────────────────────────────────────────────────────────
+// Stored in localStorage.bbAnonTheme — outside the bbAnon_* prefix on purpose,
+// so signing out doesn't flip someone back into a bright screen at 2 a.m. The
+// inline script in <head> applies it before first paint; this keeps it right
+// afterwards (setting changed, or the phone switching at sunset).
+const THEME_KEY = 'bbAnonTheme';
+function _themePref() {
+  try { const v = localStorage.getItem(THEME_KEY); return (v === 'light' || v === 'dark') ? v : 'auto'; }
+  catch (e) { return 'auto'; }
+}
+const _darkQuery = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+function applyTheme() {
+  const pref = _themePref();
+  const dark = pref === 'dark' || (pref === 'auto' && !!(_darkQuery && _darkQuery.matches));
+  document.documentElement.classList.toggle('theme-dark', dark);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? '#1c190f' : '#f5c800');
+}
+if (_darkQuery) {
+  const onChange = () => { if (_themePref() === 'auto') applyTheme(); };
+  if (_darkQuery.addEventListener) _darkQuery.addEventListener('change', onChange);
+  else if (_darkQuery.addListener) _darkQuery.addListener(onChange);
+}
+applyTheme();
+function _paintThemeStatus() {
+  const el = document.getElementById('ms-theme-status');
+  if (!el) return;
+  const pref = _themePref();
+  el.textContent = _wt(pref === 'dark' ? 'anon.ux.themeDark' : pref === 'light' ? 'anon.ux.themeLight' : 'anon.ux.themeAuto');
+}
+function cycleTheme() {
+  const order = ['auto', 'light', 'dark'];
+  const next = order[(order.indexOf(_themePref()) + 1) % order.length];
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  applyTheme();
+  _paintThemeStatus();
+  _haptic();
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Saved posts (this device only)
+// ─────────────────────────────────────────────────────────────────
+// A snapshot of the post, not a pointer to it — posts leave the board after
+// POST_RETENTION_DAYS, and the point of saving the reply that helped is being
+// able to find it again on a bad day next month. Cleared with the rest of the
+// bbAnon_* state on sign-out.
+const SAVED_MAX = 100;
+function _loadSaved() {
+  try { const a = JSON.parse(BB.storage.get('Anon_saved') || '[]'); return Array.isArray(a) ? a : []; }
+  catch (e) { return []; }
+}
+function _storeSaved(list) {
+  try { BB.storage.set('Anon_saved', JSON.stringify(list.slice(0, SAVED_MAX))); } catch (e) {}
+}
+function isSaved(id) { return !!id && _loadSaved().some(s => s.id === id); }
+function _findPost(id) {
+  return localPosts.find(p => p.id === id)
+      || (postsByTab.general || []).find(p => p.id === id)
+      || (postsByTab.announcements || []).find(p => p.id === id);
+}
+function toggleSaved(id) {
+  const list = _loadSaved();
+  const at = list.findIndex(s => s.id === id);
+  if (at >= 0) {
+    list.splice(at, 1);
+    _storeSaved(list);
+    showHint(_wt('anon.ux.unsavedToast'));
+    return false;
+  }
+  const p = _findPost(id);
+  if (!p) return false;
+  const topicA = (p.isTopic || p.wasTopic) ? topicAuthorOf(p) : null;
+  list.unshift({
+    id,
+    name:     topicA ? topicA.name : (p.isAdmin ? ADMIN_DISPLAY_NAME : (p.name || '')),
+    initials: topicA ? topicA.initials : (p.initials || initials(p.name || '')),
+    grad1:    safeColor(topicA ? topicA.grad1 : p.grad1, YELLOW_LT),
+    grad2:    safeColor(topicA ? topicA.grad2 : p.grad2, YELLOW_DARK),
+    text:     String(p.text || ''),
+    ts:       p.timestamp?.toMillis?.() ?? (p.timestamp instanceof Date ? p.timestamp.getTime() : Date.now()),
+    savedAt:  Date.now(),
+  });
+  _storeSaved(list);
+  _haptic('success');
+  showHint(_wt('anon.ux.savedToast'));
+  return true;
+}
+function _paintSavedStatus() {
+  const el = document.getElementById('ms-saved-status');
+  if (!el) return;
+  const n = _loadSaved().length;
+  el.textContent = n ? _wt('anon.ux.savedCount', { n }) : _wt('anon.ux.savedNone');
+}
+function openSaved() {
+  const listEl = document.getElementById('saved-list');
+  const saved = _loadSaved();
+  if (!saved.length) {
+    listEl.innerHTML = _emptyHtml(_wt('anon.ux.savedEmpty'), true);
+  } else {
+    listEl.innerHTML = saved.map(s => {
+      const live = !!_findPost(s.id);
+      return `<div class="saved-card" data-sid="${esc(s.id)}">
+        <div class="saved-head">
+          <div class="post-av-circle" style="background:linear-gradient(135deg,${safeColor(s.grad1, YELLOW_LT)},${safeColor(s.grad2, YELLOW_DARK)});">${esc(s.initials || '')}</div>
+          <div class="saved-name">[${esc(s.name)}]</div>
+          <div class="saved-when">${esc(timeAgo(new Date(num(s.ts, Date.now()))))}</div>
+        </div>
+        <div class="saved-text" data-tt>${esc(s.text)}</div>
+        <div class="saved-actions">
+          ${live ? `<button class="sugg-btn sugg-yes" data-saved-open="${esc(s.id)}">${esc(_wt('anon.ux.openThread'))}</button>`
+                 : `<span class="saved-gone">${esc(_wt('anon.ux.expired'))}</span>`}
+          <div style="flex:1"></div>
+          <button class="sugg-btn sugg-no" data-saved-remove="${esc(s.id)}">${esc(_wt('anon.ux.remove'))}</button>
+        </div>
+      </div>`;
+    }).join('');
+    if (window.BB && BB.translate) BB.translate.scan(listEl);
+  }
+  openOv('ov-saved');
+}
+document.getElementById('saved-list').addEventListener('click', e => {
+  const open = e.target.closest('[data-saved-open]');
+  const rm   = e.target.closest('[data-saved-remove]');
+  if (open) {
+    const id = open.dataset.savedOpen;
+    const p = _findPost(id);
+    closeOv('ov-saved');
+    closeOv('ov-monika');
+    if (p) {
+      const tab = p.tab === 'announcements' ? 'announcements' : 'general';
+      if (currentTab !== tab) setTab(tab);
+      openThread(id);
+    }
+  } else if (rm) {
+    const list = _loadSaved().filter(s => s.id !== rm.dataset.savedRemove);
+    _storeSaved(list);
+    openSaved();
+    _paintSavedStatus();
+  }
+});
+document.getElementById('saved-close').addEventListener('click', () => closeOv('ov-saved'));
+
+// ─────────────────────────────────────────────────────────────────
+// Need help now
+// ─────────────────────────────────────────────────────────────────
+document.getElementById('board-help-btn').addEventListener('click', () => { _haptic(); openOv('ov-help'); });
+document.getElementById('help-close').addEventListener('click', () => closeOv('ov-help'));
+
+// ─────────────────────────────────────────────────────────────────
+// The ⋯ action sheet (posts and comments)
+// ─────────────────────────────────────────────────────────────────
+// Each card still renders its moderation buttons (SOS / report / mute / the
+// admin tools), hidden inside .post-more-items, so the handlers that were
+// already bound to them keep working. The sheet lists them and, on a tap,
+// clicks the real button — one code path, whichever way the member got there.
+const _DANGER_ACTIONS = ['delete', 'ban', 'report', 'selfdelete', 'cdelete', 'cban', 'creport', 'cselfdelete'];
+let _actionTargets = [];
+function openActions(card) {
+  if (!card) return;
+  const isComment = card.classList.contains('comment-card');
+  const rows = [];
+  _actionTargets = [];
+  const add = (ico, label, fn, danger) => {
+    _actionTargets.push(fn);
+    rows.push(`<button class="action-row${danger ? ' action-danger' : ''}" data-act="${_actionTargets.length - 1}">`
+      + `<span class="action-ico">${ico}</span><span>${esc(label)}</span></button>`);
+  };
+  if (isComment) {
+    const author = card.dataset.author || '';
+    if (author && author !== profile.monika) {
+      add('↩️', _wt('anon.ux.reply'), () => _replyTo(author));
+    }
+  } else {
+    const pid = card.dataset.pid;
+    const p = pid && _findPost(pid);
+    if (p && _isThreadable(p)) {
+      const saved = isSaved(pid);
+      add('🔖', _wt(saved ? 'anon.ux.unsave' : 'anon.ux.save'), () => toggleSaved(pid));
+    }
+  }
+  card.querySelectorAll('.post-more-items > button').forEach(btn => {
+    const kind = Object.keys(btn.dataset).find(k => k !== 'tab') || '';
+    add(btn.textContent.trim(), btn.title || kind, () => btn.click(), _DANGER_ACTIONS.includes(kind));
+  });
+  if (!rows.length) return;
+  const txt = card.querySelector('.post-text, .comment-text');
+  const prev = document.getElementById('actions-preview');
+  prev.textContent = txt ? txt.textContent.trim() : '';
+  prev.style.display = prev.textContent ? '' : 'none';
+  document.getElementById('actions-list').innerHTML = rows.join('');
+  _haptic();
+  openOv('ov-actions');
+}
+document.getElementById('actions-list').addEventListener('click', e => {
+  const row = e.target.closest('[data-act]');
+  if (!row) return;
+  const fn = _actionTargets[parseInt(row.dataset.act, 10)];
+  closeOv('ov-actions');
+  if (fn) fn();
+});
+document.getElementById('actions-cancel').addEventListener('click', () => closeOv('ov-actions'));
+
+// The ⋯ button itself: shared markup for posts and comments. `items` is the
+// hidden moderation buttons' HTML.
+function moreMenuHtml(items) {
+  return `<button class="more-btn" data-more title="${esc(_wt('anon.ux.more'))}" aria-label="${esc(_wt('anon.ux.more'))}">⋯</button>`
+       + `<span class="post-more-items">${items}</span>`;
+}
+
+// Press and hold a post or reply: same sheet as ⋯. Delegated on a container
+// that outlives its re-renders. A move of more than a few pixels is a scroll,
+// not a press; the click that follows a long press is swallowed so it doesn't
+// also open the thread or like the post.
+function bindLongPress(container, selector) {
+  let timer = null, startX = 0, startY = 0, card = null, fired = false;
+  const cancel = () => { clearTimeout(timer); timer = null; if (card) card.classList.remove('pressing'); card = null; };
+  container.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return cancel();
+    const c = e.target.closest(selector);
+    if (!c || e.target.closest('button, a, textarea, input')) return;
+    card = c; fired = false;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    timer = setTimeout(() => {
+      if (!card) return;
+      fired = true;
+      const target = card;
+      cancel();
+      openActions(target);
+    }, 480);
+    setTimeout(() => { if (timer && card) card.classList.add('pressing'); }, 150);
+  }, { passive: true });
+  container.addEventListener('touchmove', e => {
+    if (!timer) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - startX) > 8 || Math.abs(t.clientY - startY) > 8) cancel();
+  }, { passive: true });
+  container.addEventListener('touchend', cancel, { passive: true });
+  container.addEventListener('touchcancel', cancel, { passive: true });
+  container.addEventListener('click', e => {
+    if (fired) { fired = false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
+  container.addEventListener('contextmenu', e => { if (e.target.closest(selector)) e.preventDefault(); });
+}
+
+// Swipe a reply to the right to answer it: the composer gets "@Name " and focus.
+function _replyTo(author) {
+  const ta = document.getElementById('thread-ta');
+  if (!ta || !author) return;
+  const tag = '@' + author + ' ';
+  if (!ta.value.startsWith(tag)) ta.value = tag + ta.value.replace(/^@\S+\s/, '');
+  document.getElementById('thread-send').disabled = !ta.value.trim();
+  ta.focus();
+  try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {}
+}
+function bindSwipeReply(container) {
+  let card = null, startX = 0, startY = 0, dx = 0, locked = null;
+  const THRESH = 64;
+  container.addEventListener('touchstart', e => {
+    card = e.target.closest('.comment-card');
+    if (!card || e.touches.length !== 1) { card = null; return; }
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY; dx = 0; locked = null;
+  }, { passive: true });
+  container.addEventListener('touchmove', e => {
+    if (!card) return;
+    const t = e.touches[0];
+    const mx = t.clientX - startX, my = t.clientY - startY;
+    if (locked === null && (Math.abs(mx) > 8 || Math.abs(my) > 8)) {
+      locked = (mx > 0 && Math.abs(mx) > Math.abs(my) * 1.5) ? 'x' : 'y';
+      if (locked === 'x') card.classList.add('swiping');
+    }
+    if (locked !== 'x') return;
+    const was = dx >= THRESH;
+    dx = Math.max(0, Math.min(mx, 90));
+    card.style.transform = `translateX(${dx}px)`;
+    const ready = dx >= THRESH;
+    card.classList.toggle('swipe-ready', ready);
+    if (ready && !was) _haptic();
+  }, { passive: true });
+  const end = () => {
+    if (!card) return;
+    const c = card; card = null;
+    c.classList.remove('swiping', 'swipe-ready');
+    c.style.transform = '';
+    if (locked === 'x' && dx >= THRESH) {
+      const author = c.dataset.author || '';
+      if (author && author !== profile.monika) _replyTo(author);
+    }
+  };
+  container.addEventListener('touchend', end, { passive: true });
+  container.addEventListener('touchcancel', end, { passive: true });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Pull to refresh (feed)
+// ─────────────────────────────────────────────────────────────────
+// The feed is already live, so a refresh re-opens the listeners — which is
+// also what a member means by it when the connection has quietly dropped.
+let _ptrDone = null;
+function setupPullToRefresh() {
+  const list = document.getElementById('post-list');
+  const ptr  = document.getElementById('ptr');
+  const lbl  = document.getElementById('ptr-label');
+  if (!list || !ptr) return;
+  const TRIGGER = 64;
+  let startY = 0, pulling = false, h = 0, busy = false;
+  const setH = v => { h = v; ptr.style.height = v + 'px'; };
+  list.addEventListener('touchstart', e => {
+    if (busy || list.scrollTop > 0 || e.touches.length !== 1) return;
+    startY = e.touches[0].clientY; pulling = true;
+    ptr.style.transition = 'none';
+  }, { passive: true });
+  list.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0 || list.scrollTop > 0) { setH(0); return; }
+    const was = h >= TRIGGER;
+    setH(Math.min(dy * 0.5, 90));
+    const ready = h >= TRIGGER;
+    ptr.classList.toggle('ready', ready);
+    lbl.textContent = _wt(ready ? 'anon.ux.releaseRefresh' : 'anon.ux.pullRefresh');
+    if (ready && !was) _haptic();
+  }, { passive: true });
+  const finish = () => {
+    ptr.style.transition = 'height 0.2s ease';
+    ptr.classList.remove('busy', 'ready');
+    setH(0);
+    busy = false;
+  };
+  list.addEventListener('touchend', () => {
+    if (!pulling) return;
+    pulling = false;
+    ptr.style.transition = 'height 0.2s ease';
+    if (h < TRIGGER) { setH(0); ptr.classList.remove('ready'); return; }
+    busy = true;
+    ptr.classList.remove('ready');
+    ptr.classList.add('busy');
+    lbl.textContent = _wt('anon.ux.refreshing');
+    setH(44);
+    const timeout = setTimeout(() => { _ptrDone = null; finish(); }, 4000);
+    _ptrDone = () => {
+      clearTimeout(timeout);
+      _ptrDone = null;
+      lbl.textContent = _wt('anon.ux.refreshed');
+      ptr.classList.remove('busy');
+      setTimeout(finish, 500);
+    };
+    listenPosts({ keep: true });
+    listenBanned();
+  }, { passive: true });
+}
+
+// ─────────────────────────────────────────────────────────────────
 // SCREEN: Agree to terms (BipolarBear-app path only)
 // ─────────────────────────────────────────────────────────────────
 /**
@@ -1508,6 +1896,8 @@ function initBoard() {
     setupCompose();
     setupThread();
     setupOverlayActions();
+    setupPullToRefresh();
+    bindLongPress(document.getElementById('post-list'), '.post-card');
     _boardSetupDone = true;
   }
   // Fire-and-forget; openThread/send await the same memoised promise. The
@@ -1915,8 +2305,12 @@ function renderWiki() {
           </div>
         </div>
       </div>
+      <div id="wiki-hero" class="wiki-hero"></div>
       <div id="wiki-body" class="wiki-body"></div>
     `;
+    // Keep the banner's article count right for the sections that load
+    // asynchronously (groups, community wisdom) as well as the static ones.
+    new MutationObserver(_paintWikiCount).observe(document.getElementById('wiki-body'), { childList: true });
     wiki.querySelectorAll('.wiki-pill').forEach(btn => {
       btn.addEventListener('click', () => {
         setWikiSection(btn.dataset.wiki);
@@ -1983,8 +2377,8 @@ function applyWikiFilter() {
   if (q && visibleCount === 0) {
     if (!noResults) {
       noResults = document.createElement('div');
-      noResults.className = 'wiki-empty wiki-no-results';
-      noResults.textContent = _wt('anon.wiki.noResults');
+      noResults.className = 'wiki-no-results';
+      noResults.innerHTML = _emptyHtml(_wt('anon.wiki.noResults'), true);
       body.appendChild(noResults);
     }
   } else if (noResults) {
@@ -1992,8 +2386,33 @@ function applyWikiFilter() {
   }
 }
 
+// Banner above each wiki section: the pill's own emoji and name, bigger, in
+// the section's colour (see #wiki-section[data-section] in anonymous.css).
+function _paintWikiHero(section) {
+  const hero = document.getElementById('wiki-hero');
+  const pill = document.querySelector(`.wiki-pill[data-wiki="${section}"]`);
+  if (!hero || !pill) return;
+  const label = pill.textContent.trim();
+  const m = label.match(/^(\S+)\s+(.*)$/);
+  const ico  = m && !/[A-Za-z0-9]/.test(m[1]) ? m[1] : '📖';
+  const name = m && !/[A-Za-z0-9]/.test(m[1]) ? m[2] : label;
+  hero.innerHTML = `<div class="wiki-hero-ico">${esc(ico)}</div>`
+    + `<div><div class="wiki-hero-title">${esc(name)}</div><div class="wiki-hero-count" id="wiki-hero-count"></div></div>`;
+  _paintWikiCount();
+}
+function _paintWikiCount() {
+  const el = document.getElementById('wiki-hero-count');
+  const body = document.getElementById('wiki-body');
+  if (!el || !body) return;
+  const n = body.querySelectorAll('.wiki-card, .wiki-wisdom-card').length;
+  el.textContent = n ? '📄 ' + n : '';
+}
+
 function setWikiSection(section) {
   _wikiSection = section;
+  const wikiSec = document.getElementById('wiki-section');
+  if (wikiSec) wikiSec.dataset.section = section;
+  _paintWikiHero(section);
   document.querySelectorAll('.wiki-pill').forEach(b =>
     b.classList.toggle('active', b.dataset.wiki === section));
   if (section === 'meds')              renderWikiMeds();
@@ -3344,18 +3763,23 @@ async function maybePostDailyTopic() {
   }
 }
 
-function listenPosts() {
+// opts.keep (pull-to-refresh): leave the current feed on screen until the new
+// snapshot replaces it, rather than blanking it to skeletons.
+function listenPosts(opts) {
+  const keep = !!(opts && opts.keep);
   stopAllListeners();
-  postsByTab = { announcements: [], general: [] };
-  localPosts = [];
+  if (!keep) {
+    postsByTab = { announcements: [], general: [] };
+    localPosts = [];
+  }
 
   if (!db) {
-    renderPosts(currentTab === 'general' ? assembleGeneralPosts([]) : announcementFeed());
+    renderPosts(currentTab === 'general' ? assembleGeneralPosts(keep ? localPosts : []) : announcementFeed());
+    if (_ptrDone) _ptrDone();
     return;
   }
 
-  document.getElementById('post-list').innerHTML =
-    '<div class="empty-state">' + esc(_wt('anon.ui.loading')) + '</div>';
+  if (!keep) document.getElementById('post-list').innerHTML = _skeletonHtml(3);
 
   // Run one listener per tab simultaneously so badge counts stay live
   // even when the user is looking at the other tab.
@@ -3371,6 +3795,7 @@ function listenPosts() {
           renderPosts(tab === 'general'
             ? assembleGeneralPosts(localPosts)
             : announcementFeed());
+          if (_ptrDone) _ptrDone();
         }
         renderTabBadges();
       }, err => {
@@ -3660,8 +4085,7 @@ async function openThread(postId) {
 
   if (currentThreadUnsub) { currentThreadUnsub(); currentThreadUnsub = null; }
   if (!db) {
-    document.getElementById('thread-comments-list').innerHTML =
-      '<div class="empty-state" style="padding:24px 0 16px;">' + esc(_wt('anon.ui.noComments')) + '</div>';
+    document.getElementById('thread-comments-list').innerHTML = _emptyHtml(_wt('anon.ui.noComments'), true);
     return;
   }
 
@@ -3693,7 +4117,7 @@ async function openThread(postId) {
       const stick = _threadStickToBottom || _threadAtBottom();
       _threadStickToBottom = false;
       if (!comments.length) {
-        el.innerHTML = '<div class="empty-state" style="padding:24px 0 16px;">' + esc(_wt('anon.ui.noComments')) + '</div>';
+        el.innerHTML = _emptyHtml(_wt('anon.ui.noComments'), true);
         return;
       }
       el.innerHTML = comments.map(renderComment).join('');
@@ -3702,7 +4126,7 @@ async function openThread(postId) {
     }, err => {
       console.warn('[Thread] comments listener error', err);
       const el = document.getElementById('thread-comments-list');
-      if (el) el.innerHTML = '<div class="empty-state" style="padding:24px 0 16px;">' + esc(_wt('anon.ui.commentsError')) + '</div>';
+      if (el) el.innerHTML = _emptyHtml(_wt('anon.ui.commentsError'), true);
     });
 }
 
@@ -3782,8 +4206,8 @@ function renderThreadHeader(p) {
         <div class="post-avatar">
           <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});">${esc(a.initials)}</div>
           <div>
-            <div class="post-name">[${esc(a.name)}] 🔥 ${a.streak}d</div>
-            <div class="post-med" style="color:var(--muted);">💬 ${esc(label)}</div>
+            <div class="post-name">[${esc(a.name)}]</div>
+            ${_chipsHtml({ streak: a.streak, label: '💬 ' + label })}
           </div>
         </div>
         <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
@@ -3803,8 +4227,8 @@ function renderThreadHeader(p) {
       <div class="post-avatar">
         <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
         <div>
-          <div class="post-name">${authorLabel(p)} 🔥 ${streakNum}d${showStable ? ` 🧘 ${stableNum}d` : ''}</div>
-          ${showMed ? `<div class="post-med">💊 ${esc(p.med)}</div>` : ''}
+          <div class="post-name">${authorLabel(p)}</div>
+          ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, med: showMed ? p.med : '' })}
         </div>
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
@@ -3833,6 +4257,7 @@ function renderComment(c) {
   const muteBtn = !isMine
     ? `<button class="icon-btn" data-cmute title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : '';
   return `<div class="comment-card" data-cid="${esc(c.id)}" data-author="${esc(c.name)}">
+    ${isMine ? '' : '<span class="swipe-cue">↩️</span>'}
     <div class="comment-header">
       <div class="post-av-circle" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
       <div style="flex:1;min-width:0;">
@@ -3843,12 +4268,7 @@ function renderComment(c) {
     <div class="comment-text" data-tt>${esc(c.text)}</div>
     <div class="comment-actions">
       <div style="flex:1"></div>
-      ${selfDeleteBtn}
-      ${adminDeleteBtn}
-      ${banBtn}
-      ${sosBtn}
-      ${reportBtn}
-      ${muteBtn}
+      ${(selfDeleteBtn || adminDeleteBtn || banBtn || sosBtn) ? moreMenuHtml(`${selfDeleteBtn}${adminDeleteBtn}${banBtn}${sosBtn}${reportBtn}${muteBtn}`) : ''}
     </div>
   </div>`;
 }
@@ -3862,7 +4282,12 @@ function setupThread() {
 
   // Comment moderation controls (delegated — the comments list re-renders on
   // every snapshot, so per-button binding would be re-wired constantly).
-  document.getElementById('thread-comments-list').addEventListener('click', e => {
+  const commentsList = document.getElementById('thread-comments-list');
+  bindSwipeReply(commentsList);
+  bindLongPress(commentsList, '.comment-card');
+  commentsList.addEventListener('click', e => {
+    const more = e.target.closest('[data-more]');
+    if (more) { openActions(more.closest('.comment-card')); return; }
     const btn = e.target.closest('button.icon-btn');
     if (!btn) return;
     const card = btn.closest('.comment-card');
@@ -3970,6 +4395,7 @@ function setupThread() {
     }
 
     if (sent) {
+      _haptic('success');
       ta.value = '';
       // A reply is posting too — often a member's first contribution — so
       // offer notifications here as well. No-op once the sheet has been
@@ -4051,7 +4477,7 @@ function renderPosts(posts) {
   // point every render funnels through — makes duplicate topic cards impossible.
   posts = dedupeTopics(posts);
   if (!posts.length) {
-    list.innerHTML = '<div class="empty-state">' + esc(_wt('anon.ui.noPosts')) + '</div>';
+    list.innerHTML = _emptyHtml(_wt('anon.ui.noPosts'));
     return;
   }
   // Collapse runs of deleted posts: keep only the most recent tombstone, drop the rest.
@@ -4148,6 +4574,13 @@ function renderPosts(posts) {
       openOv('ov-admin-ban');
     });
   });
+  // ⋯ menus and the author chips
+  list.querySelectorAll('[data-more]').forEach(btn => {
+    btn.addEventListener('click', () => openActions(btn.closest('.post-card')));
+  });
+  list.querySelectorAll('.chip[data-hint]').forEach(chip => {
+    chip.addEventListener('click', () => showHint(chip.dataset.hint));
+  });
   // Comment thread buttons
   list.querySelectorAll('[data-comment]').forEach(btn => {
     btn.addEventListener('click', () => openThread(btn.dataset.comment));
@@ -4210,13 +4643,13 @@ function renderArchivedTopic(p) {
   const a            = topicAuthorOf(p);
   const deleteBtn    = profile.isAdmin
     ? `<button class="icon-btn" data-delete="${esc(p.id)}" title="${esc(_wt('anon.modbtn.deletePost'))}">🗑️</button>` : '';
-  return `<div class="post-card">
+  return `<div class="post-card" data-pid="${esc(p.id)}">
     <div class="post-header">
       <div class="post-avatar">
         <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});">${esc(a.initials)}</div>
         <div>
-          <div class="post-name">[${esc(a.name)}] 🔥 ${a.streak}d</div>
-          <div class="post-med" style="color:var(--muted);">💬 ${esc(_wt('anon.feed.pastTopic'))}</div>
+          <div class="post-name">[${esc(a.name)}]</div>
+          ${_chipsHtml({ streak: a.streak, label: '💬 ' + _wt('anon.feed.pastTopic') })}
         </div>
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
@@ -4228,7 +4661,7 @@ function renderArchivedTopic(p) {
       </button>
       ${commentBtnHtml(p, commentCount)}
       <div style="flex:1"></div>
-      ${deleteBtn}
+      ${moreMenuHtml(deleteBtn)}
     </div>
   </div>`;
 }
@@ -4256,6 +4689,22 @@ function renderAnnouncement(p) {
   </div>`;
 }
 
+// Author badges under a name: visit streak, days stable, Bipolar Bear
+// birthday, medication (when both sides share it). Each chip explains itself
+// on a tap — "🔥 12d" means nothing to a new member until it does. `label` is
+// a plain extra chip (the "past daily topic" marker).
+function _chipsHtml(o) {
+  const chips = [];
+  const chip = (text, hint) => chips.push(
+    `<button class="chip"${hint ? ` data-hint="${esc(hint)}" title="${esc(hint)}"` : ''}>${esc(text)}</button>`);
+  if (o.label) chip(o.label, '');
+  if (o.streak) chip('🔥 ' + o.streak + 'd', _wt('anon.ux.chipStreak', { n: o.streak }));
+  if (o.stable) chip('🧘 ' + o.stable + 'd', _wt('anon.ux.chipStable', { n: o.stable }));
+  if (o.bday)   chip('🎂 ' + o.bday, _wt('anon.ui.bbBirthday'));
+  if (o.med)    chip('💊 ' + o.med, _wt('anon.ux.chipMed'));
+  return chips.length ? `<div class="post-chips">${chips.join('')}</div>` : '';
+}
+
 function renderPost(p) {
   if (p.deleted) {
     return `<div class="post-card"><div class="post-deleted">🛡️ ${esc(_wt('anon.feed.postDeleted'))}</div></div>`;
@@ -4281,14 +4730,14 @@ function renderPost(p) {
   const commentBtn   = !p.isSeed ? commentBtnHtml(p, commentCount) : '';
   const pinnedBadge  = p.pinned ? `<div class="pinned-badge">📌 ${esc(_wt('anon.modbtn.pinnedBadge'))}</div>` : '';
   const postBday     = _birthdayCompact(p.joinedAt || '');
-  return `<div class="post-card${p.pinned ? ' post-pinned' : ''}">
+  return `<div class="post-card${p.pinned ? ' post-pinned' : ''}" data-pid="${esc(p.id)}">
     ${pinnedBadge}
     <div class="post-header">
       <div class="post-avatar">
         <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
         <div>
-          <div class="post-name">${authorLabel(p)} 🔥 ${streakNum}d${showStable ? ` 🧘 ${stableNum}d` : ''}${postBday ? ` 🎂 ${postBday}` : ''}</div>
-          ${showMed ? `<div class="post-med">💊 ${esc(p.med)}</div>` : ''}
+          <div class="post-name">${authorLabel(p)}</div>
+          ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, bday: postBday, med: showMed ? p.med : '' })}
         </div>
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
@@ -4300,13 +4749,10 @@ function renderPost(p) {
       </button>
       ${commentBtn}
       <div style="flex:1"></div>
-      ${selfDeleteBtn}
-      ${pinBtn}
-      ${deleteBtn}
-      ${banBtn}
-      ${p.name !== profile.monika ? `<button class="icon-btn" data-sos="${esc(p.name)}" title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>` : ''}
-      ${p.name !== profile.monika ? `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>` : ''}
-      ${p.name !== profile.monika ? `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''}
+      ${p.isSeed ? '' : moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
+        + (p.name !== profile.monika ? `<button class="icon-btn" data-sos="${esc(p.name)}" title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>`
+          + `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>`
+          + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''))}
     </div>
   </div>`;
 }
@@ -4333,6 +4779,7 @@ function handleLike(btn) {
     span.textContent  = count - 1;
     if (db) db.collection(BB_BRAND.collections.posts).doc(id).update({ likes: firebase.firestore.FieldValue.increment(-1) }).catch(() => {});
   } else {
+    _haptic();
     likedPosts.add(id);
     btn.classList.add('liked');
     btn.dataset.likes = count + 1;
@@ -4492,6 +4939,7 @@ function setupCompose() {
         // post renders before anyone answers it.
         markThreadSeen(docId, 0);
         _anonMarkPostedToday();
+        _haptic('success');
         // Replace optimistic entry with the real one from the snapshot (happens automatically)
       } catch (e) { console.error('[Anonymous] post failed', e); }
     }
@@ -5002,6 +5450,10 @@ function openMonikaSettings() {
   // Language & translation status row
   _paintTranslateStatus();
 
+  // Saved posts count and Appearance
+  _paintSavedStatus();
+  _paintThemeStatus();
+
   // Medication status row
   const msStatus = document.getElementById('ms-med-status');
   if (msStatus) {
@@ -5096,6 +5548,8 @@ function openMonikaSettings() {
 }
 
 document.getElementById('ms-cancel').addEventListener('click', () => closeOv('ov-monika'));
+document.getElementById('ms-saved-btn').addEventListener('click', openSaved);
+document.getElementById('ms-theme-btn').addEventListener('click', cycleTheme);
 
 document.getElementById('ms-signout').addEventListener('click', () => {
   // Standalone sign-out: clear all bbAnon_* identity/session state. Profile

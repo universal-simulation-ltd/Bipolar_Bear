@@ -1152,7 +1152,13 @@
 //       block (no What's New popup: nothing new to point at). Carries the
 //       suite counter's p_platform (v235) and interaction gate (v236) into the
 //       store builds. Touches js/shared/brand-config.js, journal.html.
-const CACHE_NAME = 'bipolarbear-v237';
+// v238: Bipolar Anonymous UX pass — the ⋯ post menu (and press-and-hold),
+//       saved posts, pull to refresh, loading skeletons, author chips, dark
+//       mode with an Appearance setting, a Need help now sheet, swipe a reply
+//       to answer it, illustrated empty states, wiki section colours. Touches
+//       anonymous.html, css/anonymous.css, js/anonymous.js, js/shared/i18n.js,
+//       icons/anon-bear-256.png (new).
+const CACHE_NAME = 'bipolarbear-v238';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
