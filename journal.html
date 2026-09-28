@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Mood Journal – Bipolar Bear App</title>
   <!-- Native PIN gate: must be first — fires before any render -->
-  <style>body{background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)}</style>
+  <style>body{background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)}html.theme-dark,html.theme-dark body{background:#1c1612}</style>
   <script>
   // Native PIN gate. Signed-in users use account-derived encryption, not the
   // guest PIN, so a stale `bbGuestPinSalt` (left over from a guest session
@@ -14,6 +14,11 @@
   // otherwise they bounce back to index.html every time they tap Journal
   // and never reach the journal.js cleanup that would clear it.
   {const _np=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&localStorage.getItem('bbNativePinEnabled')==='1';let _signed=false;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('firebase:authUser:')===0&&localStorage.getItem(k)){_signed=true;break;}}}catch(_){}const _gp=!_signed&&localStorage.getItem('bbGuestPinSalt');if((_gp||_np)&&sessionStorage.getItem('bbPinUnlocked')!=='1'){location.replace('index.html');}}</script>
+  <!-- Theme before first paint (must stay inline): Appearance is 'auto'
+       (follow the phone), 'light' or 'dark' in localStorage.bbTheme — kept
+       off every logout / reset clear-list so it survives signing out.
+       BB.theme in fab.js re-applies it when it changes (css/dark.css). -->
+  <script>(function(){var p='auto';try{p=localStorage.getItem('bbTheme')||'auto';}catch(e){}if(p==='dark'||(p==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('theme-dark');})();</script>
 
   <!-- Shared helpers: load before any inline script that depends on isNative()/window.BB_FIREBASE_CONFIG/BB.onboarding/BB.storage. brand-config.js must come first so the BB.storage helper is available before debug.js + onboarding.js try to read localStorage through it. -->
   <script src="js/shared/brand-config.js"></script>
@@ -83,6 +88,7 @@
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/journal.css">
+  <link rel="stylesheet" href="css/dark.css">
 </head>
 <body>
 <div id="iphone-frame">
@@ -1444,6 +1450,18 @@
             </summary>
             <div id="stepTogglesRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;"></div>
           </details>
+        </div>
+
+        <!-- Appearance: automatic (follow the phone) / light / dark. Per device
+             (localStorage.bbTheme via BB.theme in fab.js), never synced. The
+             value is filled in by showSettingsModal(). -->
+        <div id="appearanceRow" style="margin-bottom:16px;text-align:left;">
+          <label for="appearanceSelect" style="display:block;font-weight:600;color:#495057;font-size:0.95em;margin-bottom:6px;">🌗 <span data-i18n="anon.ux.theme">Appearance</span></label>
+          <select id="appearanceSelect" onchange="window.BB&&BB.theme&&BB.theme.set(this.value)" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;font-family:inherit;color:#495057;background:white;cursor:pointer;">
+            <option value="auto" data-i18n="anon.ux.themeAuto">Automatic (follows your phone)</option>
+            <option value="light" data-i18n="anon.ux.themeLight">Light</option>
+            <option value="dark" data-i18n="anon.ux.themeDark">Dark</option>
+          </select>
         </div>
 
         <div style="text-align: center; display: flex; justify-content: center; gap: 16px; margin-bottom: 14px;">

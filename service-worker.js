@@ -1167,7 +1167,13 @@
 //       css/index.css, survival-kit.html, js/survival-kit.js,
 //       css/survival-kit.css, journal.html, js/journal.js, css/journal.css,
 //       js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v239';
+// v240: Bipolar Bear dark mode — warm dark theme for home, journal, Survival
+//       Kit, the FAB dock and its modals, with an Appearance setting
+//       (automatic / light / dark) in journal Settings and a pre-paint
+//       one-liner in each page's <head>. Touches css/dark.css (new), fab.js,
+//       index.html, journal.html, js/journal.js, survival-kit.html,
+//       js/survival-kit.js, privacy.html.
+const CACHE_NAME = 'bipolarbear-v240';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1229,6 +1235,7 @@ const STATIC_ASSETS = [
   './css/index.css',
   './css/journal.css',
   './css/survival-kit.css',
+  './css/dark.css',
   './css/anonymous.css',
 
   // Manifests. Icons are deliberately not precached — they're served from

@@ -53,6 +53,7 @@ plus the auth/account modals. Loaded on `index`, `journal`, `survival-kit`
 - The "Isolated safety net" 8s timeout in journal.html — must survive errors in the main script body
 - The pre-activation IIFE in anonymous.html — picks the initial screen synchronously before Firebase auth resolves
 - The theme one-liner in anonymous.html `<head>` — sets `html.theme-dark` from `localStorage.bbAnonTheme` (auto / light / dark) before first paint; `applyTheme()` in `js/anonymous.js` mirrors it
+- The theme one-liner in the `<head>` of index.html, journal.html, survival-kit.html and privacy.html — sets `html.theme-dark` from `localStorage.bbTheme` (auto / light / dark) before first paint; `BB.theme` in `fab.js` mirrors it (and fires `bb:themechange`), styles live in `css/dark.css`. `bbTheme` is per device and deliberately NOT on any logout / reset clear-list
 
 ## Loading order
 

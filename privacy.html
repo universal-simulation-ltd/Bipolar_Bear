@@ -128,7 +128,21 @@
       font-size: 0.85em;
       line-height: 1.5;
     }
+
+    /* Dark mode — follows the app's Appearance setting (bbTheme). */
+    html.theme-dark { color-scheme: dark; }
+    html.theme-dark body { background: #1c1612; color: #f5ebdd; }
+    html.theme-dark header { background: linear-gradient(160deg, #3a2515 0%, #261a12 100%); }
+    html.theme-dark h2 { color: #ffa94d; border-bottom-color: #4a3d30; }
+    html.theme-dark a { color: #ffa94d; }
+    html.theme-dark header a { color: white; }
+    html.theme-dark .highlight { background: #262019; }
+    html.theme-dark .convenience-notice { background: #262019; color: #e3d5c3; }
+    html.theme-dark footer { color: #a8977f; border-top-color: #4a3d30; }
   </style>
+  <!-- Theme before first paint (must stay inline): same one-liner as the app
+       pages — 'auto' / 'light' / 'dark' in localStorage.bbTheme. -->
+  <script>(function(){var p='auto';try{p=localStorage.getItem('bbTheme')||'auto';}catch(e){}if(p==='dark'||(p==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('theme-dark');})();</script>
 
   <!-- Shared helpers: load before anything that depends on isNative()/window.BB_FIREBASE_CONFIG/BB.storage. brand-config.js must come first so debug.js can use BB.storage. i18n.js auto-runs applyAll() on DOMContentLoaded. -->
   <script src="js/shared/brand-config.js"></script>

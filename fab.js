@@ -218,6 +218,53 @@
   /** Map from extra FAB id → DOM id of the injected button. */
   const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab' };
 
+  // ── Appearance (automatic / light / dark) ─────────────────────────────────
+  // Stored in localStorage.bbTheme ('auto' | 'light' | 'dark', default auto =
+  // follow the phone). Per device, never synced, and deliberately left off the
+  // logout / reset clear-lists so signing out doesn't flip someone back into a
+  // bright screen at 2 a.m. The inline one-liner in each page's <head> applies
+  // it before first paint; this keeps it right afterwards — the setting
+  // changing (journal Settings → Appearance) or the phone switching at sunset.
+  // Styles live in css/dark.css. Anything that draws its own colours listens
+  // for the `bb:themechange` event on document and redraws.
+  const _THEME_KEY = 'bbTheme';
+  const _darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function _themePref() {
+    try { const v = localStorage.getItem(_THEME_KEY); return (v === 'light' || v === 'dark') ? v : 'auto'; }
+    catch (e) { return 'auto'; }
+  }
+  function _applyTheme() {
+    const pref = _themePref();
+    const dark = pref === 'dark' || (pref === 'auto' && !!(_darkQuery && _darkQuery.matches));
+    const root = document.documentElement;
+    const changed = root.classList.contains('theme-dark') !== dark;
+    root.classList.toggle('theme-dark', dark);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#1c1612' : '#ff9500');
+    if (changed) {
+      try { document.dispatchEvent(new CustomEvent('bb:themechange', { detail: { dark: dark } })); } catch (e) {}
+    }
+    return dark;
+  }
+  function _setThemePref(pref) {
+    if (pref !== 'light' && pref !== 'dark') pref = 'auto';
+    try { localStorage.setItem(_THEME_KEY, pref); } catch (e) {}
+    return _applyTheme();
+  }
+  if (_darkQuery) {
+    const _onSchemeChange = () => { if (_themePref() === 'auto') _applyTheme(); };
+    if (_darkQuery.addEventListener) _darkQuery.addEventListener('change', _onSchemeChange);
+    else if (_darkQuery.addListener) _darkQuery.addListener(_onSchemeChange);
+  }
+  window.BB = window.BB || {};
+  window.BB.theme = {
+    pref: _themePref,
+    set: _setThemePref,
+    apply: _applyTheme,
+    isDark: () => document.documentElement.classList.contains('theme-dark'),
+  };
+  _applyTheme();
+
   // ── CSS ───────────────────────────────────────────────────────────────────
   // All FAB styling is injected into <head> as a single <style> so pages
   // don't need to copy this CSS. Selectors are namespaced (`fab-*`, `bb-*`)

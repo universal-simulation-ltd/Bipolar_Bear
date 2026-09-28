@@ -2594,7 +2594,9 @@ function _sktMood(moodKey) {
       try {
         const StatusBar = window.Capacitor.Plugins.StatusBar;
         if (StatusBar) {
-          await StatusBar.setStyle({ style: 'LIGHT' });
+          // Dark theme (css/dark.css): the header is dark too, so light icons.
+          const _dark = document.documentElement.classList.contains('theme-dark');
+          await StatusBar.setStyle({ style: _dark ? 'DARK' : 'LIGHT' });
           await StatusBar.setBackgroundColor({ color: 'var(--brand-primary-dark)' });
         }
       } catch (e) { /* ignore */ }

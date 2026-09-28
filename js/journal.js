@@ -5099,7 +5099,11 @@ window.addEventListener('pageshow', () => {
       // Accept a legacy category string OR a spectrum number — normalise to a category.
       const cat    = (mood != null && mood !== '') ? _moodCat(mood) : null;
       const accent = (cat && _FM_MOOD_COLORS[cat]) || 'var(--brand-primary)';
-      const bg     = (cat && _FM_MOOD_BG[cat])     || 'var(--brand-tint)';
+      // Dark mode: the pale washes would put cream text on near-white, so mix
+      // the mood colour faintly into the dark card surface instead.
+      const bg     = _fmIsDark()
+        ? ((cat && _fmPaleTint(_FM_MOOD_COLORS[cat])) || 'var(--brand-tint)')
+        : ((cat && _FM_MOOD_BG[cat]) || 'var(--brand-tint)');
       const card   = document.getElementById('focusedModeCard');
       const sticky = document.getElementById('fmNextRow');
       if (card)   { card.style.background = bg;   card.style.setProperty('--fm-accent', accent); }
@@ -5168,9 +5172,22 @@ window.addEventListener('pageshow', () => {
       const resolved = getComputedStyle(_fmTintProbe).color;
       const m = resolved.match(/(\d+(?:\.\d+)?)[,\s]+(\d+(?:\.\d+)?)[,\s]+(\d+(?:\.\d+)?)/);
       if (!m) return null;
-      const mix = (c) => Math.round(0.14 * parseFloat(c) + 0.86 * 255);
-      return `rgb(${mix(m[1])}, ${mix(m[2])}, ${mix(m[3])})`;
+      // Light: 14% colour over white. Dark: 14% over the dark card surface
+      // (#262019 in css/dark.css), so the tint stays a quiet hint of colour.
+      const base = _fmIsDark() ? [38, 32, 25] : [255, 255, 255];
+      const mix = (c, i) => Math.round(0.14 * parseFloat(c) + 0.86 * base[i]);
+      return `rgb(${mix(m[1], 0)}, ${mix(m[2], 1)}, ${mix(m[3], 2)})`;
     }
+
+    /** True while the dark theme is on (html.theme-dark, see css/dark.css). */
+    function _fmIsDark() {
+      return document.documentElement.classList.contains('theme-dark');
+    }
+    // Appearance switched (Settings → Appearance, or the phone at sunset):
+    // repaint the check-in card's mood wash for the new theme.
+    document.addEventListener('bb:themechange', () => {
+      try { _fmApplyMoodTheme(selectedMood); } catch (_) {}
+    });
 
     /**
      * Live background wash driven by the wheel: while the user spins to a slot,
@@ -12621,6 +12638,14 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const _guestSignInNote = document.getElementById('settingsGuestSignInNote');
       if (_guestSignInBtn) _guestSignInBtn.style.display = _isGuest ? '' : 'none';
       if (_guestSignInNote) _guestSignInNote.style.display = _isGuest ? '' : 'none';
+
+      // Appearance row — reflect the stored preference (BB.theme lives in fab.js).
+      const _appearanceSel = document.getElementById('appearanceSelect');
+      if (_appearanceSel) {
+        let _pref = 'auto';
+        try { _pref = (window.BB && BB.theme) ? BB.theme.pref() : (localStorage.getItem('bbTheme') || 'auto'); } catch (_) {}
+        _appearanceSel.value = _pref;
+      }
 
       // Always open showing main panel
       document.getElementById('settingsMainPanel').style.display = '';

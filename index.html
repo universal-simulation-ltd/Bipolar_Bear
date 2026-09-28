@@ -6,7 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Bipolar Bear – Mood &amp; Mental Health Tracker</title>
   <!-- Paint-blocking critical CSS: paints the brand gradient before the stylesheet loads. -->
-  <style>body{background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)}</style>
+  <style>body{background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)}html.theme-dark,html.theme-dark body{background:#1c1612}</style>
+  <!-- Theme before first paint (must stay inline): Appearance is 'auto'
+       (follow the phone), 'light' or 'dark' in localStorage.bbTheme — kept
+       off every logout / reset clear-list so it survives signing out.
+       BB.theme in fab.js re-applies it when it changes (css/dark.css). -->
+  <script>(function(){var p='auto';try{p=localStorage.getItem('bbTheme')||'auto';}catch(e){}if(p==='dark'||(p==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('theme-dark');})();</script>
 
   <!-- Shared helpers: load before any inline script that depends on isNative()/window.BB_FIREBASE_CONFIG/BB.onboarding/BB.storage. brand-config.js must come first so the BB.storage helper is available before debug.js + onboarding.js try to read localStorage through it. -->
   <script src="js/shared/brand-config.js"></script>
@@ -78,6 +83,7 @@
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/dark.css">
 </head>
 <body>
 <!-- Loading splash. Hidden by default; css/theme.css reveals it while

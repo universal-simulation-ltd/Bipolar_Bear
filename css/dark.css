@@ -1,0 +1,432 @@
+/**
+ * Dark mode for the main Bipolar Bear app (index, journal, survival-kit).
+ *
+ * Everything here is scoped under `html.theme-dark`, which the inline
+ * one-liner in each page's <head> sets before first paint from
+ * localStorage.bbTheme ('auto' follows the phone, or 'light' / 'dark'), and
+ * which BB.theme in fab.js keeps in sync afterwards (Appearance setting in the
+ * journal's Settings, or the phone switching at sunset).
+ *
+ * NOT loaded on anonymous.html — the board has its own dark mode in
+ * css/anonymous.css keyed off the same class but its own bbAnonTheme setting.
+ *
+ * Look: warm dark (deep brown / charcoal), cream text, orange kept for accents
+ * and primary buttons. Mood colours are untouched so they stay recognisable.
+ *
+ * Much of the app's markup (HTML and JS-built) carries inline style=""
+ * colours, so the second half of this file overrides the common literals by
+ * attribute match. The literals are listed both as written in source and in
+ * the rgb() form the browser serialises when JS sets `el.style.*`.
+ *
+ * @file css/dark.css
+ */
+
+html.theme-dark {
+  color-scheme: dark;
+  --dk-bg:        #1c1612;
+  --dk-surface:   #262019;
+  --dk-surface-2: #30281f;
+  --dk-surface-3: #3b3127;
+  --dk-line:      #4a3d30;
+  --dk-text:      #f5ebdd;
+  --dk-text-2:    #e3d5c3;
+  --dk-muted:     #bfae98;
+  --dk-page: linear-gradient(160deg, #3a2515 0%, #261a12 42%, #1c1612 100%);
+
+  /* Brand tints are pale orange/yellow washes in light mode; on dark they
+     become a warm brown lift so everything using them follows. */
+  --brand-tint: #2f2419;
+  --brand-secondary-tint: #2f2a17;
+
+  /* Survival Kit's page tokens. */
+  --text: var(--dk-text);
+  --text-light: var(--dk-muted);
+  --bg: var(--dk-bg);
+  --card-bg: var(--dk-surface);
+  --border: var(--dk-line);
+
+  background-color: var(--dk-bg) !important;
+}
+
+html.theme-dark body {
+  background: var(--dk-page);
+  background-attachment: fixed;
+  color: var(--dk-text);
+}
+
+/* Desktop device-frame mockup (≥920px): the page colour lives on #app-shell
+   and the surround turns near-black. Native keeps the page gradient on body. */
+@media (min-width: 920px) {
+  html.theme-dark:not(.is-native) body { background: #111 !important; }
+  html.theme-dark #app-shell { background: var(--dk-page) !important; }
+  html.theme-dark.is-native body { background: var(--dk-page) !important; }
+  html.theme-dark.is-native #iphone-frame { background: var(--dk-bg) !important; }
+}
+
+/* The bear logo artwork is transparent with black lettering, designed to sit
+   on the orange page. On dark, give it its own orange tile so it still reads. */
+html.theme-dark .logo-img,
+html.theme-dark #appLogo,
+html.theme-dark #survivalLogo,
+html.theme-dark #settingsLogoImg {
+  background: linear-gradient(135deg, var(--brand-primary-light) 0%, var(--brand-primary-mid) 100%);
+}
+html.theme-dark #settingsLogoImg { border-radius: 18px; padding: 4px; }
+
+/* ── Loading splash + PIN unlock overlays ── */
+html.theme-dark #bbAuthSplash,
+html.theme-dark #pageCover,
+html.theme-dark #guestPinOverlay,
+html.theme-dark #pinOverlay { background: var(--dk-page) !important; }
+html.theme-dark .pin-key-dark { background: var(--dk-surface-2); color: var(--dk-text); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   FAB dock + shared modals (fab.js)
+   ══════════════════════════════════════════════════════════════════════════ */
+html.theme-dark .fab-footer { background: var(--dk-surface); box-shadow: 0 -4px 20px rgba(0,0,0,0.45); }
+html.theme-dark .whatsapp-fab, html.theme-dark .placeholder-fab, html.theme-dark .coffee-fab,
+html.theme-dark .feedback-fab, html.theme-dark .review-fab, html.theme-dark .bb-extra-fab {
+  background: rgba(255,149,0,0.16); box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+html.theme-dark .bb-auth-fab { background: var(--dk-surface-2); }
+html.theme-dark .bb-feedback-content,
+html.theme-dark .bb-auth-box,
+html.theme-dark .bb-account-box { background: var(--dk-surface); color: var(--dk-text); }
+html.theme-dark .bb-fb-type-btn { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text-2); }
+html.theme-dark .bb-fb-type-btn.selected { border-color: var(--brand-primary); background: rgba(255,149,0,0.14); color: var(--brand-primary); }
+html.theme-dark .bb-auth-input,
+html.theme-dark .bb-fab-modal input, html.theme-dark .bb-fab-modal textarea, html.theme-dark .bb-fab-modal select,
+html.theme-dark .bb-feedback-modal input, html.theme-dark .bb-feedback-modal textarea,
+html.theme-dark .bb-account-box input, html.theme-dark .bb-account-box select {
+  background: var(--dk-surface-2) !important; color: var(--dk-text) !important; border-color: var(--dk-line) !important;
+}
+html.theme-dark #bbAccountVersion, html.theme-dark #bbAuthVersion, html.theme-dark #bbFbMeta { color: var(--dk-muted) !important; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Home (index.html)
+   ══════════════════════════════════════════════════════════════════════════ */
+html.theme-dark .logo-img { box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
+html.theme-dark .btn-journal,
+html.theme-dark .btn-survival,
+html.theme-dark .btn-anonymous {
+  background: linear-gradient(135deg, #a8430a 0%, #8a3708 100%);
+  border-color: rgba(255,170,90,0.45);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+html.theme-dark .btn-anonymous.locked {
+  background: rgba(255,255,255,0.04);
+  color: var(--dk-muted);
+  border-color: rgba(255,170,90,0.35);
+  box-shadow: none;
+}
+html.theme-dark .btn-anonymous.locked .entry-tick { border-color: rgba(255,170,90,0.35); color: rgba(255,170,90,0.5); }
+html.theme-dark .btn-subnote,
+html.theme-dark .btn-subnote-muted,
+html.theme-dark .user-count { color: #f0c79a; }
+html.theme-dark .footer-link { background: rgba(168,67,10,0.9); }
+html.theme-dark #_featureHintToast,
+html.theme-dark #achievementToast { box-shadow: 0 0 0 1px var(--dk-line), 0 8px 24px rgba(0,0,0,0.5) !important; }
+html.theme-dark #bbHomeVersion { color: rgba(245,235,221,0.5) !important; }
+
+/* Quick check-in card */
+html.theme-dark .quick-checkin { background: var(--dk-surface); color: var(--dk-text); box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
+html.theme-dark .quick-checkin[data-done="true"] { background: rgba(38,32,25,0.92); }
+html.theme-dark .qc-prompt,
+html.theme-dark .quick-checkin[data-done="true"] .qc-done-note,
+html.theme-dark .qc-bear,
+html.theme-dark .qc-week { color: var(--dk-text); }
+html.theme-dark .qc-week { border-top-color: var(--dk-line); }
+html.theme-dark .qc-week-title,
+html.theme-dark .qc-wd { color: #f0c79a; }
+html.theme-dark .qc-bear:active,
+html.theme-dark .qc-bear.qc-picked { background: var(--dk-surface-3); }
+@media (hover: hover) and (pointer: fine) {
+  html.theme-dark .qc-bear:hover { background: var(--dk-surface-2); }
+}
+html.theme-dark .qc-dot { box-shadow: inset 0 0 0 1px rgba(0,0,0,0.3); }
+html.theme-dark .qc-dot-empty { background: var(--dk-surface-3); box-shadow: inset 0 0 0 1.5px var(--dk-line); }
+html.theme-dark .qc-week:focus-visible { outline-color: var(--brand-primary); }
+
+/* index.css modals */
+html.theme-dark .modal-box,
+html.theme-dark .wa-modal-box { background: var(--dk-surface); color: var(--dk-text); }
+html.theme-dark .modal-box h3 { color: var(--dk-text); }
+html.theme-dark .modal-input { background: var(--dk-surface-2); color: var(--dk-text); border-color: var(--dk-line); }
+html.theme-dark .modal-btn-secondary { background: var(--dk-surface-2); color: var(--dk-text-2); border-color: var(--dk-line); }
+html.theme-dark .modal-toggle { color: var(--dk-muted); }
+@media (hover: hover) and (pointer: fine) {
+  html.theme-dark .modal-btn-secondary:hover { background: var(--dk-surface-3); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Journal (journal.html)
+   ══════════════════════════════════════════════════════════════════════════ */
+html.theme-dark .card { background: var(--dk-surface); color: var(--dk-text); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+html.theme-dark .bb-muted,
+html.theme-dark .bb-light-muted { color: var(--dk-text-2) !important; }
+html.theme-dark label { color: var(--dk-text-2); }
+html.theme-dark textarea,
+html.theme-dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.theme-dark select {
+  background-color: var(--dk-surface-2) !important;
+  color: var(--dk-text) !important;
+  border-color: var(--dk-line);
+}
+html.theme-dark textarea::placeholder, html.theme-dark input::placeholder { color: #8f806e; }
+
+/* Focused-mode check-in */
+html.theme-dark .fm-opt { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text); }
+html.theme-dark .fm-opt:active { background: var(--dk-surface-3); }
+html.theme-dark .fm-card-btn { background: var(--dk-surface-2); border-color: var(--dk-line); }
+html.theme-dark .fm-card-btn .fm-card-label { color: var(--dk-text-2); }
+html.theme-dark .fm-hero-value,
+html.theme-dark .step-hero-value { color: var(--dk-text); }
+html.theme-dark .fm-hero-badge,
+html.theme-dark .step-hero-badge { background: rgba(81,207,102,0.14); color: #8ce99a; border-color: rgba(81,207,102,0.4); }
+html.theme-dark .fm-hero-badge.guess { background: rgba(255,149,0,0.12); border-color: rgba(255,149,0,0.4); }
+html.theme-dark .fm-wheel-btn { background: var(--dk-surface-2); color: var(--dk-text-2); }
+html.theme-dark .fm-wheel-btn.fm-wheel-runway.sel { color: var(--dk-text-2); }
+html.theme-dark #fmContent .mood-btn { background: rgba(255,255,255,0.05); box-shadow: none; }
+/* The mood wash over the page: quieter on dark so it tints rather than glows. */
+html.theme-dark body.bb-fm-full.bb-fm-tinted::before { opacity: 0.16; }
+@media (min-width: 920px) {
+  html.theme-dark:not(.is-native) body.bb-fm-full.bb-fm-tinted #app-shell::before { opacity: 0.16; }
+}
+
+/* Classic form mood / energy / sleep / meds buttons */
+html.theme-dark .mood-btn,
+html.theme-dark .energy-btn,
+html.theme-dark .sleep-btn,
+html.theme-dark .medication-btn { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text-2); }
+html.theme-dark .mood-btn .label { color: var(--dk-text-2); }
+html.theme-dark .energy-btn.selected,
+html.theme-dark .sleep-btn.selected,
+html.theme-dark .medication-btn.selected { color: #fff; }
+html.theme-dark .mood-manic.selected,     html.theme-dark .mood-manic.linked     { background: rgba(255,68,68,0.16); }
+html.theme-dark .mood-elevated.selected,  html.theme-dark .mood-elevated.linked  { background: rgba(255,149,0,0.16); }
+html.theme-dark .mood-stable.selected,    html.theme-dark .mood-stable.linked,
+html.theme-dark .mood-good.selected       { background: rgba(81,207,102,0.16); }
+html.theme-dark .mood-low.selected,       html.theme-dark .mood-low.linked       { background: rgba(132,94,247,0.2); }
+html.theme-dark .mood-depressed.selected, html.theme-dark .mood-depressed.linked { background: rgba(92,124,250,0.2); }
+@media (hover: hover) and (pointer: fine) {
+  html.theme-dark .mood-manic:hover     { background: rgba(255,68,68,0.16); }
+  html.theme-dark .mood-elevated:hover  { background: rgba(255,149,0,0.16); }
+  html.theme-dark .mood-stable:hover, html.theme-dark .mood-good:hover { background: rgba(81,207,102,0.16); }
+  html.theme-dark .mood-low:hover       { background: rgba(132,94,247,0.2); }
+  html.theme-dark .mood-depressed:hover { background: rgba(92,124,250,0.2); }
+}
+html.theme-dark .mood-spectrum-control { background: var(--dk-surface-2); border-color: var(--dk-line); }
+html.theme-dark .msc-label { color: var(--dk-text-2); }
+html.theme-dark .label-btn { background: var(--dk-surface-2); color: var(--dk-text); border-color: var(--dk-line); }
+html.theme-dark .label-btn.label-btn-inactive:active { background: var(--dk-surface-2); color: var(--dk-text); }
+html.theme-dark .medication-item { background: var(--dk-surface-2); }
+html.theme-dark .medication-dose { color: var(--dk-muted); }
+html.theme-dark input[type="date"] { background-color: var(--dk-surface-2) !important; color: var(--dk-text) !important; }
+
+/* Entries list, stats, pagination */
+html.theme-dark .entry { background: var(--dk-surface-2); }
+html.theme-dark .entry-date,
+html.theme-dark .entry-notes,
+html.theme-dark .no-entries { color: var(--dk-text); }
+html.theme-dark .stat-card { background: linear-gradient(135deg, rgba(102,126,234,0.16) 0%, rgba(118,75,162,0.16) 100%); }
+html.theme-dark .stat-number { color: #a5b4fc; }
+html.theme-dark .stat-label { color: var(--dk-text-2); }
+html.theme-dark .chart-container { border-bottom-color: var(--dk-line); }
+html.theme-dark .chart-label { color: var(--dk-muted); }
+html.theme-dark .pagination-btn { background: var(--dk-surface); }
+html.theme-dark .pagination-btn:disabled { background: var(--dk-surface-2); color: var(--dk-muted); }
+html.theme-dark .pagination-info { color: var(--dk-text-2); }
+
+/* Journal modals */
+html.theme-dark .confirm-content { background: var(--dk-surface); color: var(--dk-text); }
+html.theme-dark .confirm-content h3 { color: var(--dk-text); }
+html.theme-dark .confirm-content p { color: var(--dk-muted); }
+html.theme-dark .confirm-btn-yes { background: var(--dk-surface-2); }
+html.theme-dark .confirm-btn-no { background: var(--dk-surface-2); color: var(--dk-text-2); border-color: var(--dk-line); }
+@media (hover: hover) and (pointer: fine) {
+  html.theme-dark .confirm-btn-no:hover { background: var(--dk-surface-3); }
+}
+html.theme-dark .missing-date-item:hover { background: var(--dk-surface-3) !important; }
+html.theme-dark .auth-box { background: var(--dk-surface); }
+html.theme-dark .auth-btn { background: var(--dk-surface-2); }
+html.theme-dark .auth-toggle { color: var(--dk-text-2); }
+html.theme-dark .bb-switch .bb-slider { background: #5a4a3a; }
+html.theme-dark .bb-switch input:checked + .bb-slider { background: var(--brand-primary); }
+html.theme-dark .bb-switch .bb-slider:before { background: #f5ebdd; }
+
+/* Life chart + early-warning card (js/journal-insights.js) */
+html.theme-dark #lifeChart { background: var(--dk-surface); border-color: var(--dk-line); }
+html.theme-dark #lifeChart .lc-title,
+html.theme-dark #lifeChart .lc-detail { color: var(--dk-text); }
+html.theme-dark #lifeChart .lc-sub,
+html.theme-dark #lifeChart .lc-legend { color: var(--dk-muted); }
+html.theme-dark #lifeChart .lc-ranges { border-color: var(--dk-line); }
+html.theme-dark #lifeChart .lc-range { background: var(--dk-surface); color: var(--dk-muted); }
+html.theme-dark #lifeChart .lc-range + .lc-range { border-left-color: var(--dk-line); }
+html.theme-dark #lifeChart .lc-range.on { background: rgba(255,149,0,0.18); color: #ffb347; }
+html.theme-dark #lifeChart .lc-c-elevated { color: #e0cc2e; }
+html.theme-dark #lifeChart .lc-c-stable { color: #69db7c; }
+html.theme-dark #lifeChart .lc-c-low { color: #b197fc; }
+html.theme-dark #lifeChart .lc-c-depressed { color: #91a7ff; }
+html.theme-dark #lifeChart .lc-c-meds { color: #ff8787; }
+html.theme-dark #lifeChart .lc-c-sleep { color: #91a7ff; }
+html.theme-dark #lifeChart .lc-grid { stroke: #3a3026; }
+html.theme-dark #lifeChart .lc-base { stroke: #6b5a48; }
+html.theme-dark #lifeChart .lc-month { stroke: #45382c; }
+html.theme-dark #lifeChart .lc-sleepmed { stroke: #91a7ff; }
+html.theme-dark #lifeChart .lc-axis { fill: var(--dk-muted); }
+html.theme-dark #lifeChart .lc-axis-sm { fill: #9c8b76; }
+html.theme-dark .ew-card { background: var(--dk-surface); border-color: rgba(81,207,102,0.35); border-left-color: #51cf66; color: var(--dk-text-2); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+html.theme-dark .ew-title { color: #8ce99a; }
+html.theme-dark .ew-hist,
+html.theme-dark .ew-care,
+html.theme-dark .ew-device { color: var(--dk-muted); }
+html.theme-dark .ew-care a { color: #91a7ff; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Survival Kit (survival-kit.html)
+   ══════════════════════════════════════════════════════════════════════════ */
+html.theme-dark .header { background: var(--dk-page); }
+html.theme-dark .sticky-nav,
+html.theme-dark .sticky-nav-row,
+html.theme-dark .sticky-nav-inner,
+html.theme-dark .sticky-nav-home,
+html.theme-dark .sticky-nav-help { background: var(--dk-surface); }
+html.theme-dark .sticky-nav-home a,
+html.theme-dark .sticky-nav-help a { color: var(--dk-text-2); }
+html.theme-dark .accordion-header,
+html.theme-dark .accordion-body,
+html.theme-dark .steps-card,
+html.theme-dark .quote-block,
+html.theme-dark .steps-tile,
+html.theme-dark .steps-modal-content,
+html.theme-dark .sk-back-btn,
+html.theme-dark .link-btn.secondary { background: var(--dk-surface); }
+html.theme-dark .sk-tile-state { background: var(--dk-surface-2); border-color: var(--dk-line); }
+html.theme-dark .sk-tile.done .sk-tile-state { background: #40c057; border-color: #40c057; }
+html.theme-dark .sk-tile { box-shadow: 0 2px 12px rgba(0,0,0,0.35); }
+html.theme-dark .crisis-btn { background: #fff; }
+html.theme-dark .pill { background: var(--dk-surface-2); }
+html.theme-dark .mood-card.manic,     html.theme-dark .mood-detail-panel.manic     { background: rgba(255,68,68,0.14); }
+html.theme-dark .mood-card.stable,    html.theme-dark .mood-detail-panel.stable    { background: rgba(81,207,102,0.13); }
+html.theme-dark .mood-card.depressed, html.theme-dark .mood-detail-panel.depressed { background: rgba(92,124,250,0.16); }
+html.theme-dark .mood-card.crisis,    html.theme-dark .mood-detail-panel.low       { background: rgba(132,94,247,0.16); }
+html.theme-dark .mood-detail-panel.neutral { background: rgba(116,192,252,0.14); }
+html.theme-dark .mood-icon-btn { background: var(--dk-surface-2); }
+html.theme-dark .mood-icon-btn .label { color: var(--dk-text-2); }
+html.theme-dark .mood-icon-btn.manic:is(.selected, .active-mood)     { background: rgba(255,68,68,0.16); }
+html.theme-dark .mood-icon-btn.stable:is(.selected, .active-mood)    { background: rgba(81,207,102,0.15); }
+html.theme-dark .mood-icon-btn.neutral:is(.selected, .active-mood)   { background: rgba(116,192,252,0.15); }
+html.theme-dark .mood-icon-btn.low:is(.selected, .active-mood)       { background: rgba(132,94,247,0.2); }
+html.theme-dark .mood-icon-btn.depressed:is(.selected, .active-mood) { background: rgba(92,124,250,0.2); }
+@media (hover: hover) and (pointer: fine) {
+  html.theme-dark .mood-icon-btn.manic:hover     { background: rgba(255,68,68,0.14); }
+  html.theme-dark .mood-icon-btn.stable:hover    { background: rgba(81,207,102,0.13); }
+  html.theme-dark .mood-icon-btn.neutral:hover   { background: rgba(116,192,252,0.14); }
+  html.theme-dark .mood-icon-btn.low:hover       { background: rgba(132,94,247,0.16); }
+  html.theme-dark .mood-icon-btn.depressed:hover { background: rgba(92,124,250,0.16); }
+  html.theme-dark .steps-tile-blue:hover   { background: rgba(77,171,247,0.12); }
+  html.theme-dark .steps-tile-green:hover  { background: rgba(81,207,102,0.12); }
+  html.theme-dark .steps-tile-purple:hover { background: rgba(132,94,247,0.14); }
+}
+html.theme-dark .steps-tile-blue .tile-num   { color: #74c0fc; }
+html.theme-dark .steps-tile-green .tile-num  { color: #69db7c; }
+html.theme-dark .steps-tile-purple .tile-num { color: #b197fc; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Inline style="" colours (HTML and JS-built markup, all three pages)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* White / near-white surfaces → card surface */
+html.theme-dark [style*="background:white"], html.theme-dark [style*="background: white"],
+html.theme-dark [style*="background:#fff;"], html.theme-dark [style*="background: #fff;"],
+html.theme-dark [style$="background:#fff"], html.theme-dark [style*="background:#ffffff"],
+html.theme-dark [style*="background: #ffffff"], html.theme-dark [style*="background-color:white"],
+html.theme-dark [style*="background-color: white"], html.theme-dark [style*="background-color:#fff"],
+html.theme-dark [style*="background:#fefdfb"], html.theme-dark [style*="background: #fefdfb"],
+html.theme-dark [style*="background: rgb(255, 255, 255)"],
+html.theme-dark [style*="background-color: rgb(255, 255, 255)"] {
+  background-color: var(--dk-surface) !important;
+}
+html.theme-dark [style*="background:white"][style*="gradient"],
+html.theme-dark [style*="background: white"][style*="gradient"] { background-image: none !important; }
+
+/* Toggle knobs drawn inline as small white circles stay light. */
+html.theme-dark [style*="border-radius:50%"][style*="background:white"],
+html.theme-dark [style*="border-radius: 50%"][style*="background: white"] { background-color: #f5ebdd !important; }
+
+/* Pale greys and pale tints → raised surface */
+html.theme-dark [style*="background:#f8f9fa"], html.theme-dark [style*="background: #f8f9fa"],
+html.theme-dark [style*="background:#f1f3f5"], html.theme-dark [style*="background: #f1f3f5"],
+html.theme-dark [style*="background:#f0f0f0"], html.theme-dark [style*="background: #f0f0f0"],
+html.theme-dark [style*="background:#f5f5f5"], html.theme-dark [style*="background:#fafafa"],
+html.theme-dark [style*="background: #fafafa"], html.theme-dark [style*="background:#fff3e0"],
+html.theme-dark [style*="background: #fff3e0"], html.theme-dark [style*="background:#fff8f0"],
+html.theme-dark [style*="background:#fff5e6"], html.theme-dark [style*="background:#fff9f0"],
+html.theme-dark [style*="background:#fffaf5"], html.theme-dark [style*="background:#fdf6ee"],
+html.theme-dark [style*="background-color:#f8f9fa"], html.theme-dark [style*="background-color: #f8f9fa"],
+html.theme-dark [style*="background: rgb(248, 249, 250)"], html.theme-dark [style*="background-color: rgb(248, 249, 250)"],
+html.theme-dark [style*="background: rgb(241, 243, 245)"] {
+  background-color: var(--dk-surface-2) !important;
+}
+
+/* Light grey fills (empty calendar days, disabled chips) → a step up again */
+html.theme-dark [style*="background:#e9ecef"], html.theme-dark [style*="background: #e9ecef"],
+html.theme-dark [style*="background:#dee2e6"], html.theme-dark [style*="background: #dee2e6"],
+html.theme-dark [style*="background: rgb(233, 236, 239)"], html.theme-dark [style*="background-color: rgb(233, 236, 239)"] {
+  background-color: var(--dk-surface-3) !important;
+}
+
+/* Near-black text → cream */
+html.theme-dark [style*="color:#212529"], html.theme-dark [style*="color: #212529"],
+html.theme-dark [style*="color:#333"], html.theme-dark [style*="color: #333"],
+html.theme-dark [style*="color:#2d2d2d"], html.theme-dark [style*="color: #2d2d2d"],
+html.theme-dark [style*="color:#343a40"], html.theme-dark [style*="color: #343a40"],
+html.theme-dark [style*="color:#222"], html.theme-dark [style*="color:#1a1a1a"],
+html.theme-dark [style*="color: rgb(33, 37, 41)"], html.theme-dark [style*="color: rgb(51, 51, 51)"] {
+  color: var(--dk-text) !important;
+}
+/* Dark grey body text → soft cream */
+html.theme-dark [style*="color:#495057"], html.theme-dark [style*="color: #495057"],
+html.theme-dark [style*="color:#555"], html.theme-dark [style*="color: #555"],
+html.theme-dark [style*="color:#444"], html.theme-dark [style*="color: #444"],
+html.theme-dark [style*="color: rgb(73, 80, 87)"] {
+  color: var(--dk-text-2) !important;
+}
+/* Mid grey secondary text → warm muted (the light-mode greys fail 4.5:1 on dark) */
+html.theme-dark [style*="color:#6c757d"], html.theme-dark [style*="color: #6c757d"],
+html.theme-dark [style*="color:#868e96"], html.theme-dark [style*="color: #868e96"],
+html.theme-dark [style*="color:#666"], html.theme-dark [style*="color: #666"],
+html.theme-dark [style*="color:#888"], html.theme-dark [style*="color: #888"],
+html.theme-dark [style*="color:#999"], html.theme-dark [style*="color: #999"],
+html.theme-dark [style*="color:var(--text-light)"], html.theme-dark [style*="color: var(--text-light)"],
+html.theme-dark [style*="color: rgb(108, 117, 125)"] {
+  color: var(--dk-muted) !important;
+}
+html.theme-dark [style*="color:#adb5bd"], html.theme-dark [style*="color: #adb5bd"],
+html.theme-dark [style*="color:#c8ced4"], html.theme-dark [style*="color: rgb(173, 181, 189)"] {
+  color: #a8977f !important;
+}
+/* Mood-colour text (the calendar legend and entries use these as labels):
+   keep the hue, lift the ones too dark to read on brown. */
+html.theme-dark [style*="color:#5c7cfa"], html.theme-dark [style*="color: #5c7cfa"] { color: #91a7ff !important; }
+html.theme-dark [style*="color:#845ef7"], html.theme-dark [style*="color: #845ef7"] { color: #b197fc !important; }
+
+/* Light borders → warm line. Left edges are often a mood-colour stripe set
+   separately (border-left:4px solid <mood>), so leave those alone. */
+html.theme-dark [style*="solid #e9ecef"], html.theme-dark [style*="dashed #e9ecef"],
+html.theme-dark [style*="solid #dee2e6"], html.theme-dark [style*="dashed #dee2e6"],
+html.theme-dark [style*="solid #f0f0f0"], html.theme-dark [style*="solid #eee"],
+html.theme-dark [style*="solid #eef0f2"], html.theme-dark [style*="solid #ffe0b2"],
+html.theme-dark [style*="solid #ffd6a0"], html.theme-dark [style*="solid #ffe8cc"],
+html.theme-dark [style*="solid rgb(233, 236, 239)"], html.theme-dark [style*="solid rgb(222, 226, 230)"] {
+  border-top-color: var(--dk-line) !important;
+  border-right-color: var(--dk-line) !important;
+  border-bottom-color: var(--dk-line) !important;
+}
+html.theme-dark :is([style*="solid #e9ecef"], [style*="dashed #e9ecef"], [style*="solid #dee2e6"],
+  [style*="dashed #dee2e6"], [style*="solid #f0f0f0"], [style*="solid #eee"], [style*="solid #eef0f2"],
+  [style*="solid #ffe0b2"], [style*="solid #ffd6a0"], [style*="solid #ffe8cc"],
+  [style*="solid rgb(233, 236, 239)"], [style*="solid rgb(222, 226, 230)"]):not([style*="border-left"]) {
+  border-left-color: var(--dk-line) !important;
+}

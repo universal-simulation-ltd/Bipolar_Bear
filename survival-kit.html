@@ -6,11 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>Bipolar Survival Kit – Bipolar Bear</title>
   <!-- Native PIN gate: must be first — fires before any render -->
-  <style>body{background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)}</style>
+  <style>body{background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)}html.theme-dark,html.theme-dark body{background:#1c1612}</style>
   <script>
   // See journal.html: signed-in users skip the stale-bbGuestPinSalt redirect
   // so they aren't trapped on index.html when they tap Survival Kit.
   {const _np=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&localStorage.getItem('bbNativePinEnabled')==='1';let _signed=false;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('firebase:authUser:')===0&&localStorage.getItem(k)){_signed=true;break;}}}catch(_){}const _gp=!_signed&&localStorage.getItem('bbGuestPinSalt');if((_gp||_np)&&sessionStorage.getItem('bbPinUnlocked')!=='1'){location.replace('index.html');}}</script>
+  <!-- Theme before first paint (must stay inline): Appearance is 'auto'
+       (follow the phone), 'light' or 'dark' in localStorage.bbTheme — kept
+       off every logout / reset clear-list so it survives signing out.
+       BB.theme in fab.js re-applies it when it changes (css/dark.css). -->
+  <script>(function(){var p='auto';try{p=localStorage.getItem('bbTheme')||'auto';}catch(e){}if(p==='dark'||(p==='auto'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('theme-dark');})();</script>
 
   <!-- Shared helpers: load before any inline script that depends on isNative()/window.BB_FIREBASE_CONFIG/BB.storage. brand-config.js must come first so debug.js can use BB.storage. -->
   <script src="js/shared/brand-config.js"></script>
@@ -68,6 +73,7 @@
   <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/survival-kit.css">
+  <link rel="stylesheet" href="css/dark.css">
 </head>
 <body>
 <div id="iphone-frame">
