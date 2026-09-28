@@ -118,6 +118,7 @@
         anonymous: 'Bipolar Anonymous',
       },
       home: {
+        quick: {"last7": "Last 7 days", "weekLabel": "Last 7 days — open Mood Journal", "dayMood": "{day}: {mood}", "noEntry": "No entry", "doneYesterday": "✓ Yesterday is logged — nice one", "doneToday": "✓ Today is logged — nice one"},
         tutorialProgressOne: '{n} more entry needed to complete tutorial', tutorialProgressMany: '{n} more entries needed to complete tutorial',
         signInNote: 'Sign in to join the community',
         logoHint: '🐻 psst… click me!',
@@ -734,6 +735,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Life chart", "subtitle": "Your mood day by day — above the line is elevated, below is low — with sleep underneath. Swipe to move through time.", "rangeLabel": "Time range", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1Y", "stable": "Stable", "sleep": "Sleep", "meds": "Meds", "legendSleep": "Hours slept", "legendMeds": "Meds missed or unsure", "legendGap": "Blank = no entry", "tapHint": "Tap a day to see it.", "dayNoEntry": "{date}: no entry", "sleepHours": "{h}h sleep", "medsMissed": "meds missed", "medsUnsure": "meds unsure", "autoFilled": "auto-filled", "pdfTitle": "Life chart — last 90 days", "pdfNote": "Bars above the line are elevated/manic days, below it low/depressed days. Blue bars show hours slept; red marks show days medication was missed or unsure. Gaps are days with no entry."},
+        earlyWarn: {"settingTitle": "🌱 Early-warning nudges", "settingDesc": "Off by default. Gently lets you know when your recent entries follow a pattern worth keeping an eye on. Worked out on this device only — nothing is sent anywhere.", "cardTitle": "🌱 Something to keep an eye on", "shortSleep": "You have slept less than usual on {n} of the last 4 nights (about {avg}h, when you usually get around {base}h). You might want to keep an eye on your sleep.", "shortSleepNoBase": "You have had under 6 hours of sleep on {n} of the last 4 nights. You might want to keep an eye on your sleep.", "elevatedRun": "You have logged an elevated or manic mood {n} days in a row. You might want to keep an eye on how the next few days go.", "lowRun": "You have logged a low or depressed mood {n} days in a row. You might want to be extra gentle with yourself and keep an eye on how you are doing.", "swing": "Your mood has moved quite a lot over the last couple of days ({from} → {to}). You might want to keep an eye on it.", "histSleepUp": "The last time you slept this little for a few nights, the week after was mostly elevated.", "histSleepDown": "The last time you slept this little for a few nights, the week after was mostly low.", "histSleepStable": "The last time you slept this little for a few nights, the week after stayed mostly stable.", "histRun": "The last time you had a run like this, it lasted {n} days.", "strategies": "🧠 Open my strategies", "careTeam": "If you're worried, talk to your care team.", "help": "Support contacts", "dismiss": "Dismiss", "onDevice": "Worked out on this device only."},
         pdf: {
           moodTracker: "Mood Tracker",
           patientDetails: "Patient details",
@@ -1484,6 +1487,7 @@
         }
       },
       sk: {
+        grid: {"sosTitle": "Struggling right now?", "sosBody": "Crisis lines and people who can help", "back": "← All sections", "done": "Done", "todo": "To do", "tabsLabel": "Survival kit sections", "tab": {"all": "All", "moods": "Moods", "coping": "Coping", "meds": "Meds", "gratitude": "Gratitude", "goals": "Goals", "mind": "Mind", "reading": "Reading", "media": "Media", "memories": "Memories", "struggling": "Struggling", "steps": "Steps", "spirit": "Spirit"}},
         "pageTitle": "Bipolar survival kit",
         "home": "← Home",
         "help": "🆘 Help",
@@ -1941,6 +1945,7 @@
         anonymous: 'Bipolar Anonymous',
       },
       home: {
+        quick: {"last7": "Últimos 7 días", "weekLabel": "Últimos 7 días — abrir el Diario de Ánimo", "dayMood": "{day}: {mood}", "noEntry": "Sin registro", "doneYesterday": "✓ Ayer ya está registrado — ¡bien hecho!", "doneToday": "✓ Hoy ya está registrado — ¡bien hecho!"},
         tutorialProgressOne: 'Falta {n} entrada para completar el tutorial', tutorialProgressMany: 'Faltan {n} entradas para completar el tutorial',
         signInNote: 'Inicia sesión para unirte a la comunidad',
         logoHint: '🐻 psst… ¡haz clic en mí!',
@@ -2550,6 +2555,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Gráfico de vida", "subtitle": "Tu estado de ánimo día a día — por encima de la línea, elevado; por debajo, bajo — con el sueño debajo. Desliza para moverte en el tiempo.", "rangeLabel": "Periodo", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1A", "stable": "Estable", "sleep": "Sueño", "meds": "Medicación", "legendSleep": "Horas de sueño", "legendMeds": "Medicación olvidada o dudosa", "legendGap": "En blanco = sin entrada", "tapHint": "Toca un día para verlo.", "dayNoEntry": "{date}: sin entrada", "sleepHours": "{h} h de sueño", "medsMissed": "medicación no tomada", "medsUnsure": "medicación dudosa", "autoFilled": "rellenado automáticamente", "pdfTitle": "Gráfico de vida — últimos 90 días", "pdfNote": "Las barras por encima de la línea son días elevados/maníacos; por debajo, días bajos/deprimidos. Las barras azules muestran las horas de sueño; las marcas rojas, los días en que la medicación se olvidó o no se sabe si se tomó. Los huecos son días sin entrada."},
+        earlyWarn: {"settingTitle": "🌱 Avisos tempranos", "settingDesc": "Desactivado por defecto. Te avisa con suavidad cuando tus entradas recientes siguen un patrón al que conviene prestar atención. Se calcula solo en este dispositivo; no se envía nada a ningún sitio.", "cardTitle": "🌱 Algo a lo que prestar atención", "shortSleep": "Has dormido menos de lo habitual {n} de las últimas 4 noches (unas {avg} h, cuando sueles dormir unas {base} h). Quizá quieras prestar atención a tu sueño.", "shortSleepNoBase": "Has dormido menos de 6 horas {n} de las últimas 4 noches. Quizá quieras prestar atención a tu sueño.", "elevatedRun": "Has registrado un estado de ánimo elevado o maníaco {n} días seguidos. Quizá quieras prestar atención a cómo van los próximos días.", "lowRun": "Has registrado un estado de ánimo bajo o deprimido {n} días seguidos. Quizá quieras cuidarte con especial cariño y prestar atención a cómo te encuentras.", "swing": "Tu estado de ánimo ha cambiado bastante en los últimos días ({from} → {to}). Quizá quieras prestarle atención.", "histSleepUp": "La última vez que dormiste así de poco durante varias noches, la semana siguiente fue sobre todo elevada.", "histSleepDown": "La última vez que dormiste así de poco durante varias noches, la semana siguiente fue sobre todo baja.", "histSleepStable": "La última vez que dormiste así de poco durante varias noches, la semana siguiente se mantuvo sobre todo estable.", "histRun": "La última vez que tuviste una racha así, duró {n} días.", "strategies": "🧠 Abrir mis estrategias", "careTeam": "Si te preocupa, habla con tu equipo de salud.", "help": "Contactos de apoyo", "dismiss": "Cerrar", "onDevice": "Calculado solo en este dispositivo."},
         pdf: {
           moodTracker: "Registro de ánimo",
           patientDetails: "Datos del paciente",
@@ -3331,6 +3338,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "¿Lo estás pasando mal ahora?", "sosBody": "Líneas de crisis y personas que pueden ayudarte", "back": "← Todas las secciones", "done": "Hecho", "todo": "Pendiente", "tabsLabel": "Secciones del kit de supervivencia", "tab": {"all": "Todo", "moods": "Estados", "coping": "Afrontar", "meds": "Medicación", "gratitude": "Gratitud", "goals": "Metas", "mind": "Mente", "reading": "Lectura", "media": "Medios", "memories": "Recuerdos", "struggling": "Dificultades", "steps": "Pasos", "spirit": "Espíritu"}},
         pageTitle: 'Kit de supervivencia bipolar',
         home: '← Inicio',
         help: '🆘 Ayuda',
@@ -3783,6 +3791,7 @@
       },
       nav: { journal: "Journal d'Humeur", survivalKit: 'Votre Kit de Survie', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "7 derniers jours", "weekLabel": "7 derniers jours — ouvrir le Journal d'Humeur", "dayMood": "{day} : {mood}", "noEntry": "Aucune entrée", "doneYesterday": "✓ Hier est enregistré — bravo", "doneToday": "✓ Aujourd'hui est enregistré — bravo"},
         tutorialProgressOne: 'Encore {n} entrée pour terminer le tutoriel', tutorialProgressMany: 'Encore {n} entrées pour terminer le tutoriel',
         signInNote: 'Connectez-vous pour rejoindre la communauté',
         logoHint: '🐻 psst… cliquez sur moi !',
@@ -4370,6 +4379,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Graphique de vie", "subtitle": "Votre humeur jour après jour — au-dessus de la ligne : élevée ; en dessous : basse — avec le sommeil en bas. Faites glisser pour vous déplacer dans le temps.", "rangeLabel": "Période", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1A", "stable": "Stable", "sleep": "Sommeil", "meds": "Traitement", "legendSleep": "Heures de sommeil", "legendMeds": "Traitement oublié ou incertain", "legendGap": "Vide = aucune entrée", "tapHint": "Touchez un jour pour le voir.", "dayNoEntry": "{date} : aucune entrée", "sleepHours": "{h} h de sommeil", "medsMissed": "traitement non pris", "medsUnsure": "traitement incertain", "autoFilled": "rempli automatiquement", "pdfTitle": "Graphique de vie — 90 derniers jours", "pdfNote": "Les barres au-dessus de la ligne correspondent aux jours élevés/maniaques, celles en dessous aux jours bas/déprimés. Les barres bleues indiquent les heures de sommeil ; les marques rouges, les jours où le traitement a été oublié ou est incertain. Les vides sont des jours sans entrée."},
+        earlyWarn: {"settingTitle": "🌱 Signaux d'alerte précoces", "settingDesc": "Désactivé par défaut. Vous prévient en douceur lorsque vos entrées récentes suivent un schéma qui mérite votre attention. Calculé uniquement sur cet appareil — rien n'est envoyé.", "cardTitle": "🌱 Un point à surveiller", "shortSleep": "Vous avez dormi moins que d'habitude {n} des 4 dernières nuits (environ {avg} h, alors que vous dormez habituellement autour de {base} h). Vous voudrez peut-être garder un œil sur votre sommeil.", "shortSleepNoBase": "Vous avez dormi moins de 6 heures {n} des 4 dernières nuits. Vous voudrez peut-être garder un œil sur votre sommeil.", "elevatedRun": "Vous avez noté une humeur élevée ou maniaque {n} jours de suite. Vous voudrez peut-être garder un œil sur les prochains jours.", "lowRun": "Vous avez noté une humeur basse ou déprimée {n} jours de suite. Prenez particulièrement soin de vous, et gardez un œil sur la façon dont vous allez.", "swing": "Votre humeur a beaucoup varié ces derniers jours ({from} → {to}). Vous voudrez peut-être garder un œil dessus.", "histSleepUp": "La dernière fois que vous avez aussi peu dormi plusieurs nuits, la semaine suivante a été surtout élevée.", "histSleepDown": "La dernière fois que vous avez aussi peu dormi plusieurs nuits, la semaine suivante a été surtout basse.", "histSleepStable": "La dernière fois que vous avez aussi peu dormi plusieurs nuits, la semaine suivante est restée plutôt stable.", "histRun": "La dernière fois que vous avez connu une période comme celle-ci, elle a duré {n} jours.", "strategies": "🧠 Ouvrir mes stratégies", "careTeam": "En cas d'inquiétude, parlez-en à votre équipe soignante.", "help": "Contacts de soutien", "dismiss": "Fermer", "onDevice": "Calculé uniquement sur cet appareil."},
         pdf: {
           moodTracker: "Suivi de l'humeur",
           patientDetails: "Détails du patient",
@@ -5120,6 +5131,7 @@
         }
       },
       sk: {
+        grid: {"sosTitle": "Ça ne va pas en ce moment ?", "sosBody": "Lignes d'écoute et personnes qui peuvent aider", "back": "← Toutes les sections", "done": "Fait", "todo": "À faire", "tabsLabel": "Sections du kit de survie", "tab": {"all": "Tout", "moods": "Humeurs", "coping": "Stratégies", "meds": "Médocs", "gratitude": "Gratitude", "goals": "Objectifs", "mind": "Esprit", "reading": "Lecture", "media": "Médias", "memories": "Souvenirs", "struggling": "En difficulté", "steps": "Étapes", "spirit": "Spiritualité"}},
         "pageTitle": "Kit de survie bipolaire",
         "home": "← Accueil",
         "help": "🆘 Aide",
@@ -5573,6 +5585,7 @@
       },
       nav: { journal: 'Stimmungstagebuch', survivalKit: 'Ihr Überlebenskit', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "Letzte 7 Tage", "weekLabel": "Letzte 7 Tage — Stimmungstagebuch öffnen", "dayMood": "{day}: {mood}", "noEntry": "Kein Eintrag", "doneYesterday": "✓ Gestern ist eingetragen — gut gemacht", "doneToday": "✓ Heute ist eingetragen — gut gemacht"},
         tutorialProgressOne: 'Noch {n} Eintrag bis zum Abschluss des Tutorials', tutorialProgressMany: 'Noch {n} Einträge bis zum Abschluss des Tutorials',
         signInNote: 'Anmelden, um der Community beizutreten',
         logoHint: '🐻 psst… klick mich!',
@@ -6112,6 +6125,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Life-Chart", "subtitle": "Ihre Stimmung Tag für Tag — über der Linie gehoben, darunter gedrückt — mit dem Schlaf darunter. Wischen Sie, um sich durch die Zeit zu bewegen.", "rangeLabel": "Zeitraum", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1J", "stable": "Stabil", "sleep": "Schlaf", "meds": "Medikation", "legendSleep": "Geschlafene Stunden", "legendMeds": "Medikamente vergessen oder unsicher", "legendGap": "Leer = kein Eintrag", "tapHint": "Tippen Sie auf einen Tag, um ihn anzusehen.", "dayNoEntry": "{date}: kein Eintrag", "sleepHours": "{h} Std. Schlaf", "medsMissed": "Medikamente nicht genommen", "medsUnsure": "Medikamente unsicher", "autoFilled": "automatisch ausgefüllt", "pdfTitle": "Life-Chart — letzte 90 Tage", "pdfNote": "Balken über der Linie sind gehobene/manische Tage, darunter gedrückte/depressive Tage. Blaue Balken zeigen die Schlafstunden, rote Markierungen Tage, an denen Medikamente vergessen wurden oder es unsicher ist. Lücken sind Tage ohne Eintrag."},
+        earlyWarn: {"settingTitle": "🌱 Frühwarn-Hinweise", "settingDesc": "Standardmäßig aus. Weist Sie behutsam darauf hin, wenn Ihre letzten Einträge einem Muster folgen, das Sie im Blick behalten sollten. Wird nur auf diesem Gerät berechnet — nichts wird gesendet.", "cardTitle": "🌱 Etwas, das Sie im Blick behalten könnten", "shortSleep": "Sie haben in {n} der letzten 4 Nächte weniger als sonst geschlafen (etwa {avg} Std., während Sie sonst ungefähr {base} Std. schlafen). Vielleicht möchten Sie Ihren Schlaf im Blick behalten.", "shortSleepNoBase": "Sie haben in {n} der letzten 4 Nächte weniger als 6 Stunden geschlafen. Vielleicht möchten Sie Ihren Schlaf im Blick behalten.", "elevatedRun": "Sie haben {n} Tage in Folge eine gehobene oder manische Stimmung eingetragen. Vielleicht möchten Sie im Blick behalten, wie die nächsten Tage verlaufen.", "lowRun": "Sie haben {n} Tage in Folge eine gedrückte oder depressive Stimmung eingetragen. Gehen Sie vielleicht besonders behutsam mit sich um und behalten Sie im Blick, wie es Ihnen geht.", "swing": "Ihre Stimmung hat sich in den letzten Tagen deutlich verändert ({from} → {to}). Vielleicht möchten Sie das im Blick behalten.", "histSleepUp": "Als Sie das letzte Mal mehrere Nächte so wenig geschlafen haben, war die Woche danach überwiegend gehoben.", "histSleepDown": "Als Sie das letzte Mal mehrere Nächte so wenig geschlafen haben, war die Woche danach überwiegend gedrückt.", "histSleepStable": "Als Sie das letzte Mal mehrere Nächte so wenig geschlafen haben, blieb die Woche danach überwiegend stabil.", "histRun": "Als Sie das letzte Mal eine solche Phase hatten, dauerte sie {n} Tage.", "strategies": "🧠 Meine Strategien öffnen", "careTeam": "Wenn Sie sich Sorgen machen, sprechen Sie mit Ihrem Behandlungsteam.", "help": "Hilfe-Kontakte", "dismiss": "Schließen", "onDevice": "Nur auf diesem Gerät berechnet."},
         pdf: {
           moodTracker: "Stimmungs-Tracker",
           patientDetails: "Patientendaten",
@@ -6893,6 +6908,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "Geht es Ihnen gerade schlecht?", "sosBody": "Krisentelefone und Menschen, die helfen können", "back": "← Alle Bereiche", "done": "Erledigt", "todo": "Offen", "tabsLabel": "Bereiche des Überlebenskits", "tab": {"all": "Alle", "moods": "Stimmungen", "coping": "Strategien", "meds": "Medis", "gratitude": "Dankbarkeit", "goals": "Ziele", "mind": "Kopf", "reading": "Lesen", "media": "Medien", "memories": "Erinnerungen", "struggling": "Schwierig", "steps": "Schritte", "spirit": "Glaube"}},
         pageTitle: 'Bipolar-Survival-Kit',
         home: '← Startseite',
         help: '🆘 Hilfe',
@@ -7346,6 +7362,7 @@
       },
       nav: { journal: "Diario dell'Umore", survivalKit: 'Il Tuo Kit di Sopravvivenza', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "Ultimi 7 giorni", "weekLabel": "Ultimi 7 giorni — apri il Diario dell'Umore", "dayMood": "{day}: {mood}", "noEntry": "Nessuna voce", "doneYesterday": "✓ Ieri è registrato — ottimo lavoro", "doneToday": "✓ Oggi è registrato — ottimo lavoro"},
         tutorialProgressOne: 'Manca {n} voce per completare il tutorial', tutorialProgressMany: 'Mancano {n} voci per completare il tutorial',
         signInNote: 'Accedi per unirti alla comunità',
         logoHint: '🐻 psst… cliccami!',
@@ -7885,6 +7902,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Grafico di vita", "subtitle": "Il tuo umore giorno per giorno — sopra la linea elevato, sotto basso — con il sonno in basso. Scorri per muoverti nel tempo.", "rangeLabel": "Periodo", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1A", "stable": "Stabile", "sleep": "Sonno", "meds": "Farmaci", "legendSleep": "Ore di sonno", "legendMeds": "Farmaci saltati o incerti", "legendGap": "Vuoto = nessuna voce", "tapHint": "Tocca un giorno per vederlo.", "dayNoEntry": "{date}: nessuna voce", "sleepHours": "{h} h di sonno", "medsMissed": "farmaci non presi", "medsUnsure": "farmaci incerti", "autoFilled": "compilato automaticamente", "pdfTitle": "Grafico di vita — ultimi 90 giorni", "pdfNote": "Le barre sopra la linea sono giorni elevati/maniacali, quelle sotto giorni bassi/depressi. Le barre blu mostrano le ore di sonno; i segni rossi i giorni in cui i farmaci sono stati saltati o non si è sicuri di averli presi. Gli spazi vuoti sono giorni senza voce."},
+        earlyWarn: {"settingTitle": "🌱 Segnali precoci", "settingDesc": "Disattivato per impostazione predefinita. Ti avvisa con delicatezza quando le tue voci recenti seguono uno schema a cui vale la pena fare attenzione. Calcolato solo su questo dispositivo — non viene inviato nulla.", "cardTitle": "🌱 Qualcosa da tenere d'occhio", "shortSleep": "Hai dormito meno del solito {n} delle ultime 4 notti (circa {avg} h, mentre di solito dormi circa {base} h). Potresti voler tenere d'occhio il tuo sonno.", "shortSleepNoBase": "Hai dormito meno di 6 ore {n} delle ultime 4 notti. Potresti voler tenere d'occhio il tuo sonno.", "elevatedRun": "Hai registrato un umore elevato o maniacale per {n} giorni di fila. Potresti voler tenere d'occhio come vanno i prossimi giorni.", "lowRun": "Hai registrato un umore basso o depresso per {n} giorni di fila. Potresti volerti trattare con particolare gentilezza e tenere d'occhio come stai.", "swing": "Il tuo umore è cambiato parecchio negli ultimi giorni ({from} → {to}). Potresti volerlo tenere d'occhio.", "histSleepUp": "L'ultima volta che hai dormito così poco per qualche notte, la settimana successiva è stata per lo più elevata.", "histSleepDown": "L'ultima volta che hai dormito così poco per qualche notte, la settimana successiva è stata per lo più bassa.", "histSleepStable": "L'ultima volta che hai dormito così poco per qualche notte, la settimana successiva è rimasta per lo più stabile.", "histRun": "L'ultima volta che hai avuto un periodo così, è durato {n} giorni.", "strategies": "🧠 Apri le mie strategie", "careTeam": "Se qualcosa ti preoccupa, parlane con il tuo team di cura.", "help": "Contatti di supporto", "dismiss": "Chiudi", "onDevice": "Calcolato solo su questo dispositivo."},
         pdf: {
           moodTracker: "Monitoraggio dell'umore",
           patientDetails: "Dati del paziente",
@@ -8666,6 +8685,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "Stai attraversando un momento difficile?", "sosBody": "Linee di crisi e persone che possono aiutarti", "back": "← Tutte le sezioni", "done": "Fatto", "todo": "Da fare", "tabsLabel": "Sezioni del kit di sopravvivenza", "tab": {"all": "Tutto", "moods": "Umori", "coping": "Strategie", "meds": "Farmaci", "gratitude": "Gratitudine", "goals": "Obiettivi", "mind": "Mente", "reading": "Letture", "media": "Media", "memories": "Ricordi", "struggling": "Difficoltà", "steps": "Passi", "spirit": "Spirito"}},
         pageTitle: 'Kit di sopravvivenza bipolare',
         home: '← Home',
         help: '🆘 Aiuto',
@@ -9119,6 +9139,7 @@
       },
       nav: { journal: 'Diário de Humor', survivalKit: 'Seu Kit de Sobrevivência', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "Últimos 7 dias", "weekLabel": "Últimos 7 dias — abrir o Diário de Humor", "dayMood": "{day}: {mood}", "noEntry": "Sem registro", "doneYesterday": "✓ Ontem já está registrado — muito bem", "doneToday": "✓ Hoje já está registrado — muito bem"},
         tutorialProgressOne: 'Falta {n} registro para concluir o tutorial', tutorialProgressMany: 'Faltam {n} registros para concluir o tutorial',
         signInNote: 'Faça login para entrar na comunidade',
         logoHint: '🐻 psst… clique em mim!',
@@ -9658,6 +9679,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Gráfico de vida", "subtitle": "O seu humor dia a dia — acima da linha, elevado; abaixo, em baixo — com o sono por baixo. Deslize para se mover no tempo.", "rangeLabel": "Período", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1A", "stable": "Estável", "sleep": "Sono", "meds": "Medicação", "legendSleep": "Horas de sono", "legendMeds": "Medicação esquecida ou incerta", "legendGap": "Em branco = sem registo", "tapHint": "Toque num dia para o ver.", "dayNoEntry": "{date}: sem registo", "sleepHours": "{h} h de sono", "medsMissed": "medicação não tomada", "medsUnsure": "medicação incerta", "autoFilled": "preenchido automaticamente", "pdfTitle": "Gráfico de vida — últimos 90 dias", "pdfNote": "As barras acima da linha são dias elevados/maníacos; abaixo, dias em baixo/deprimidos. As barras azuis mostram as horas de sono; as marcas vermelhas, os dias em que a medicação foi esquecida ou é incerta. Os espaços vazios são dias sem registo."},
+        earlyWarn: {"settingTitle": "🌱 Avisos precoces", "settingDesc": "Desativado por predefinição. Mostra um aviso discreto quando os seus registos recentes seguem um padrão que merece atenção. Calculado apenas neste dispositivo — nada é enviado.", "cardTitle": "🌱 Algo a que vale a pena prestar atenção", "shortSleep": "Dormiu menos do que o habitual em {n} das últimas 4 noites (cerca de {avg} h, quando costuma dormir cerca de {base} h). Talvez queira prestar atenção ao seu sono.", "shortSleepNoBase": "Dormiu menos de 6 horas em {n} das últimas 4 noites. Talvez queira prestar atenção ao seu sono.", "elevatedRun": "Registou um humor elevado ou maníaco durante {n} dias seguidos. Talvez queira prestar atenção a como correm os próximos dias.", "lowRun": "Registou um humor em baixo ou deprimido durante {n} dias seguidos. Talvez queira tratar-se com especial cuidado e prestar atenção a como se sente.", "swing": "O seu humor mudou bastante nos últimos dias ({from} → {to}). Talvez queira prestar atenção a isso.", "histSleepUp": "Da última vez que dormiu tão pouco durante algumas noites, a semana seguinte foi sobretudo elevada.", "histSleepDown": "Da última vez que dormiu tão pouco durante algumas noites, a semana seguinte foi sobretudo em baixo.", "histSleepStable": "Da última vez que dormiu tão pouco durante algumas noites, a semana seguinte manteve-se sobretudo estável.", "histRun": "Da última vez que teve um período assim, durou {n} dias.", "strategies": "🧠 Abrir as minhas estratégias", "careTeam": "Em caso de preocupação, fale com a sua equipa de saúde.", "help": "Contactos de apoio", "dismiss": "Fechar", "onDevice": "Calculado apenas neste dispositivo."},
         pdf: {
           moodTracker: "Registo de humor",
           patientDetails: "Dados do doente",
@@ -10439,6 +10462,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "Está a passar por um momento difícil?", "sosBody": "Linhas de crise e pessoas que podem ajudar", "back": "← Todas as secções", "done": "Feito", "todo": "Por fazer", "tabsLabel": "Secções do kit de sobrevivência", "tab": {"all": "Tudo", "moods": "Humores", "coping": "Estratégias", "meds": "Medicação", "gratitude": "Gratidão", "goals": "Metas", "mind": "Mente", "reading": "Leitura", "media": "Media", "memories": "Memórias", "struggling": "Dificuldades", "steps": "Passos", "spirit": "Espírito"}},
         pageTitle: 'Kit de sobrevivência bipolar',
         home: '← Início',
         help: '🆘 Ajuda',
@@ -10892,6 +10916,7 @@
       },
       nav: { journal: 'Stemmingsdagboek', survivalKit: 'Uw Overlevingskit', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "Afgelopen 7 dagen", "weekLabel": "Afgelopen 7 dagen — Stemmingsdagboek openen", "dayMood": "{day}: {mood}", "noEntry": "Geen invoer", "doneYesterday": "✓ Gisteren is ingevuld — goed gedaan", "doneToday": "✓ Vandaag is ingevuld — goed gedaan"},
         tutorialProgressOne: 'Nog {n} dagboekitem nodig om de tutorial af te ronden', tutorialProgressMany: 'Nog {n} dagboekitems nodig om de tutorial af te ronden',
         signInNote: 'Meld u aan om deel te nemen aan de community',
         logoHint: '🐻 psst… klik op mij!',
@@ -11431,6 +11456,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Life chart", "subtitle": "Uw stemming dag voor dag — boven de lijn verhoogd, eronder laag — met uw slaap daaronder. Veeg om door de tijd te bewegen.", "rangeLabel": "Periode", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1J", "stable": "Stabiel", "sleep": "Slaap", "meds": "Medicatie", "legendSleep": "Uren geslapen", "legendMeds": "Medicatie vergeten of onzeker", "legendGap": "Leeg = geen invoer", "tapHint": "Tik op een dag om die te bekijken.", "dayNoEntry": "{date}: geen invoer", "sleepHours": "{h} u slaap", "medsMissed": "medicatie niet ingenomen", "medsUnsure": "medicatie onzeker", "autoFilled": "automatisch ingevuld", "pdfTitle": "Life chart — laatste 90 dagen", "pdfNote": "Balken boven de lijn zijn verhoogde/manische dagen, eronder lage/depressieve dagen. Blauwe balken tonen de uren slaap; rode markeringen de dagen waarop medicatie is vergeten of onzeker is. Lege plekken zijn dagen zonder invoer."},
+        earlyWarn: {"settingTitle": "🌱 Vroege signalen", "settingDesc": "Standaard uit. Laat u voorzichtig weten wanneer uw recente invoer een patroon volgt dat het waard is om in de gaten te houden. Alleen op dit apparaat berekend — er wordt niets verstuurd.", "cardTitle": "🌱 Iets om in de gaten te houden", "shortSleep": "U hebt {n} van de afgelopen 4 nachten minder geslapen dan gewoonlijk (ongeveer {avg} u, terwijl u meestal rond de {base} u slaapt). Misschien wilt u uw slaap in de gaten houden.", "shortSleepNoBase": "U hebt {n} van de afgelopen 4 nachten minder dan 6 uur geslapen. Misschien wilt u uw slaap in de gaten houden.", "elevatedRun": "U hebt {n} dagen achter elkaar een verhoogde of manische stemming ingevuld. Misschien wilt u in de gaten houden hoe de komende dagen verlopen.", "lowRun": "U hebt {n} dagen achter elkaar een lage of depressieve stemming ingevuld. Wees misschien extra mild voor uzelf en houd in de gaten hoe het met u gaat.", "swing": "Uw stemming is de afgelopen dagen flink veranderd ({from} → {to}). Misschien wilt u dat in de gaten houden.", "histSleepUp": "De vorige keer dat u een paar nachten zo weinig sliep, was de week erna grotendeels verhoogd.", "histSleepDown": "De vorige keer dat u een paar nachten zo weinig sliep, was de week erna grotendeels laag.", "histSleepStable": "De vorige keer dat u een paar nachten zo weinig sliep, bleef de week erna grotendeels stabiel.", "histRun": "De vorige keer dat u zo'n periode had, duurde die {n} dagen.", "strategies": "🧠 Mijn strategieën openen", "careTeam": "Maakt u zich zorgen, praat dan met uw zorgteam.", "help": "Hulpcontacten", "dismiss": "Sluiten", "onDevice": "Alleen op dit apparaat berekend."},
         pdf: {
           moodTracker: "Stemmingstracker",
           patientDetails: "Patiëntgegevens",
@@ -12212,6 +12239,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "Heb je het nu moeilijk?", "sosBody": "Crisislijnen en mensen die kunnen helpen", "back": "← Alle onderdelen", "done": "Klaar", "todo": "Te doen", "tabsLabel": "Onderdelen van de overlevingskit", "tab": {"all": "Alles", "moods": "Stemmingen", "coping": "Strategieën", "meds": "Medicatie", "gratitude": "Dankbaarheid", "goals": "Doelen", "mind": "Geest", "reading": "Lezen", "media": "Media", "memories": "Herinneringen", "struggling": "Moeilijk", "steps": "Stappen", "spirit": "Geloof"}},
         pageTitle: 'Bipolaire overlevingskit',
         home: '← Home',
         help: '🆘 Hulp',
@@ -12665,6 +12693,7 @@
       },
       nav: { journal: 'Dziennik Nastroju', survivalKit: 'Twój Zestaw Przetrwania', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "Ostatnie 7 dni", "weekLabel": "Ostatnie 7 dni — otwórz Dziennik Nastroju", "dayMood": "{day}: {mood}", "noEntry": "Brak wpisu", "doneYesterday": "✓ Wczoraj jest zapisane — tak trzymaj", "doneToday": "✓ Dzisiaj jest zapisane — tak trzymaj"},
         tutorialProgressOne: 'Jeszcze {n} wpis do ukończenia samouczka', tutorialProgressMany: 'Jeszcze {n} wpisy do ukończenia samouczka',
         signInNote: 'Zaloguj się, aby dołączyć do społeczności',
         logoHint: '🐻 psst… kliknij mnie!',
@@ -13204,6 +13233,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Przebieg nastroju", "subtitle": "Twój nastrój dzień po dniu — nad linią podwyższony, pod nią obniżony — a pod spodem sen. Przesuń palcem, aby poruszać się w czasie.", "rangeLabel": "Zakres czasu", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1R", "stable": "Stabilny", "sleep": "Sen", "meds": "Leki", "legendSleep": "Godziny snu", "legendMeds": "Leki pominięte lub niepewne", "legendGap": "Puste = brak wpisu", "tapHint": "Dotknij dnia, aby go zobaczyć.", "dayNoEntry": "{date}: brak wpisu", "sleepHours": "{h} godz. snu", "medsMissed": "leki pominięte", "medsUnsure": "leki – niepewne", "autoFilled": "uzupełnione automatycznie", "pdfTitle": "Przebieg nastroju — ostatnie 90 dni", "pdfNote": "Słupki nad linią to dni podwyższonego nastroju/manii, pod linią dni obniżonego nastroju/depresji. Niebieskie słupki pokazują godziny snu, czerwone znaczniki dni, w których leki zostały pominięte lub nie wiadomo, czy zostały przyjęte. Przerwy to dni bez wpisu."},
+        earlyWarn: {"settingTitle": "🌱 Wczesne sygnały ostrzegawcze", "settingDesc": "Domyślnie wyłączone. Delikatnie daje znać, gdy ostatnie wpisy układają się we wzorzec, któremu warto się przyjrzeć. Obliczane tylko na tym urządzeniu — nic nie jest wysyłane.", "cardTitle": "🌱 Coś, na co warto zwrócić uwagę", "shortSleep": "W {n} z ostatnich 4 nocy sen był krótszy niż zwykle (około {avg} godz., a zwykle około {base} godz.). Może warto zwrócić uwagę na swój sen.", "shortSleepNoBase": "W {n} z ostatnich 4 nocy sen trwał krócej niż 6 godzin. Może warto zwrócić uwagę na swój sen.", "elevatedRun": "Od {n} dni z rzędu Twoje wpisy pokazują podwyższony lub maniakalny nastrój. Może warto zwrócić uwagę na to, jak miną najbliższe dni.", "lowRun": "Od {n} dni z rzędu Twoje wpisy pokazują obniżony lub depresyjny nastrój. Może warto potraktować siebie szczególnie łagodnie i zwracać uwagę na swoje samopoczucie.", "swing": "W ciągu ostatnich dni Twój nastrój wyraźnie się zmienił ({from} → {to}). Może warto zwrócić na to uwagę.", "histSleepUp": "Poprzednim razem, gdy przez kilka nocy sen był tak krótki, kolejny tydzień upłynął głównie w podwyższonym nastroju.", "histSleepDown": "Poprzednim razem, gdy przez kilka nocy sen był tak krótki, kolejny tydzień upłynął głównie w obniżonym nastroju.", "histSleepStable": "Poprzednim razem, gdy przez kilka nocy sen był tak krótki, kolejny tydzień był przeważnie stabilny.", "histRun": "Poprzednim razem taki okres trwał {n} dni.", "strategies": "🧠 Otwórz moje strategie", "careTeam": "Jeśli coś Cię niepokoi, porozmawiaj ze swoim zespołem leczącym.", "help": "Kontakty wsparcia", "dismiss": "Zamknij", "onDevice": "Obliczane tylko na tym urządzeniu."},
         pdf: {
           moodTracker: "Monitor nastroju",
           patientDetails: "Dane pacjenta",
@@ -13993,6 +14024,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "Jest ci teraz ciężko?", "sosBody": "Telefony kryzysowe i ludzie, którzy mogą pomóc", "back": "← Wszystkie sekcje", "done": "Gotowe", "todo": "Do zrobienia", "tabsLabel": "Sekcje zestawu przetrwania", "tab": {"all": "Wszystko", "moods": "Nastroje", "coping": "Strategie", "meds": "Leki", "gratitude": "Wdzięczność", "goals": "Cele", "mind": "Umysł", "reading": "Lektury", "media": "Media", "memories": "Wspomnienia", "struggling": "Trudności", "steps": "Kroki", "spirit": "Duchowość"}},
         pageTitle: 'Zestaw przetrwania przy chorobie dwubiegunowej',
         home: '← Strona główna',
         help: '🆘 Pomoc',
@@ -14446,6 +14478,7 @@
       },
       nav: { journal: 'Stämningsdagbok', survivalKit: 'Ditt Överlevnadskit', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "Senaste 7 dagarna", "weekLabel": "Senaste 7 dagarna — öppna Stämningsdagbok", "dayMood": "{day}: {mood}", "noEntry": "Ingen anteckning", "doneYesterday": "✓ Gårdagen är loggad — snyggt jobbat", "doneToday": "✓ Dagen är loggad — snyggt jobbat"},
         tutorialProgressOne: '{n} anteckning kvar för att slutföra guiden', tutorialProgressMany: '{n} anteckningar kvar för att slutföra guiden',
         signInNote: 'Logga in för att gå med i gemenskapen',
         logoHint: '🐻 psst… klicka på mig!',
@@ -14985,6 +15018,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 Livsdiagram", "subtitle": "Ditt humör dag för dag — ovanför linjen förhöjt, under nedstämt — med sömnen under. Svep för att röra dig genom tiden.", "rangeLabel": "Tidsperiod", "r1m": "1M", "r3m": "3M", "r6m": "6M", "r1y": "1Å", "stable": "Stabil", "sleep": "Sömn", "meds": "Medicin", "legendSleep": "Timmar sömn", "legendMeds": "Medicin missad eller osäker", "legendGap": "Tomt = ingen anteckning", "tapHint": "Tryck på en dag för att se den.", "dayNoEntry": "{date}: ingen anteckning", "sleepHours": "{h} h sömn", "medsMissed": "medicin missad", "medsUnsure": "medicin osäker", "autoFilled": "automatiskt ifylld", "pdfTitle": "Livsdiagram — senaste 90 dagarna", "pdfNote": "Staplar ovanför linjen är förhöjda/maniska dagar, under linjen nedstämda/deprimerade dagar. Blå staplar visar timmar sömn; röda markeringar dagar då medicinen missades eller var osäker. Luckor är dagar utan anteckning."},
+        earlyWarn: {"settingTitle": "🌱 Tidiga varningssignaler", "settingDesc": "Av som standard. Säger försiktigt till när dina senaste anteckningar följer ett mönster som kan vara värt att hålla koll på. Beräknas bara på den här enheten — inget skickas någonstans.", "cardTitle": "🌱 Något att hålla koll på", "shortSleep": "Du har sovit mindre än vanligt {n} av de senaste 4 nätterna (runt {avg} h, när du brukar sova runt {base} h). Du kanske vill hålla koll på din sömn.", "shortSleepNoBase": "Du har sovit mindre än 6 timmar {n} av de senaste 4 nätterna. Du kanske vill hålla koll på din sömn.", "elevatedRun": "Du har loggat ett förhöjt eller maniskt humör {n} dagar i rad. Du kanske vill hålla koll på hur de närmaste dagarna blir.", "lowRun": "Du har loggat ett nedstämt eller deprimerat humör {n} dagar i rad. Var gärna extra snäll mot dig själv och håll koll på hur du mår.", "swing": "Ditt humör har svängt ganska mycket de senaste dagarna ({from} → {to}). Du kanske vill hålla koll på det.", "histSleepUp": "Förra gången du sov så här lite några nätter var veckan efter mest förhöjd.", "histSleepDown": "Förra gången du sov så här lite några nätter var veckan efter mest nedstämd.", "histSleepStable": "Förra gången du sov så här lite några nätter höll sig veckan efter mest stabil.", "histRun": "Förra gången du hade en period som den här varade den i {n} dagar.", "strategies": "🧠 Öppna mina strategier", "careTeam": "Om du är orolig, prata med ditt vårdteam.", "help": "Stödkontakter", "dismiss": "Stäng", "onDevice": "Beräknas bara på den här enheten."},
         pdf: {
           moodTracker: "Humörspårare",
           patientDetails: "Patientuppgifter",
@@ -15766,6 +15801,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "Har du det tufft just nu?", "sosBody": "Stödlinjer och människor som kan hjälpa", "back": "← Alla avsnitt", "done": "Klart", "todo": "Att göra", "tabsLabel": "Avsnitt i överlevnadskitet", "tab": {"all": "Alla", "moods": "Humör", "coping": "Strategier", "meds": "Mediciner", "gratitude": "Tacksamhet", "goals": "Mål", "mind": "Sinne", "reading": "Läsning", "media": "Media", "memories": "Minnen", "struggling": "Kämpar", "steps": "Steg", "spirit": "Ande"}},
         pageTitle: 'Bipolärt överlevnadskit',
         home: '← Hem',
         help: '🆘 Hjälp',
@@ -16219,6 +16255,7 @@
       },
       nav: { journal: '情绪日记', survivalKit: '你的生存工具包', anonymous: 'Bipolar Anonymous' },
       home: {
+        quick: {"last7": "最近 7 天", "weekLabel": "最近 7 天 — 打开情绪日记", "dayMood": "{day}：{mood}", "noEntry": "无记录", "doneYesterday": "✓ 昨天已记录 — 做得好", "doneToday": "✓ 今天已记录 — 做得好"},
         tutorialProgressOne: '还需 {n} 条记录即可完成教程', tutorialProgressMany: '还需 {n} 条记录即可完成教程',
         signInNote: '登录以加入社区',
         logoHint: '🐻 嘿……点击我！',
@@ -16758,6 +16795,8 @@
         },
       },
       journal: {
+        lifeChart: {"title": "📈 生活图表", "subtitle": "逐日记录你的情绪——线上方为高涨，下方为低落——下方同时显示睡眠。左右滑动即可浏览不同时间。", "rangeLabel": "时间范围", "r1m": "1月", "r3m": "3月", "r6m": "6月", "r1y": "1年", "stable": "稳定", "sleep": "睡眠", "meds": "用药", "legendSleep": "睡眠时长", "legendMeds": "漏服或不确定是否服药", "legendGap": "空白 = 无记录", "tapHint": "点按某一天查看详情。", "dayNoEntry": "{date}：无记录", "sleepHours": "睡眠 {h} 小时", "medsMissed": "漏服药物", "medsUnsure": "不确定是否服药", "autoFilled": "自动填写", "pdfTitle": "生活图表——最近 90 天", "pdfNote": "线上方的柱条表示情绪高涨/躁狂的日子，线下方表示低落/抑郁的日子。蓝色柱条表示睡眠时长；红色标记表示漏服或不确定是否服药的日子。空白处为没有记录的日子。"},
+        earlyWarn: {"settingTitle": "🌱 早期预警提醒", "settingDesc": "默认关闭。当你最近的记录呈现出值得留意的规律时，会温和地提醒你。仅在本设备上计算——不会发送任何数据。", "cardTitle": "🌱 值得留意的情况", "shortSleep": "最近 4 晚中有 {n} 晚你的睡眠比平时少（约 {avg} 小时，而你通常睡 {base} 小时左右）。你或许可以留意一下自己的睡眠。", "shortSleepNoBase": "最近 4 晚中有 {n} 晚你的睡眠不足 6 小时。你或许可以留意一下自己的睡眠。", "elevatedRun": "你已连续 {n} 天记录了高涨或躁狂的情绪。你或许可以留意接下来几天的情况。", "lowRun": "你已连续 {n} 天记录了低落或抑郁的情绪。或许可以对自己格外温柔一些，并留意自己的状态。", "swing": "最近几天你的情绪变化较大（{from} → {to}）。你或许可以多留意一下。", "histSleepUp": "上一次你连续几晚睡得这么少时，之后的一周情绪大多偏高涨。", "histSleepDown": "上一次你连续几晚睡得这么少时，之后的一周情绪大多偏低落。", "histSleepStable": "上一次你连续几晚睡得这么少时，之后的一周情绪大体保持稳定。", "histRun": "上一次出现类似情况时，持续了 {n} 天。", "strategies": "🧠 打开我的应对策略", "careTeam": "如果你感到担心，请与你的医疗团队谈谈。", "help": "支持联系方式", "dismiss": "关闭", "onDevice": "仅在本设备上计算。"},
         pdf: {
           moodTracker: "心情记录",
           patientDetails: "患者信息",
@@ -17535,6 +17574,7 @@
         },
       },
       sk: {
+        grid: {"sosTitle": "现在感觉很艰难？", "sosBody": "危机热线和可以帮助你的人", "back": "← 全部板块", "done": "已完成", "todo": "待完成", "tabsLabel": "生存工具包板块", "tab": {"all": "全部", "moods": "情绪", "coping": "应对", "meds": "药物", "gratitude": "感恩", "goals": "目标", "mind": "思维", "reading": "阅读", "media": "媒体", "memories": "回忆", "struggling": "困难", "steps": "步骤", "spirit": "心灵"}},
         pageTitle: '双相生存工具包',
         home: '← 首页',
         help: '🆘 帮助',

@@ -1158,7 +1158,16 @@
 //       to answer it, illustrated empty states, wiki section colours. Touches
 //       anonymous.html, css/anonymous.css, js/anonymous.js, js/shared/i18n.js,
 //       icons/anon-bear-256.png (new).
-const CACHE_NAME = 'bipolarbear-v238';
+// v239: Bipolar Bear UX pass — mood bears + last-7-days strip on home and
+//       AA-contrast home buttons; Survival Kit tile grid with a crisis banner
+//       and labelled tabs; bigger check-in bears with pop, haptic and mood
+//       tint, journal.html?mood= deep link (home + native widgets); life chart
+//       (also in the PDF) and opt-in early-warning nudges in
+//       js/journal-insights.js (new). Touches index.html, js/index.js,
+//       css/index.css, survival-kit.html, js/survival-kit.js,
+//       css/survival-kit.css, journal.html, js/journal.js, css/journal.css,
+//       js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v239';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1179,6 +1188,7 @@ const STATIC_ASSETS = [
   './js/welcome.js',
   './js/index.js',
   './js/journal.js',
+  './js/journal-insights.js',
   './js/survival-kit.js',
   './js/anonymous.js',
 

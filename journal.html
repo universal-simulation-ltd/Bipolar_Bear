@@ -518,6 +518,8 @@
         <polyline points="7,16 12,21 17,16" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
     </div>
+    <!-- Early-warning nudge card (opt-in) — rendered by js/journal-insights.js -->
+    <div id="earlyWarnSlot"></div>
     <div id="journalToggleSection" style="display:none; text-align: center; margin: 20px 0;">
       <button onclick="toggleJournal()" id="journalToggleBtn" class="journal-toggle-btn" style="padding: 15px 30px; background: rgba(255,255,255,0.2); color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1.1em; backdrop-filter: blur(10px); -webkit-tap-highlight-color:transparent;" data-i18n="journal.btn.openJournal">
         📔 Open Journal
@@ -553,6 +555,8 @@
 
         <div class="chart-container" id="chart"></div>
         <div id="monthCalendar"></div>
+        <!-- Life chart — rendered by js/journal-insights.js -->
+        <div id="lifeChart" style="display:none;"></div>
         <div id="streakStats"></div>
       </div>
 
@@ -1627,6 +1631,9 @@
           <label class="bb-switch"><input type="checkbox" id="incognitoModeToggle" onchange="_toggleIncognitoMode()"><span class="bb-slider"></span></label>
         </div>
 
+        <!-- Early-warning nudges toggle (opt-in, unticked by default) — rendered by js/journal-insights.js -->
+        <div id="earlyWarnSettingRow"></div>
+
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
         <div style="display:flex;gap:10px;">
@@ -1835,6 +1842,9 @@
        `typeof firebase !== 'undefined'` guard inside initializeApp falls
        back to a window.load listener for the Firebase race. -->
   <script src="js/journal.js"></script>
+  <!-- Life chart + opt-in early-warning nudges. After journal.js (it is
+       called from loadEntries/saveEntry), before fab.js (which stays last). -->
+  <script src="js/journal-insights.js"></script>
   <script src="fab.js"></script>
 </body>
 </html>

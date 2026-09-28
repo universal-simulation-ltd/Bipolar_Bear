@@ -139,6 +139,24 @@
         <div id="journalTutorialProgress" style="text-align:center;font-size:0.7em;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);margin-top:4px;font-style:italic;display:none;"></div>
         <div id="journalStreakBadge" class="btn-subnote bb-skeleton">🔥 0 days  🧘 0d</div>
       </div>
+      <!-- Quick check-in: the journal's five step-1 mood bears, one tap from
+           home. Each bear opens journal.html?mood=<id> (the journal preselects
+           that mood and moves on to step 2). Hidden until onboarding step 4
+           and shown quieter once the day is logged — both handled by
+           _renderQuickCheckin() in js/index.js, which also fills the prompt
+           and the last-7-days strip (#qcWeek) from cached local entries. -->
+      <div id="quickCheckin" class="quick-checkin" style="display:none;" data-done="false">
+        <div id="qcPrompt" class="qc-prompt" data-i18n="journal.prompt.howYesterday">How was yesterday?</div>
+        <div class="qc-bears" role="group" aria-labelledby="qcPrompt">
+          <button type="button" class="qc-bear" data-mood="manic"><img src="images/moods/manic.png" alt="" draggable="false"><span class="qc-label" data-i18n="mood.manic">Manic</span></button>
+          <button type="button" class="qc-bear" data-mood="elevated"><img src="images/moods/elevated.png" alt="" draggable="false"><span class="qc-label" data-i18n="mood.elevated">Elevated</span></button>
+          <button type="button" class="qc-bear" data-mood="stable"><img src="images/moods/stable.png" alt="" draggable="false"><span class="qc-label" data-i18n="mood.stable">Stable</span></button>
+          <button type="button" class="qc-bear" data-mood="low"><img src="images/moods/low.png" alt="" draggable="false"><span class="qc-label" data-i18n="mood.low">Low</span></button>
+          <button type="button" class="qc-bear" data-mood="depressed"><img src="images/moods/depressed.png" alt="" draggable="false"><span class="qc-label" data-i18n="mood.depressed">Depressed</span></button>
+        </div>
+        <div id="qcDoneNote" class="qc-done-note"></div>
+        <button type="button" id="qcWeek" class="qc-week" style="display:none;"></button>
+      </div>
       <div id="journalStartHint" style="display:none; flex-direction:column; align-items:center; gap:2px; pointer-events:none; animation:hintFade 2.4s ease-in-out infinite; margin-top:-4px;">
         <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
           <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" fill="none"/>

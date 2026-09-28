@@ -254,7 +254,7 @@ Settings that live in BOTH localStorage AND `userSettings/{uid}`:
 `moodLinkingEnabled, moodSpectrumEnabled, wheelModeEnabled, showMoodSuggestion,
 healthSyncEnabled, focusedModeEnabled, incognitoMode, achievementToastsEnabled,
 reminderEnabled, reminderTime, weeklySummaryEnabled, customiseFormEnabled,
-disabledSteps, currentStreak, stableStreak, fabState`
+disabledSteps, currentStreak, stableStreak, fabState, earlyWarnEnabled`
 
 ## When adding a new feature
 

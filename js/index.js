@@ -990,6 +990,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         }
       }
 
+      // Quick check-in bears + 7-day strip (BLOCK 3c) share this gate.
+      if (typeof window._renderQuickCheckin === 'function') window._renderQuickCheckin();
+
       if (typeof window._applyFabDock === 'function') window._applyFabDock();
     }
     window._applyOnboardingGating = _applyOnboardingGating;
@@ -1231,7 +1234,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // 'OnboardingStep' is intentionally NOT here — Firestore preserves it
       // so the user resumes at the same onboarding step on re-login.
       const bbKeysToRemove = [
-        '_entryStatus',
+        '_entryStatus', '_recentMoods',
         'HasEntries',
         // Streaks & stats — must clear so they don't leak between accounts
         'CurrentStreak', 'StableStreak',
@@ -1723,6 +1726,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
         BB.storage.remove('_draft');
         BB.storage.remove('_entryStatus');
+        BB.storage.remove('_recentMoods');
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
          'rememberThis','myCommitments','customReminders','currentMedList',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
@@ -1734,6 +1738,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'incognitoMode', 'pdfHideByDefault',
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
+          'earlyWarnEnabled', 'bbEarlyWarnSeen',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
@@ -1784,7 +1789,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               currentMedList: [], dailyGoals: [], dailyBudget: '', logoVariant: 0,
               focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
-              achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
+              achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false, earlyWarnEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
               moodDefinitions: {}, copingStrategies: {},
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,
@@ -1996,6 +2001,202 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           if (e.date && toKey(new Date(e.date)) === targetKey) { setTickDone(true); return; }
         } catch(e) {}
       }
+    })();
+
+// ── BLOCK 3c: quick check-in bears + last-7-days mood strip ──
+    (function() {
+      const card = document.getElementById('quickCheckin');
+      if (!card) return;
+      const MOODS = ['manic', 'elevated', 'stable', 'low', 'depressed'];
+      // Same palette as the journal's entry list (moodColors in js/journal.js).
+      const MOOD_COLORS = { manic: '#ff6b6b', elevated: '#d2be00', stable: '#51cf66', low: '#845ef7', depressed: '#5c7cfa' };
+      const toKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+      // BB.t, falling back to the English literal while a key is untranslated
+      // (BB.t returns the key itself when it has no string for it).
+      function qt(key, fallback, vars) {
+        let s = null;
+        try { s = (window.BB && window.BB.t) ? window.BB.t(key, vars) : null; } catch (_) {}
+        if (s && s !== key) return s;
+        let out = fallback;
+        if (vars) Object.keys(vars).forEach(k => { out = out.split('{' + k + '}').join(vars[k]); });
+        return out;
+      }
+
+      // Journal mood value → one of MOODS. Mirrors _moodCat() in js/journal.js:
+      // 'good' is the legacy name for stable; numbers come from the 0–10 spectrum.
+      function moodCat(m) {
+        if (m == null || m === '') return null;
+        if (typeof m === 'number' || /^\d+(\.\d+)?$/.test(String(m))) {
+          const n = Number(m);
+          if (n <= 1) return 'depressed';
+          if (n <= 3) return 'low';
+          if (n <= 6) return 'stable';
+          if (n <= 8) return 'elevated';
+          return 'manic';
+        }
+        if (m === 'good') return 'stable';
+        return MOODS.indexOf(m) >= 0 ? m : null;
+      }
+
+      // Which day the journal is asking about: yesterday by default, today when
+      // "journalDefaultToday" is on (same rule as BLOCK 3 and journal.html).
+      function targetDate() {
+        const d = new Date(); d.setHours(0, 0, 0, 0);
+        if (localStorage.getItem('journalDefaultToday') !== 'true') d.setDate(d.getDate() - 1);
+        return d;
+      }
+
+      // Day key → mood category, from data already on this device. Never
+      // decrypts: guest entries saved as plaintext `entry:<ts>` JSON carry a
+      // mood; PIN-encrypted ones (`_enc`) are skipped. Signed-in entries live
+      // only in Firestore (encrypted) unless the journal has left a
+      // `bb_recentMoods` map ({"YYYY-MM-DD": mood}) behind — read if present.
+      function localMoodsByDay() {
+        const byDay = {};
+        const stamp = {};
+        try {
+          const cached = JSON.parse(BB.storage.get('_recentMoods') || 'null');
+          if (cached && typeof cached === 'object') {
+            Object.keys(cached).forEach(k => {
+              const c = moodCat(cached[k]);
+              if (c && /^\d{4}-\d{2}-\d{2}$/.test(k)) { byDay[k] = c; stamp[k] = 0; }
+            });
+          }
+        } catch (_) {}
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (!k || k.indexOf('entry:') !== 0) continue;
+          try {
+            const e = JSON.parse(localStorage.getItem(k) || 'null');
+            if (!e || e._enc || !e.date) continue;
+            const c = moodCat(e.mood);
+            if (!c) continue;
+            const day = toKey(new Date(e.date));
+            const ts = Number(e.timestamp) || Number(k.slice(6)) || 0;
+            if (!(day in stamp) || ts >= stamp[day]) { byDay[day] = c; stamp[day] = ts; }
+          } catch (_) {}
+        }
+        return byDay;
+      }
+
+      function weekdayFmt(style) {
+        let lang = 'en';
+        try { lang = (window.BB && BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en'; } catch (_) {}
+        if (lang === 'zh') lang = 'zh-Hans';
+        try { return new Intl.DateTimeFormat(lang, { weekday: style }); }
+        catch (_) { return new Intl.DateTimeFormat('en', { weekday: style }); }
+      }
+
+      function renderWeek() {
+        const btn = document.getElementById('qcWeek');
+        if (!btn) return;
+        const byDay = localMoodsByDay();
+        const end = targetDate();
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(end); d.setDate(d.getDate() - i);
+          days.push({ d, mood: byDay[toKey(d)] || null });
+        }
+        if (!days.some(x => x.mood)) { btn.style.display = 'none'; btn.innerHTML = ''; return; }
+        const narrow = weekdayFmt('narrow');
+        const long = weekdayFmt('long');
+        const moodName = c => qt('mood.' + c, c.charAt(0).toUpperCase() + c.slice(1));
+        const noEntry = qt('home.quick.noEntry', 'No entry');
+        const spoken = days.map(x => qt('home.quick.dayMood', '{day}: {mood}',
+          { day: long.format(x.d), mood: x.mood ? moodName(x.mood) : noEntry })).join(', ');
+        btn.setAttribute('aria-label', qt('home.quick.weekLabel', 'Last 7 days — open Mood Journal') + '. ' + spoken);
+        btn.innerHTML =
+          '<span class="qc-week-title" aria-hidden="true">' + _escHtml(qt('home.quick.last7', 'Last 7 days')) + '</span>' +
+          '<span class="qc-week-days" aria-hidden="true">' + days.map(x =>
+            '<span class="qc-day">' +
+              '<span class="qc-dot' + (x.mood ? '' : ' qc-dot-empty') + '"' +
+                (x.mood ? ' style="background:' + MOOD_COLORS[x.mood] + '"' : '') + '></span>' +
+              '<span class="qc-wd">' + _escHtml(narrow.format(x.d)) + '</span>' +
+            '</span>').join('') +
+          '</span>';
+        btn.style.display = '';
+      }
+
+      function render() {
+        const useToday = localStorage.getItem('journalDefaultToday') === 'true';
+        const prompt = document.getElementById('qcPrompt');
+        if (prompt) {
+          const k = useToday ? 'journal.prompt.howToday' : 'journal.prompt.howYesterday';
+          prompt.setAttribute('data-i18n', k);
+          prompt.textContent = qt(k, useToday ? 'How is today going?' : 'How was yesterday?');
+        }
+        const tick = document.getElementById('journalEntryTick');
+        const done = !!(tick && tick.getAttribute('data-done') === 'true');
+        card.setAttribute('data-done', done ? 'true' : 'false');
+        const note = document.getElementById('qcDoneNote');
+        if (note) note.textContent = done
+          ? (useToday ? qt('home.quick.doneToday', '✓ Today is logged — nice one')
+                      : qt('home.quick.doneYesterday', '✓ Yesterday is logged — nice one'))
+          : '';
+        // Mood names double as the bears' accessible names.
+        card.querySelectorAll('.qc-bear').forEach(b => {
+          const m = b.getAttribute('data-mood');
+          b.setAttribute('aria-label', qt('mood.' + m, m));
+          b.tabIndex = done ? -1 : 0;
+        });
+        renderWeek();
+      }
+
+      // Visibility follows onboarding: hidden during the first-run steps 0–3
+      // (the journal's own first-entry tutorial runs from the Mood Journal
+      // button), shown to everyone past it — i.e. whenever the Mood Journal
+      // button is the normal home button. Called from _applyOnboardingGating.
+      window._renderQuickCheckin = function () {
+        let step = 12;
+        try { step = window.BB.onboarding.getStep(); } catch (_) {}
+        card.style.display = step >= 4 ? '' : 'none';
+        if (step >= 4) render();
+      };
+
+      let navigating = false;
+      card.addEventListener('click', function (ev) {
+        const bear = ev.target.closest && ev.target.closest('.qc-bear');
+        const week = ev.target.closest && ev.target.closest('#qcWeek');
+        if (!bear && !week) return;
+        if (navigating) return;
+        if (bear && card.getAttribute('data-done') === 'true') return;
+        navigating = true;
+        // Same side-effects as the Mood Journal button.
+        try { localStorage.setItem('bbPrivacyNoteDismissed', '1'); } catch (_) {}
+        const pn = document.getElementById('privacyNote'); if (pn) pn.style.display = 'none';
+        let url = 'journal.html';
+        if (bear) {
+          const mood = bear.getAttribute('data-mood');
+          if (MOODS.indexOf(mood) >= 0) url = 'journal.html?mood=' + encodeURIComponent(mood);
+          bear.classList.add('qc-picked');
+          card.classList.add('qc-leaving');
+          // Light tap on native (Capacitor's bundled Haptics plugin); no-op on web.
+          try {
+            const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+            if (H && H.impact) H.impact({ style: 'LIGHT' }).catch(function () {});
+          } catch (_) {}
+        }
+        // Let the press animation read before the page swaps.
+        setTimeout(function () { location.replace(url); }, bear ? 180 : 0);
+      });
+      // Back-forward cache: a restored page must be tappable again.
+      window.addEventListener('pageshow', function () {
+        navigating = false;
+        card.classList.remove('qc-leaving');
+        card.querySelectorAll('.qc-picked').forEach(b => b.classList.remove('qc-picked'));
+      });
+
+      // The ✓ on the Mood Journal button is corrected asynchronously (Firestore
+      // reconcile in BLOCK 2) — follow it so the row goes quiet the moment it flips.
+      const tick = document.getElementById('journalEntryTick');
+      if (tick && window.MutationObserver) {
+        new MutationObserver(function () { if (card.style.display !== 'none') render(); })
+          .observe(tick, { attributes: true, attributeFilter: ['data-done'] });
+      }
+      document.addEventListener('bb:languagechange', function () { if (card.style.display !== 'none') render(); });
+
+      window._renderQuickCheckin();
     })();
 
 // ── BLOCK 3b: Bipolar Anonymous tick — posted today OR board all read ──

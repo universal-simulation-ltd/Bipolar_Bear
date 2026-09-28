@@ -259,41 +259,192 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.22);
     }
 
-    .btn-journal {
-      background: rgba(255, 255, 255, 0.28);
-      color: white;
-      border: 3px solid rgba(255, 255, 255, 0.62);
-    }
-
-    .btn-survival {
-      background: rgba(255, 255, 255, 0.28);
-      color: white;
-      border: 3px solid rgba(255, 255, 255, 0.62);
-    }
-
+    /* Home buttons: opaque burnt-orange fill so the white label clears WCAG AA
+       (4.5:1). The old rgba(255,255,255,0.28) wash over the #ffaa33→#ff8833
+       gradient gave white text only ~1.6–2:1. Both gradient stops pass on
+       their own: #c24a0c ≈ 5.0:1, #a8430a ≈ 6.1:1 against white. */
+    .btn-journal,
+    .btn-survival,
     .btn-anonymous {
-      background: rgba(255, 255, 255, 0.28);
+      background: linear-gradient(135deg, #c24a0c 0%, #a8430a 100%);
       color: white;
       border: 3px solid rgba(255, 255, 255, 0.62);
+    }
+    .btn-anonymous {
       transition: opacity 0.2s, border-color 0.2s, background 0.2s;
     }
+    /* Locked (signed out): a dashed outline with dark warm text rather than
+       faded white, so the label still reads at ≥5:1 on the gradient. */
     .btn-anonymous.locked {
-      background: rgba(255, 255, 255, 0.12);
-      color: rgba(255, 255, 255, 0.85);
-      border: 3px dashed rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.18);
+      color: #5a2a00;
+      text-shadow: none;
+      border: 3px dashed rgba(90, 42, 0, 0.45);
       box-shadow: none;
       cursor: default;
       pointer-events: none;
     }
+    .btn-anonymous.locked .entry-tick {
+      border-color: rgba(90, 42, 0, 0.4);
+      background: transparent;
+      color: rgba(90, 42, 0, 0.45);
+    }
+    /* ── Quick check-in (BLOCK 3c in js/index.js) ──
+       A cream card under the Mood Journal button: prompt, five mood bears
+       (journal step 1's images) and an optional last-7-days strip. Dark warm
+       text on cream keeps every label well above 4.5:1. */
+    .quick-checkin {
+      background: #fff8ef;
+      border-radius: 18px;
+      padding: 12px 10px 10px;
+      margin: 2px 10px 0;
+      /* .buttons is fit-content, so this min-width is what gives the five
+         bears room for full names ("Depressed", "Deprimiert") — the Mood
+         Journal button above stretches to match. Capped by the viewport. */
+      min-width: min(320px, calc(100vw - 60px));
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+      color: #5a2a00;
+      text-shadow: none;
+    }
+    .qc-prompt {
+      font-size: 0.95em;
+      font-weight: 800;
+      color: #7a3a00;
+      margin-bottom: 6px;
+    }
+    .qc-bears {
+      display: flex;
+      justify-content: space-between;
+      gap: 2px;
+    }
+    .qc-bear {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 6px 1px 5px;
+      background: none;
+      border: none;
+      border-radius: 12px;
+      font: inherit;
+      color: #5a2a00;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.14s ease, background 0.14s ease;
+    }
+    .qc-bear img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      pointer-events: none;
+      -webkit-user-drag: none;
+      transition: transform 0.14s ease;
+    }
+    /* One line per label: the card grows to fit full names where there's
+       room (it can widen .buttons, which is fit-content) and ellipsises on
+       very narrow screens instead of splitting a word mid-way. */
+    .qc-label {
+      font-size: 0.64em;
+      font-weight: 700;
+      line-height: 1.15;
+      max-width: 100%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 2px;
+    }
+    .qc-bear:active { transform: scale(0.9); background: #ffe8cc; }
+    .qc-bear:focus-visible { outline: 3px solid #a8430a; outline-offset: 1px; }
+    @media (hover: hover) and (pointer: fine) {
+      .qc-bear:hover { background: #fff0dc; }
+      .qc-bear:hover img { transform: translateY(-2px); }
+    }
+    /* Tapped bear pops while the others fade, then journal.html takes over. */
+    .qc-bear.qc-picked { background: #ffe8cc; animation: qcPick 0.18s ease-out forwards; }
+    .quick-checkin.qc-leaving .qc-bear:not(.qc-picked) { opacity: 0.35; transition: opacity 0.15s; }
+    @keyframes qcPick {
+      0%   { transform: scale(0.9); }
+      60%  { transform: scale(1.12); }
+      100% { transform: scale(1.06); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .qc-bear, .qc-bear img { transition: none; }
+      .qc-bear.qc-picked { animation: none; }
+    }
+    /* Already logged: drop the bears, keep a quiet confirmation + the strip. */
+    .qc-done-note { display: none; }
+    .quick-checkin[data-done="true"] { padding: 9px 10px 8px; background: rgba(255, 248, 239, 0.9); }
+    .quick-checkin[data-done="true"] .qc-prompt,
+    .quick-checkin[data-done="true"] .qc-bears { display: none; }
+    .quick-checkin[data-done="true"] .qc-done-note {
+      display: block;
+      font-size: 0.82em;
+      font-weight: 700;
+      color: #7a3a00;
+    }
+    .qc-week {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      padding: 7px 4px 2px;
+      background: none;
+      border: none;
+      border-top: 1px solid #f1dcc2;
+      font: inherit;
+      color: #5a2a00;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .quick-checkin[data-done="true"] .qc-week { margin-top: 6px; }
+    .qc-week:focus-visible { outline: 3px solid #a8430a; outline-offset: 2px; border-radius: 10px; }
+    .qc-week-title {
+      display: block;
+      font-size: 0.66em;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8a4500;
+      margin-bottom: 5px;
+    }
+    .qc-week-days {
+      display: flex;
+      justify-content: space-between;
+      padding: 0 8px;
+    }
+    .qc-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 22px;
+    }
+    .qc-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+    }
+    .qc-dot-empty {
+      background: #efe3d4;
+      box-shadow: inset 0 0 0 1.5px #d9c3a8;
+    }
+    .qc-wd {
+      font-size: 0.66em;
+      font-weight: 700;
+      color: #8a4500;
+    }
+
     .btn-subnote {
       display: none;
       text-align: center;
       font-size: 0.78em;
-      font-weight: 600;
-      color: #fff;
+      font-weight: 700;
+      /* Dark warm text for AA contrast on the orange gradient (see .user-count). */
+      color: #5a2a00;
       margin-top: 4px;
       letter-spacing: 0.1px;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.3);
       /* Smooth unblur when the skeleton class is removed (~350ms). Combined
          with the 450ms minimum-visible delay enforced in js/index.js this
          gives a consistent ~800ms "loading" feel — long enough to register
@@ -327,12 +478,11 @@
       display: block;
       text-align: center;
       font-size: 0.78em;
-      font-weight: 600;
-      color: #fff;
+      font-weight: 700;
+      color: #5a2a00;
       margin-top: 4px;
       letter-spacing: 0.1px;
       font-style: italic;
-      text-shadow: 0 1px 3px rgba(0,0,0,0.35);
     }
 
     .btn.btn-whatsapp {
@@ -372,7 +522,9 @@
     .user-count {
       font-size: 0.78em;
       font-weight: 700;
-      color: rgba(255, 255, 255, 0.85);
+      /* Dark warm text: white on the #ffaa33→#ff8833 gradient is only ~2:1;
+         #5a2a00 is ≥5:1 across the whole gradient (WCAG AA). */
+      color: #5a2a00;
       letter-spacing: 0.02em;
       /* Small top margin only — the credit chip's own 10px bottom margin
          supplies the rest of the gap, so the pair reads as one block. */
@@ -384,17 +536,19 @@
       margin-top: 20px;
       margin-bottom: 10px;
       font-size: 0.9em;
-      color: rgba(255, 255, 255, 0.9);
+      color: white;
       text-decoration: none;
       padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.22);
+      /* Burnt-orange chip (matches the home buttons) — white text ≥4.7:1
+         wherever it sits on the gradient; the old white wash was ~1.7:1. */
+      background: rgba(168, 67, 10, 0.85);
       border-radius: 20px;
       transition: all 0.3s ease;
     }
 
     @media (hover: hover) and (pointer: fine) {
       .footer-link:hover {
-        background: rgba(255, 255, 255, 0.3);
+        background: rgba(168, 67, 10, 0.95);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
     }

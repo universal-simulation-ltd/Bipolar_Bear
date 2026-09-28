@@ -108,16 +108,20 @@
       <div class="sticky-nav-home">
         <a href="index.html" onclick="event.preventDefault(); location.replace('index.html')" data-i18n="sk.nav.home">🏠 Home</a>
       </div>
-      <div class="sticky-nav-row">
-        <a href="#mood-scale">📊 </a>
-        <a href="#medications">💊 </a>
-        <a href="#goals">🎯 </a>
-        <a href="#mind">🧠 </a>
-        <a href="#books">📚 </a>
-        <a href="#media">🎵 </a>
-        <a href="#memories">😂 </a>
-        <a href="#faq">❓ </a>
-        <a href="#steps">🙏</a>
+      <div class="sticky-nav-row" id="skTabRow">
+        <a href="#all" class="sk-tab" data-sk-tab="all"><span class="sk-tab-ico" aria-hidden="true">▦</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.all">All</span></a>
+        <a href="#mood-scale" class="sk-tab" data-sk-tab="mood-scale"><span class="sk-tab-ico" aria-hidden="true">📊</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.moods">Moods</span></a>
+        <a href="#coping-strategies" class="sk-tab" data-sk-tab="coping-strategies"><span class="sk-tab-ico" aria-hidden="true">🧠</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.coping">Coping</span></a>
+        <a href="#medications" class="sk-tab" data-sk-tab="medications"><span class="sk-tab-ico" aria-hidden="true">💊</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.meds">Meds</span></a>
+        <a href="#gratitude" class="sk-tab" data-sk-tab="gratitude"><span class="sk-tab-ico" aria-hidden="true">🙏</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.gratitude">Gratitude</span></a>
+        <a href="#goals" class="sk-tab" data-sk-tab="goals"><span class="sk-tab-ico" aria-hidden="true">🎯</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.goals">Goals</span></a>
+        <a href="#mind" class="sk-tab" data-sk-tab="mind"><span class="sk-tab-ico" aria-hidden="true">🧩</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.mind">Mind</span></a>
+        <a href="#books" class="sk-tab" data-sk-tab="books"><span class="sk-tab-ico" aria-hidden="true">📚</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.reading">Reading</span></a>
+        <a href="#media" class="sk-tab" data-sk-tab="media"><span class="sk-tab-ico" aria-hidden="true">🎵</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.media">Media</span></a>
+        <a href="#memories" class="sk-tab" data-sk-tab="memories"><span class="sk-tab-ico" aria-hidden="true">📸</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.memories">Memories</span></a>
+        <a href="#faq" class="sk-tab" data-sk-tab="faq"><span class="sk-tab-ico" aria-hidden="true">❓</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.struggling">Struggling</span></a>
+        <a href="#steps" class="sk-tab" data-sk-tab="steps"><span class="sk-tab-ico" aria-hidden="true">👣</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.steps">Steps</span></a>
+        <a href="#spiritual" class="sk-tab" data-sk-tab="spiritual"><span class="sk-tab-ico" aria-hidden="true">🙌</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.spirit">Spirit</span></a>
       </div>
       <div class="sticky-nav-help">
         <a href="#help" data-i18n="sk.help">🆘 Help</a>
@@ -125,8 +129,105 @@
     </div>
   </nav>
 
-  <div class="container">
+  <div class="container" id="skContainer">
 
+    <!-- OVERVIEW GRID: one tile per section. Tapping a tile shows just that
+         section (focused view) with a Back bar; the crisis box stays reachable
+         from the SOS banner in both views. Section markup below is unchanged. -->
+    <div id="skOverview">
+      <button type="button" class="sk-sos" onclick="skGoToHelp()">
+        <span class="sk-sos-ico" aria-hidden="true">🆘</span>
+        <span class="sk-sos-text">
+          <span class="sk-sos-title" data-i18n="sk.grid.sosTitle">Struggling right now?</span>
+          <span class="sk-sos-sub" data-i18n="sk.grid.sosBody">Crisis lines and people who can help</span>
+        </span>
+        <span class="sk-sos-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <div class="sk-progress">
+        <div class="sk-progress-label" id="skGridProgress">&nbsp;</div>
+        <div class="sk-progress-track"><div class="sk-progress-fill" id="skGridProgressFill"></div></div>
+      </div>
+
+      <div class="sk-grid">
+      <button type="button" class="sk-tile" data-sk-open="mood-scale">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">📊</span>
+        <span class="sk-tile-name" data-i18n="sk.moodScale.sectionTitle">Bipolar Moods</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="coping-strategies">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">🧠</span>
+        <span class="sk-tile-name" data-i18n="sk.strategies.sectionTitle">My Strategies</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="medications">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">💊</span>
+        <span class="sk-tile-name" data-i18n="sk.meds.sectionTitle">My Meds</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="gratitude">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">🙏</span>
+        <span class="sk-tile-name" data-i18n="sk.gratitude.sectionTitle">Gratitude</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="goals">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">🎯</span>
+        <span class="sk-tile-name" data-i18n="sk.goals.sectionTitle">My 1-5 Yr Goals</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="mind">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">🧩</span>
+        <span class="sk-tile-name" data-i18n="sk.mindGames.sectionTitle">Mind Games</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="books">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">📚</span>
+        <span class="sk-tile-name" data-i18n="sk.reading.sectionTitle">Reading</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="media">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">🎵</span>
+        <span class="sk-tile-name" data-i18n="sk.media.sectionTitle">Media</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="memories">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">📸</span>
+        <span class="sk-tile-name" data-i18n="sk.memories.sectionTitle">Memories</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="faq">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">❓</span>
+        <span class="sk-tile-name" data-i18n="sk.faq.sectionTitle">Struggling?</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="steps">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">👣</span>
+        <span class="sk-tile-name" data-i18n="sk.steps.sectionTitle">12 Steps</span>
+      </button>
+      <button type="button" class="sk-tile" data-sk-open="spiritual">
+        <span class="sk-tile-state" aria-hidden="true"></span>
+        <span class="sk-tile-ico" aria-hidden="true">🙌</span>
+        <span class="sk-tile-name" data-i18n="sk.spiritual.sectionTitle">Karma &amp; Spirit</span>
+      </button>
+      </div>
+    </div>
+
+    <div class="sk-backbar" id="skBackBar">
+      <button type="button" class="sk-back-btn" onclick="skShowGrid()" data-i18n="sk.grid.back">← All sections</button>
+    </div>
+
+    <!-- MOOD SCALE -->
+    <div class="section" id="mood-scale">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">📊</span>
+        <h2 data-i18n="sk.moodScale.sectionTitle">Bipolar Moods</h2>
+        <span id="tick_mood-scale" style="margin-left:auto;margin-right:8px;font-size:0.85em;"></span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+
+      <!-- DSM-5 definition (was a free-standing block above the sections) -->
     <h3 style="font-size: 1.05em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-top: 0px; margin-bottom: 14px; padding-left: 2px;" data-i18n="sk.def.heading">📖 Definition</h3>
 
       <div class="accordion">
@@ -144,16 +245,6 @@
           <p style="margin-top: 10px;" data-i18n-html="sk.def.sources">Sources: <a href="https://icd.who.int/browse/2024-01/mms/en#199053300" target="_blank" style="color: var(--orange);">ICD-11</a> (Free) · <a href="https://www.amazon.co.uk/Diagnostic-Statistical-Manual-Mental-Disorders/dp/0890425558" target="_blank" style="color: var(--orange);">DSM-5</a></p>
         </div>
       </div>
-
-    <!-- MOOD SCALE -->
-    <div class="section" id="mood-scale">
-      <div class="section-header" onclick="toggleSection(this)">
-        <span class="section-icon">📊</span>
-        <h2 data-i18n="sk.moodScale.sectionTitle">Bipolar Moods</h2>
-        <span id="tick_mood-scale" style="margin-left:auto;margin-right:8px;font-size:0.85em;"></span>
-        <span class="section-chevron">▼</span>
-      </div>
-      <div class="section-body">
 
       <h3 style="font-size: 1.05em; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); margin-bottom: 14px; padding-left: 2px;" data-i18n="sk.moodScale.scaleTitle">Mood Scale</h3>
 
@@ -404,7 +495,7 @@
     <!-- MIND -->
     <div class="section collapsed" id="mind">
       <div class="section-header" onclick="toggleSection(this)">
-        <span class="section-icon">🧠</span>
+        <span class="section-icon">🧩</span>
         <h2 data-i18n="sk.mindGames.sectionTitle">Mind Games</h2>
         <span id="tick_mind" style="margin-left:auto;margin-right:8px;font-size:0.85em;"></span>
         <span class="section-chevron">▼</span>
@@ -680,7 +771,7 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
     <!-- 12 STEPS -->
     <div class="section collapsed" id="steps">
       <div class="section-header" onclick="toggleSection(this)">
-        <span class="section-icon">🙏</span>
+        <span class="section-icon">👣</span>
         <h2 data-i18n="sk.steps.sectionTitle">12 Steps</h2>
         <span id="tick_steps" style="margin-left:auto;margin-right:8px;font-size:0.85em;"></span>
         <span class="section-chevron">▼</span>
@@ -783,6 +874,10 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
          survival kit is for the user's own private material. The Bipolar UK
          support-group finder that shared this card moved into the crisis box
          below, next to the other Bipolar UK links. -->
+
+    <div class="sk-backbar sk-backbar-bottom">
+      <button type="button" class="sk-back-btn" onclick="skShowGrid()" data-i18n="sk.grid.back">← All sections</button>
+    </div>
 
     <!-- HELP / CRISIS -->
     <div class="section" id="help">

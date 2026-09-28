@@ -69,6 +69,10 @@ function _sktMood(moodKey) {
 // ── SECTION COLLAPSE ──
     function toggleSection(headerEl) {
       const section = headerEl.closest('.section');
+      // In the focused view the open section's header is just a title — tapping
+      // it must not collapse the only thing on screen. (All sections are shown
+      // one at a time from the overview grid now.)
+      if (section.classList.contains('sk-open')) return;
       section.classList.toggle('collapsed');
     }
 
@@ -96,30 +100,155 @@ function _sktMood(moodKey) {
       _skUpdateTicks();
     }
 
-    // ── ACTIVE NAV HIGHLIGHT ──
-    const navLinks = document.querySelectorAll('.sticky-nav a[href^="#"]');
-    const sections = document.querySelectorAll('.section[id]');
+    // ── OVERVIEW GRID / FOCUSED SECTION VIEW ──
+    // The page opens on a grid of section tiles (#skOverview). Tapping a tile
+    // (or a tab in the sticky nav, or arriving with #<section-id> in the URL,
+    // e.g. fab.js's "survival-kit.html#goals") shows just that section with a
+    // Back bar. The crisis box (#help) stays visible in both views. This is
+    // presentation only: section markup, ids and data are unchanged.
+    const _SK_SECTION_IDS = ['mood-scale', 'coping-strategies', 'medications', 'gratitude',
+      'goals', 'mind', 'books', 'media', 'memories', 'faq', 'steps', 'spiritual'];
+    let _skOpenId = null;
+
+    function _skNavOffset() {
+      const nav = document.querySelector('.sticky-nav');
+      return (nav ? nav.offsetHeight : 60) + 8;
+    }
+    // Scrolls `el` to just under the sticky nav. Works for both the window
+    // (phones) and the #scroll-view container of the desktop iPhone frame.
+    function _skScrollTo(el, smooth) {
+      if (!el) return;
+      el.style.scrollMarginTop = _skNavOffset() + 'px';
+      el.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+    }
 
     function updateActiveNav() {
-      let current = '';
-      const navHeight = document.querySelector('.sticky-nav').offsetHeight;
-      sections.forEach(section => {
-        if (window.scrollY >= section.offsetTop - navHeight - 60) {
-          current = section.id;
-        }
-      });
-      navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === '#' + current) {
-          link.classList.add('active');
-          // Scroll nav link into view
-          link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      const current = _skOpenId || 'all';
+      document.querySelectorAll('.sk-tab[data-sk-tab]').forEach(link => {
+        const on = link.getAttribute('data-sk-tab') === current;
+        link.classList.toggle('active', on);
+        if (on) link.setAttribute('aria-current', 'page'); else link.removeAttribute('aria-current');
+        if (on) {
+          const row = link.parentElement;
+          if (row && row.scrollWidth > row.clientWidth) {
+            row.scrollTo({ left: link.offsetLeft - (row.clientWidth - link.offsetWidth) / 2, behavior: 'smooth' });
+          }
         }
       });
     }
 
-    window.addEventListener('scroll', updateActiveNav, { passive: true });
-    updateActiveNav();
+    function _skSetHash(id) {
+      try {
+        const url = location.pathname + location.search + (id ? '#' + id : '');
+        history.replaceState(history.state, '', url);
+      } catch (_) {}
+    }
+
+    function skOpenSection(id, opts) {
+      opts = opts || {};
+      const section = document.getElementById(id);
+      const container = document.getElementById('skContainer');
+      if (!section || !container || _SK_SECTION_IDS.indexOf(id) === -1) return;
+      document.querySelectorAll('.section.sk-open').forEach(s => s.classList.remove('sk-open'));
+      section.classList.add('sk-open');
+      section.classList.remove('collapsed');
+      container.classList.add('sk-focused');
+      _skOpenId = id;
+      if (opts.hash !== false) _skSetHash(id);
+      updateActiveNav();
+      if (opts.scroll !== false) _skScrollTo(document.getElementById('skBackBar'), false);
+    }
+    window.skOpenSection = skOpenSection;
+
+    function skShowGrid(opts) {
+      opts = opts || {};
+      const container = document.getElementById('skContainer');
+      if (!container) return;
+      const wasOpen = _skOpenId;
+      document.querySelectorAll('.section.sk-open').forEach(s => s.classList.remove('sk-open'));
+      container.classList.remove('sk-focused');
+      _skOpenId = null;
+      if (opts.hash !== false) _skSetHash('');
+      updateActiveNav();
+      if (opts.scroll === false) return;
+      // Return to the tile the user came from so they don't lose their place.
+      const tile = wasOpen && document.querySelector('.sk-tile[data-sk-open="' + wasOpen + '"]');
+      if (tile) {
+        const r = tile.getBoundingClientRect();
+        if (r.top < _skNavOffset() || r.bottom > window.innerHeight) {
+          tile.scrollIntoView({ behavior: 'auto', block: 'center' });
+        }
+        try { tile.focus({ preventScroll: true }); } catch (_) {}
+      } else {
+        _skScrollTo(document.getElementById('skOverview'), false);
+      }
+    }
+    window.skShowGrid = skShowGrid;
+
+    // SOS banner → the existing "Need Help Right Now?" crisis box.
+    function skGoToHelp() {
+      const help = document.getElementById('help');
+      if (!help) return;
+      _skScrollTo(help, true);
+      const box = help.querySelector('.crisis-box');
+      if (box) {
+        box.classList.remove('sk-pulse');
+        void box.offsetWidth; // restart the animation on repeat taps
+        box.classList.add('sk-pulse');
+      }
+    }
+    window.skGoToHelp = skGoToHelp;
+
+    // Route a "#id" to the right view. Returns true if it was handled.
+    function _skRouteHash(hash, fromLoad) {
+      const id = String(hash || '').replace(/^#/, '');
+      if (_SK_SECTION_IDS.indexOf(id) !== -1) { skOpenSection(id, { hash: false }); return true; }
+      if (id === 'help') { skGoToHelp(); return true; }
+      if (id === 'all' || (!id && !fromLoad)) { skShowGrid({ hash: false, scroll: !fromLoad }); return true; }
+      return false;
+    }
+
+    // Tile taps (event delegation — tiles are static markup).
+    document.addEventListener('click', e => {
+      const tile = e.target.closest && e.target.closest('.sk-tile[data-sk-open]');
+      if (tile) { skOpenSection(tile.getAttribute('data-sk-open')); return; }
+      // In-page "#…" links: the nav tabs, the Help tab, and any other link on
+      // this page that points at a section (e.g. fab.js's goals link).
+      const a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      const href = a.getAttribute('href') || '';
+      const m = href.match(/^(?:survival-kit\.html)?#([\w-]+)$/);
+      if (!m) return;
+      if (m[1] === 'all') { e.preventDefault(); skShowGrid(); return; }
+      if (_SK_SECTION_IDS.indexOf(m[1]) !== -1 || m[1] === 'help') {
+        e.preventDefault();
+        _skRouteHash('#' + m[1]);
+      }
+    });
+    window.addEventListener('hashchange', () => { _skRouteHash(location.hash); });
+
+    // Initial view: a deep link opens its section, otherwise the grid.
+    if (!_skRouteHash(location.hash, true)) updateActiveNav();
+
+    // Tab / tile accessible names (data-i18n only sets textContent, so the
+    // aria-labels are rebuilt here after translations apply).
+    function _skApplyGridA11y() {
+      const row = document.getElementById('skTabRow');
+      if (row) row.setAttribute('aria-label', _skt('sk.grid.tabsLabel'));
+      document.querySelectorAll('.sk-tab[data-sk-tab]').forEach(link => {
+        const id = link.getAttribute('data-sk-tab');
+        const tile = document.querySelector('.sk-tile[data-sk-open="' + id + '"] .sk-tile-name');
+        const lbl = link.querySelector('.sk-tab-lbl');
+        link.setAttribute('aria-label', (tile ? tile.textContent : (lbl ? lbl.textContent : id)).trim());
+      });
+      document.querySelectorAll('.sk-tile[data-sk-open]').forEach(tile => {
+        const name = (tile.querySelector('.sk-tile-name') || {}).textContent || '';
+        const state = tile.classList.contains('done') ? _skt('sk.grid.done') : _skt('sk.grid.todo');
+        tile.setAttribute('aria-label', name.trim() + ', ' + state);
+      });
+    }
+    document.addEventListener('DOMContentLoaded', _skApplyGridA11y);
+    document.addEventListener('bb:languagechange', () => { _skApplyGridA11y(); _skUpdateTicks(); });
 
     // ── ACCORDION ──
     function toggleAccordion(el) {
@@ -240,6 +369,9 @@ function _sktMood(moodKey) {
       // Smooth scroll to just above the guide title on load (custom 1.2s ease)
       // Skip when arriving via the index slide-in animation (already at top)
       if (sessionStorage.getItem('_bbSkipScroll') === '1') { sessionStorage.removeItem('_bbSkipScroll'); return; }
+      // Deep-linked straight into a section (e.g. #goals): keep it in view
+      // instead of gliding up to the title.
+      if (_skOpenId) { requestAnimationFrame(() => _skScrollTo(document.getElementById('skBackBar'), false)); return; }
       requestAnimationFrame(() => {
         const title = document.getElementById('survivalGuideTitle');
         if (!title) return;
@@ -388,11 +520,30 @@ function _sktMood(moodKey) {
         { id: 'media',      done: () => true },
         { id: 'spiritual',  done: () => true },
       ];
+      let _doneCount = 0;
       sections.forEach(({ id, done }) => {
+        const isDone = !!done();
+        if (isDone) _doneCount++;
         const el = document.getElementById(`tick_${id}`);
-        if (!el) return;
-        el.textContent = done() ? '✅' : '⬜';
+        if (el) el.textContent = isDone ? '✅' : '⬜';
+        // Overview grid tile for the same section — same done() test.
+        const tile = document.querySelector(`.sk-tile[data-sk-open="${id}"]`);
+        if (tile) {
+          tile.classList.toggle('done', isDone);
+          const name = (tile.querySelector('.sk-tile-name') || {}).textContent || '';
+          tile.setAttribute('aria-label', name.trim() + ', ' + _skt(isDone ? 'sk.grid.done' : 'sk.grid.todo'));
+        }
       });
+      // Grid progress line — same count and wording as the home screen's
+      // survival-progress badge (js/index.js _updateSurvivalProgress).
+      const _gp = document.getElementById('skGridProgress');
+      if (_gp) {
+        _gp.textContent = _doneCount >= sections.length
+          ? _skt('home.survivalAllDone')
+          : _skt('home.survivalProgress', { c: _doneCount });
+      }
+      const _gf = document.getElementById('skGridProgressFill');
+      if (_gf) _gf.style.width = Math.round(_doneCount / sections.length * 100) + '%';
       // Hide tap hints for filled sections
       const _copingFilled = sections.find(s => s.id === 'coping-strategies').done();
       const _memoriesFilled = sections.find(s => s.id === 'memories').done();
@@ -2459,6 +2610,9 @@ function _sktMood(moodKey) {
         const openModal = document.querySelector('.overlay-modal.active, .steps-modal.active');
         if (openModal) {
           openModal.classList.remove('active');
+        } else if (_skOpenId) {
+          // A section is open: back returns to the overview grid first.
+          skShowGrid();
         } else {
           location.replace('index.html');
         }

@@ -2213,3 +2213,196 @@
         content: none !important;
       }
     }
+
+
+    /* ════════════════════════════════════════════════════════════════════
+       Check-in polish (focused mode) — Nunito everywhere, bigger bears with a
+       pop on tap, a page tint that follows the chosen mood, and a card that
+       sits in the upper part of the screen rather than dead centre.
+       ════════════════════════════════════════════════════════════════════ */
+
+    /* Form controls don't inherit the page font by default, so every button
+       in the check-in (mood labels, ✕ Exit, Skip, Next, answer cards) fell back
+       to the system font while the headings were Nunito. */
+    #focusedModeCard button, #focusedModeCard input, #focusedModeCard textarea, #focusedModeCard select,
+    #entryFormCard button, #entryFormCard input, #entryFormCard textarea, #entryFormCard select,
+    #fmResumeSection button, #depressedSupportModal button {
+      font-family: inherit;
+    }
+
+    /* Step 1 bears (plain mode — the wheel / spectrum modes render their own
+       controls). Five across down to ~340px; no horizontal padding so the bear
+       gets the whole column. The mobile `.mood-selector` rule is !important,
+       hence the id-qualified !important here. */
+    #fmContent .mood-selector {
+      grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+      gap: 5px;
+      margin: 6px 0 0;
+    }
+    #fmContent .mood-btn {
+      min-width: 0;
+      padding: 10px 0 9px;
+      border-width: 2px;
+      border-radius: 18px;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    #fmContent .mood-btn .emoji {
+      width: 100%;
+      max-width: 88px;
+      height: auto;
+      aspect-ratio: 1 / 1;
+    }
+    /* Labels: one line, centred, allowed to spill a few px into the gap rather
+       than break mid-word ("Depresse-d"). Long translations (fm-label-long,
+       set in _fmRenderContent) drop a size and may wrap instead. */
+    #fmContent .mood-btn .label {
+      font-size: clamp(10.5px, 3vw, 14px);
+      line-height: 1.15;
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+    }
+    #fmContent .mood-btn .label.fm-label-long {
+      font-size: clamp(9.5px, 2.6vw, 13px);
+      white-space: normal;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      hyphens: auto;
+    }
+    /* Very narrow phones: 3 + 2 (second row centred) rather than squashing. */
+    @media (max-width: 339px) {
+      #fmContent .mood-selector { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; row-gap: 8px; }
+      #fmContent .mood-btn { grid-column: span 2; }
+      #fmContent .mood-btn .emoji { max-width: 64px; }
+      #fmContent .mood-btn:nth-child(4) { grid-column: 2 / span 2; }
+    }
+
+    /* Tap pop on the chosen bear (added by _fmMoodPop in js/journal.js). */
+    @keyframes fmMoodPop {
+      0%   { transform: scale(1); }
+      30%  { transform: scale(1.18) translateY(-4px); }
+      58%  { transform: scale(0.95); }
+      80%  { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+    #fmContent .mood-btn.fm-mood-pop .emoji {
+      animation: fmMoodPop 0.34s cubic-bezier(0.3, 0.7, 0.4, 1.2) both;
+    }
+
+    /* Mood tint: a soft wash of the chosen mood's colour over the orange page
+       while the check-in is open. body.bb-fm-tinted + --fm-page-tint are set by
+       _fmSetPageTint(); the wash disappears with body.bb-fm-full when the
+       check-in closes. `isolation` makes body a stacking context so the
+       z-index:-1 layer paints above body's own gradient but under the card. */
+    body.bb-fm-full { isolation: isolate; }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(180deg, var(--fm-page-tint, transparent) 0%, var(--fm-page-tint, transparent) 35%, transparent 100%);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    body.bb-fm-full.bb-fm-tinted::before { opacity: 0.3; }
+    @media (min-width: 920px) {
+      /* Desktop device-frame mockup: the orange lives on #app-shell. */
+      html:not(.is-native) body::before { display: none; }
+      html:not(.is-native) #app-shell::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: 30px;
+        pointer-events: none;
+        background: linear-gradient(180deg, var(--fm-page-tint, transparent) 0%, var(--fm-page-tint, transparent) 35%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.6s ease;
+      }
+      html:not(.is-native) body.bb-fm-full.bb-fm-tinted #app-shell::before { opacity: 0.3; }
+    }
+
+    /* Card placement: a fitted (plain-step) card used to float dead centre
+       with equal slabs of orange above and below. Sit it at the optical
+       centre instead — a third of the spare room above, two thirds below —
+       and give the mood step a little more height so it reads as the
+       screen's main surface, not a dialog. Auto margins stay as the fallback
+       where :has() is unsupported. */
+    @supports selector(:has(*)) {
+      body.bb-fm-full #appContent > .container:has(> #focusedModeCard.fm-plain-fit)::before,
+      body.bb-fm-full #appContent > .container:has(> #focusedModeCard.fm-plain-fit)::after {
+        content: '';
+        display: block;
+        flex: 1 1 0;
+        min-height: 0;
+      }
+      body.bb-fm-full #appContent > .container:has(> #focusedModeCard.fm-plain-fit)::after { flex-grow: 2; }
+      body.bb-fm-full #appContent > .container > #focusedModeCard.fm-plain-fit { margin-top: 0; margin-bottom: 0; }
+    }
+    @media (max-width: 919px) {
+      body.bb-fm-full #focusedModeCard.fm-plain-fit.fm-step-mood {
+        min-height: min(580px, 64vh);
+        min-height: min(580px, 64dvh);
+        padding-top: 22px !important;
+        padding-bottom: 22px !important;
+      }
+      /* Share the extra height above and below the question + bears. */
+      body.bb-fm-full #focusedModeCard.fm-plain-fit.fm-step-mood #fmHeaderSpacer { flex: 0.35 1 0; min-height: 16px; }
+      body.bb-fm-full #focusedModeCard.fm-plain-fit.fm-step-mood #fmFooterSpacer { flex: 1 1 0; min-height: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #fmContent .mood-btn.fm-mood-pop .emoji { animation: none !important; }
+      body::before, #app-shell::before { transition: none !important; }
+    }
+
+/* ── Life chart + early warnings ── */
+/* Styles for js/journal-insights.js: the life chart (#lifeChart, in the stats
+   block) and the opt-in early-warning card (#earlyWarnSlot). */
+#lifeChart { margin-top: 18px; background: #fff; border: 1.5px solid #e9ecef; border-radius: 14px; padding: 14px 12px 12px; }
+#lifeChart .lc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+#lifeChart .lc-title { font-weight: 700; color: #495057; font-size: 1em; }
+#lifeChart .lc-sub { color: #6c757d; font-size: 0.78em; line-height: 1.4; margin: 4px 0 10px; }
+#lifeChart .lc-ranges { display: inline-flex; border: 1.5px solid #e9ecef; border-radius: 10px; overflow: hidden; }
+#lifeChart .lc-range { background: #fff; border: 0; padding: 5px 10px; font-size: 0.78em; font-weight: 600; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
+#lifeChart .lc-range + .lc-range { border-left: 1px solid #e9ecef; }
+#lifeChart .lc-range.on { background: rgba(255,149,0,0.12); color: var(--brand-primary); }
+#lifeChart .lc-frame { display: flex; align-items: flex-start; }
+#lifeChart .lc-ylabels { position: relative; width: 60px; flex: 0 0 60px; }
+#lifeChart .lc-ylab { position: absolute; right: 6px; font-size: 9.5px; line-height: 12px; font-weight: 600; white-space: nowrap; max-width: 58px; overflow: hidden; text-overflow: ellipsis; }
+#lifeChart .lc-c-manic { color: #ff6b6b; }
+#lifeChart .lc-c-elevated { color: #a89800; }
+#lifeChart .lc-c-stable { color: #37b24d; }
+#lifeChart .lc-c-low { color: #845ef7; }
+#lifeChart .lc-c-depressed { color: #5c7cfa; }
+#lifeChart .lc-c-meds { color: #e03131; }
+#lifeChart .lc-c-sleep { color: #4c6ef5; }
+#lifeChart .lc-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; scrollbar-width: thin; outline: none; }
+#lifeChart .lc-svg { display: block; }
+#lifeChart .lc-grid { stroke: #f1f3f5; stroke-width: 1; }
+#lifeChart .lc-base { stroke: #ced4da; stroke-width: 1; }
+#lifeChart .lc-month { stroke: #e9ecef; stroke-width: 1; }
+#lifeChart .lc-sleepmed { stroke: #4c6ef5; stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.5; }
+#lifeChart .lc-axis { font-size: 9px; fill: #868e96; font-family: inherit; }
+#lifeChart .lc-axis-sm { fill: #adb5bd; }
+#lifeChart .lc-hl { fill: rgba(255,149,0,0.14); stroke: var(--brand-primary); stroke-width: 1; }
+#lifeChart .lc-detail { font-size: 0.8em; color: #495057; min-height: 1.3em; margin-top: 6px; text-align: center; }
+#lifeChart .lc-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; margin-top: 8px; font-size: 0.72em; color: #6c757d; }
+#lifeChart .lc-key { display: inline-flex; align-items: center; gap: 3px; }
+#lifeChart .lc-key i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
+#lifeChart .lc-key-gap { font-style: italic; }
+
+#earlyWarnSlot:empty { display: none; }
+#earlyWarnSlot { margin: 0 0 16px; }
+.ew-card { position: relative; background: #fff; border: 1.5px solid #d3f9d8; border-left: 5px solid #51cf66; border-radius: 14px; padding: 14px 40px 12px 16px; color: #495057; box-shadow: 0 4px 16px rgba(0,0,0,0.08); text-align: left; }
+.ew-title { font-weight: 700; font-size: 0.98em; margin-bottom: 6px; color: #2b8a3e; }
+.ew-list { list-style: none; margin: 0 0 10px; padding: 0; font-size: 0.88em; line-height: 1.5; }
+.ew-list li + li { margin-top: 8px; }
+.ew-hist { color: #6c757d; font-size: 0.95em; margin-top: 3px; font-style: italic; }
+.ew-close { position: absolute; top: 6px; right: 8px; background: none; border: 0; font-size: 1.4em; line-height: 1; color: #adb5bd; cursor: pointer; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
+.ew-strat { display: inline-block; background: rgba(255,149,0,0.1); border: 1.5px solid var(--brand-primary); color: var(--brand-primary); border-radius: 20px; padding: 7px 14px; font-size: 0.85em; font-weight: 600; text-decoration: none; }
+.ew-care { font-size: 0.8em; color: #6c757d; margin-top: 10px; line-height: 1.5; }
+.ew-care a { color: #5c7cfa; font-weight: 600; }
+.ew-device { font-size: 0.72em; color: #adb5bd; margin-top: 4px; }

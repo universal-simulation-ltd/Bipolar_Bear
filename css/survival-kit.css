@@ -1020,3 +1020,206 @@
         content: none !important;
       }
     }
+
+/* ── OVERVIEW GRID + FOCUSED SECTION VIEW ──
+   The page opens on #skOverview (SOS banner, progress, one tile per section).
+   Tapping a tile adds .sk-focused to #skContainer and .sk-open to that
+   section, so only it (plus the crisis box) shows. See js/survival-kit.js
+   skOpenSection() / skShowGrid(). */
+
+    /* Tab strip: icon over a short label, scrolls sideways on narrow phones */
+    .sticky-nav-row {
+      -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+              mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+      padding-right: 14px;
+    }
+    .sticky-nav-row .sk-tab {
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      min-width: 56px;
+      padding: 8px 8px 6px;
+      font-size: 0.7em;
+      line-height: 1.1;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sk-tab-ico { font-size: 1.6em; line-height: 1; }
+    .sk-tab-lbl {
+      font-weight: 700;
+      max-width: 76px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sticky-nav-row .sk-tab:active { background: var(--brand-tint); }
+    .sticky-nav-home a, .sticky-nav-help a { padding: 14px 10px; font-size: 0.78em; }
+    .sticky-nav-help a { color: #c62828; font-weight: 700; }
+
+    #skOverview { container-type: inline-size; margin-bottom: 28px; }
+
+    /* "Struggling right now?" — calm red banner, same palette as .crisis-box */
+    .sk-sos {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #e53935, #c62828);
+      color: white;
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(198,40,40,0.22);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sk-sos:active { transform: scale(0.98); box-shadow: 0 2px 6px rgba(198,40,40,0.25); }
+    .sk-sos-ico {
+      flex-shrink: 0;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45em; line-height: 1;
+    }
+    .sk-sos-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .sk-sos-title { font-weight: 800; font-size: 1.05em; line-height: 1.3; }
+    .sk-sos-sub { font-size: 0.84em; opacity: 0.92; line-height: 1.35; }
+    .sk-sos-arrow { flex-shrink: 0; font-size: 1.9em; line-height: 1; opacity: 0.85; margin-top: -3px; }
+
+    /* Progress — same count as the home screen badge */
+    .sk-progress { margin: 0 2px 14px; }
+    .sk-progress-label {
+      font-size: 0.8em;
+      font-weight: 700;
+      color: var(--text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .sk-progress-track { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+    .sk-progress-fill {
+      height: 100%; width: 0;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--orange), var(--orange-dark));
+      transition: width 0.4s ease;
+    }
+
+    .sk-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @container (min-width: 420px) {
+      .sk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    .sk-tile {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      min-height: 100px;
+      padding: 12px 12px 12px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      color: var(--text);
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sk-tile:active {
+      transform: scale(0.96);
+      background: var(--brand-tint);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .sk-tile:hover { box-shadow: 0 6px 18px rgba(255,136,51,0.18); border-color: var(--orange); }
+      .sk-sos:hover { box-shadow: 0 6px 18px rgba(198,40,40,0.3); }
+    }
+    .sk-tile:focus-visible, .sk-sos:focus-visible, .sk-back-btn:focus-visible, .sk-tab:focus-visible {
+      outline: 3px solid var(--orange);
+      outline-offset: 2px;
+    }
+    .sk-tile-ico {
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      background: var(--brand-tint);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6em; line-height: 1;
+    }
+    .sk-tile-name {
+      font-weight: 800;
+      font-size: 0.95em;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      hyphens: auto;
+    }
+    /* Completion state: empty ring (to do) / green tick (done) */
+    .sk-tile-state {
+      position: absolute;
+      top: 12px; right: 12px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid #e6dccd;
+      background: white;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sk-tile.done .sk-tile-state { background: #40c057; border-color: #40c057; }
+    .sk-tile.done .sk-tile-state::after {
+      content: '';
+      width: 6px; height: 11px;
+      margin-top: -2px;
+      border: solid white;
+      border-width: 0 2.5px 2.5px 0;
+      transform: rotate(45deg);
+    }
+
+    /* View switching */
+    #skContainer:not(.sk-focused) > .section:not(#help),
+    #skContainer:not(.sk-focused) > .sk-backbar { display: none; }
+    #skContainer.sk-focused > #skOverview,
+    #skContainer.sk-focused > .section:not(.sk-open):not(#help) { display: none; }
+    .section.sk-open .section-body { display: block; }
+    .section.sk-open .section-chevron { display: none; }
+    .section.sk-open .section-header { cursor: default; }
+    @media (hover: hover) and (pointer: fine) { .section.sk-open .section-header:hover { opacity: 1; } }
+
+    .sk-backbar { margin: -8px 0 18px; }
+    .sk-backbar-bottom { margin: 4px 0 28px; text-align: center; }
+    .sk-back-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 16px;
+      background: white;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      color: var(--orange);
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sk-back-btn:active { transform: scale(0.96); background: var(--brand-tint); }
+
+    @keyframes skPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(229,57,53,0.5); }
+      100% { box-shadow: 0 0 0 16px rgba(229,57,53,0); }
+    }
+    .crisis-box.sk-pulse { animation: skPulse 1.1s ease-out 2; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sk-tile, .sk-sos, .sk-back-btn, .sk-progress-fill { transition: none; }
+      .crisis-box.sk-pulse { animation: none; }
+    }

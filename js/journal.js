@@ -253,6 +253,59 @@ window.addEventListener('pageshow', () => {
       }, 600);
     }
 
+    // ── Deep link: journal.html?mood=<manic|elevated|stable|low|depressed> ──
+    // The home screen and the native home-screen widget link here to start a
+    // check-in with the mood already picked. The param is read once and
+    // stripped from the URL at once (history.replaceState), so a reload — e.g.
+    // after the entry is saved — never replays it. Invalid values are ignored.
+    // The mood is applied by _fmDeepLinkResolve(), called from
+    // updateDatePickerStatus() once the page knows which check-in it opens.
+    var _fmDeepLinkMood = (function () {
+      try {
+        const _p = new URLSearchParams(window.location.search);
+        if (!_p.has('mood')) return null;
+        const _m = String(_p.get('mood') || '').trim().toLowerCase();
+        _p.delete('mood');
+        const _qs = _p.toString();
+        history.replaceState(history.state, '', location.pathname + (_qs ? '?' + _qs : '') + location.hash);
+        return ['manic', 'elevated', 'stable', 'low', 'depressed'].includes(_m) ? _m : null;
+      } catch (_) { return null; }
+    })();
+
+    /**
+     * Apply a pending ?mood= deep link — one shot. `allowed` is false when the
+     * current day's entry is already complete: the page then does what it
+     * always does in that state (the "View yesterday's entry" card) and the
+     * link is dropped. Otherwise the mood is chosen exactly as a tap would
+     * (_fmMoodTap / _fmSpectrumTap, so the depressed-support modal, hints,
+     * haptic, tint and auto-advance to step 2 all run). With focused mode
+     * off, the classic form's bear is clicked instead.
+     */
+    function _fmDeepLinkResolve(allowed) {
+      const mood = _fmDeepLinkMood;
+      if (!mood) return;
+      _fmDeepLinkMood = null;
+      if (!allowed || (typeof editingEntry !== 'undefined' && editingEntry)) return;
+      const _card = document.getElementById('focusedModeCard');
+      if (typeof _fmActive !== 'undefined' && _fmActive && _card && _card.style.display !== 'none') {
+        const _moodIdx = _fmSteps.findIndex(s => s.id === 'mood');
+        if (_moodIdx < 0) return;
+        // A restored draft opens on the review step — go back to the mood step.
+        if (_fmStepIndex !== _moodIdx) { _fmReturnToDone = false; _fmGoTo(_moodIdx); }
+        setTimeout(() => {
+          if (!_fmActive || _fmStepIndex !== _moodIdx) return;
+          if (_spectrumEnabled()) _fmSpectrumTap({ manic: 9, elevated: 7, stable: 5, low: 3, depressed: 1 }[mood]);
+          else _fmMoodTap(mood);
+        }, 60);
+        return;
+      }
+      const _form = document.getElementById('entryFormCard');
+      if (_form && _form.style.display !== 'none') {
+        const _btn = _form.querySelector(`.mood-btn[data-mood="${mood}"]`);
+        if (_btn && _btn.offsetParent !== null) _btn.click();
+      }
+    }
+
     // ── Onboarding page lock ──
     (function() {
       const _targets = { 1:'journalToggleBtn', 2:'journalToggleBtn', 3:'homeLink' };
@@ -464,6 +517,7 @@ window.addEventListener('pageshow', () => {
               if (d.incognitoMode !== undefined) localStorage.setItem('incognitoMode', d.incognitoMode ? 'true' : 'false');
               else if (d.pdfHideByDefault !== undefined) localStorage.setItem('incognitoMode', d.pdfHideByDefault ? 'true' : 'false');
               if (d.achievementToastsEnabled !== undefined) localStorage.setItem('achievementToastsEnabled', d.achievementToastsEnabled ? 'true' : 'false');
+              if (d.earlyWarnEnabled !== undefined) localStorage.setItem('earlyWarnEnabled', d.earlyWarnEnabled ? 'true' : 'false');
               if (d.unlockedAchievements) {
                 localStorage.setItem('unlockedAchievements', JSON.stringify(d.unlockedAchievements));
                 _achievementsInitialized = false; // reset so next checkAchievements re-baselines without toasting
@@ -589,7 +643,7 @@ window.addEventListener('pageshow', () => {
               ['PinEnabled','PinCode','FavAnniShown',
                'PrivateHintSeen','FavouriteHintSeen','_moodTipShown','_fmMoodTipShown','_draft']
                 .forEach(k => BB.storage.remove(k));
-              ['moreDataOpenByDefault','showMoodSuggestion','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled']
+              ['moreDataOpenByDefault','showMoodSuggestion','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled','earlyWarnEnabled','bbEarlyWarnSeen']
                 .forEach(k => localStorage.removeItem(k));
               BB.storage.remove('OnboardingStep'); // new user starts at step 0
               localStorage.setItem('focusedModeEnabled', '1');
@@ -841,6 +895,7 @@ window.addEventListener('pageshow', () => {
         'bbWelcomeShown',
         'focusedModeEnabled', 'moreDataOpenByDefault', 'showMoodSuggestion',
         'moodLinkingEnabled', 'bb_draft',
+        'earlyWarnEnabled', 'bbEarlyWarnSeen',
         // "Already counted in counters/{userCount,anonUserCount}" mirrors.
         // Account-specific: leaving them behind would make the next account to
         // sign in on this device skip counting itself.
@@ -1273,9 +1328,19 @@ window.addEventListener('pageshow', () => {
           _ecEl.style.display = 'none';
         }
         document.getElementById('depressedSupportModal').classList.add('active');
+        _fmMoodPop('depressed');
       } else {
         selectedMood = mood;
-        _fmAdvance();
+        _fmApplyMoodTheme(selectedMood); // tint straight away, not after the step change
+        // Let the bear's pop finish before the step changes (it's ~0.34s;
+        // _fmAdvance adds 180ms of its own). The index check stops a late
+        // second tap from advancing twice.
+        if (_fmMoodPop(mood)) {
+          const _fromIdx = _fmStepIndex;
+          setTimeout(() => { if (_fmStepIndex === _fromIdx) _fmAdvance(); }, 150);
+        } else {
+          _fmAdvance();
+        }
       }
     }
     function _fmDismissDepressedMsg() {
@@ -2215,6 +2280,8 @@ window.addEventListener('pageshow', () => {
         // Only a fresh, hand-logged entry can earn the review prompt — edits and
         // auto-filled guesses don't count as a win. loadEntries() decides.
         if (_wasNewEntry && !entry.autoFilled) _reviewCandidateMood = entry.mood;
+        // Opt-in early-warning check runs on the reloaded entries (js/journal-insights.js).
+        if (window.BBInsights) window.BBInsights.noteSaved();
         loadEntries();
         nativeHaptic('success');
       } catch (error) {
@@ -2536,6 +2603,9 @@ window.addEventListener('pageshow', () => {
 
         // Display chart
         displayChart(entries);
+
+        // Life chart + opt-in early warnings (js/journal-insights.js)
+        if (window.BBInsights) { try { window.BBInsights.render(entries); } catch (e) { console.warn('insights', e); } }
 
         // Update date picker outline status
         updateDatePickerStatus(entries);
@@ -5036,6 +5106,43 @@ window.addEventListener('pageshow', () => {
       if (sticky) { sticky.style.background = bg; }
       const fullCard = document.getElementById('entryFormCard');
       if (fullCard) fullCard.style.background = bg;
+      _fmSetPageTint(cat ? _FM_MOOD_COLORS[cat] : null);
+    }
+
+    /**
+     * Mood tint for the page behind the check-in card: a soft wash of the
+     * chosen mood's colour over the orange background (see body::before in
+     * css/journal.css). Only visible while body.bb-fm-full is on, so it
+     * vanishes with the check-in; passing null clears it for a fresh one.
+     */
+    function _fmSetPageTint(color) {
+      const b = document.body;
+      if (!b) return;
+      if (color) b.style.setProperty('--fm-page-tint', color);
+      b.classList.toggle('bb-fm-tinted', !!color);
+    }
+
+    /** True when the OS asks for reduced motion. */
+    function _fmReducedMotion() {
+      try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (_) { return false; }
+    }
+
+    /**
+     * Selection feedback for a step-1 mood: a light haptic tick plus a short
+     * pop on the chosen bear (plain mode's .mood-btn; skipped under reduced
+     * motion). Returns true when a pop is playing, so the caller can hold the
+     * step change back until it has finished.
+     */
+    function _fmMoodPop(mood) {
+      try { nativeHaptic('light'); } catch (_) {}
+      const btn = document.querySelector(`#fmContent .mood-btn.mood-${mood}`);
+      if (!btn) return false;
+      btn.parentElement.querySelectorAll('.mood-btn').forEach(b => b.classList.toggle('selected', b === btn));
+      if (_fmReducedMotion()) return false;
+      btn.classList.remove('fm-mood-pop');
+      void btn.offsetWidth; // restart the animation on a repeat tap
+      btn.classList.add('fm-mood-pop');
+      return true;
     }
 
     /**
@@ -5182,6 +5289,8 @@ window.addEventListener('pageshow', () => {
       // let the card hug its own content instead of stretching to the full
       // viewport and leaving a large dead band below the answer cards.
       document.getElementById('focusedModeCard').classList.toggle('fm-plain-fit', !_isHeroStep);
+      // Mood step: lets the CSS give the first card a bit more height/presence.
+      document.getElementById('focusedModeCard').classList.toggle('fm-step-mood', step.id === 'mood');
       // setTimeout(0), not rAF: rAF can starve in a backgrounded/hidden WebView
       // and the wheel would never get its initial centring + hero paint.
       if (_hasWheel) setTimeout(_fmInitWheel, 0);
@@ -5748,7 +5857,7 @@ window.addEventListener('pageshow', () => {
                   onclick="_fmMoodTap('${m}')"
                   ontouchstart="_fmLongPressStart('${m}',event)" ontouchend="_fmLongPressCancel()" ontouchmove="_fmLongPressCancel()" onmousedown="_fmLongPressStart('${m}',event)" onmouseup="_fmLongPressCancel()" onmouseleave="_fmLongPressCancel()">
                   <img class="emoji" src="images/moods/${m}.png" alt="${m}">
-                  <span class="label">${BB.t('mood.' + m)}</span>
+                  <span class="label${BB.t('mood.' + m).length > 10 ? ' fm-label-long' : ''}">${BB.t('mood.' + m)}</span>
                 </button>`).join('')}</div>`;
             }
             return `${_quickNotesHtml}${_prevIntentionHtml}${_fmDayFillBtnHtml()}${_moodControl}
@@ -7690,6 +7799,7 @@ window.addEventListener('pageshow', () => {
         document.getElementById('entryFormCard').style.display = '';
         showDatePickerForNew();
         if (typeof _maybeFocusedModeAfterFormShown !== 'undefined') _maybeFocusedModeAfterFormShown();
+        _fmDeepLinkResolve(true); // ?mood= deep link (see its definition)
         return;
       }
 
@@ -7744,6 +7854,9 @@ window.addEventListener('pageshow', () => {
           }
         }
       }
+      // ?mood= deep link: apply to the check-in that just opened, or drop it
+      // when the day's entry is already complete.
+      _fmDeepLinkResolve(!currentDone);
       document.getElementById('todayCompleteSection').style.display = currentDone ? '' : 'none';
       const label = document.getElementById('entryCompleteLabel');
       if (label) label.textContent = (window.BB && BB.t)
@@ -8994,6 +9107,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           'elaborateResponsesEnabled', 'intentionEnabled', 'incognitoMode', 'pdfHideByDefault',
           'showMoodSuggestion', 'moreDataOpenByDefault', 'achievementToastsEnabled',
           'statsStartDate', 'weeklySummaryEnabled', 'customiseFormEnabled', 'disabledSteps',
+          'earlyWarnEnabled',
           'moodLinkingEnabled', 'customTrackingFields', 'deletedDefaultCustomFields',
           'deletedBuiltinFields', 'trackGoals', 'trackBudget', 'trackExercise',
           'trackOutside', 'trackAnxiety', 'trackAlcohol', 'trackEmotions',
@@ -9945,6 +10059,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           }
         }
 
+        // ── LIFE CHART (last 90 days, js/journal-insights.js) — with the other charts ──
+        if (_anyChartOn && window.BBInsights && window.BBInsights.drawLifeChartPdf) {
+          y = window.BBInsights.drawLifeChartPdf(doc, entries, { margin, pageW, pageH, y });
+        }
+
         // ── PERSONALISED INSIGHTS ──
         {
           const pdfSorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -10238,7 +10357,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               ['focusedModeEnabled','fmConfirmStep','fmAutoAdvance','fmAutoAdvanceMoreData',
                'elaborateResponsesEnabled','intentionEnabled','incognitoMode','pdfHideByDefault',
                'showMoodSuggestion','moreDataOpenByDefault','achievementToastsEnabled',
-               'weeklySummaryEnabled','customiseFormEnabled','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled'].forEach(k => {
+               'weeklySummaryEnabled','customiseFormEnabled','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled',
+               'earlyWarnEnabled'].forEach(k => {
                 if (settings[k] !== undefined) fsSettings[k] = _boolKey(settings[k]);
               });
               if (settings.statsStartDate) fsSettings.statsStartDate = settings.statsStartDate;
@@ -10510,6 +10630,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
         'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
         'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
+        'earlyWarnEnabled', 'bbEarlyWarnSeen',
       ];
       _keys.forEach(k => localStorage.removeItem(k));
       // Clear custom field toggle keys, label overrides, and tracking prefs (trackCustom_*, _labelOverride_*, trackXxx)
@@ -10540,6 +10661,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
           achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
           customTrackingFields: [], trackingFields: {}, labelOverrides: {},
+          earlyWarnEnabled: false,
         }, { merge: true }).catch(() => {});
       }
       closeSettingsModal();
@@ -10698,6 +10820,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
+          'earlyWarnEnabled', 'bbEarlyWarnSeen',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
@@ -10778,6 +10901,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
+              earlyWarnEnabled: false,
               moodDefinitions: {}, copingStrategies: {},
               onboardingStep: 0,
               helpedVoted: false,
@@ -10955,6 +11079,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         toggleBtn.innerHTML = BB.t('journal.btn.closeJournal');
         // Advance onboarding step 1→2 when user first opens journal (hint 2 fulfilled)
         _advanceOnboardingStep(2);
+        if (window.BBInsights) window.BBInsights.onStatsOpen();
         // Do NOT call loadEntries() here — the init load already ran before this button
         // became visible, so entries are already populated in #entries.
         // A redundant second load here was the source of the "connection issue on open" bug.
@@ -12513,6 +12638,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const _wmToggle = document.getElementById('wheelModeToggle');
       if (_wmToggle) _wmToggle.checked = _wheelMode();
       document.getElementById('moodSuggestionToggle').checked = localStorage.getItem('showMoodSuggestion') === '1';
+      if (window.BBInsights) window.BBInsights.syncSettingUI();
       document.getElementById('focusModeToggle').checked = _fmEnabled;
       document.getElementById('focusModeSubOptions').style.display = _fmEnabled ? '' : 'none';
       document.getElementById('fmConfirmStepToggle').checked = localStorage.getItem('fmConfirmStep') === 'true';
