@@ -1144,7 +1144,11 @@
 //       the Capacitor shells, 'web' otherwise), so these apps' users land in
 //       the suite's web / native split (migration 0187) instead of neither.
 //       Touches js/shared/user-count.js.
-const CACHE_NAME = 'bipolarbear-v235';
+// v236: on the web, the suite counter's first beat now waits for a tap, key,
+//       touch, wheel or scroll (as @unisim/sdk 0.158 does), so a visit that
+//       lands and leaves is not counted. Native shells beat on open as before.
+//       Touches js/shared/user-count.js.
+const CACHE_NAME = 'bipolarbear-v236';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

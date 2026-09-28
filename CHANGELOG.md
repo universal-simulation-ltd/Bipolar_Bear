@@ -6,6 +6,7 @@
 
 ## v1.38 (unreleased)
 - 📊 **The suite counter knows web from phone.** The beat to `app_presence_beat` now sends `p_platform` — `ios` / `android` inside the Capacitor shells, `web` on bipolarbear.app — so both apps' users count in the suite's "web · native" split (Supabase migration 0187). Before this they sent the old two-argument call and sat in neither column. Still only a random install id and the app's name besides; nothing about the person. The web side is live on push; the store apps get it with build 38. Touches `js/shared/user-count.js` (`CACHE_NAME` v235).
+- 👆 **On the web, a visit counts once you do something.** The suite counter's first beat waits for a tap, key press, touch, wheel or scroll, as every other suite app has since @unisim/sdk 0.158 — so somebody who lands and leaves is not a user. The apps are unchanged: opening one is the interaction. The two app-own Firestore counters are untouched (`CACHE_NAME` v236).
 - 🔒 **Privacy policy §6 says so.** The UNI·SIM line now reads "a randomly generated install ID and whether it is the web, iPhone or Android app, and nothing else", in all ten languages (`privacy.s6li2`, and `privacy.html`'s English fallback).
 
 ## v1.37

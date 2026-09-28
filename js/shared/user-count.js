@@ -356,7 +356,8 @@
   // Firestore counters above:
   //
   //   * a BEAT — app_presence_beat {p_product, p_install_id, p_platform}, on
-  //     load and every 45 s while the page is visible (migration 0175; the
+  //     load (on the web: on the first interaction — see INTERACTION_EVENTS)
+  //     and every 45 s while the page is visible (migration 0175; the
   //     platform since 0187), which is what puts this app's users INTO the
   //     suite figure, and into its web or native column;
   //   * a READ — suite_user_counts {} → {total, live} (migration 0177), for
@@ -450,6 +451,38 @@
       }
     } catch (_) {}
     return 'web';
+  }
+
+  // ── "Did something" — the gate in front of the first suite beat on the web ──
+  //
+  // Mirrors @unisim/sdk 0.158's presence.ts: in a browser, nobody is counted
+  // until they tap, press a key, touch, wheel or scroll, so somebody who lands
+  // and leaves is not a user. Scroll and wheel are in on purpose — reading the
+  // wiki IS using it. The Capacitor apps are exempt: opening an installed app
+  // is already the interaction. Capture + passive, so a handler that stops
+  // propagation can't hide a tap and nothing here holds up a scroll.
+  var INTERACTION_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'];
+  var _interacted = false;
+  var _interactionWaiters = [];
+
+  function _noteInteraction() {
+    if (_interacted) return;
+    _interacted = true;
+    INTERACTION_EVENTS.forEach(function (type) {
+      try { window.removeEventListener(type, _noteInteraction, true); } catch (_) {}
+    });
+    var waiting = _interactionWaiters;
+    _interactionWaiters = [];
+    waiting.forEach(function (run) { try { run(); } catch (_) {} });
+  }
+
+  INTERACTION_EVENTS.forEach(function (type) {
+    try { window.addEventListener(type, _noteInteraction, { capture: true, passive: true }); } catch (_) {}
+  });
+
+  /** May this page beat yet? Always in the native shells. */
+  function _mayBeat() {
+    return _interacted || _platform() !== 'web';
   }
 
   /**
@@ -594,8 +627,14 @@
 
       function tick() {
         if (stopped || _hidden()) return;
+        // Not yet interacted with (web only): read, so the line can still show
+        // the suite figure, but don't count this visit.
+        if (!_mayBeat()) { read(); return; }
         beat().then(read);
       }
+
+      // The first interaction beats straight away rather than up to 45 s later.
+      if (!_mayBeat()) _interactionWaiters.push(function () { if (!stopped && !_hidden()) beat(); });
 
       tick();
       timer = setInterval(tick, BEAT_MS);
