@@ -331,7 +331,7 @@ rather than Firestore, and a second figure rather than a replacement for the
 ones the apps already had.
 
 ```
-POST {supabase}/rest/v1/rpc/app_presence_beat  {p_product, p_install_id}
+POST {supabase}/rest/v1/rpc/app_presence_beat  {p_product, p_install_id, p_platform}
 POST {supabase}/rest/v1/rpc/suite_user_counts  {}  → [{total, live}]
 ```
 

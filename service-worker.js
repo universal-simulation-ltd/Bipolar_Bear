@@ -1140,7 +1140,11 @@
 // v234: release 1.37 — _APP_VERSION 1.37, What's New headline and the
 //       changelog modal's v1.37 block. Touches js/shared/brand-config.js,
 //       js/index.js, journal.html.
-const CACHE_NAME = 'bipolarbear-v234';
+// v235: the suite counter's beat now sends p_platform ('ios' / 'android' inside
+//       the Capacitor shells, 'web' otherwise), so these apps' users land in
+//       the suite's web / native split (migration 0187) instead of neither.
+//       Touches js/shared/user-count.js.
+const CACHE_NAME = 'bipolarbear-v235';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

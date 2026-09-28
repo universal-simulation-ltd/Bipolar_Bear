@@ -355,9 +355,10 @@
   // both against Supabase's REST endpoint, both deliberately separate from the
   // Firestore counters above:
   //
-  //   * a BEAT — app_presence_beat {p_product, p_install_id}, on load and every
-  //     45 s while the page is visible (migration 0175), which is what puts
-  //     this app's users INTO the suite figure;
+  //   * a BEAT — app_presence_beat {p_product, p_install_id, p_platform}, on
+  //     load and every 45 s while the page is visible (migration 0175; the
+  //     platform since 0187), which is what puts this app's users INTO the
+  //     suite figure, and into its web or native column;
   //   * a READ — suite_user_counts {} → {total, live} (migration 0177), for
   //     when somebody taps the line to see that figure.
   //
@@ -431,6 +432,24 @@
     } catch (_) {
       return _uuid();
     }
+  }
+
+  /**
+   * Which column of the suite's web / native split this device belongs in
+   * (migration 0187). 'ios' / 'android' inside the Capacitor shells, 'web' on
+   * bipolarbear.app. Without it every row landed in neither column, so the
+   * suite's native figure was missing this app's users entirely.
+   * @returns {'ios'|'android'|'web'}
+   */
+  function _platform() {
+    try {
+      var c = window.Capacitor;
+      if (c && c.isNativePlatform && c.isNativePlatform()) {
+        var p = c.getPlatform && c.getPlatform();
+        if (p === 'ios' || p === 'android') return p;
+      }
+    } catch (_) {}
+    return 'web';
   }
 
   /**
@@ -549,7 +568,7 @@
       var first = true;
 
       function beat() {
-        return _suiteRpc('app_presence_beat', { p_product: product, p_install_id: id })
+        return _suiteRpc('app_presence_beat', { p_product: product, p_install_id: id, p_platform: _platform() })
           .then(function () { beaten = true; })
           .catch(function (e) {
             _warn('[userCount] suite beat for ' + product + ' failed:', e && (e.message || e));
