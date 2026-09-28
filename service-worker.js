@@ -1148,7 +1148,11 @@
 //       touch, wheel or scroll (as @unisim/sdk 0.158 does), so a visit that
 //       lands and leaves is not counted. Native shells beat on open as before.
 //       Touches js/shared/user-count.js.
-const CACHE_NAME = 'bipolarbear-v236';
+// v237: release 1.38 — _APP_VERSION 1.38 and the changelog modal's v1.38
+//       block (no What's New popup: nothing new to point at). Carries the
+//       suite counter's p_platform (v235) and interaction gate (v236) into the
+//       store builds. Touches js/shared/brand-config.js, journal.html.
+const CACHE_NAME = 'bipolarbear-v237';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

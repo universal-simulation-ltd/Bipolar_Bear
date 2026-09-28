@@ -1,6 +1,6 @@
 {
  "bipolarbear": {
-  "releaseName": "37 (1.37)",
+  "releaseName": "38 (1.38)",
   "listing": {
    "es": {
     "title": "Bipolar Bear (Diario de ánimo)",
@@ -44,21 +44,21 @@
    }
   },
   "releaseNotes": {
-   "en": "Bipolar Bear is now part of the UNI·SIM suite: tap the community count on the home screen to see how many people use UNI·SIM apps.",
-   "es": "Bipolar Bear ya forma parte de la suite UNI·SIM: toca el contador de la comunidad en la pantalla de inicio para ver cuántas personas usan las apps de UNI·SIM.",
-   "fr": "Bipolar Bear fait désormais partie de la suite UNI·SIM : touche le compteur de la communauté sur l’écran d’accueil pour voir combien de personnes utilisent les applis UNI·SIM.",
-   "de": "Bipolar Bear gehört jetzt zur UNI·SIM-Suite: Tippe auf dem Startbildschirm auf den Community-Zähler, um zu sehen, wie viele Menschen UNI·SIM-Apps nutzen.",
-   "it": "Bipolar Bear ora fa parte della suite UNI·SIM: tocca il contatore della community nella schermata iniziale per vedere quante persone usano le app UNI·SIM.",
-   "pt": "O Bipolar Bear faz agora parte da suite UNI·SIM: toca no contador da comunidade no ecrã inicial para veres quantas pessoas usam as apps UNI·SIM.",
-   "pt-BR": "O Bipolar Bear agora faz parte da suíte UNI·SIM: toque no contador da comunidade na tela inicial para ver quantas pessoas usam os apps UNI·SIM.",
-   "nl": "Bipolar Bear hoort nu bij de UNI·SIM-suite: tik op de communityteller op het startscherm om te zien hoeveel mensen UNI·SIM-apps gebruiken.",
-   "pl": "Bipolar Bear jest teraz częścią pakietu UNI·SIM: stuknij licznik społeczności na ekranie głównym, aby zobaczyć, ile osób korzysta z aplikacji UNI·SIM.",
-   "sv": "Bipolar Bear är nu en del av UNI·SIM-sviten: tryck på gemenskapsräknaren på startskärmen för att se hur många som använder UNI·SIM-appar.",
-   "zh": "Bipolar Bear 现已加入 UNI·SIM 应用套件：在主屏幕上点按社区人数，即可查看有多少人在使用 UNI·SIM 应用。"
+   "en": "A small behind-the-scenes update: the UNI·SIM community count can now tell the app from the website. It still sends only a random install ID — nothing about you or your journal.",
+   "es": "Una pequeña actualización interna: el contador de la comunidad UNI·SIM ahora distingue la app de la web. Sigue enviando solo un ID de instalación aleatorio, nada sobre ti ni tu diario.",
+   "fr": "Une petite mise à jour en coulisses : le compteur de la communauté UNI·SIM distingue désormais l’app du site web. Il n’envoie toujours qu’un identifiant d’installation aléatoire, rien sur toi ni sur ton journal.",
+   "de": "Ein kleines Update im Hintergrund: Der UNI·SIM-Community-Zähler unterscheidet jetzt zwischen App und Website. Er sendet weiterhin nur eine zufällige Installationskennung – nichts über dich oder dein Tagebuch.",
+   "it": "Un piccolo aggiornamento dietro le quinte: il contatore della community UNI·SIM ora distingue l’app dal sito web. Invia sempre solo un ID di installazione casuale, niente su di te o sul tuo diario.",
+   "pt": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM passa a distinguir a app do site. Continua a enviar apenas um ID de instalação aleatório, nada sobre ti nem sobre o teu diário.",
+   "pt-BR": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM agora diferencia o app do site. Ele continua enviando só um ID de instalação aleatório, nada sobre você ou seu diário.",
+   "nl": "Een kleine update achter de schermen: de UNI·SIM-communityteller ziet nu het verschil tussen de app en de website. Hij verstuurt nog steeds alleen een willekeurige installatie-ID, niets over jou of je dagboek.",
+   "pl": "Mała zmiana pod maską: licznik społeczności UNI·SIM odróżnia teraz aplikację od strony internetowej. Nadal wysyła tylko losowy identyfikator instalacji, nic o tobie ani o twoim dzienniku.",
+   "sv": "En liten uppdatering bakom kulisserna: UNI·SIM-gemenskapens räknare skiljer nu på appen och webbplatsen. Den skickar fortfarande bara ett slumpmässigt installations-ID, inget om dig eller din dagbok.",
+   "zh": "一次幕后小更新：UNI·SIM 社区计数器现在可以区分应用和网站。它仍然只发送一个随机的安装 ID，不会发送任何关于你或你日记的信息。"
   }
  },
  "anonymous": {
-  "releaseName": "37 (1.37)",
+  "releaseName": "38 (1.38)",
   "listing": {
    "es": {
     "title": "Bipolar Anonymous",
@@ -102,17 +102,17 @@
    }
   },
   "releaseNotes": {
-   "en": "Posts now appear in your language — tap “Show original” under any translated post to read it as it was written. And the Bipolar Anonymous 12 Steps have their own page in the Wiki.",
-   "es": "Las publicaciones ahora aparecen en tu idioma: toca «Ver original» bajo cualquier publicación traducida para leerla tal como se escribió. Y los 12 Pasos de Bipolar Anonymous tienen su propia página en la Wiki.",
-   "fr": "Les messages s’affichent désormais dans ta langue — touche « Voir l’original » sous un message traduit pour le lire tel qu’il a été écrit. Et les 12 Étapes de Bipolar Anonymous ont leur propre page dans le Wiki.",
-   "de": "Beiträge erscheinen jetzt in deiner Sprache – tippe unter einem übersetzten Beitrag auf „Original anzeigen“, um ihn so zu lesen, wie er geschrieben wurde. Und die 12 Schritte von Bipolar Anonymous haben eine eigene Seite im Wiki.",
-   "it": "I post ora compaiono nella tua lingua: tocca «Mostra l’originale» sotto un post tradotto per leggerlo com’è stato scritto. E i 12 Passi di Bipolar Anonymous hanno una pagina tutta loro nella Wiki.",
-   "pt": "As publicações aparecem agora no teu idioma — toca em «Ver original» por baixo de qualquer publicação traduzida para a leres tal como foi escrita. E os 12 Passos do Bipolar Anonymous têm a sua própria página na Wiki.",
-   "nl": "Berichten verschijnen nu in jouw taal — tik op ‘Origineel tonen’ onder een vertaald bericht om het te lezen zoals het is geschreven. En de 12 Stappen van Bipolar Anonymous hebben een eigen pagina in de Wiki.",
-   "pl": "Posty wyświetlają się teraz w twoim języku — stuknij „Pokaż oryginał” pod przetłumaczonym postem, aby przeczytać go tak, jak został napisany. A 12 Kroków Bipolar Anonymous ma własną stronę w Wiki.",
-   "sv": "Inlägg visas nu på ditt språk – tryck på ”Visa originalet” under ett översatt inlägg för att läsa det som det skrevs. Och Bipolar Anonymous tolv steg har en egen sida i wikin.",
-   "zh": "帖子现在会以你的语言显示——在任何翻译过的帖子下点按“查看原文”即可阅读原文。Bipolar Anonymous 十二步也在 Wiki 里有了自己的页面。",
-   "pt-BR": "As publicações agora aparecem no seu idioma — toque em “Ver original” abaixo de qualquer publicação traduzida para ler como foi escrita. E os 12 Passos do Bipolar Anonymous ganharam uma página própria na Wiki."
+   "en": "A small behind-the-scenes update: the UNI·SIM community count can now tell the app from the website. It still sends only a random install ID — nothing about you or your posts.",
+   "es": "Una pequeña actualización interna: el contador de la comunidad UNI·SIM ahora distingue la app de la web. Sigue enviando solo un ID de instalación aleatorio, nada sobre ti ni tus publicaciones.",
+   "fr": "Une petite mise à jour en coulisses : le compteur de la communauté UNI·SIM distingue désormais l’app du site web. Il n’envoie toujours qu’un identifiant d’installation aléatoire, rien sur toi ni sur tes publications.",
+   "de": "Ein kleines Update im Hintergrund: Der UNI·SIM-Community-Zähler unterscheidet jetzt zwischen App und Website. Er sendet weiterhin nur eine zufällige Installationskennung – nichts über dich oder deine Beiträge.",
+   "it": "Un piccolo aggiornamento dietro le quinte: il contatore della community UNI·SIM ora distingue l’app dal sito web. Invia sempre solo un ID di installazione casuale, niente su di te o sui tuoi post.",
+   "pt": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM passa a distinguir a app do site. Continua a enviar apenas um ID de instalação aleatório, nada sobre ti nem sobre as tuas publicações.",
+   "nl": "Een kleine update achter de schermen: de UNI·SIM-communityteller ziet nu het verschil tussen de app en de website. Hij verstuurt nog steeds alleen een willekeurige installatie-ID, niets over jou of je berichten.",
+   "pl": "Mała zmiana pod maską: licznik społeczności UNI·SIM odróżnia teraz aplikację od strony internetowej. Nadal wysyła tylko losowy identyfikator instalacji, nic o tobie ani o twoich postach.",
+   "sv": "En liten uppdatering bakom kulisserna: UNI·SIM-gemenskapens räknare skiljer nu på appen och webbplatsen. Den skickar fortfarande bara ett slumpmässigt installations-ID, inget om dig eller dina inlägg.",
+   "zh": "一次幕后小更新：UNI·SIM 社区计数器现在可以区分应用和网站。它仍然只发送一个随机的安装 ID，不会发送任何关于你或你帖子的信息。",
+   "pt-BR": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM agora diferencia o app do site. Ele continua enviando só um ID de instalação aleatório, nada sobre você ou suas publicações."
   }
  }
 }
