@@ -291,6 +291,12 @@
       <div class="sheet-sub" id="compose-sub" data-i18n="anon.sugg.composeSub">Announcements are posted by the Bipolar Bear admin. Write yours here and it goes to them for approval — you'll see it waiting on this tab.</div>
     </div>
     <textarea id="compose-ta" class="compose-ta" placeholder="Share with the community…" rows="4" data-i18n-placeholder="anon.compose.placeholder"></textarea>
+    <!-- Optional poll (General tab only). Written via the createAnonPoll callable. -->
+    <div id="compose-poll" class="compose-poll" style="display:none;">
+      <div id="compose-poll-opts"></div>
+      <button type="button" id="compose-poll-more" class="poll-more" data-i18n="anon.ux.pollAddOption">+ Add option</button>
+    </div>
+    <button type="button" id="compose-poll-toggle" class="poll-toggle" data-i18n="anon.ux.pollAdd">📊 Add a poll</button>
     <div class="btn-row">
       <button class="btn-secondary" id="compose-cancel" style="flex:1" data-i18n="anon.compose.cancel">Cancel</button>
       <button class="btn-primary"   id="compose-post"   style="flex:2" disabled data-i18n="anon.compose.post">Post 🐻</button>

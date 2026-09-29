@@ -1194,3 +1194,199 @@ exports.translateAnonTexts = onCall(
     return { results };
   }
 );
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Board interactions: reactions, polls, the daily mood check-in
+// ═══════════════════════════════════════════════════════════════════════════
+// Written through callables (Admin SDK) rather than client writes, so none of
+// them needs a Firestore rules change — clients already read post docs, which
+// is where reaction counts and poll tallies live.
+//
+// Privacy follows likes: only totals are stored. Which posts you reacted to,
+// and how you voted, stay in localStorage on your device. The mood check-in
+// keeps one "this session has checked in today" marker so it counts once — the
+// marker holds no mood, and sweepAnonMoodSeen deletes it two days later.
+
+const REACTION_KINDS  = ['hug', 'same', 'strong'];
+const MOOD_KINDS      = ['low', 'flat', 'okay', 'high'];
+const MOOD_COL        = 'bbAnonMood';       // {day}: totals per mood
+const MOOD_SEEN_COL   = 'bbAnonMoodSeen';   // {day}_{uid}: checked-in marker
+const BANNED_COL      = 'bbAnonBanned';     // doc id = lowercased monika
+const POLL_MAX_OPTS   = 4;
+const POLL_OPT_CHARS  = 60;
+const POLL_TEXT_CHARS = 1000;
+
+function requireAuth(request) {
+  if (!request.auth || !request.auth.uid) {
+    throw new HttpsError('unauthenticated', 'Sign-in required.');
+  }
+}
+
+// The board's day, in UK time — the community is UK-based, and a day that
+// rolled over at 01:00 BST would split one evening across two totals.
+function boardDay(date) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(date || new Date());
+}
+
+// ── Reactions ────────────────────────────────────────────────────────────────
+// { postId, kind: 'hug'|'same'|'strong', delta: 1|-1 } → { count }
+// The client dedupes (like it does for 💛); the server only keeps the total
+// sane — never below zero, never on a deleted or missing post.
+exports.reactAnonPost = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    requireAuth(request);
+    const data   = request.data || {};
+    const postId = String(data.postId || '');
+    const kind   = String(data.kind || '');
+    const delta  = data.delta === -1 ? -1 : 1;
+    if (!postId || postId.includes('/') || !REACTION_KINDS.includes(kind)) {
+      throw new HttpsError('invalid-argument', 'Bad reaction.');
+    }
+    const ref = db.collection(POSTS).doc(postId);
+    const count = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists || snap.data().deleted) throw new HttpsError('not-found', 'Post not found.');
+      const cur  = Number((snap.data().reactions || {})[kind]) || 0;
+      const next = Math.max(0, cur + delta);
+      tx.update(ref, { [`reactions.${kind}`]: next });
+      return next;
+    });
+    return { count };
+  }
+);
+
+// ── Polls ────────────────────────────────────────────────────────────────────
+// createAnonPoll: the compose sheet's poll. Written here so the options are
+// validated and the tallies start at zero; the rest of the post has the same
+// shape (and the same trust) as a post the client writes itself.
+exports.createAnonPoll = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    requireAuth(request);
+    const d = request.data || {};
+    const str = (v, max) => String(v == null ? '' : v).trim().slice(0, max);
+    const text    = str(d.text, POLL_TEXT_CHARS);
+    const name    = str(d.name, 20);
+    const options = (Array.isArray(d.options) ? d.options : [])
+      .map((o) => str(o, POLL_OPT_CHARS)).filter(Boolean);
+    if (!text || !name) throw new HttpsError('invalid-argument', 'A question and a name are needed.');
+    if (options.length < 2 || options.length > POLL_MAX_OPTS) {
+      throw new HttpsError('invalid-argument', `A poll needs 2–${POLL_MAX_OPTS} options.`);
+    }
+    if (new Set(options.map((o) => o.toLowerCase())).size !== options.length) {
+      throw new HttpsError('invalid-argument', 'Options must differ.');
+    }
+    const banned = await db.collection(BANNED_COL).doc(name.toLowerCase()).get();
+    if (banned.exists) throw new HttpsError('permission-denied', 'Posting is disabled for this member.');
+
+    const num = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt);
+    const colour = (v) => (/^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? String(v) : '');
+    const ref = await db.collection(POSTS).add({
+      name,
+      text,
+      tab:       'general',
+      streak:    num(d.streak, 1),
+      initials:  str(d.initials, 2),
+      grad1:     colour(d.grad1),
+      grad2:     colour(d.grad2),
+      // The admin posts under the shared "Bipolar Bear Admin" label (see
+      // authorLabel in js/anonymous.js); trusted from the token, not the client.
+      isAdmin:   !!(request.auth.token && request.auth.token.email === ADMIN_ACCOUNT_EMAIL),
+      med:       str(d.med, 60),
+      stable:    num(d.stable, 0),
+      joinedAt:  d.joinedAt ? str(d.joinedAt, 40) : null,
+      likes:     0,
+      isSystem:  false,
+      poll:      { options, votes: options.map(() => 0) },
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    return { id: ref.id };
+  }
+);
+
+// voteAnonPoll: { postId, option, from? } → { votes }. `from` is the option the
+// device voted for before (changing your vote moves it); the device remembers
+// its own vote, as with likes.
+exports.voteAnonPoll = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    requireAuth(request);
+    const data   = request.data || {};
+    const postId = String(data.postId || '');
+    const option = Number(data.option);
+    const from   = data.from == null ? null : Number(data.from);
+    if (!postId || postId.includes('/') || !Number.isInteger(option)) {
+      throw new HttpsError('invalid-argument', 'Bad vote.');
+    }
+    const ref = db.collection(POSTS).doc(postId);
+    const votes = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const poll = snap.exists && !snap.data().deleted ? snap.data().poll : null;
+      if (!poll || !Array.isArray(poll.options)) throw new HttpsError('not-found', 'Poll not found.');
+      const n = poll.options.length;
+      if (option < 0 || option >= n) throw new HttpsError('invalid-argument', 'No such option.');
+      const v = poll.options.map((_, i) => Math.max(0, Number((poll.votes || [])[i]) || 0));
+      if (from !== null && Number.isInteger(from) && from >= 0 && from < n) {
+        if (from === option) return v;
+        v[from] = Math.max(0, v[from] - 1);
+      }
+      v[option] += 1;
+      tx.update(ref, { 'poll.votes': v });
+      return v;
+    });
+    return { votes };
+  }
+);
+
+// ── Daily mood check-in ──────────────────────────────────────────────────────
+// { mood? } → { day, counts, checkedIn }. With no mood it just reads today's
+// totals (the board shows them once you've checked in). One check-in per
+// session per UK day; a second is ignored rather than moved, which is what
+// lets the marker carry no mood at all.
+exports.anonMoodCheckin = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    requireAuth(request);
+    const mood = request.data && request.data.mood != null ? String(request.data.mood) : null;
+    if (mood !== null && !MOOD_KINDS.includes(mood)) {
+      throw new HttpsError('invalid-argument', 'Unknown mood.');
+    }
+    const day      = boardDay();
+    const totalRef = db.collection(MOOD_COL).doc(day);
+    const seenRef  = db.collection(MOOD_SEEN_COL).doc(`${day}_${request.auth.uid}`);
+    const out = await db.runTransaction(async (tx) => {
+      const [totSnap, seenSnap] = await Promise.all([tx.get(totalRef), tx.get(seenRef)]);
+      const counts = {};
+      MOOD_KINDS.forEach((k) => { counts[k] = Number((totSnap.exists && totSnap.data()[k]) || 0); });
+      let checkedIn = seenSnap.exists;
+      if (mood !== null && !checkedIn) {
+        counts[mood] += 1;
+        tx.set(totalRef, { [mood]: counts[mood], day }, { merge: true });
+        tx.set(seenRef, { day });
+        checkedIn = true;
+      }
+      return { counts, checkedIn };
+    });
+    return { day, ...out };
+  }
+);
+
+// The check-in markers are only needed for the day they belong to.
+exports.sweepAnonMoodSeen = onSchedule(
+  { schedule: '30 3 * * *', timeZone: 'Europe/London', region: REGION },
+  async () => {
+    const cutoff = boardDay(new Date(Date.now() - 2 * 24 * 60 * 60 * 1000));
+    let removed = 0;
+    for (;;) {
+      const snap = await db.collection(MOOD_SEEN_COL).where('day', '<=', cutoff).limit(400).get();
+      if (snap.empty) break;
+      const batch = db.batch();
+      snap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+      removed += snap.size;
+      if (snap.size < 400) break;
+    }
+    console.log(`[sweepAnonMoodSeen] removed ${removed} markers up to ${cutoff}`);
+  }
+);

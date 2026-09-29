@@ -1006,6 +1006,248 @@ function setupPullToRefresh() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Reactions, polls and the daily mood check-in
+// ─────────────────────────────────────────────────────────────────
+// All three write through callables in functions/index.js (reactAnonPost,
+// createAnonPoll, voteAnonPoll, anonMoodCheckin), so no Firestore rules change
+// is involved. As with 💛, only totals live on the server: which posts this
+// device reacted to, and how it voted, are remembered here in localStorage.
+async function _callFn(name, data) {
+  if (typeof firebase === 'undefined' || !firebase.app) throw new Error('offline');
+  await _ensureAuthSession();
+  const res = await firebase.app().functions('europe-west1').httpsCallable(name)(data || {});
+  return res.data || {};
+}
+
+const REACTIONS = [
+  { k: 'hug',    e: '🫂', key: 'anon.ux.reactHug' },
+  { k: 'same',   e: '🙋', key: 'anon.ux.reactSame' },
+  { k: 'strong', e: '💪', key: 'anon.ux.reactStrong' },
+];
+function _loadMap(key) {
+  try { const o = JSON.parse(BB.storage.get(key) || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; }
+  catch (e) { return {}; }
+}
+const reactedPosts = _loadMap('Anon_reacted');   // postId → ['hug', …]
+const votedPolls   = _loadMap('Anon_votes');     // postId → option index
+function _saveMap(key, obj) { try { BB.storage.set(key, JSON.stringify(obj)); } catch (e) {} }
+
+// The reaction chips beside 💛, plus the ☺ button that opens the picker.
+function reactionRowHtml(p) {
+  if (!_isThreadable(p)) return '';
+  const own  = p.name === profile.monika;
+  const mine = reactedPosts[p.id] || [];
+  const r    = p.reactions || {};
+  const chips = REACTIONS.map(x => {
+    const n = num(r[x.k], 0);
+    if (!n && !mine.includes(x.k)) return '';
+    return `<button class="react-chip${mine.includes(x.k) ? ' mine' : ''}" data-react="${x.k}" data-rid="${esc(p.id)}"`
+      + ` title="${esc(_wt(x.key))}"${own ? ' disabled' : ''}>${x.e} <span>${Math.max(n, mine.includes(x.k) ? 1 : 0)}</span></button>`;
+  }).join('');
+  return `<div class="react-row">${chips}</div>`;
+}
+// The ☺+ that opens the picker sits in the action row; the chips get their
+// own line above it, so a post with every reaction doesn't push ⋯ to a new row.
+function reactionAddHtml(p) {
+  if (!_isThreadable(p) || p.name === profile.monika) return '';
+  return `<button class="react-add" data-react-open="${esc(p.id)}" title="${esc(_wt('anon.ux.reactAdd'))}" aria-label="${esc(_wt('anon.ux.reactAdd'))}">☺︎<span>+</span></button>`;
+}
+function reactionPickerHtml(p) {
+  if (!_isThreadable(p) || p.name === profile.monika) return '';
+  return `<div class="react-picker">${REACTIONS.map(x =>
+    `<button class="react-pick" data-react="${x.k}" data-rid="${esc(p.id)}"><span class="rp-e">${x.e}</span><span class="rp-l">${esc(_wt(x.key))}</span></button>`
+  ).join('')}</div>`;
+}
+function _repaintCard(id) {
+  const card = document.querySelector(`#post-list .post-card[data-pid="${CSS.escape(id)}"]`);
+  const p = _findPost(id);
+  if (!card || !p) return;
+  const row = card.querySelector('.react-row');
+  if (row) row.outerHTML = reactionRowHtml(p);
+  const poll = card.querySelector('.poll');
+  if (poll) poll.outerHTML = pollHtml(p);
+}
+async function toggleReaction(id, kind) {
+  const p = _findPost(id);
+  if (!p || !REACTIONS.some(x => x.k === kind)) return;
+  if (p.name === profile.monika) { showHint(_wt('anon.ux.cantReactOwn')); return; }
+  const mine  = reactedPosts[id] || [];
+  const on    = !mine.includes(kind);
+  const delta = on ? 1 : -1;
+  const prevCount = num((p.reactions || {})[kind], 0);
+  // Optimistic: the chip moves now, the server's total lands a moment later.
+  reactedPosts[id] = on ? mine.concat(kind) : mine.filter(k => k !== kind);
+  if (!reactedPosts[id].length) delete reactedPosts[id];
+  p.reactions = Object.assign({}, p.reactions, { [kind]: Math.max(0, prevCount + delta) });
+  _saveMap('Anon_reacted', reactedPosts);
+  if (on) _haptic();
+  _repaintCard(id);
+  try {
+    const res = await _callFn('reactAnonPost', { postId: id, kind, delta });
+    p.reactions = Object.assign({}, p.reactions, { [kind]: num(res.count, 0) });
+  } catch (e) {
+    console.warn('[Anonymous] reaction failed', e);
+    reactedPosts[id] = mine;
+    if (!mine.length) delete reactedPosts[id];
+    p.reactions = Object.assign({}, p.reactions, { [kind]: prevCount });
+    _saveMap('Anon_reacted', reactedPosts);
+    showHint(_wt('anon.ux.reactFailed'));
+  }
+  _repaintCard(id);
+}
+
+// A poll under the post text. Before you vote: plain option buttons. After:
+// bars with percentages, your pick ticked, and still tappable to change it.
+// `readonly` for the copy in the thread header.
+function pollHtml(p, readonly) {
+  const poll = p && p.poll;
+  if (!poll || !Array.isArray(poll.options) || poll.options.length < 2) return '';
+  const votes = poll.options.map((_, i) => Math.max(0, num((poll.votes || [])[i], 0)));
+  const total = votes.reduce((a, b) => a + b, 0);
+  const mine  = Object.prototype.hasOwnProperty.call(votedPolls, p.id) ? votedPolls[p.id] : null;
+  const showResults = mine !== null || readonly;
+  const rows = poll.options.map((o, i) => {
+    const pct = total ? Math.round(votes[i] * 100 / total) : 0;
+    const attrs = readonly ? ' disabled' : ` data-vote="${i}" data-pid="${esc(p.id)}"`;
+    return `<button class="poll-opt${showResults ? ' voted' : ''}${mine === i ? ' mine' : ''}"${attrs}>`
+      + (showResults ? `<span class="poll-fill" style="width:${pct}%"></span>` : '')
+      + `<span class="poll-label">${mine === i ? '✓ ' : ''}${esc(o)}</span>`
+      + (showResults ? `<span class="poll-pct">${pct}%</span>` : '')
+      + `</button>`;
+  }).join('');
+  const count = total === 1 ? _wt('anon.ux.votesOne') : _wt('anon.ux.votesMany', { n: total });
+  return `<div class="poll"><div class="poll-tag">📊 ${esc(_wt('anon.ux.pollTag'))} · ${esc(count)}</div>${rows}</div>`;
+}
+async function votePoll(id, option) {
+  const p = _findPost(id);
+  if (!p || !p.poll || !_isThreadable(p)) return;
+  const had  = Object.prototype.hasOwnProperty.call(votedPolls, id);
+  const from = had ? votedPolls[id] : null;
+  if (from === option) return;
+  const before = (p.poll.votes || []).slice();
+  const v = p.poll.options.map((_, i) => Math.max(0, num(before[i], 0)));
+  if (from !== null && v[from] > 0) v[from] -= 1;
+  v[option] += 1;
+  p.poll = Object.assign({}, p.poll, { votes: v });
+  votedPolls[id] = option;
+  _saveMap('Anon_votes', votedPolls);
+  _haptic();
+  _repaintCard(id);
+  try {
+    const res = await _callFn('voteAnonPoll', { postId: id, option, from });
+    if (Array.isArray(res.votes)) p.poll = Object.assign({}, p.poll, { votes: res.votes });
+  } catch (e) {
+    console.warn('[Anonymous] vote failed', e);
+    p.poll = Object.assign({}, p.poll, { votes: before });
+    if (had) votedPolls[id] = from; else delete votedPolls[id];
+    _saveMap('Anon_votes', votedPolls);
+    showHint(_wt('anon.ux.voteFailed'));
+  }
+  _repaintCard(id);
+}
+
+// The daily check-in on the greeting card. One tap, once a day; afterwards the
+// card shows how the board as a whole is doing. Only totals are stored.
+const MOODS = [
+  { k: 'low',  e: '😔', key: 'anon.ux.moodLow',  c: '#7986cb' },
+  { k: 'flat', e: '😐', key: 'anon.ux.moodFlat', c: '#a1887f' },
+  { k: 'okay', e: '🙂', key: 'anon.ux.moodOkay', c: '#81c784' },
+  { k: 'high', e: '⚡', key: 'anon.ux.moodHigh', c: '#ffb74d' },
+];
+const _moodState = { ready: false, counts: null, checkedIn: false, day: '' };
+function _ukDay() {
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date()); }
+  catch (e) { return new Date().toISOString().slice(0, 10); }
+}
+function _myMood() {
+  try { const m = JSON.parse(BB.storage.get('Anon_mood') || 'null'); return m && m.day === _ukDay() ? m.mood : null; }
+  catch (e) { return null; }
+}
+function moodBlockHtml() {
+  if (!_moodState.ready) return '<div class="mood-block"></div>';
+  const mine = _myMood();
+  if (!_moodState.checkedIn && !mine) {
+    return `<div class="mood-block"><div class="mood-ask">${esc(_wt('anon.ux.moodAsk'))}</div><div class="mood-btns">`
+      + MOODS.map(m => `<button class="mood-btn" data-mood="${m.k}"><span class="mb-e">${m.e}</span><span class="mb-l">${esc(_wt(m.key))}</span></button>`).join('')
+      + `</div><div class="mood-note">${esc(_wt('anon.ux.moodPrivate'))}</div></div>`;
+  }
+  const counts = _moodState.counts || {};
+  const total  = MOODS.reduce((n, m) => n + num(counts[m.k], 0), 0);
+  const bar = total ? MOODS.map(m => {
+    const n = num(counts[m.k], 0);
+    return n ? `<span style="flex:${n};background:${m.c}" title="${esc(_wt(m.key))}: ${n}"></span>` : '';
+  }).join('') : '';
+  const legend = MOODS.map(m => `<span class="ml-i">${m.e} ${num(counts[m.k], 0)}</span>`).join('');
+  const you = mine ? MOODS.find(m => m.k === mine) : null;
+  const countLabel = total === 1 ? _wt('anon.ux.moodOne') : _wt('anon.ux.moodCount', { n: total });
+  return `<div class="mood-block"><div class="mood-ask">${esc(_wt('anon.ux.moodToday'))} · ${esc(countLabel)}</div>`
+    + (bar ? `<div class="mood-bar">${bar}</div>` : '')
+    + `<div class="mood-legend">${legend}</div>`
+    + (you ? `<div class="mood-note">${esc(_wt('anon.ux.moodYou', { m: you.e + ' ' + _wt(you.key) }))}</div>` : '')
+    + `</div>`;
+}
+function _repaintMood() {
+  const el = document.querySelector('#post-list .sys-card .mood-block');
+  if (el) el.outerHTML = moodBlockHtml();
+}
+async function loadMood() {
+  try {
+    const res = await _callFn('anonMoodCheckin', {});
+    Object.assign(_moodState, { ready: true, counts: res.counts || {}, checkedIn: !!res.checkedIn, day: res.day || '' });
+  } catch (e) {
+    // Offline or the function isn't there: the card just stays a greeting.
+    return;
+  }
+  _repaintMood();
+}
+async function checkInMood(kind) {
+  if (!MOODS.some(m => m.k === kind) || _myMood()) return;
+  const prev = Object.assign({}, _moodState);
+  try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
+  const counts = Object.assign({}, _moodState.counts);
+  counts[kind] = num(counts[kind], 0) + 1;
+  Object.assign(_moodState, { counts, checkedIn: true });
+  _haptic('success');
+  _repaintMood();
+  try {
+    const res = await _callFn('anonMoodCheckin', { mood: kind });
+    Object.assign(_moodState, { counts: res.counts || counts, checkedIn: true, day: res.day || '' });
+  } catch (e) {
+    console.warn('[Anonymous] mood check-in failed', e);
+    BB.storage.remove('Anon_mood');
+    Object.assign(_moodState, prev);
+    showHint(_wt('anon.ux.moodFailed'));
+  }
+  _repaintMood();
+}
+
+// One delegated listener on the feed for all three (the feed re-renders on
+// every snapshot, so per-button binding would be rewired constantly).
+function setupInteractions() {
+  const list = document.getElementById('post-list');
+  if (!list) return;
+  list.addEventListener('click', e => {
+    const open = e.target.closest('[data-react-open]');
+    if (open) {
+      const card = open.closest('.post-card');
+      if (card) card.classList.toggle('picker-open');
+      return;
+    }
+    const r = e.target.closest('[data-react]');
+    if (r && !r.disabled) {
+      const card = r.closest('.post-card');
+      if (card) card.classList.remove('picker-open');
+      toggleReaction(r.dataset.rid, r.dataset.react);
+      return;
+    }
+    const v = e.target.closest('[data-vote]');
+    if (v) { votePoll(v.dataset.pid, parseInt(v.dataset.vote, 10)); return; }
+    const m = e.target.closest('[data-mood]');
+    if (m) checkInMood(m.dataset.mood);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
 // SCREEN: Agree to terms (BipolarBear-app path only)
 // ─────────────────────────────────────────────────────────────────
 /**
@@ -1897,6 +2139,7 @@ function initBoard() {
     setupThread();
     setupOverlayActions();
     setupPullToRefresh();
+    setupInteractions();
     bindLongPress(document.getElementById('post-list'), '.post-card');
     _boardSetupDone = true;
   }
@@ -1904,6 +2147,7 @@ function initBoard() {
   // community-size read and the one-time self-count both need the auth session
   // Firestore rules expect, so they chain off it rather than racing it.
   _ensureAuthSession().then(() => {
+    loadMood();
     _refreshMemberCount();
     _countAnonMember();
     // "(N live)" — report this session as live and count the others. Once per
@@ -4234,6 +4478,7 @@ function renderThreadHeader(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
+    ${pollHtml(p, true)}
   </div>`;
 }
 
@@ -4613,6 +4858,7 @@ function renderSystem(p) {
     <div class="sys-emoji">${esc(p.icon) || '☀️'}</div>
     <div class="sys-text">${esc(p.text)}</div>
     <div class="sys-meta">BipolarBear${p.time ? ' · ' + esc(p.time) : (p.timestamp ? ' · ' + timeAgo(p.timestamp) : '')}</div>
+    ${p.id === 'sys_daily' ? moodBlockHtml() : ''}
   </div>`;
 }
 
@@ -4655,14 +4901,18 @@ function renderArchivedTopic(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
+    ${pollHtml(p)}
+    ${reactionRowHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(a.name)}">
         💛 <span>${likes}</span>
       </button>
+      ${reactionAddHtml(p)}
       ${commentBtnHtml(p, commentCount)}
       <div style="flex:1"></div>
       ${moreMenuHtml(deleteBtn)}
     </div>
+    ${reactionPickerHtml(p)}
   </div>`;
 }
 
@@ -4743,10 +4993,13 @@ function renderPost(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
+    ${p.isSeed ? '' : pollHtml(p)}
+    ${p.isSeed ? '' : reactionRowHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}"${p.name === profile.monika ? ` data-self="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
         💛 <span>${likes}</span>
       </button>
+      ${p.isSeed ? '' : reactionAddHtml(p)}
       ${commentBtn}
       <div style="flex:1"></div>
       ${p.isSeed ? '' : moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
@@ -4754,6 +5007,7 @@ function renderPost(p) {
           + `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>`
           + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''))}
     </div>
+    ${p.isSeed ? '' : reactionPickerHtml(p)}
   </div>`;
 }
 
@@ -4829,6 +5083,7 @@ function setupFAB() {
       return;
     }
     setComposeMode();
+    resetComposePoll();
     document.getElementById('compose-ta').value = '';
     document.getElementById('compose-post').disabled = true;
     openOv('ov-compose');
@@ -4862,7 +5117,48 @@ function setComposeMode() {
   if (post) post.textContent = _wt(suggest ? 'anon.sugg.send' : 'anon.compose.post');
 }
 
+// ── Compose: optional poll ──
+const POLL_MAX_OPTIONS = 4;
+function _pollOptionInput(i) {
+  return `<input type="text" class="bb-input poll-opt-input" maxlength="60" placeholder="${esc(_wt('anon.ux.pollOption', { n: i + 1 }))}">`;
+}
+function resetComposePoll() {
+  const box = document.getElementById('compose-poll');
+  const tog = document.getElementById('compose-poll-toggle');
+  const opts = document.getElementById('compose-poll-opts');
+  if (!box || !tog || !opts) return;
+  box.style.display = 'none';
+  opts.innerHTML = _pollOptionInput(0) + _pollOptionInput(1);
+  document.getElementById('compose-poll-more').style.display = '';
+  tog.textContent = _wt('anon.ux.pollAdd');
+  // Polls are member posts on General; suggestions and announcements don't carry them.
+  tog.style.display = (composeMode() === 'post' && currentTab === 'general') ? '' : 'none';
+}
+// null when no poll is being written; otherwise the trimmed, non-empty options.
+function _composePollOptions() {
+  const box = document.getElementById('compose-poll');
+  if (!box || box.style.display === 'none') return null;
+  return [...box.querySelectorAll('.poll-opt-input')].map(i => i.value.trim()).filter(Boolean);
+}
+
 function setupCompose() {
+  document.getElementById('compose-poll-toggle').addEventListener('click', () => {
+    const box = document.getElementById('compose-poll');
+    const tog = document.getElementById('compose-poll-toggle');
+    const showing = box.style.display !== 'none';
+    box.style.display = showing ? 'none' : '';
+    tog.textContent = _wt(showing ? 'anon.ux.pollAdd' : 'anon.ux.pollRemove');
+    if (!showing) { const f = box.querySelector('.poll-opt-input'); if (f) f.focus(); }
+  });
+  document.getElementById('compose-poll-more').addEventListener('click', () => {
+    const opts = document.getElementById('compose-poll-opts');
+    const n = opts.querySelectorAll('.poll-opt-input').length;
+    if (n >= POLL_MAX_OPTIONS) return;
+    opts.insertAdjacentHTML('beforeend', _pollOptionInput(n));
+    opts.lastElementChild.focus();
+    if (n + 1 >= POLL_MAX_OPTIONS) document.getElementById('compose-poll-more').style.display = 'none';
+  });
+
   const ta   = document.getElementById('compose-ta');
   const post = document.getElementById('compose-post');
 
@@ -4885,6 +5181,12 @@ function setupCompose() {
       showHint(_wt('anon.toast.postObjectionable'));
       post.disabled = false;
       return;
+    }
+    const pollOpts = composeMode() === 'post' ? _composePollOptions() : null;
+    if (pollOpts) {
+      const distinct = new Set(pollOpts.map(o => o.toLowerCase())).size === pollOpts.length;
+      if (pollOpts.length < 2 || !distinct) { showHint(_wt('anon.ux.pollNeedTwo')); return; }
+      if (pollOpts.some(o => findBlockedTerm(o))) { showHint(_wt('anon.toast.postObjectionable')); return; }
     }
     _posting = true;
     post.disabled = true;
@@ -4916,6 +5218,7 @@ function setupCompose() {
       isSystem: false,
       timestamp: now,
     };
+    if (pollOpts) entry.poll = { options: pollOpts, votes: pollOpts.map(() => 0) };
 
     // Show post immediately (optimistic update). Route through assembleGeneralPosts
     // on the general tab so the optimistic render keeps the system greeting, the
@@ -4929,11 +5232,19 @@ function setupCompose() {
     let docId = null;
     if (db) {
       try {
-        const ref = await db.collection(BB_BRAND.collections.posts).add({
-          ...entry,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-        docId = ref.id;
+        if (pollOpts) {
+          // Polls go through the createAnonPoll callable (validated options,
+          // tallies at zero) rather than a direct write.
+          const { timestamp, poll, ...fields } = entry;
+          const res = await _callFn('createAnonPoll', { ...fields, options: pollOpts });
+          docId = res.id || null;
+        } else {
+          const ref = await db.collection(BB_BRAND.collections.posts).add({
+            ...entry,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+          docId = ref.id;
+        }
         // A post you just wrote starts read, with no replies outstanding — the
         // first-render baseline would land on the same value, but only if the
         // post renders before anyone answers it.
@@ -4941,7 +5252,17 @@ function setupCompose() {
         _anonMarkPostedToday();
         _haptic('success');
         // Replace optimistic entry with the real one from the snapshot (happens automatically)
-      } catch (e) { console.error('[Anonymous] post failed', e); }
+      } catch (e) {
+        console.error('[Anonymous] post failed', e);
+        if (pollOpts) {
+          // No snapshot will replace the optimistic card, so take it back down.
+          localPosts = localPosts.filter(p => p.id !== optimisticId);
+          renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
+          showHint(_wt('anon.ux.pollFailed'));
+          _posting = false;
+          return;
+        }
+      }
     }
 
     if (!profile.hasPosted) {
