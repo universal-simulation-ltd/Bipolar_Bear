@@ -40,11 +40,13 @@
     }
 
     .home-link-btn {
-      color: white; text-decoration: none; background: rgba(255,255,255,0.2);
+      /* Opaque burnt orange (css/theme.css --brand-btn): white on the old
+         rgba(255,255,255,0.2) wash over the orange header was ~1.9:1. */
+      color: white; text-decoration: none; background: var(--brand-btn);
       padding: 8px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600;
       transition: background 0.2s;
     }
-    @media (hover: hover) and (pointer: fine) { .home-link-btn:hover { background: rgba(255,255,255,0.35); } }
+    @media (hover: hover) and (pointer: fine) { .home-link-btn:hover { background: var(--brand-btn-hover); } }
 
     .signin-btn {
       background: rgba(255,255,255,0.2);
@@ -123,9 +125,9 @@
       to   { transform: translateY(0);    opacity: 1; }
     }
     .helped-plus-btn {
-      background: rgba(255,255,255,0.15);
-      border: 2px solid rgba(255,255,255,0.4);
-      color: rgba(255,255,255,0.85);
+      background: var(--brand-btn);
+      border: 2px solid rgba(255,255,255,0.55);
+      color: white;
       border-radius: 20px;
       padding: 3px 11px;
       font-size: 0.85em;
@@ -138,7 +140,7 @@
     .helped-plus-btn.voted {
       background: white;
       border-color: white;
-      color: var(--brand-primary-dark);
+      color: #a8430a;
       box-shadow: 0 0 14px rgba(255,255,255,0.45);
     }
     @keyframes votePop {
@@ -404,7 +406,7 @@
     .link-btn {
       display: inline-block;
       padding: 10px 20px;
-      background: var(--orange);
+      background: var(--brand-btn);
       color: white;
       border-radius: 8px;
       text-decoration: none;
@@ -837,10 +839,10 @@
       margin-bottom: 10px;
       transition: all 0.2s;
     }
-    .modal-btn-primary { background: var(--brand-primary); color: white; }
+    .modal-btn-primary { background: var(--brand-btn); color: white; }
     .modal-btn-secondary { background: #f8f9fa; color: #495057; border: 2px solid #e9ecef; }
     @media (hover: hover) and (pointer: fine) {
-      .modal-btn-primary:hover { background: var(--brand-primary-dark); }
+      .modal-btn-primary:hover { background: var(--brand-btn-hover); }
       .modal-btn-secondary:hover { background: #e9ecef; }
     }
     /* Quick-add chips inside the My Medications modal — tapping a chip
@@ -867,7 +869,7 @@
     }
     .med-chip:active { transform: scale(0.96); }
     @media (hover: hover) and (pointer: fine) {
-      .med-chip:hover { background: var(--brand-primary); color: white; }
+      .med-chip:hover { background: var(--brand-btn); color: white; }
     }
     .modal-toggle { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 4px; }
     .modal-toggle span { color: var(--brand-primary); cursor: pointer; font-weight: 600; }

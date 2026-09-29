@@ -1173,7 +1173,14 @@
 //       one-liner in each page's <head>. Touches css/dark.css (new), fab.js,
 //       index.html, journal.html, js/journal.js, survival-kit.html,
 //       js/survival-kit.js, privacy.html.
-const CACHE_NAME = 'bipolarbear-v240';
+// v241: Home last-7-days strip for signed-in users (journal leaves a
+//       device-only mood-per-day cache, never with incognito or a PIN on),
+//       burnt-orange fills for the remaining white-label orange buttons
+//       (--brand-btn in css/theme.css), and ?mood= now survives the PIN
+//       gate. Touches css/theme.css, css/dark.css, css/index.css,
+//       css/journal.css, css/survival-kit.css, fab.js, index.html,
+//       journal.html, survival-kit.html, js/index.js, js/journal.js.
+const CACHE_NAME = 'bipolarbear-v241';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

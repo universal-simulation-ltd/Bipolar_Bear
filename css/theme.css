@@ -20,6 +20,15 @@
   --brand-primary-light: #ffaa33;
   --brand-tint: #fff8f0;
 
+  /* Filled buttons with WHITE labels. The light brand oranges can't carry
+     white text (#ff9500 ≈ 2.2:1, #ff6b00 ≈ 2.8:1), so they use the same
+     opaque burnt orange as the home buttons (css/index.css): #c24a0c ≈ 5.0:1
+     and #a8430a ≈ 6.1:1 against white, both past WCAG AA's 4.5:1.
+     css/dark.css deepens both for dark mode. */
+  --brand-btn: linear-gradient(135deg, #c24a0c 0%, #a8430a 100%);
+  --brand-btn-hover: linear-gradient(135deg, #a8430a 0%, #8a3708 100%);
+  --brand-btn-solid: #b5470b;
+
   /* Secondary brand, used by the anonymous community board (yellow). */
   --brand-secondary: #f5c800;
   --brand-secondary-tint: #fff8e6;

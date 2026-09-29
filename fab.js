@@ -421,7 +421,7 @@
             </div>
           </a>
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <button onclick="closeChatModal()" style="padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
+            <button onclick="closeChatModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
             <button onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
@@ -439,7 +439,7 @@
             <p style="margin-bottom:0;" data-i18n-html="fab.security.e2eeBody"><strong>🛡️ End-to-end encryption</strong> means your data is protected at every step — on your device, in transit, and in storage.</p>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
-            <button onclick="closeSecurityModal()" style="padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.gotIt">Got it</button>
+            <button onclick="closeSecurityModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.gotIt">Got it</button>
             <button onclick="closeSecurityModal();window._showHidePermanently('quicknote')" style="padding:10px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
@@ -454,7 +454,7 @@
           <p id="bbCoffeeFundedText" style="font-size:0.82em;color:var(--brand-primary);font-weight:600;margin-bottom:16px;display:none;"></p>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <a href="https://buymeacoffee.com/jamesmarkey" target="_blank" rel="noopener noreferrer" onclick="closeCoffeeModal()"
-              style="display:block;padding:13px;background:var(--brand-primary);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95em;text-align:center;">
+              style="display:block;padding:13px;background:var(--brand-btn);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95em;text-align:center;">
               <span data-i18n="fab.coffee.send">☕ Send me a coffee</span>
             </a>
             <button onclick="window._showHidePermanently('coffee')"
@@ -504,7 +504,7 @@
           </label>
           <div id="bbFbError" style="color:#dc3545;font-size:0.85em;margin-bottom:10px;display:none;"></div>
           <div style="display:flex;gap:10px;justify-content:center;">
-            <button onclick="submitFabFeedback()" style="padding:11px 24px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.95em;" data-i18n="common.send">Send</button>
+            <button onclick="submitFabFeedback()" style="padding:11px 24px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.95em;" data-i18n="common.send">Send</button>
             <button onclick="closeFabFeedback()" style="padding:11px 24px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.95em;" data-i18n="common.cancel">Cancel</button>
           </div>
           <button onclick="window._showHidePermanently('feedback')"
@@ -571,7 +571,7 @@
           <textarea id="bbQuickNoteInput" placeholder="Something to remember..." data-i18n-placeholder="quickNote.placeholder" style="width:100%;min-height:90px;border:1.5px solid #e9ecef;border-radius:10px;padding:10px 12px;font-size:0.9em;color:#495057;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.5;outline:none;"></textarea>
           <div style="display:flex;gap:10px;margin-top:12px;">
             <button onclick="closeQuickNoteModal()" style="flex:1;padding:11px;background:white;color:#adb5bd;border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
-            <button onclick="saveQuickNote()" style="flex:1;padding:11px;background:var(--brand-primary);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9em;cursor:pointer;"><span data-i18n="common.save">Save</span> ✓</button>
+            <button onclick="saveQuickNote()" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9em;cursor:pointer;"><span data-i18n="common.save">Save</span> ✓</button>
           </div>
           <button onclick="closeQuickNoteModal();window._hideExtraFab('quicknote')" style="display:block;margin:10px auto 0;padding:6px 10px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
@@ -586,7 +586,7 @@
           <div id="bbCelebField" style="color:#6c757d;font-size:0.85em;margin-bottom:16px;"></div>
           <div style="display:flex;gap:8px;margin-bottom:12px;">
             <button onclick="nextCeleb()" style="flex:1;padding:10px;background:#f8f9fa;color:#495057;border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="fab.celeb.next">Next ›</button>
-            <a id="bbCelebWiki" href="#" target="_blank" rel="noopener noreferrer" style="flex:1;padding:10px;background:var(--brand-primary);color:white;border-radius:12px;font-weight:700;font-size:0.9em;text-decoration:none;display:flex;align-items:center;justify-content:center;" data-i18n="fab.celeb.wiki">Wikipedia ↗</a>
+            <a id="bbCelebWiki" href="#" target="_blank" rel="noopener noreferrer" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border-radius:12px;font-weight:700;font-size:0.9em;text-decoration:none;display:flex;align-items:center;justify-content:center;" data-i18n="fab.celeb.wiki">Wikipedia ↗</a>
           </div>
           <div style="display:flex;gap:8px;">
             <button onclick="closeCelebModal()" style="flex:1;padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:12px;font-size:0.85em;cursor:pointer;" data-i18n="common.close">Close</button>
@@ -602,7 +602,7 @@
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:16px;text-align:center;" data-i18n="fab.goals.title">My Goals</div>
           <div id="bbGoalsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
           <a href="survival-kit.html#goals" style="display:block;text-align:center;color:var(--brand-primary);font-size:0.88em;text-decoration:none;margin-bottom:14px;padding:10px;border:1.5px solid #ffe0b2;border-radius:10px;" data-i18n="fab.goals.manage">Manage goals in Survival Kit ↗</a>
-          <button onclick="closeGoalsModal()" style="display:block;width:100%;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="common.close">Close</button>
+          <button onclick="closeGoalsModal()" style="display:block;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="common.close">Close</button>
           <button onclick="closeGoalsModal();window._hideExtraFab('goals')" style="display:block;width:100%;padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
@@ -613,7 +613,7 @@
           <div style="font-size:2em;margin-bottom:8px;">📊</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:8px;" data-i18n="fab.stats.title">Mood Statistics</div>
           <p style="font-size:0.85em;color:#6c757d;margin-bottom:18px;" data-i18n="fab.stats.body">View your mood patterns, streaks, and trends in the journal.</p>
-          <button onclick="document.getElementById('bbStatsModal').style.display='none';window.location.href='journal.html?openStats=1'" style="display:block;width:100%;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="fab.stats.open">Open Statistics ↗</button>
+          <button onclick="document.getElementById('bbStatsModal').style.display='none';window.location.href='journal.html?openStats=1'" style="display:block;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="fab.stats.open">Open Statistics ↗</button>
           <button onclick="document.getElementById('bbStatsModal').style.display='none'" style="display:block;width:100%;padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:12px;font-size:0.9em;cursor:pointer;margin-bottom:8px;" data-i18n="common.cancel">Cancel</button>
           <button onclick="document.getElementById('bbStatsModal').style.display='none';window._hideExtraFab('stats')" style="display:block;width:100%;padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
@@ -626,7 +626,7 @@
           <div id="bbAuthError" style="display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;"></div>
           <input type="email" id="bbAuthEmail" class="bb-auth-input" placeholder="Email" data-i18n-placeholder="auth.emailPlaceholder" autocomplete="email">
           <input type="password" id="bbAuthPassword" class="bb-auth-input" placeholder="Password" data-i18n-placeholder="auth.passwordPlaceholder" autocomplete="current-password">
-          <button id="bbAuthSubmit" style="width:100%;padding:13px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin-bottom:8px;" data-i18n="common.signIn">Sign In</button>
+          <button id="bbAuthSubmit" style="width:100%;padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin-bottom:8px;" data-i18n="common.signIn">Sign In</button>
           <button onclick="window.closeAuthModal()" style="width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="auth.continueGuest">Continue as Guest</button>
           <div id="bbAuthToggle" style="text-align:center;font-size:0.85em;color:#6c757d;cursor:pointer;padding:4px;">Don't have an account? <span style="color:var(--brand-primary);font-weight:600;">Sign up</span></div>
           <button onclick="(window._confirmDeleteGuestData||function(){})()" style="display:block;width:100%;margin-top:10px;background:none;border:none;color:#adb5bd;font-size:0.78em;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;text-align:center;" data-i18n="auth.deleteGuestData">🗑 Delete all guest data</button>
@@ -646,7 +646,7 @@
               <input type="password" id="bbAccountCurrentPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;outline:none;font-family:inherit;">
               <input type="password" id="bbAccountNewPass" placeholder="New password" data-i18n-placeholder="account.newPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
-                <button onclick="window._bbSubmitPasswordChange()" style="flex:1;padding:10px;background:var(--brand-primary);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
+                <button onclick="window._bbSubmitPasswordChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
                 <button onclick="document.getElementById('bbAccountPassFields').style.display='none';document.getElementById('bbAccountPassToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
@@ -657,7 +657,7 @@
               <input type="email" id="bbAccountNewEmail" placeholder="New email address" data-i18n-placeholder="account.newEmail" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;outline:none;font-family:inherit;">
               <input type="password" id="bbAccountEmailPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
-                <button onclick="window._bbSubmitEmailChange()" style="flex:1;padding:10px;background:var(--brand-primary);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
+                <button onclick="window._bbSubmitEmailChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
                 <button onclick="document.getElementById('bbAccountEmailFields').style.display='none';document.getElementById('bbAccountEmailToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>

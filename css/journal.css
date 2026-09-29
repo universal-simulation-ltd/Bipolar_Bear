@@ -621,7 +621,7 @@
       width: 100%;
       padding: 14px;
       margin: 14px 0 min(7vh, 60px);
-      background: var(--fm-accent, var(--brand-primary));
+      background: var(--fm-accent-btn, var(--brand-btn));
       color: #fff;
       border: none; border-radius: 14px;
       font-family: inherit; font-size: 1em; font-weight: 700;
@@ -650,7 +650,7 @@
     }
     .fm-done-actions .fm-wheel-emoji { font-size: 1.5em; line-height: 1.1; }
     .fm-done-del  { border-color: #ffc9c9 !important; color: #e03131 !important; background: #fff5f5 !important; }
-    .fm-done-save { --wb-color: var(--fm-accent, var(--brand-primary)); background: var(--fm-accent, var(--brand-primary)) !important; color: #fff !important; border-color: transparent !important; }
+    .fm-done-save { --wb-color: var(--fm-accent, var(--brand-primary)); background: var(--fm-accent-btn, var(--brand-btn)) !important; color: #fff !important; border-color: transparent !important; }
     .fm-done-save.grey { background: #adb5bd !important; }
     .fm-wheel-btn {
       scroll-snap-align: center;
@@ -1051,9 +1051,9 @@
     .submit-btn {
       width: 100%;
       padding: 15px;
-      background: darkorange;
+      background: var(--brand-btn);
       color: #fff;
-      border: 3px solid orange;
+      border: 3px solid rgba(255, 255, 255, 0.55);
       border-radius: 10px;
       font-size: 1.1em;
       font-weight: 600;
@@ -1076,7 +1076,7 @@
 
     @media (hover: hover) and (pointer: fine) {
       .submit-btn:hover {
-        background: orange;
+        background: var(--brand-btn-hover);
         color: white;
         transform: translateY(-3px);
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
@@ -1499,7 +1499,7 @@
 
     @media (hover: hover) and (pointer: fine) {
       .auth-btn:hover {
-        background: var(--brand-primary);
+        background: var(--brand-btn);
         color: white;
         transform: translateY(-2px);
         box-shadow: 0 5px 16px rgba(255, 149, 0, 0.35);
@@ -1952,7 +1952,7 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       }
       .confirm-btn-yes:hover { background: #c92a2a; color: white; }
-      #saveConfirmModal .confirm-btn-yes:hover { background: var(--brand-primary); border-color: var(--brand-primary); color: white !important; }
+      #saveConfirmModal .confirm-btn-yes:hover { background: var(--brand-btn); border-color: transparent; color: white !important; }
       .confirm-btn-no:hover { background: #f8f9fa; border-color: #adb5bd; }
     }
 
@@ -1979,7 +1979,7 @@
 
     @media (hover: hover) and (pointer: fine) {
       .pagination-btn:hover:not(:disabled) {
-        background: var(--brand-primary);
+        background: var(--brand-btn);
         color: white;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         transform: translateY(-2px);
@@ -2047,7 +2047,9 @@
       outline: 2px solid rgba(255,149,0,0.6);
     }
     /* Button & card hover — desktop pointer devices only */
-    .home-link-journal { color:white; text-decoration:none; background:rgba(255,255,255,0.2); padding:8px 16px; border-radius:20px; font-size:0.9em; font-weight:600; transition:background 0.2s; }
+    /* Opaque burnt orange (css/theme.css --brand-btn): white on the old
+       rgba(255,255,255,0.2) wash over the orange page was ~1.7:1. */
+    .home-link-journal { color:white; text-decoration:none; background:var(--brand-btn); padding:8px 16px; border-radius:20px; font-size:0.9em; font-weight:600; transition:background 0.2s; }
     .journal-toggle-btn { transition: background 0.2s, transform 0.2s; }
     .stats-toggle-btn   { transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s; }
     .btn-outline-orange { transition: background 0.2s, color 0.2s; }
@@ -2058,13 +2060,13 @@
     .logout-btn-list    { transition: border-color 0.2s; }
     .missing-date-item  { transition: background 0.2s, transform 0.2s; }
     @media (hover: hover) and (pointer: fine) {
-      .home-link-journal:hover  { background: rgba(255,255,255,0.35); }
-      .journal-toggle-btn:hover { background: rgba(255,255,255,0.35) !important; transform: translateY(-2px); }
-      .stats-toggle-btn:hover   { background: var(--brand-primary-dark) !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
-      .btn-outline-orange:hover { background: var(--brand-primary) !important; color: white !important; }
+      .home-link-journal:hover  { background: var(--brand-btn-hover); }
+      .journal-toggle-btn:hover { background: var(--brand-btn-hover) !important; transform: translateY(-2px); }
+      .stats-toggle-btn:hover   { background: var(--brand-btn-hover) !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
+      .btn-outline-orange:hover { background: var(--brand-btn) !important; color: white !important; }
       .btn-outline-red:hover    { background: #ff3b30 !important; color: white !important; }
       .stat-card[onclick]:hover { transform: scale(1.05); }
-      .btn-export-pdf:hover    { background: var(--brand-primary) !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
+      .btn-export-pdf:hover    { background: var(--brand-btn) !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .btn-export-backup:hover { background: #51cf66 !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .btn-export-import:hover { background: #74c0fc !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .logout-btn-list:hover   { border-color: #adb5bd !important; }

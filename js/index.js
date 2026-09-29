@@ -1921,7 +1921,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               <div style="font-size:0.88em;color:#666;line-height:1.55;margin-bottom:18px;">${_tr('home.resetDockBody', 'This will restore all hidden dock buttons back to their default positions.')}</div>
               <div style="display:flex;gap:10px;">
                 <button id="_dockCancelBtn" style="flex:1;padding:11px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-weight:600;font-size:0.9em;cursor:pointer;">${_tr('common.cancel', 'Cancel')}</button>
-                <button id="_dockConfirmBtn" style="flex:1;padding:11px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.9em;cursor:pointer;">${_tr('home.resetDockConfirm', 'Reset')}</button>
+                <button id="_dockConfirmBtn" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.9em;cursor:pointer;">${_tr('home.resetDockConfirm', 'Reset')}</button>
               </div>
             </div>`;
             Object.assign(_confirmOverlay.style, {
@@ -2056,7 +2056,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         const byDay = {};
         const stamp = {};
         try {
-          const cached = JSON.parse(BB.storage.get('_recentMoods') || 'null');
+          // Belt and braces: the journal never leaves the map behind with
+          // incognito or a PIN on (this screen paints before the unlock), but
+          // a setting synced from another device may not have reached it yet.
+          const blocked = localStorage.getItem('incognitoMode') === 'true'
+            || BB.storage.get('NativePinEnabled') === '1' || !!BB.storage.get('GuestPinSalt');
+          if (blocked) BB.storage.remove('_recentMoods');
+          const cached = blocked ? null : JSON.parse(BB.storage.get('_recentMoods') || 'null');
           if (cached && typeof cached === 'object') {
             Object.keys(cached).forEach(k => {
               const c = moodCat(cached[k]);
@@ -2593,6 +2599,34 @@ function _handleIndexJournalNav() {
     // locked guest, which both suppressed the PIN unlock (journal.html then
     // bounced every visit straight back to an unlockable home screen) and
     // killed every top-level statement after this block.
+    // ?mood= carried through journal.html's PIN gate: a bear tapped on home
+    // or on the native widget while the app was locked lands here as
+    // index.html?mood=<mood>. Read it once and strip it from the URL straight
+    // away (so a reload never replays it); _initPinLock keeps it only while
+    // the PIN overlay is actually up, and _afterPinUnlock() forwards to the
+    // journal with it. With no PIN gate it is simply dropped.
+    var _pinPendingMood = (function () {
+      try {
+        const p = new URLSearchParams(location.search);
+        if (!p.has('mood')) return null;
+        const m = String(p.get('mood') || '').trim().toLowerCase();
+        p.delete('mood');
+        const qs = p.toString();
+        history.replaceState(history.state, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+        return ['manic', 'elevated', 'stable', 'low', 'depressed'].indexOf(m) >= 0 ? m : null;
+      } catch (_) { return null; }
+    })();
+
+    // Called on every successful unlock (native PIN, guest PIN, native PIN
+    // turned off via "Forgot PIN"). Returns true when it navigated away.
+    function _afterPinUnlock() {
+      const mood = _pinPendingMood;
+      _pinPendingMood = null;
+      if (!mood) return false;
+      location.replace('journal.html?mood=' + encodeURIComponent(mood));
+      return true;
+    }
+
     function _initPinLock() {
       const _isNat = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
       // Signed-in users use account-derived encryption, not the guest PIN —
@@ -2602,9 +2636,10 @@ function _handleIndexJournalNav() {
       // applies even when signed in.
       const hasGuestPin = !_hasCachedFbUser() && !!BB.storage.get('GuestPinSalt');
       const hasNativePin = _isNat && BB.storage.get('NativePinEnabled') === '1';
-      if (!hasGuestPin && !hasNativePin) return;
+      if (!hasGuestPin && !hasNativePin) { _pinPendingMood = null; return; }
 
       const unlocked = sessionStorage.getItem('bbPinUnlocked') === '1';
+      if (unlocked) _pinPendingMood = null;
       if (!unlocked) {
         const _pinOv = document.getElementById('guestPinOverlay');
         if (_pinOv) _pinOv.style.display = 'flex';
@@ -2663,6 +2698,7 @@ function _handleIndexJournalNav() {
             return;
           }
           sessionStorage.setItem('bbPinUnlocked', '1');
+          if (_afterPinUnlock()) return;
           document.getElementById('guestPinOverlay').style.display = 'none';
           return;
         } catch(e) {
@@ -2701,6 +2737,7 @@ function _handleIndexJournalNav() {
         } catch(e) { console.error('PIN derive failed', e); }
       }
       sessionStorage.setItem('bbPinUnlocked', '1');
+      if (_afterPinUnlock()) return;
       document.getElementById('guestPinOverlay').style.display = 'none';
     }
 
@@ -2792,6 +2829,7 @@ function _handleIndexJournalNav() {
         BB.storage.remove('NativePinEnabled');
         await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
         sessionStorage.setItem('bbPinUnlocked', '1');
+        if (_afterPinUnlock()) return;
         document.getElementById('guestPinOverlay').style.display = 'none';
         return;
       }

@@ -36,6 +36,10 @@ html.theme-dark {
   /* Brand tints are pale orange/yellow washes in light mode; on dark they
      become a warm brown lift so everything using them follows. */
   --brand-tint: #2f2419;
+  /* White-label buttons: the home buttons' dark-mode burnt orange. */
+  --brand-btn: linear-gradient(135deg, #a8430a 0%, #8a3708 100%);
+  --brand-btn-hover: linear-gradient(135deg, #8a3708 0%, #6f2c06 100%);
+  --brand-btn-solid: #9a3d09;
   --brand-secondary-tint: #2f2a17;
 
   /* Survival Kit's page tokens. */

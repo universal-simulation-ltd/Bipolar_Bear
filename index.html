@@ -398,7 +398,7 @@
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;">
         <button onclick="_dismissWhatsNew()" style="flex:1;padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:10px;font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.whatsNew.gotIt">Got it</button>
-        <button onclick="_openFullChangelog()" style="flex:1;padding:10px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.whatsNew.changelog">Full changelog ↗</button>
+        <button onclick="_openFullChangelog()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.whatsNew.changelog">Full changelog ↗</button>
       </div>
     </div>
   </div>
@@ -446,7 +446,7 @@
         <textarea           id="pdNotes"     placeholder="Notes (optional)" rows="3"                  style="padding:8px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;resize:vertical;font-family:inherit;" data-i18n-placeholder="pd.notes"></textarea>
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;">
-        <button onclick="savePersonalDetails()" style="flex:1;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;" data-i18n="common.save">Save</button>
+        <button onclick="savePersonalDetails()" style="flex:1;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;" data-i18n="common.save">Save</button>
         <button onclick="closePersonalDetailsModal()" style="padding:12px 18px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
       </div>
     </div>
@@ -493,11 +493,11 @@
 
         <!-- Guest-only: sign up / in (hidden once signed in). Placed below the
              language picker to mirror the journal Settings menu layout. -->
-        <button id="idxCustomiseSignIn" onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;margin-bottom:18px;-webkit-tap-highlight-color:transparent;" data-i18n="home.signUpIn">Sign up / in</button>
+        <button id="idxCustomiseSignIn" onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;margin-bottom:18px;-webkit-tap-highlight-color:transparent;" data-i18n="home.signUpIn">Sign up / in</button>
 
         <div style="display:flex;gap:10px;">
           <button onclick="closeProfileModal()" style="flex:1;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.92em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.close">Close</button>
-          <button onclick="_profileShowPanel('account')" style="flex:1;padding:11px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.more">More →</button>
+          <button onclick="_profileShowPanel('account')" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.more">More →</button>
         </div>
         <div id="idxProfileVersion" style="margin-top:12px;text-align:center;font-size:0.7em;color:#adb5bd;letter-spacing:0.02em;"></div>
       </div>
@@ -517,7 +517,7 @@
               <input type="password" id="idxCurrentPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;outline:none;font-family:inherit;">
               <input type="password" id="idxNewPass" placeholder="New password" data-i18n-placeholder="account.newPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
-                <button onclick="_idxSubmitPasswordChange()" style="flex:1;padding:10px;background:var(--brand-primary);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
+                <button onclick="_idxSubmitPasswordChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
                 <button onclick="document.getElementById('idxPassFields').style.display='none';document.getElementById('idxPassToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
@@ -529,7 +529,7 @@
               <input type="email" id="idxNewEmail" placeholder="New email address" data-i18n-placeholder="account.newEmail" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;outline:none;font-family:inherit;">
               <input type="password" id="idxEmailPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
-                <button onclick="_idxSubmitEmailChange()" style="flex:1;padding:10px;background:var(--brand-primary);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
+                <button onclick="_idxSubmitEmailChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
                 <button onclick="document.getElementById('idxEmailFields').style.display='none';document.getElementById('idxEmailToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
@@ -540,7 +540,7 @@
         <!-- Guest notice (shown when not signed in) -->
         <div id="idxAccountGuest" style="display:none;margin-bottom:10px;">
           <p style="font-size:0.85em;color:#6c757d;line-height:1.5;text-align:center;margin-bottom:10px;" data-i18n="home.guestNotice">You're using Bipolar Bear as a guest. Sign in to save your progress and manage your account.</p>
-          <button onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="width:100%;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.signIn">Sign in</button>
+          <button onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.signIn">Sign in</button>
         </div>
 
         <button id="idxPersonalInfoBtn" onclick="window._fabOpenPersonalInfo&&window._fabOpenPersonalInfo()" style="width:100%;padding:12px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="fab.personalInfo">👤 Personal information</button>
@@ -601,7 +601,7 @@
         <p style="font-size:0.85em;color:#495057;line-height:1.6;margin-bottom:10px;" data-i18n-html="pin.e2ee1">Your journal entries are <strong>end-to-end encrypted</strong> — scrambled before they leave your device. Only you can read them. Not even we can.</p>
         <p style="font-size:0.85em;color:#495057;line-height:1.6;margin-bottom:10px;" data-i18n-html="pin.e2ee2">Think of it like a locked diary that only unlocks with your combination — your <strong>password + PIN together</strong> form that key.</p>
         <p style="font-size:0.85em;color:#495057;line-height:1.6;margin-bottom:16px;" data-i18n="pin.e2ee3">For personal and mental health data, this level of privacy really matters. Your entries stay private, always.</p>
-        <button onclick="document.getElementById('pinE2eeModal').style.display='none'" style="width:100%;padding:11px;background:var(--brand-primary);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-size:0.9em;" data-i18n="pin.gotIt">Got it</button>
+        <button onclick="document.getElementById('pinE2eeModal').style.display='none'" style="width:100%;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-size:0.9em;" data-i18n="pin.gotIt">Got it</button>
       </div>
     </div>
     <div id="idxPinDots" style="display:flex;gap:12px;margin-bottom:24px;">

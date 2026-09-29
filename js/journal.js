@@ -434,6 +434,7 @@ window.addEventListener('pageshow', () => {
           _updateJournalAuthFab(true);
           _justLoggedIn = true;
           BB.storage.remove('_entryStatus');
+          BB.storage.remove('_recentMoods');
           migrateGoodMoodToStable(user);
           // Load user settings from Firestore, then derive key + migrate + load entries
           // Race against 5 s — if Firestore hangs here _authResolved is already true so
@@ -516,6 +517,7 @@ window.addEventListener('pageshow', () => {
               if (d.fmConfirmStep !== undefined) localStorage.setItem('fmConfirmStep', d.fmConfirmStep ? 'true' : 'false');
               if (d.incognitoMode !== undefined) localStorage.setItem('incognitoMode', d.incognitoMode ? 'true' : 'false');
               else if (d.pdfHideByDefault !== undefined) localStorage.setItem('incognitoMode', d.pdfHideByDefault ? 'true' : 'false');
+              if (localStorage.getItem('incognitoMode') === 'true') BB.storage.remove('_recentMoods');
               if (d.achievementToastsEnabled !== undefined) localStorage.setItem('achievementToastsEnabled', d.achievementToastsEnabled ? 'true' : 'false');
               if (d.earlyWarnEnabled !== undefined) localStorage.setItem('earlyWarnEnabled', d.earlyWarnEnabled ? 'true' : 'false');
               if (d.unlockedAchievements) {
@@ -906,6 +908,7 @@ window.addEventListener('pageshow', () => {
       _userCryptoKey = null;
       _pendingAuthPassword = null;
       BB.storage.remove('NativePinEnabled');
+      BB.storage.remove('_recentMoods'); // home strip's per-device mood cache
       if (isNative()) {
         const _ss = window.Capacitor?.Plugins?.SecureStorage;
         if (_ss) {
@@ -1758,6 +1761,50 @@ window.addEventListener('pageshow', () => {
       if (k && window.BB && BB.t) return BB.t(k);
       return cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : '';
     }
+
+    // ── bb_recentMoods: the home screen's last-7-days strip ──
+    // Signed-in entries only exist encrypted in Firestore, so the home page
+    // (which never decrypts) can't draw the strip for them. After each load of
+    // decrypted entries — and loadEntries() re-runs after every save / edit /
+    // delete — leave a tiny plaintext map ON THIS DEVICE ONLY:
+    // {"YYYY-MM-DD": "manic|elevated|stable|low|depressed"} for today and the
+    // 7 days before it. Mood category only — no notes, sleep or anything else.
+    // Never synced to Firestore. Not written (and any existing copy removed)
+    // with incognito mode on or an app / guest PIN set: the home screen paints
+    // before the PIN unlock, so the strip would show moods to anyone holding
+    // the phone. Read by localMoodsByDay() in js/index.js (BLOCK 3c), whose
+    // day key (local date of entry.date) and categories this mirrors.
+    // Cleared by logout(), deleteAllEntries() and index.js's logout / reset.
+    function _recentMoodsBlocked() {
+      return localStorage.getItem('incognitoMode') === 'true'
+        || BB.storage.get('NativePinEnabled') === '1'
+        || !!BB.storage.get('GuestPinSalt');
+    }
+    function _writeRecentMoods(entries) {
+      try {
+        if (_recentMoodsBlocked()) { BB.storage.remove('_recentMoods'); return; }
+        const toKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const keep = {};
+        const d = new Date(); d.setHours(0, 0, 0, 0);
+        for (let i = 0; i <= 7; i++) { keep[toKey(d)] = true; d.setDate(d.getDate() - 1); }
+        const out = {}, stamp = {};
+        (entries || []).forEach(e => {
+          if (!e || !e.date) return;
+          const cat = _moodCat(e.mood);
+          if (['manic', 'elevated', 'stable', 'low', 'depressed'].indexOf(cat) < 0) return;
+          const dt = new Date(e.date);
+          if (isNaN(dt)) return;
+          const day = toKey(dt);
+          if (!keep[day]) return;
+          const ts = Number(e.timestamp) || 0;
+          if (!(day in stamp) || ts >= stamp[day]) { out[day] = cat; stamp[day] = ts; }
+        });
+        if (Object.keys(out).length) BB.storage.set('_recentMoods', JSON.stringify(out));
+        else BB.storage.remove('_recentMoods');
+      } catch (_) {}
+    }
+    // Re-evaluate after a privacy setting changes (incognito / PIN on or off).
+    function _refreshRecentMoods() { _writeRecentMoods(_allEntries); }
     // Descriptive label for any mood value (spectrum → band description, else category name).
     function _moodLabelOf(m) {
       if (_isNumericMood(m)) {
@@ -2559,9 +2606,11 @@ window.addEventListener('pageshow', () => {
         if (entries.length === 0) {
           // Encrypted entries exist but no key — redirect to index where the PIN prompt lives
           if (_lockedEntryCount > 0) {
-            location.replace('index.html');
+            location.replace('index.html' + location.search);
             return;
           }
+          _allEntries = [];
+          _writeRecentMoods([]);
           document.getElementById('entries').innerHTML = '<div class="no-entries">' + BB.t('journal.noEntries') + '</div>';
           document.getElementById('stats').style.display = 'none';
           document.getElementById('chart').style.display = 'none';
@@ -2581,6 +2630,7 @@ window.addEventListener('pageshow', () => {
         if (loader) loader.style.display = 'none';
         entries.sort((a, b) => b.timestamp - a.timestamp);
         _allEntries = entries;
+        _writeRecentMoods(entries);
         _updateMedBtn();
         _syncStableStreak(entries);
 
@@ -2685,7 +2735,7 @@ window.addEventListener('pageshow', () => {
         const _pageNums = [];
         for (let p = _pageStart; p <= _pageEnd; p++) _pageNums.push(p);
         const _pageButtons = _pageNums.map(p =>
-          `<button class="pagination-btn" onclick="goToPage(${p})" style="${p === currentPage ? 'background:var(--brand-primary);color:white;border-color:var(--brand-primary);' : ''}">${p}</button>`
+          `<button class="pagination-btn" onclick="goToPage(${p})" style="${p === currentPage ? 'background:var(--brand-btn);color:white;border-color:var(--brand-primary);' : ''}">${p}</button>`
         ).join('');
         const paginationHtml = `
           <div style="margin-top: 15px;">
@@ -2705,7 +2755,7 @@ window.addEventListener('pageshow', () => {
                 <button onclick="logout()" class="logout-btn-list" style="flex-shrink:0;padding:7px 14px;background:white;color:#adb5bd;border:1.5px solid #dee2e6;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.logout')}</button>
               ` : `
                 <span style="font-size:0.82em;color:#adb5bd;font-style:italic;">${BB.t('journal.ui.loginToBackup')}</span>
-                <button onclick="window.showAuthModal()" style="flex-shrink:0;padding:7px 14px;background:var(--brand-primary);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.signInUp')}</button>
+                <button onclick="window.showAuthModal()" style="flex-shrink:0;padding:7px 14px;background:var(--brand-btn);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.signInUp')}</button>
               `}
             </div>
             <div style="text-align:center;margin-top:8px;position:relative;display:inline-block;width:100%;">
@@ -3547,6 +3597,7 @@ window.addEventListener('pageshow', () => {
           BB.storage.set('PinCode', _guestPinSetupFirst);
           BB.storage.set('PinLinkedUID', currentUser ? currentUser.uid : 'guest');
           sessionStorage.setItem('bbPinUnlocked', '1');
+          BB.storage.remove('_recentMoods'); // home paints before the PIN unlock
           _guestCryptoKey = await _guestDeriveKey(_guestPinSetupFirst, saltB64);
           await _guestExportKeyToSession(_guestCryptoKey);
           const overlay = document.getElementById('guestPinSetupOverlay');
@@ -3750,6 +3801,7 @@ window.addEventListener('pageshow', () => {
               ]);
               BB.storage.set('NativePinEnabled', '1');
               sessionStorage.setItem('bbPinUnlocked', '1');
+              BB.storage.remove('_recentMoods'); // home paints before the PIN unlock
               _nativePinSetupMode = false;
               closePinSetup();
               _updateNativePinBtn();
@@ -3821,6 +3873,7 @@ window.addEventListener('pageshow', () => {
 
     async function disableNativePin() {
       BB.storage.remove('NativePinEnabled');
+      _refreshRecentMoods();
       sessionStorage.removeItem('bbPinUnlocked');
       await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
       _nativePinSetupMode = false;
@@ -5106,7 +5159,13 @@ window.addEventListener('pageshow', () => {
         : ((cat && _FM_MOOD_BG[cat]) || 'var(--brand-tint)');
       const card   = document.getElementById('focusedModeCard');
       const sticky = document.getElementById('fmNextRow');
-      if (card)   { card.style.background = bg;   card.style.setProperty('--fm-accent', accent); }
+      if (card)   {
+        card.style.background = bg;
+        card.style.setProperty('--fm-accent', accent);
+        // Filled white-label buttons (Next on notes, Save): the brand orange
+        // can't carry white text (~2.2:1) — use the burnt orange instead.
+        card.style.setProperty('--fm-accent-btn', accent === 'var(--brand-primary)' ? 'var(--brand-btn)' : accent);
+      }
       if (sticky) { sticky.style.background = bg; }
       const fullCard = document.getElementById('entryFormCard');
       if (fullCard) fullCard.style.background = bg;
@@ -5269,7 +5328,9 @@ window.addEventListener('pageshow', () => {
       } else {
         nextRow.style.display = 'flex';
       }
-      const _accent = ((selectedMood != null && selectedMood !== '') && _FM_MOOD_COLORS[_moodCat(selectedMood)]) || 'var(--brand-primary)';
+      let _accent = ((selectedMood != null && selectedMood !== '') && _FM_MOOD_COLORS[_moodCat(selectedMood)]) || 'var(--brand-primary)';
+      // White label on the fill: the brand orange is too light (~2.2:1).
+      if (_accent === 'var(--brand-primary)') _accent = 'var(--brand-btn)';
       const _t = (k) => (window.BB && BB.t) ? BB.t(k) : k;
       if (step.id === 'done') {
         const _noChanges = editingEntry && !_hasEditChanges();
@@ -5879,7 +5940,7 @@ window.addEventListener('pageshow', () => {
             }
             return `${_quickNotesHtml}${_prevIntentionHtml}${_fmDayFillBtnHtml()}${_moodControl}
             ${_linkedChip}
-            ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
+            ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
             ${_chooseHint}${_tapHoldHint}`;
           }
           // Full mood spectrum — render an 11-point (0–10) wheel instead of the
@@ -5921,7 +5982,7 @@ window.addEventListener('pageshow', () => {
           })));
           return `${_quickNotesHtml}${_prevIntentionHtml}${_fmDayFillBtnHtml()}${_fmHeroHtml()}${_moodWheel}
           ${_linkedChip}
-          ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
+          ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
           ${_showChooseMoodHint ? `<div id="_fmChooseMoodHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:8px;">
             <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
               <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -6021,7 +6082,7 @@ window.addEventListener('pageshow', () => {
                 <div style="font-size:2.6em;margin-bottom:10px;line-height:1;">🌙</div>
                 <p style="font-size:0.98em;color:#495057;font-weight:600;margin:0 0 6px;">${BB.t('journal.fm.sleepNotYet')}</p>
                 <p style="font-size:0.83em;color:#adb5bd;margin:0 0 18px;">${BB.t('journal.fm.sleepNotYetSub')}</p>
-                <button onclick="_fmAdvance()" style="width:100%;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>
+                <button onclick="_fmAdvance()" style="width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>
               </div>`;
           }
           const _committedBucket = (_fmSleepClear || selectedSleep == null) ? null : _fmSleepBucketOf(selectedSleep);
@@ -6323,7 +6384,7 @@ window.addEventListener('pageshow', () => {
           const _budgetInfo = _budgetVal
             ? `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:10px 14px;background:var(--brand-tint);border-radius:12px;border:1.5px solid rgba(255,149,0,0.3);">
                 <span style="font-size:0.9em;color:#495057;">💰 Daily budget: <b>${_budgetVal}</b></span>
-                <button onclick="showBudgetModal()" style="padding:4px 12px;background:var(--brand-primary);color:white;border:none;border-radius:8px;font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button>
+                <button onclick="showBudgetModal()" style="padding:4px 12px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button>
               </div>`
             : `<div style="text-align:center;margin-bottom:14px;">
                 <button onclick="showBudgetModal()" style="padding:8px 18px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>
@@ -6363,7 +6424,7 @@ window.addEventListener('pageshow', () => {
             if (ex.id === 'goals') {
               const _goalItems = JSON.parse(localStorage.getItem('dailyGoals') || '[]');
               const _goalsDetail = _goalItems.length > 0
-                ? (() => { const _dg = _goalItems.map(g => `<span style="display:inline-block;background:rgba(255,149,0,0.12);border-radius:6px;padding:2px 7px;margin:2px;font-size:0.8em;color:#495057;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g}</span>`).join(''); return `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${_dg}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-primary);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">${BB.t('common.change')}</button></div>`; })()
+                ? (() => { const _dg = _goalItems.map(g => `<span style="display:inline-block;background:rgba(255,149,0,0.12);border-radius:6px;padding:2px 7px;margin:2px;font-size:0.8em;color:#495057;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g}</span>`).join(''); return `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${_dg}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">${BB.t('common.change')}</button></div>`; })()
                 : `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
               const _goalsTitleClick = _goalItems.length > 0
                 ? "var el=document.getElementById('fmGoalsDetail');el.style.display=el.style.display==='none'?'':'none';"
@@ -6425,7 +6486,7 @@ window.addEventListener('pageshow', () => {
             } else if (ex.id === 'budget') {
               const _bv = localStorage.getItem('dailyBudget') || '';
               const _budgetDetail = _bv
-                ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.85em;color:#495057;">💰 Daily budget: <b>${_bv}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-primary);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`
+                ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.85em;color:#495057;">💰 Daily budget: <b>${_bv}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`
                 : `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
               const _budgetTitleClick = _bv
                 ? "var el=document.getElementById('fmBudgetDetail');el.style.display=el.style.display==='none'?'':'none';"
@@ -7934,7 +7995,7 @@ window.addEventListener('pageshow', () => {
         if (missingAction) {
           if (missingCount > 0) {
             missingAction.textContent = _t('journal.banner.missingEntries', { count: missingCount });
-            missingAction.style.background = 'rgba(255,149,0,0.9)';
+            missingAction.style.background = 'var(--brand-btn)';
             missingAction.style.color = 'white';
             missingAction.style.border = 'none';
             missingAction.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
@@ -7968,7 +8029,7 @@ window.addEventListener('pageshow', () => {
             otherBtn.onclick = reviewOtherEntry;
           } else {
             otherBtn.textContent = _t('journal.banner.last24Log');
-            otherBtn.style.background = 'rgba(255,149,0,0.9)';
+            otherBtn.style.background = 'var(--brand-btn)';
             otherBtn.style.color = 'white';
             otherBtn.style.border = 'none';
             otherBtn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
@@ -10815,6 +10876,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
         // Clear home-screen tick caches so buttons show as unchecked
         BB.storage.remove('_entryStatus');
+        BB.storage.remove('_recentMoods');
         localStorage.removeItem('moodDefinitions');
         localStorage.removeItem('copingStrategies');
         localStorage.removeItem('moodMemories');
@@ -11038,7 +11100,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                 style="width:90px;padding:7px 10px;border:1.5px solid #dee2e6;border-radius:8px;font-size:0.95em;outline:none;"
                 onkeydown="if(event.key==='Enter')_tfPickerSelectCustom()"
                 onclick="event.stopPropagation()">
-              <button onclick="_tfPickerSelectCustom()" style="padding:7px 14px;background:var(--brand-primary-dark);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;">OK</button>
+              <button onclick="_tfPickerSelectCustom()" style="padding:7px 14px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;">OK</button>
             </div>
           </div>
         </div>` +
@@ -11684,7 +11746,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         el.innerHTML = `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
       } else {
         const chips = goals.map(g => `<span style="display:inline-block;background:rgba(255,149,0,0.12);border-radius:6px;padding:2px 7px;margin:2px;font-size:0.8em;color:#495057;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g}</span>`).join('');
-        el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${chips}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-primary);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">Edit</button></div>`;
+        el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${chips}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">Edit</button></div>`;
       }
     }
 
@@ -11705,7 +11767,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (!val) {
         el.innerHTML = `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
       } else {
-        el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.9em;color:#495057;">💰 Daily budget: <b>${val}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-primary);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`;
+        el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.9em;color:#495057;">💰 Daily budget: <b>${val}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`;
       }
     }
 
@@ -12858,6 +12920,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     function _toggleIncognitoMode() {
       const on = document.getElementById('incognitoModeToggle').checked;
       localStorage.setItem('incognitoMode', on ? 'true' : 'false');
+      _refreshRecentMoods();
     }
     window._toggleIncognitoMode = _toggleIncognitoMode;
 
@@ -13044,7 +13107,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (!list) return;
       const pill = active =>
         active
-          ? `<span style="background:var(--brand-primary);color:white;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;">On</span>`
+          ? `<span style="background:var(--brand-btn);color:white;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;">On</span>`
           : `<span style="background:#e9ecef;color:#adb5bd;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;">Off</span>`;
 
       const _deletedBuiltin = JSON.parse(localStorage.getItem('deletedBuiltinFields') || '[]');
@@ -13072,7 +13135,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                 <input id="builtinFieldEditInput" type="text" value="${_storedLabel ? _storedLabel.replace(/^\S+\s*/, '') : f.label.replace(/^\S+\s*/, '')}" maxlength="20"
                   style="flex:1;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
                   onkeydown="if(event.key==='Enter')saveBuiltinFieldLabel('${f.key}')">
-                <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-primary);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Save</button>
+                <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Save</button>
                 <button onclick="cancelBuiltinFieldEdit()" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
               </div>
               <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:120px;overflow-y:auto;">${_bEmojiGrid}</div>
@@ -13120,7 +13183,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               <input id="customFieldEditInput" type="text" value="${f.label}" maxlength="15"
                 style="flex:1;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
                 onkeydown="if(event.key==='Enter')saveCustomFieldEdit()">
-              <button onclick="saveCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:var(--brand-primary);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Save</button>
+              <button onclick="saveCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Save</button>
               <button onclick="cancelCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f0f0f0;border-radius:8px;">
@@ -13148,7 +13211,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           <input id="customFieldInput" type="text" placeholder="${BB.t('journal.ui.fieldNameMax')}" maxlength="15"
             style="flex:1;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
             onkeydown="if(event.key==='Enter')addCustomField()">
-          <button onclick="addCustomField()" style="height:38px;box-sizing:border-box;background:var(--brand-primary);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Add</button>
+          <button onclick="addCustomField()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Add</button>
         </div>
         <div id="emojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f8f9fa;border-radius:8px;">
           ${emojiPickerGrid}
@@ -13776,6 +13839,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // Save incognito mode + auto-advance
       const _incogVal = document.getElementById('incognitoModeToggle').checked;
       localStorage.setItem('incognitoMode', _incogVal ? 'true' : 'false');
+      _refreshRecentMoods();
       const _csVal = document.getElementById('fmConfirmStepToggle').checked;
       localStorage.setItem('fmConfirmStep', _csVal ? 'true' : 'false');
       if (window.db && window.currentUser) {

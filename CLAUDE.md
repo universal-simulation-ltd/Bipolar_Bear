@@ -257,6 +257,18 @@ healthSyncEnabled, focusedModeEnabled, incognitoMode, achievementToastsEnabled,
 reminderEnabled, reminderTime, weeklySummaryEnabled, customiseFormEnabled,
 disabledSteps, currentStreak, stableStreak, fabState, earlyWarnEnabled`
 
+Device-only caches that must NEVER be synced to Firestore:
+
+- `bb_recentMoods` — `{"YYYY-MM-DD": "manic|elevated|stable|low|depressed"}`
+  for today + the 7 days before, the ONLY plaintext copy of a signed-in
+  user's moods (mood category only, nothing else). Written by
+  `_writeRecentMoods()` in `js/journal.js` after every `loadEntries()`, read
+  by the home last-7-days strip (`localMoodsByDay()`, BLOCK 3c of
+  `js/index.js`). Never written — and removed — while `incognitoMode` is on
+  or an app / guest PIN is set (`bbNativePinEnabled` / `bbGuestPinSalt`),
+  because the home screen paints before the PIN unlock. Cleared on logout,
+  sign-in, `deleteAllEntries()` and index.js's logout / reset lists.
+
 ## When adding a new feature
 
 If it adds a localStorage key, also consider updating:

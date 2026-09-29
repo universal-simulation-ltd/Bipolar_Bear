@@ -13,7 +13,9 @@
   // before they signed in) must NOT redirect them away from journal.html —
   // otherwise they bounce back to index.html every time they tap Journal
   // and never reach the journal.js cleanup that would clear it.
-  {const _np=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&localStorage.getItem('bbNativePinEnabled')==='1';let _signed=false;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('firebase:authUser:')===0&&localStorage.getItem(k)){_signed=true;break;}}}catch(_){}const _gp=!_signed&&localStorage.getItem('bbGuestPinSalt');if((_gp||_np)&&sessionStorage.getItem('bbPinUnlocked')!=='1'){location.replace('index.html');}}</script>
+  // The query string rides along so a ?mood= deep link (home bears / widget)
+  // survives the unlock — js/index.js BLOCK 8 forwards it back here.
+  {const _np=window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&localStorage.getItem('bbNativePinEnabled')==='1';let _signed=false;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('firebase:authUser:')===0&&localStorage.getItem(k)){_signed=true;break;}}}catch(_){}const _gp=!_signed&&localStorage.getItem('bbGuestPinSalt');if((_gp||_np)&&sessionStorage.getItem('bbPinUnlocked')!=='1'){location.replace('index.html'+location.search);}}</script>
   <!-- Theme before first paint (must stay inline): Appearance is 'auto'
        (follow the phone), 'light' or 'dark' in localStorage.bbTheme — kept
        off every logout / reset clear-list so it survives signing out.
@@ -212,7 +214,7 @@
         <span id="entryCompleteLabel" data-i18n="journal.prompt.viewYesterdayEntry" style="color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); font-weight:600; font-size:0.9em;">View yesterday's entry</span>
       </div>
       <div id="completionActionsRow" style="display:none; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:8px;">
-        <button id="missingEntriesAction" onclick="showMissingDates()" style="display:none; background:rgba(255,149,0,0.9); color:white; border:none; border-radius:20px; padding:7px 16px; font-size:0.85em; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; box-shadow:0 2px 8px rgba(0,0,0,0.15);"></button>
+        <button id="missingEntriesAction" onclick="showMissingDates()" style="display:none; background:var(--brand-btn); color:white; border:none; border-radius:20px; padding:7px 16px; font-size:0.85em; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent; box-shadow:0 2px 8px rgba(0,0,0,0.15);"></button>
         <button id="startOtherEntryBtn" onclick="startOtherDateEntry()" style="display:none; background:rgba(255,255,255,0.18); color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.25); border:1.5px solid rgba(255,255,255,0.55); border-radius:20px; padding:7px 16px; font-size:0.85em; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent;"></button>
       </div>
     </div>
@@ -498,7 +500,7 @@
       <!-- Next/Save button row (shown only for non-auto steps) -->
       <div id="fmNextRow" style="display:none;margin-top:16px;gap:10px;align-items:center;position:sticky;bottom:0;background:var(--brand-tint);padding-bottom:4px;">
         <button id="fmDeleteBtn" onclick="_fmDoneDelete()" style="display:none;min-width:52px;height:52px;background:white;color:#ff6b6b;border:2px solid #ff6b6b;border-radius:14px;font-size:1.3em;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">🗑️</button>
-        <button id="fmNextBtn" onclick="_fmNext()" style="flex:1;padding:14px;background:var(--brand-primary);color:white;border:none;border-radius:14px;font-size:1em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.fmNext">Next →</button>
+        <button id="fmNextBtn" onclick="_fmNext()" style="flex:1;padding:14px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:1em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.fmNext">Next →</button>
       </div>
       <div id="fmDraftStatus" style="text-align:right;font-size:0.75em;color:#6c757d;margin-top:4px;min-height:1em;transition:opacity 0.5s ease;opacity:0;"></div>
 
@@ -527,7 +529,7 @@
     <!-- Early-warning nudge card (opt-in) — rendered by js/journal-insights.js -->
     <div id="earlyWarnSlot"></div>
     <div id="journalToggleSection" style="display:none; text-align: center; margin: 20px 0;">
-      <button onclick="toggleJournal()" id="journalToggleBtn" class="journal-toggle-btn" style="padding: 15px 30px; background: rgba(255,255,255,0.2); color: white; text-shadow: 0 1px 4px rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1.1em; backdrop-filter: blur(10px); -webkit-tap-highlight-color:transparent;" data-i18n="journal.btn.openJournal">
+      <button onclick="toggleJournal()" id="journalToggleBtn" class="journal-toggle-btn" style="padding: 15px 30px; background: var(--brand-btn); color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.22); border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1.1em; backdrop-filter: blur(10px); -webkit-tap-highlight-color:transparent;" data-i18n="journal.btn.openJournal">
         📔 Open Journal
       </button>
     </div>
@@ -616,7 +618,7 @@
         </div>
         <div class="confirm-buttons" style="margin-top:14px;">
           <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage1').style.display='none';document.getElementById('moodCalcPage2').style.display='';">More info →</button>
-          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active')" style="background:var(--brand-primary);color:white;">Got it</button>
+          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active')" style="background:var(--brand-btn);color:white;">Got it</button>
         </div>
       </div>
       <!-- Page 2 -->
@@ -631,7 +633,7 @@
         <p style="color:#6c757d;font-size:0.76em;margin-top:8px;">Experimental — accuracy improves as more fields are filled in each day.</p>
         <div class="confirm-buttons" style="margin-top:14px;">
           <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';">← Back</button>
-          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active');document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" style="background:var(--brand-primary);color:white;">Got it</button>
+          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active');document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" style="background:var(--brand-btn);color:white;">Got it</button>
         </div>
       </div>
     </div>
@@ -750,7 +752,7 @@
       </div><!-- /pdfChartSection -->
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('pdfExportModal').classList.remove('active')">Cancel</button>
-        <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-primary);border-color:var(--brand-primary);color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value)">Generate PDF</button>
+        <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-btn);border-color:transparent;color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value)">Generate PDF</button>
       </div>
     </div>
   </div>
@@ -941,7 +943,7 @@
       </div>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closeCalMonthPicker()" data-i18n="common.cancel">Cancel</button>
-        <button class="confirm-btn" onclick="applyCalMonthPicker()" style="background:var(--brand-primary);color:white;border-color:var(--brand-primary);" data-i18n="journal.mods.go">Go</button>
+        <button class="confirm-btn" onclick="applyCalMonthPicker()" style="background:var(--brand-btn);color:white;border-color:var(--brand-primary);" data-i18n="journal.mods.go">Go</button>
       </div>
     </div>
   </div>
@@ -1155,7 +1157,7 @@
       <input type="text" id="budgetInput" placeholder="e.g. £50 daily" data-i18n-placeholder="journal.mods.budgetPlaceholder" onkeydown="if(event.key==='Enter')saveBudgetSetting()" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;box-sizing:border-box;outline:none;margin-bottom:16px;">
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closeBudgetModal()" data-i18n="common.cancel">Cancel</button>
-        <button class="confirm-btn confirm-btn-yes" onclick="saveBudgetSetting()" style="background:var(--brand-primary);border-color:var(--brand-primary);color:white;" data-i18n="common.save">Save</button>
+        <button class="confirm-btn confirm-btn-yes" onclick="saveBudgetSetting()" style="background:var(--brand-btn);border-color:transparent;color:white;" data-i18n="common.save">Save</button>
       </div>
     </div>
   </div>
@@ -1329,7 +1331,7 @@
           <span data-i18n="journal.autofill.promoTitle">✨ Auto-complete these days</span>
         </div>
         <p style="color:#6c757d; font-size:0.86em; margin:0 0 12px; line-height:1.5;" data-i18n="journal.autofill.promoDesc">Fill the gaps in one go from the data you already have — sleep and steps from your phone's health app, with a mood and energy level suggested from them. You review every day before anything is saved.</p>
-        <button id="autoFillPromoBtn" onclick="showAutoFillModal()" style="width:100%; padding:11px 16px; background:var(--brand-primary); color:white; border:none; border-radius:10px; font-weight:700; font-size:0.92em; cursor:pointer; -webkit-tap-highlight-color:transparent;" data-i18n="journal.autofill.promoBtn">✨ Auto-complete</button>
+        <button id="autoFillPromoBtn" onclick="showAutoFillModal()" style="width:100%; padding:11px 16px; background:var(--brand-btn); color:white; border:none; border-radius:10px; font-weight:700; font-size:0.92em; cursor:pointer; -webkit-tap-highlight-color:transparent;" data-i18n="journal.autofill.promoBtn">✨ Auto-complete</button>
       </div>
 
       <div id="missingDatesList" style="margin-bottom: 20px;">
@@ -1352,7 +1354,7 @@
       <p id="autoFillFoot" style="display:none; font-size:0.8em; color:#adb5bd; line-height:1.5; margin-bottom:18px;" data-i18n="journal.autofill.foot">These are estimates, not a record of how you actually felt. Every day added is marked AUTO in your journal — tap ✏️ to edit it or × to delete it.</p>
       <div class="confirm-buttons" id="autoFillActions" style="display:none;">
         <button class="confirm-btn confirm-btn-no" onclick="closeAutoFillModal()" data-i18n="common.cancel">Cancel</button>
-        <button class="confirm-btn" id="autoFillConfirmBtn" onclick="runAutoFill()" style="background:var(--brand-primary); color:white; border:2px solid var(--brand-primary);">Fill these in</button>
+        <button class="confirm-btn" id="autoFillConfirmBtn" onclick="runAutoFill()" style="background:var(--brand-btn); color:white; border:2px solid var(--brand-primary);">Fill these in</button>
       </div>
       <div class="confirm-buttons" id="autoFillDoneActions" style="display:none;">
         <button class="confirm-btn confirm-btn-no" onclick="finishAutoFill()" data-i18n="common.close">Close</button>
@@ -1476,7 +1478,7 @@
         </div>
 
         <!-- Guest-only: signing in is optional and only backs up data (hidden once signed in) -->
-        <button id="settingsGuestSignIn" onclick="closeSettingsModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
+        <button id="settingsGuestSignIn" onclick="closeSettingsModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
         <div id="settingsGuestSignInNote" style="display:none;color:#6c757d;font-size:0.78em;text-align:center;margin-bottom:14px;" data-i18n="journal.settings.guestSignInNote">Optional — everything works without an account. Sign in to sync across devices.</div>
 
         <div style="margin-top:4px;text-align:center;">

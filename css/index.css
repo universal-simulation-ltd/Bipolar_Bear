@@ -123,7 +123,7 @@
       position: absolute;
       top: -8px;
       right: -7px;
-      background: var(--brand-primary);
+      background: var(--brand-btn);
       color: white;
       font-size: 0.58em;
       font-weight: 800;
@@ -666,10 +666,10 @@
       margin-bottom: 10px;
       transition: all 0.2s;
     }
-    .modal-btn-primary { background: var(--brand-primary); color: white; }
+    .modal-btn-primary { background: var(--brand-btn); color: white; }
     .modal-btn-secondary { background: #f8f9fa; color: #495057; border: 2px solid #e9ecef; }
     @media (hover: hover) and (pointer: fine) {
-      .modal-btn-primary:hover { background: var(--brand-primary-dark); }
+      .modal-btn-primary:hover { background: var(--brand-btn-hover); }
       .modal-btn-secondary:hover { background: #e9ecef; }
     }
     .modal-toggle { text-align: center; font-size: 0.9em; color: #495057; margin-top: 4px; }

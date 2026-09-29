@@ -471,7 +471,7 @@
           <p style="color: var(--text-light); font-size: 0.9em; margin: 8px 0 14px;" data-i18n="sk.goals.wallTrackerDesc">Keep goals pinned to a physical board as a visual reminder.</p>
           <div id="wallTrackerActions">
             <a href="https://docs.google.com/document/d/1R_UAATfvnGBiKICxslWfuzDghOsxVAd6WDZdNXYnJdI/edit?usp=sharing" target="_blank" class="link-btn" id="wallTrackerPdfLink" data-i18n="sk.goals.download">Download ↗</a>
-            <button id="wallTrackerPdfBtn" onclick="generateWallTrackerPDF()" style="display:none;padding:10px 20px;background:var(--brand-primary);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin-top:10px;font-size:0.9em;-webkit-tap-highlight-color:transparent;" data-i18n="sk.goals.generatePdf">Generate Wall Tracker PDF</button>
+            <button id="wallTrackerPdfBtn" onclick="generateWallTrackerPDF()" style="display:none;padding:10px 20px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;margin-top:10px;font-size:0.9em;-webkit-tap-highlight-color:transparent;" data-i18n="sk.goals.generatePdf">Generate Wall Tracker PDF</button>
           </div>
         </div>
 
@@ -794,7 +794,7 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
         <p id="stepText" style="font-size:0.95em;color:#495057;line-height:1.7;margin:0 0 18px;"></p>
         <div style="display:flex;gap:10px;justify-content:center;">
           <button onclick="prevStep()" id="stepPrevBtn" style="padding:9px 20px;background:white;color:var(--brand-primary);border:2px solid var(--brand-primary);border-radius:8px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="sk.steps.prev">← Prev</button>
-          <button onclick="nextStep()" id="stepNextBtn" style="padding:9px 20px;background:var(--brand-primary);color:white;border:2px solid var(--brand-primary);border-radius:8px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Next →</button>
+          <button onclick="nextStep()" id="stepNextBtn" style="padding:9px 20px;background:var(--brand-btn);color:white;border:2px solid var(--brand-primary);border-radius:8px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Next →</button>
         </div>
       </div>
 
@@ -812,7 +812,7 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
           <p id="commitmentText" style="font-size:0.95em;color:#495057;line-height:1.7;margin:0 0 16px;white-space:pre-wrap;text-align:left;"></p>
           <div style="display:flex;gap:10px;justify-content:center;">
             <button onclick="prevCommitment()" id="commitPrevBtn" style="padding:9px 20px;background:white;color:var(--brand-primary);border:2px solid var(--brand-primary);border-radius:8px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="sk.steps.prev">← Prev</button>
-            <button onclick="nextCommitment()" id="commitNextBtn" style="padding:9px 20px;background:var(--brand-primary);color:white;border:2px solid var(--brand-primary);border-radius:8px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Next →</button>
+            <button onclick="nextCommitment()" id="commitNextBtn" style="padding:9px 20px;background:var(--brand-btn);color:white;border:2px solid var(--brand-primary);border-radius:8px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Next →</button>
           </div>
         </div>
         <button onclick="openAddCommitmentModal()" style="width:100%;padding:10px;background:none;border:2px dashed var(--brand-primary);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.9em;cursor:pointer;margin-top:14px;-webkit-tap-highlight-color:transparent;" data-i18n="sk.steps.addCommitment">+ Add Commitment</button>
@@ -910,7 +910,7 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
       <p style="text-align:center;color:#6c757d;font-size:0.88em;margin-bottom:16px;" data-i18n="sk.ec.subtitle">Saved to your profile — appears in the crisis box</p>
       <input type="text" id="ecInput" class="modal-input" placeholder="Name &amp; number (e.g. Jane 07700 900123)" data-i18n-placeholder="sk.ec.placeholder">
       <div style="display:flex;gap:10px;margin-top:4px;">
-        <button onclick="saveEmergencyContact()" style="flex:1;padding:12px;background:var(--brand-primary);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="sk.ec.save">Save</button>
+        <button onclick="saveEmergencyContact()" style="flex:1;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="sk.ec.save">Save</button>
         <button onclick="closeEcModal()" style="flex:1;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-weight:600;font-size:0.95em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="sk.ec.cancel">Cancel</button>
       </div>
     </div>
@@ -1053,7 +1053,7 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
       <input type="text" id="pdEmergencyContact" class="modal-input" placeholder="Emergency Contact (name & number)" data-i18n-placeholder="sk.pd.emergency">
       <textarea id="pdNotes" class="modal-input" placeholder="Notes (optional)" data-i18n-placeholder="sk.pd.notes" rows="3" style="resize:vertical;font-family:inherit;"></textarea>
       <div style="display:flex;gap:10px;margin-top:4px;">
-        <button class="modal-btn" onclick="savePersonalDetails()" style="background:var(--brand-primary);color:white;" data-i18n="sk.pd.save">Save</button>
+        <button class="modal-btn" onclick="savePersonalDetails()" style="background:var(--brand-btn);color:white;" data-i18n="sk.pd.save">Save</button>
         <button class="modal-btn" onclick="closePersonalDetailsModal()" style="background:white;color:#6c757d;border:2px solid #dee2e6;" data-i18n="sk.pd.close">Close</button>
       </div>
     </div>
