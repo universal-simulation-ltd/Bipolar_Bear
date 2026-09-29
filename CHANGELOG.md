@@ -30,6 +30,12 @@
   - **The bear on empty screens** (no posts, no replies, no wiki results, nothing saved), a coloured banner and accent for each **wiki section**, and **haptics** on likes, sends, the ⋯ menu, pull to refresh and the swipe threshold. Haptics use `@capacitor/haptics` in both native shells (added in `bipolarbear-native` and `bipolaranonymous-native`) and fall back to `navigator.vibrate` on Android web.
   - The report, SOS, mute and delete sheets now stack above the comment thread. Before, they had the same z-index as the thread and could open hidden behind it.
   - New `anon.ux.*` strings in all ten languages. Touches `anonymous.html`, `css/anonymous.css`, `js/anonymous.js`, `js/shared/i18n.js`, `icons/anon-bear-256.png` (new) (`CACHE_NAME` v238).
+- 🫂 **Bipolar Anonymous: gentle reactions, polls and a daily mood check-in** (29 Sep 2026, `CACHE_NAME` v243).
+  - **Reactions.** Beside 💛, the ☺+ button offers 🫂 Sending a hug, 🙋 Same here and 💪 You've got this. The counts sit on their own line above the actions, and you can't react to your own post. `likes` is untouched, so the first-post gate still reads it.
+  - **Polls.** Compose on General has 📊 Add a poll, with 2–4 options. Before you vote you see buttons; after, bars with percentages and your pick ticked, and you can change your vote.
+  - **Mood check-in.** The greeting card asks "How are you today?" (😔 Low · 😐 Flat · 🙂 Okay · ⚡ Racing), once per UK day, then shows the whole board's mix for the day.
+  - **How it's stored.** Everything goes through new callable Cloud Functions (`reactAnonPost`, `createAnonPoll`, `voteAnonPoll`, `anonMoodCheckin`, plus the nightly `sweepAnonMoodSeen`), deployed to `bipolarbear-app`, so no Firestore rules change is needed. As with likes, only totals are stored. Your reactions and votes are remembered on the device. The check-in keeps a "this session checked in today" marker with no mood in it, and deletes it after two days. An admin's poll keeps the shared "Bipolar Bear Admin" identity, taken from the sign-in token.
+  - **Privacy policy.** §2 gains `s2li10`, saying so in all ten languages. Touches `functions/index.js`, `anonymous.html`, `css/anonymous.css`, `js/anonymous.js`, `js/shared/i18n.js`, `privacy.html`.
 
 ## v1.38
 - Version bump: `_APP_VERSION` 1.38, iOS (app + widget) and Android build 38 for both apps (Bipolar Anonymous 1.38 (38)), `service-worker.js` `CACHE_NAME` v237. In-app changelog: a v1.38 block; no What's New popup, as there is nothing new to point at. Store What's New in all 11 languages.

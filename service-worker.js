@@ -1184,7 +1184,12 @@
 //       the spectrum Continue use a darker shade of each mood colour, and the
 //       journal's "View yesterday's entry" / streak / 0-missing pills get a dark
 //       fill. Touches js/journal.js, css/journal.css.
-const CACHE_NAME = 'bipolarbear-v242';
+// v243: Bipolar Anonymous — gentle reactions (🫂 🙋 💪), polls in compose, and
+//       the daily mood check-in on the greeting card, via new callables
+//       (reactAnonPost, createAnonPoll, voteAnonPoll, anonMoodCheckin);
+//       privacy §2 gains s2li10. Touches anonymous.html, css/anonymous.css,
+//       js/anonymous.js, js/shared/i18n.js, privacy.html (commit 55d5ec4).
+const CACHE_NAME = 'bipolarbear-v243';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
