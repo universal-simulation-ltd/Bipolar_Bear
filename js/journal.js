@@ -3982,6 +3982,7 @@ window.addEventListener('pageshow', () => {
     let _fmDayFillSnapshot  = null;  // { mood, energy, sleep } the auto-fill wrote, for the AUTO mark
 
     const _FM_MOOD_COLORS  = { manic:'#ff4444', elevated:'var(--brand-primary)', stable:'#51cf66', good:'#51cf66', low:'#845ef7', depressed:'#5c7cfa' };
+    const _FM_BTN_FILLS    = { '#ff4444':'#c92a2a', '#51cf66':'#2f7a3a', '#845ef7':'#6741d9', '#5c7cfa':'#3b5bdb' };
     const _FM_MOOD_LABELS  = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
 
     // Spectrum (0–10) stand-in for each legacy category — the middle of the band
@@ -4491,7 +4492,7 @@ window.addEventListener('pageshow', () => {
       if (labelEl) labelEl.textContent = _moodLabelOf(n);
       if (slider) slider.style.setProperty('--msc-accent', color);
       if (ctrl) ctrl.style.setProperty('--msc-accent', color);
-      if (btn) btn.style.background = color;
+      if (btn) btn.style.background = _FM_BTN_FILLS[color] || color;
       if (typeof _fmApplyMoodTheme === 'function') _fmApplyMoodTheme(cat);
       if (typeof scheduleDraftSave === 'function') scheduleDraftSave();
     }
@@ -5331,6 +5332,8 @@ window.addEventListener('pageshow', () => {
       let _accent = ((selectedMood != null && selectedMood !== '') && _FM_MOOD_COLORS[_moodCat(selectedMood)]) || 'var(--brand-primary)';
       // White label on the fill: the brand orange is too light (~2.2:1).
       if (_accent === 'var(--brand-primary)') _accent = 'var(--brand-btn)';
+      // Same for the lighter mood fills: use a darker shade of each (all ≥5:1).
+      _accent = _FM_BTN_FILLS[_accent] || _accent;
       const _t = (k) => (window.BB && BB.t) ? BB.t(k) : k;
       if (step.id === 'done') {
         const _noChanges = editingEntry && !_hasEditChanges();
@@ -8001,8 +8004,8 @@ window.addEventListener('pageshow', () => {
             missingAction.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
           } else {
             missingAction.textContent = _t('journal.banner.missingEntries', { count: 0 });
-            missingAction.style.background = 'rgba(255,255,255,0.1)';
-            missingAction.style.color = 'rgba(255,255,255,0.6)';
+            missingAction.style.background = 'rgba(90,42,0,0.45)';
+            missingAction.style.color = '#fff';
             missingAction.style.border = '1.5px solid rgba(255,255,255,0.2)';
             missingAction.style.boxShadow = 'none';
           }

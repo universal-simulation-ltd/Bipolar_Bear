@@ -1180,7 +1180,11 @@
 //       gate. Touches css/theme.css, css/dark.css, css/index.css,
 //       css/journal.css, css/survival-kit.css, fab.js, index.html,
 //       journal.html, survival-kit.html, js/index.js, js/journal.js.
-const CACHE_NAME = 'bipolarbear-v241';
+// v242: AA contrast for the last white-on-light fills — check-in Next/Save and
+//       the spectrum Continue use a darker shade of each mood colour, and the
+//       journal's "View yesterday's entry" / streak / 0-missing pills get a dark
+//       fill. Touches js/journal.js, css/journal.css.
+const CACHE_NAME = 'bipolarbear-v242';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

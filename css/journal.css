@@ -2408,3 +2408,11 @@
 .ew-care { font-size: 0.8em; color: #6c757d; margin-top: 10px; line-height: 1.5; }
 .ew-care a { color: #5c7cfa; font-weight: 600; }
 .ew-device { font-size: 0.72em; color: #adb5bd; margin-top: 4px; }
+
+/* ── Status pills on the orange page: white text needs a dark fill (AA ≥4.5:1) ── */
+#editTodayBtn, #startOtherEntryBtn {
+  background: rgba(90,42,0,0.6) !important;
+  border-color: rgba(255,255,255,0.35) !important;
+  color: #fff !important;
+}
+#entryCompleteLabel { color: #fff !important; }
