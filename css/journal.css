@@ -2402,12 +2402,14 @@
 
 /* ── The landing stack on the orange page: one family (James, 2026-09-30) ──
    "View yesterday's entry" and "Open Journal" are the same button: one width,
-   one radius, one type size, the home buttons' solid cream. What sits between
-   them follows home, where stats are plain dark text under the buttons, not
-   pills: the streak and "No missing entries ✓" are text, and only something
-   you can act on (missing entries to fill, log the other day) is a pill — a
-   small solid cream one. #5a2a00 on the orange ≈ 7:1. Dark mode mirrors home:
-   the dark surface with the orange ring. */
+   one radius, one type size, in home's Bipolar Anonymous look — see-through
+   cream with a solid pale outline and no shadow (css/index.css,
+   .btn-anonymous:not(.locked)); solid cream was "too much" here. What sits
+   between them follows home, where stats are plain dark text under the
+   buttons: the streak and "No missing entries ✓" are text, and only something
+   you can act on (missing entries to fill, log the other day) is a pill, a
+   small one in the same see-through look. #5a2a00 on the blend ≈ 7.5:1. Dark
+   mode mirrors home's secondary buttons: a faint neutral fill and hairline. */
 #editTodayBtn,
 #journalToggleBtn {
   box-sizing: border-box;
@@ -2418,11 +2420,12 @@
   font-family: inherit;
   font-size: 1.05em !important;
   line-height: 1.3;
-}
-#editTodayBtn {
-  background: #fff8ef !important;
-  border: 2px solid transparent !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.16);
+  background: rgba(255,248,239,0.35) !important;
+  border: 2px solid rgba(255,248,239,0.6) !important;
+  color: #5a2a00 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
 }
 #entryCompleteLabel { color: #5a2a00 !important; text-shadow: none !important; font-size: 1em !important; font-weight: 700 !important; }
 #editTodayBtn > span:first-child { font-size: 1.1em !important; line-height: 1; }
@@ -2441,21 +2444,23 @@
   white-space: nowrap;
 }
 #completionActionsRow button[style*="var(--brand-btn)"] {
-  background: #fff8ef !important;
-  padding: 6px 14px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
+  background: rgba(255,248,239,0.35) !important;
+  border: 1.5px solid rgba(255,248,239,0.6) !important;
+  padding: 5px 13px !important;
 }
-:root.theme-dark #editTodayBtn {
-  background: var(--dk-surface-2) !important;
-  box-shadow: var(--brand-btn-ring), 0 6px 20px rgba(0,0,0,0.45);
+@media (hover: hover) and (pointer: fine) {
+  #editTodayBtn:hover, #journalToggleBtn:hover { background: rgba(255,248,239,0.5) !important; transform: none !important; }
 }
-:root.theme-dark #entryCompleteLabel { color: var(--dk-text) !important; }
-:root.theme-dark #completionActionsRow button { color: var(--dk-text-2) !important; }
+:root.theme-dark #editTodayBtn,
+:root.theme-dark #journalToggleBtn,
 :root.theme-dark #completionActionsRow button[style*="var(--brand-btn)"] {
-  background: var(--dk-surface-2) !important;
-  box-shadow: inset 0 0 0 1.5px rgba(255,149,0,0.55) !important;
-  color: var(--dk-text) !important;
+  background: rgba(255,255,255,0.035) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: var(--dk-text-2) !important;
+  box-shadow: none !important;
 }
+:root.theme-dark #entryCompleteLabel { color: var(--dk-text-2) !important; }
+:root.theme-dark #completionActionsRow button { color: var(--dk-text-2) !important; }
 
 /* Personalised Feedback: 1M / 3M / 6M / 1Y / All — the life chart's range
    control, reused (showPersonalisedFeedback in js/journal.js). */
@@ -2582,13 +2587,12 @@ html [style*="var(--brand-btn)"] {
 }
 .submit-btn { box-shadow: var(--brand-btn-ring), 0 3px 12px rgba(0, 0, 0, 0.12); }
 .bbm-yes { color: var(--brand-btn-text) !important; box-shadow: var(--brand-btn-ring); }
-/* On the orange page: exactly the home buttons — no ring in light mode. */
-#journalToggleBtn,
+/* On the orange page: exactly the home buttons — no ring in light mode.
+   (Open Journal left this look for the see-through one: the landing stack.) */
 .home-link-journal {
   border-color: transparent !important;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16) !important;
 }
-:root.theme-dark #journalToggleBtn,
 :root.theme-dark .home-link-journal {
   box-shadow: var(--brand-btn-ring), 0 6px 20px rgba(0, 0, 0, 0.45) !important;
 }

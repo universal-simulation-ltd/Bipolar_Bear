@@ -1233,7 +1233,10 @@
 //       width, radius, font and size; the streak and "No missing entries" are
 //       plain dark text like home's stats, and only actionable items (missing
 //       entries, log the other day) are small cream pills. Touches css/journal.css.
-const CACHE_NAME = 'bipolarbear-v251';
+// v252: those two buttons and the missing-entries pill take home's Bipolar
+//       Anonymous look — see-through cream, pale outline, no shadow (solid
+//       cream was "too much"). Touches css/journal.css.
+const CACHE_NAME = 'bipolarbear-v252';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
