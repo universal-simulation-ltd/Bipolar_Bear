@@ -513,8 +513,9 @@
        (streaks, survival progress, anon messages) under the home buttons.
        !important overrides the inline display set by _revealBadge(). */
     .buttons.bb-hide-stats .btn-subnote { display: none !important; }
-    /* The quick check-in's last-7-days strip is a stat too. */
-    .buttons.bb-hide-stats .qc-week { display: none !important; }
+    /* The quick check-in's last-7-days dots are part of the widget, not a stat:
+       they show whatever Show stats says (James, 2026-09-30 — "stats just means
+       the text underneath"). */
     /* Streak line moved under the quick check-in card (_renderQuickCheckin). */
     .quick-checkin + #journalStreakBadge { margin-top: 8px; }
     .btn-subnote-muted {

@@ -1214,7 +1214,9 @@
 // v247: dark mode — the warm outline moves to Mood Journal / the quick
 //       check-in card (lighter surface + orange ring); Survival Kit and
 //       Anonymous get a neutral hairline, the locked dashes fade. css/dark.css.
-const CACHE_NAME = 'bipolarbear-v247';
+// v248: the quick check-in's last-7-days dots show regardless of Show stats
+//       (stats = the text lines only). Touches css/index.css, index.html.
+const CACHE_NAME = 'bipolarbear-v248';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
