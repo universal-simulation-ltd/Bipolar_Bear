@@ -1241,7 +1241,11 @@
 // v254: release 1.39 (build 39) for Bipolar Bear and Bipolar Anonymous —
 //       _APP_VERSION 1.39, version.json web 1.39 (app stays 1.38 until 1.39 is
 //       live), store What's New in 11 languages for both apps.
-const CACHE_NAME = 'bipolarbear-v254';
+// v255: dark mode for the guest "Protect your data" PIN setup screen and the
+//       Set PIN dialog's dots; the missing-entries "none missing" line was
+//       black on dark, and its dates were US English. Touches css/dark.css,
+//       js/journal.js.
+const CACHE_NAME = 'bipolarbear-v255';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

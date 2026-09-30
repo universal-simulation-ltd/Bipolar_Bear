@@ -12124,17 +12124,23 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const listContainer = document.getElementById('missingDatesList');
         
         if (missingDates.length === 0) {
-          listContainer.innerHTML = '<div style="text-align: center; color: #000; padding: 20px; font-weight: 600;">' + BB.t('journal.ui.noMissing30') + '</div>';
+          // #333, not #000: dark.css only lifts the near-black literals it
+          // lists, and pure black left this line unreadable in dark mode.
+          listContainer.innerHTML = '<div style="text-align: center; color: #333; padding: 20px; font-weight: 600;">' + BB.t('journal.ui.noMissing30') + '</div>';
         } else {
+          const _lang = (window.BB && BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en';
+          const _locale = _lang === 'en' ? 'en-GB' : _lang === 'zh' ? 'zh-Hans' : _lang;
           listContainer.innerHTML = missingDates.map(date => {
-            const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            let dateStr;
+            try { dateStr = date.toLocaleDateString(_locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
+            catch (_) { dateStr = date.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); }
             const isToday = date.toDateString() === today.toDateString();
             const style = isToday ? 'background: #fff3cd; border-left: 4px solid var(--brand-primary);' : '';
             const dateValue = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             
             return `
               <div onclick="setDateAndClose('${dateValue}')" class="missing-date-item" style="padding: 10px; margin-bottom: 8px; background: #f8f9fa; border-radius: 8px; ${style} cursor: pointer;">
-                ${isToday ? '🗓️ ' : ''}${dateStr}${isToday ? ' (Today)' : ''} <span style="float: right; color: #999;">→</span>
+                ${isToday ? '🗓️ ' : ''}${dateStr}${isToday ? ' (' + BB.t('journal.ui.today') + ')' : ''} <span style="float: right; color: #999;">→</span>
               </div>
             `;
           }).join('');

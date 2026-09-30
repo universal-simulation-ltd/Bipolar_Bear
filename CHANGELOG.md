@@ -4,6 +4,11 @@
 > `CACHE_NAME` notes in `service-worker.js` (v179 – v199) are the record for
 > that stretch.
 
+## Next release (1.40) — unreleased
+- 🌙 **Dark mode for the PIN setup screen** ("Protect your data — choose a 4-digit PIN", shown to guests on their first save) — it stayed bright orange. The Set PIN dialog's dots and key presses follow dark mode too. (`CACHE_NAME` v255)
+- **Missing entries popup:** "No missing entries in the last 30 days!" was black on the dark card; the dates list is in the app's language instead of US English, and "(Today)" is translated.
+- 🤖 **Android back swipe goes home instead of closing the app** (Survival Kit and journal). The back handlers were already written, but `@capacitor/app` was never installed in `bipolarbear-native`, so they never registered — native change, needs the 1.40 build. The widget's `bipolarbear://journal` deep link (same plugin) starts working with it.
+
 ## v1.39 — everything below until v1.38 (submitted to both stores 2026-09-30)
 - Version bump: `_APP_VERSION` 1.39, iOS (app + widget) and Android build 39 for both apps (Bipolar Anonymous 1.39 (39)), `service-worker.js` `CACHE_NAME` v254, `version.json` web 1.39 / app 1.38 (1.38 is live; app → 1.39 once 1.39 is). Store What's New in all 11 languages for both apps.
 - 🗓️ **30 Sep 2026 batch** (`CACHE_NAME` v244; web live on push, the store apps with 1.39).

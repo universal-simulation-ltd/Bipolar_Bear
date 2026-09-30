@@ -81,8 +81,12 @@ html.theme-dark #settingsLogoImg { border-radius: 18px; padding: 4px; }
 html.theme-dark #bbAuthSplash,
 html.theme-dark #pageCover,
 html.theme-dark #guestPinOverlay,
-html.theme-dark #pinOverlay { background: var(--dk-page) !important; }
+html.theme-dark #pinOverlay,
+html.theme-dark #guestPinSetupOverlay { background: var(--dk-page) !important; }
 html.theme-dark .pin-key-dark { background: var(--dk-surface-2); color: var(--dk-text); }
+html.theme-dark .pin-key-dark:active { background: var(--dk-surface-3); }
+html.theme-dark .pin-dot-dark { background: var(--dk-surface-2); border-color: var(--dk-line); }
+html.theme-dark .pin-dot-dark.filled { background: var(--brand-primary); border-color: var(--brand-primary); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    FAB dock + shared modals (fab.js)
