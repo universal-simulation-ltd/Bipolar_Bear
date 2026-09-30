@@ -263,8 +263,9 @@ html.theme-dark .stat-number { color: #a5b4fc; }
 html.theme-dark .stat-label { color: var(--dk-text-2); }
 html.theme-dark .chart-container { border-bottom-color: var(--dk-line); }
 html.theme-dark .chart-label { color: var(--dk-muted); }
-html.theme-dark .pagination-btn { background: var(--dk-surface); }
-html.theme-dark .pagination-btn:disabled { background: var(--dk-surface-2); color: var(--dk-muted); }
+html.theme-dark .pagination-btn { background: var(--dk-surface); border-color: var(--dk-line); color: var(--dk-muted); }
+html.theme-dark .pagination-btn.on { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.55); }
+html.theme-dark .pagination-btn:disabled { background: var(--dk-surface); color: var(--dk-line); }
 html.theme-dark .pagination-info { color: var(--dk-text-2); }
 
 /* Journal modals */
@@ -290,10 +291,6 @@ html.theme-dark #lifeChart .lc-title,
 html.theme-dark #lifeChart .lc-detail { color: var(--dk-text); }
 html.theme-dark #lifeChart .lc-sub,
 html.theme-dark #lifeChart .lc-legend { color: var(--dk-muted); }
-html.theme-dark #lifeChart .lc-ranges { border-color: var(--dk-line); }
-html.theme-dark #lifeChart .lc-range { background: var(--dk-surface); color: var(--dk-muted); }
-html.theme-dark #lifeChart .lc-range + .lc-range { border-left-color: var(--dk-line); }
-html.theme-dark #lifeChart .lc-range.on { background: rgba(255,149,0,0.18); color: #ffb347; }
 html.theme-dark #lifeChart .lc-c-elevated { color: #e0cc2e; }
 html.theme-dark #lifeChart .lc-c-stable { color: #69db7c; }
 html.theme-dark #lifeChart .lc-c-low { color: #b197fc; }
@@ -463,4 +460,4 @@ html.theme-dark :is([style*="solid #e9ecef"], [style*="dashed #e9ecef"], [style*
 html.theme-dark .fb-ranges { border-color: var(--dk-line); }
 html.theme-dark .fb-range { background: var(--dk-surface); color: var(--dk-muted); }
 html.theme-dark .fb-range + .fb-range { border-left-color: var(--dk-line); }
-html.theme-dark .fb-range.on { background: rgba(255,149,0,0.18); color: #ffb347; }
+html.theme-dark .fb-range.on { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.55); }

@@ -1966,33 +1966,35 @@
       padding: 10px 0;
     }
 
+    /* Page numbers: the Calendar / Life chart switch's look — neutral, the
+       current page in the cream "on" colours (James, 2026-09-30). */
     .pagination-btn {
       padding: 10px 16px;
       background: white;
-      color: var(--brand-primary);
-      border: 2px solid var(--brand-primary);
-      border-radius: 8px;
+      color: #6c757d;
+      border: 1.5px solid #e9ecef;
+      border-radius: 10px;
       cursor: pointer;
+      font-family: inherit;
       font-weight: 600;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s;
+    }
+    .pagination-btn.on {
+      background: #fff8ef;
+      color: #5a2a00;
+      border-color: transparent;
+      box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35);
     }
 
     @media (hover: hover) and (pointer: fine) {
-      .pagination-btn:hover:not(:disabled) {
-        background: var(--brand-btn);
-        color: var(--brand-btn-text);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        transform: translateY(-2px);
-      }
+      .pagination-btn:hover:not(:disabled):not(.on) { background: #fff8ef; }
     }
 
     .pagination-btn:disabled {
       background: #f8f9fa;
-      color: #6c757d;
-      border-color: #dee2e6;
+      color: #ced4da;
       cursor: not-allowed;
-      box-shadow: none;
     }
 
     .pagination-info {
@@ -2052,24 +2054,16 @@
        rgba(255,255,255,0.2) wash over the orange page was ~1.7:1. */
     .home-link-journal { color:var(--brand-btn-text); text-decoration:none; background:var(--brand-btn); padding:8px 16px; border-radius:20px; font-size:0.9em; font-weight:600; transition:background 0.2s; }
     .journal-toggle-btn { transition: background 0.2s, transform 0.2s; }
-    .stats-toggle-btn   { transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s; }
     .btn-outline-orange { transition: background 0.2s, color 0.2s; }
     .btn-outline-red    { transition: background 0.2s, color 0.2s; }
-    .btn-export-pdf     { transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s; }
-    .btn-export-backup  { transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s; }
-    .btn-export-import  { transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s; }
     .logout-btn-list    { transition: border-color 0.2s; }
     .missing-date-item  { transition: background 0.2s, transform 0.2s; }
     @media (hover: hover) and (pointer: fine) {
       .home-link-journal:hover  { background: var(--brand-btn-hover); }
       .journal-toggle-btn:hover { background: var(--brand-btn-hover) !important; transform: translateY(-2px); }
-      .stats-toggle-btn:hover   { background: var(--brand-btn-hover) !important; color: var(--brand-btn-text) !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .btn-outline-orange:hover { background: var(--brand-btn) !important; color: var(--brand-btn-text) !important; }
       .btn-outline-red:hover    { background: #ff3b30 !important; color: white !important; }
       .stat-card[onclick]:hover { transform: scale(1.05); }
-      .btn-export-pdf:hover    { background: var(--brand-btn) !important; color: var(--brand-btn-text) !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
-      .btn-export-backup:hover { background: #51cf66 !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
-      .btn-export-import:hover { background: #74c0fc !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .logout-btn-list:hover   { border-color: #adb5bd !important; }
       .missing-date-item:hover { background: #e9ecef !important; transform: translateX(5px); }
     }
@@ -2368,10 +2362,6 @@
 #lifeChart .lc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 #lifeChart .lc-title { font-weight: 700; color: #495057; font-size: 1em; }
 #lifeChart .lc-sub { color: #6c757d; font-size: 0.78em; line-height: 1.4; margin: 4px 0 10px; }
-#lifeChart .lc-ranges { display: inline-flex; border: 1.5px solid #e9ecef; border-radius: 10px; overflow: hidden; }
-#lifeChart .lc-range { background: #fff; border: 0; padding: 5px 10px; font-size: 0.78em; font-weight: 600; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
-#lifeChart .lc-range + .lc-range { border-left: 1px solid #e9ecef; }
-#lifeChart .lc-range.on { background: rgba(255,149,0,0.12); color: var(--brand-primary); }
 #lifeChart .lc-frame { display: flex; align-items: flex-start; }
 #lifeChart .lc-ylabels { position: relative; width: 60px; flex: 0 0 60px; }
 #lifeChart .lc-ylab { position: absolute; right: 6px; font-size: 9.5px; line-height: 12px; font-weight: 600; white-space: nowrap; max-width: 58px; overflow: hidden; text-overflow: ellipsis; }
@@ -2457,7 +2447,7 @@
 .fb-ranges { display: flex; width: fit-content; margin: 0 auto 12px; border: 1.5px solid #e9ecef; border-radius: 10px; overflow: hidden; }
 .fb-range { background: #fff; border: 0; padding: 6px 12px; font-size: 0.8em; font-weight: 700; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
 .fb-range + .fb-range { border-left: 1px solid #e9ecef; }
-.fb-range.on { background: rgba(255,149,0,0.12); color: var(--brand-primary); }
+.fb-range.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
 
 /* ── Focused check-in: one screen, framed (30 Sep 2026) ──
    Every step fits the phone's screen without the page scrolling. The card
@@ -2588,30 +2578,46 @@ html [style*="var(--brand-btn)"] {
   box-shadow: var(--brand-btn-ring), 0 6px 20px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* ── Calendar / life chart switch (js/journal-insights.js) ── */
-#calViewSwitch { text-align: center; margin: 14px 0 4px; }
-#calViewSwitch .cv-seg { display: inline-flex; border: 1.5px solid #e9ecef; border-radius: 12px; overflow: hidden; background: #fff; }
-#calViewSwitch .cv-opt { background: #fff; border: 0; padding: 8px 14px; font-family: inherit; font-size: 0.88em; font-weight: 600; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-#calViewSwitch .cv-opt + .cv-opt { border-left: 1px solid #e9ecef; }
-#calViewSwitch .cv-opt.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
-#calViewSwitch .cv-star { color: var(--brand-primary); font-size: 0.9em; }
-#calViewSwitch .cv-note { min-height: 1.3em; margin-top: 5px; font-size: 0.75em; color: #adb5bd; font-style: italic; }
+/* ── Segmented switches: 1M…All range (js/journal.js) and Calendar / Life
+   chart (js/journal-insights.js) share one look. The choice showing is the
+   cream "on" tab; ★ marks the default. ── */
+.seg-switch { text-align: center; }
+#calViewSwitch { margin: 14px 0 4px; }
+#journeyRanges { margin: 0 0 8px; }
+.seg-switch .cv-seg { display: inline-flex; border: 1.5px solid #e9ecef; border-radius: 12px; overflow: hidden; background: #fff; }
+.seg-switch .cv-opt { background: #fff; border: 0; padding: 8px 14px; font-family: inherit; font-size: 0.88em; font-weight: 600; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+#journeyRanges .cv-opt { padding: 8px 13px; }
+.seg-switch .cv-opt + .cv-opt { border-left: 1px solid #e9ecef; }
+.seg-switch .cv-opt.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
+.seg-switch .cv-star { color: var(--brand-primary); font-size: 0.9em; }
+.seg-switch .cv-note { min-height: 1.3em; margin-top: 5px; font-size: 0.75em; color: #adb5bd; font-style: italic; }
 #statsAndCalendarBlock.cv-life #chart,
 #statsAndCalendarBlock.cv-life #monthCalendar { display: none !important; }
 #statsAndCalendarBlock:not(.cv-life) #lifeChart { display: none !important; }
 #statsAndCalendarBlock.cv-life #lifeChart { margin-top: 8px; }
-html.theme-dark #calViewSwitch .cv-seg { border-color: var(--dk-line); background: var(--dk-surface); }
-html.theme-dark #calViewSwitch .cv-opt { background: var(--dk-surface); color: var(--dk-muted); }
-html.theme-dark #calViewSwitch .cv-opt + .cv-opt { border-left-color: var(--dk-line); }
-html.theme-dark #calViewSwitch .cv-opt.on { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.55); }
-html.theme-dark #calViewSwitch .cv-note { color: var(--dk-muted); }
+html.theme-dark .seg-switch .cv-seg { border-color: var(--dk-line); background: var(--dk-surface); }
+html.theme-dark .seg-switch .cv-opt { background: var(--dk-surface); color: var(--dk-muted); }
+html.theme-dark .seg-switch .cv-opt + .cv-opt { border-left-color: var(--dk-line); }
+html.theme-dark .seg-switch .cv-opt.on { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.55); }
+html.theme-dark .seg-switch .cv-note { color: var(--dk-muted); }
 
-/* ── "See individual entries" (js/journal.js, under the feedback bear) ── */
-.entries-reveal-btn {
+/* ── Secondary buttons in the journal card: "See individual entries", Export
+   PDF, Backup, Import (js/journal.js). One look — the home buttons' cream
+   with the warm ring — instead of orange / green / blue outlines. ── */
+.entries-reveal-btn, .journal-btn {
   padding: 10px 20px; border-radius: 12px; border: 0; cursor: pointer;
   background: var(--brand-btn); color: var(--brand-btn-text);
   box-shadow: var(--brand-btn-ring);
   font-family: inherit; font-size: 0.95em; font-weight: 700;
   -webkit-tap-highlight-color: transparent;
 }
-@media (hover: hover) and (pointer: fine) { .entries-reveal-btn:hover { background: var(--brand-btn-hover); } }
+@media (hover: hover) and (pointer: fine) { .entries-reveal-btn:hover, .journal-btn:hover { background: var(--brand-btn-hover); } }
+/* Personalised Feedback under the bear: a link, in burnt orange rather than
+   the light brand orange (#ff9500 on the cream card ≈ 2.1:1; #a8430a ≈ 6:1). */
+.pf-link {
+  background: none; border: none; padding: 4px 0; cursor: pointer;
+  color: #a8430a; font-family: inherit; font-size: 0.88em; font-weight: 700;
+  text-decoration: underline; text-underline-offset: 3px;
+  -webkit-tap-highlight-color: transparent;
+}
+html.theme-dark .pf-link { color: #ffb347; }

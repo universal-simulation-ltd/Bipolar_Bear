@@ -963,8 +963,24 @@ window.addEventListener('pageshow', () => {
     let _suppressFormOpen = false;
     let currentPage = 1;
     const entriesPerPage = 5;
-    let statsTimeframe = 30; // numeric days (30,60,90,120) or 'all'
-    const _TIMEFRAME_CYCLE = [30, 60, 90, 120, 'all'];
+    // One time range for the whole "Your Journey" card — stats, calendar, life
+    // chart and the feedback popup's opening range — picked with the
+    // 1M / 3M / 6M / 1Y / All tabs under the heading (James, 2026-09-30; it
+    // replaced the 30 / 60 / 90 / custom dropdown). Days are counted back from
+    // today, like the life chart. Tapping the range already showing makes it
+    // the default (bbJournalRange, per device), like the Calendar / Life chart
+    // switch.
+    const _JOURNEY_RANGES = [[30, 'journal.lifeChart.r1m'], [90, 'journal.lifeChart.r3m'], [180, 'journal.lifeChart.r6m'], [365, 'journal.lifeChart.r1y'], ['all', 'journal.feedback.all']];
+    const _RANGE_KEY = 'bbJournalRange';
+    function _storedJourneyRange() {
+      let v = null;
+      try { v = localStorage.getItem(_RANGE_KEY); } catch (_) {}
+      if (v === 'all') return 'all';
+      const n = Number(v);
+      return _JOURNEY_RANGES.some(r => r[0] === n) ? n : 30;
+    }
+    let statsTimeframe = _storedJourneyRange(); // 30 | 90 | 180 | 365 | 'all'
+    let _journeyRangeNote = '';
     let currentStatsEntries = []; // cached for stat popups
     let _monthCalOffset = 0; // 0 = current month, -1 = previous month, etc.
     let _monthCalEntries = []; // cached entries for month calendar navigation
@@ -2769,7 +2785,7 @@ window.addEventListener('pageshow', () => {
         const _pageNums = [];
         for (let p = _pageStart; p <= _pageEnd; p++) _pageNums.push(p);
         const _pageButtons = _pageNums.map(p =>
-          `<button class="pagination-btn" onclick="goToPage(${p})" style="${p === currentPage ? 'background:var(--brand-btn);color:white;border-color:var(--brand-primary);' : ''}">${p}</button>`
+          `<button class="pagination-btn${p === currentPage ? ' on' : ''}" onclick="goToPage(${p})"${p === currentPage ? ' aria-current="page"' : ''}>${p}</button>`
         ).join('');
         // The entry-by-entry log (entries, pages, Backup / Import) sits behind
         // "See individual entries" under the Personalised Feedback bear; Export
@@ -2783,15 +2799,15 @@ window.addEventListener('pageshow', () => {
               <button class="pagination-btn" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} title="${BB.t('journal.ui.lastPage')}">»</button>
             </div>
             <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-              <button onclick="document.getElementById('exportModal').classList.add('active')" class="btn-export-backup" style="padding: 10px 20px; background: white; color: #51cf66; border: 2px solid #51cf66; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.backupData')}</button>
-              <button onclick="showImportModal()" class="btn-export-import" style="padding: 10px 20px; background: white; color: #74c0fc; border: 2px solid #74c0fc; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.importBtn')}</button>
+              <button onclick="document.getElementById('exportModal').classList.add('active')" class="journal-btn btn-export-backup">${BB.t('journal.ui.backupData')}</button>
+              <button onclick="showImportModal()" class="journal-btn btn-export-import">${BB.t('journal.ui.importBtn')}</button>
             </div>
           </div>
         `;
         const paginationHtml = `
           <div style="margin-top: 15px;">
             <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-              <button onclick="exportPDF()" class="btn-export-pdf" style="padding: 10px 20px; background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.exportPdf')}</button>
+              <button onclick="exportPDF()" class="journal-btn btn-export-pdf">${BB.t('journal.ui.exportPdf')}</button>
             </div>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
               ${currentUser ? `
@@ -2818,13 +2834,6 @@ window.addEventListener('pageshow', () => {
           </div>`;
         document.getElementById('entries').innerHTML = entriesToggleHtml + entriesListHtml + paginationHtml;
         
-        // Update toggle button text and visibility (only show after 30 entries)
-        const toggleBtn = document.getElementById('statsToggleBtn');
-        const toggleLabel = document.getElementById('statsToggleLabel');
-        if (toggleBtn) {
-          if (toggleLabel) toggleLabel.textContent = statsTimeframe === 'all' ? BB.t('journal.stats.showingAll') : BB.t('journal.stats.showingDays', { n: statsTimeframe });
-          toggleBtn.style.display = _allEntries.length >= 30 ? '' : 'none';
-        }
 
         // Attach event listeners after HTML is rendered
         paginatedEntries.forEach((entry, index) => {
@@ -2891,7 +2900,7 @@ window.addEventListener('pageshow', () => {
     function displayStats(entries) {
       const statsContainer = document.getElementById('stats');
       const _statsBlock = document.getElementById('statsAndCalendarBlock');
-      const _tpWrapper = document.getElementById('timeframePickerWrapper');
+      const _tpWrapper = document.getElementById('journeyRanges');
 
       // Calculate streak before the early-return guard so widget/button always get the correct value
       {
@@ -2936,12 +2945,24 @@ window.addEventListener('pageshow', () => {
       }
 
       if (_statsBlock) _statsBlock.style.display = '';
-      if (_tpWrapper) _tpWrapper.style.display = '';
+      if (_tpWrapper) { _tpWrapper.style.display = ''; _renderJourneyRanges(); }
       statsContainer.style.display = 'grid';
 
+      // The range's days counted back from today (today included), the same
+      // window as the life chart and the feedback popup.
+      const _rangeSince = new Date(); _rangeSince.setHours(0, 0, 0, 0);
+      if (statsTimeframe !== 'all') _rangeSince.setDate(_rangeSince.getDate() - (statsTimeframe - 1));
       const statsEntries = statsTimeframe !== 'all'
-        ? entries.slice(0, statsTimeframe)
+        ? entries.filter(e => new Date(e.date) >= _rangeSince)
         : (statsStartDate ? entries.filter(e => e.date >= statsStartDate) : entries);
+
+      // Nothing logged inside the range: say so rather than averaging nothing.
+      if (!statsEntries.length) {
+        currentStatsEntries = [];
+        statsContainer.innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">${_esc(BB.t('journal.stats.noneInRange', { period: _journeyRangeLabel(statsTimeframe) }))}</div></div>`;
+        document.getElementById('streakStats').innerHTML = '';
+        return;
+      }
       const avgEnergy = (statsEntries.reduce((sum, e) => sum + e.energy, 0) / statsEntries.length).toFixed(1);
       const _sleepStatEntries = statsEntries.filter(e => e.sleep != null);
       const avgSleep = _sleepStatEntries.length ? (_sleepStatEntries.reduce((sum, e) => sum + e.sleep, 0) / _sleepStatEntries.length).toFixed(1) : '–';
@@ -3045,9 +3066,9 @@ window.addEventListener('pageshow', () => {
         }
       }
 
-      const timeframeLabel = statsTimeframe !== 'all' ? `${statsTimeframe}d` : 'All';
+      const timeframeLabel = _journeyRangeLabel(statsTimeframe);
 
-      // "since" date: for all-time use statsStartDate/oldest entry; for fixed timeframes count back from most recent entry
+      // "since" date: for all-time use statsStartDate/oldest entry; otherwise the range's first day
       let sinceDateLabel = '';
       if (statsTimeframe === 'all') {
         const sinceRaw = statsStartDate
@@ -3055,10 +3076,7 @@ window.addEventListener('pageshow', () => {
           : new Date(entries[entries.length - 1].date);
         sinceDateLabel = sinceRaw.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
       } else {
-        const mostRecent = new Date(entries[0].date);
-        const sinceRaw = new Date(mostRecent);
-        sinceRaw.setDate(sinceRaw.getDate() - (statsTimeframe - 1));
-        sinceDateLabel = sinceRaw.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        sinceDateLabel = _rangeSince.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
       }
 
       currentStatsEntries = statsEntries;
@@ -3101,17 +3119,17 @@ window.addEventListener('pageshow', () => {
         </div>
         <div class="stat-card" style="${cardStyle}" onclick="showFavouritesModal()">
           <div class="stat-number">${statsEntries.filter(e => e.favourite).length}</div>
-          <div class="stat-label">Favourite Entries${statsTimeframe !== 'all' ? ` (${statsTimeframe}d)` : ''}</div>
+          <div class="stat-label">Favourite Entries (${timeframeLabel})</div>
         </div>
       `;
 
       document.getElementById('stats').innerHTML = html;
 
       // streak card lives inside the year calendar; show personalised feedback link for all timeframes (only when bear suggestion enabled)
-      const _pfLimitedNote = statsTimeframe !== 'all' ? `<div style="font-size:0.75em;color:#adb5bd;margin-top:2px;">Based on ${statsTimeframe}d data — limited insights</div>` : '';
+      const _pfLimitedNote = statsTimeframe === 30 ? `<div style="font-size:0.75em;color:#adb5bd;margin-top:2px;">Based on ${timeframeLabel} data — limited insights</div>` : '';
       document.getElementById('streakStats').innerHTML = (localStorage.getItem('showMoodSuggestion') === '1' && statsEntries.length > 0)
         ? `<div style="text-align:center;margin:8px 0 16px;">
-            <button onclick="showPersonalisedFeedback()" style="background:none;border:none;color:var(--brand-primary);font-size:0.88em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px 0;"><img src="images/moods/AI_Bear.png" style="max-width: 50px" > <br>${BB.t('journal.ui.personalisedFeedback')}</button><br>
+            <button onclick="showPersonalisedFeedback()" class="pf-link"><img src="images/moods/AI_Bear.png" style="max-width: 50px" > <br>${BB.t('journal.ui.personalisedFeedback')}</button><br>
             ${_pfLimitedNote}
            </div>`
         : '';
@@ -7641,10 +7659,9 @@ window.addEventListener('pageshow', () => {
     }
 
     // The feedback popup has its own period, switched by the 1M / 3M / 6M / 1Y /
-    // All buttons at its top (same look as the life chart's). It opens on the
-    // stats page's timeframe (30 → 1M, 90 → 3M …, 60/120 → the next range up
-    // that holds them) and works from _allEntries, so it isn't limited to the
-    // entries the stats page happens to have loaded.
+    // All buttons at its top (same look as the journal's range tabs). It opens
+    // on the journal's range and works from _allEntries, so it isn't limited
+    // to the entries the stats page happens to have loaded.
     const _FB_RANGES = [[30, 'journal.lifeChart.r1m'], [90, 'journal.lifeChart.r3m'], [180, 'journal.lifeChart.r6m'], [365, 'journal.lifeChart.r1y'], ['all', 'journal.feedback.all']];
     let _fbRange = null;
     function _fbRangeFromStats() {
@@ -10836,7 +10853,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
         'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
         'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
-        'earlyWarnEnabled', 'bbEarlyWarnSeen',
+        'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
       ];
       _keys.forEach(k => localStorage.removeItem(k));
       // Clear custom field toggle keys, label overrides, and tracking prefs (trackCustom_*, _labelOverride_*, trackXxx)
@@ -11027,7 +11044,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
-          'earlyWarnEnabled', 'bbEarlyWarnSeen',
+          'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
@@ -11206,92 +11223,68 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     }
     window.toggleEntriesList = toggleEntriesList;
 
-    function toggleStatsTimeframe() {
-      const _idx = _TIMEFRAME_CYCLE.indexOf(statsTimeframe);
-      statsTimeframe = _TIMEFRAME_CYCLE[(_idx + 1) % _TIMEFRAME_CYCLE.length];
-      _tfUpdateLabel();
-      displayStats(_allEntries);
-      displayChart(_allEntries);
+    function _journeyRangeLabel(r) {
+      const hit = _JOURNEY_RANGES.find(x => x[0] === r);
+      if (!hit) return r === 'all' ? 'All' : `${r}d`;
+      const t = BB.t(hit[1]);
+      return t && t !== hit[1] ? t : (r === 'all' ? 'All' : `${r}d`);
+    }
+    // Days the life chart spans: the range, or for All everything from the
+    // stats start date (or the oldest entry) up to today.
+    function getJournalRangeDays() {
+      if (statsTimeframe !== 'all') return statsTimeframe;
+      let first = statsStartDate ? new Date(statsStartDate + 'T00:00:00') : null;
+      if (!first && _allEntries && _allEntries.length) {
+        first = new Date(Math.min(..._allEntries.map(e => new Date(e.date).getTime()).filter(t => !isNaN(t))));
+      }
+      if (!first || isNaN(first)) return 365;
+      const today = new Date(); today.setHours(0, 0, 0, 0); first.setHours(0, 0, 0, 0);
+      return Math.max(30, Math.round((today - first) / 86400000) + 1);
+    }
+    window.getJournalRangeDays = getJournalRangeDays;
+
+    function _renderJourneyRanges() {
+      const host = document.getElementById('journeyRanges');
+      if (!host) return;
+      const def = _storedJourneyRange();
+      const _tr = (k, fb) => { const t = BB.t(k); return t && t !== k ? t : fb; };
+      const defLabel = _tr('journal.lifeChart.viewDefault', 'Default view');
+      const note = _journeyRangeNote || (statsTimeframe !== def ? _tr('journal.lifeChart.viewTapAgain', 'Tap again to make this your default') : '');
+      host.innerHTML =
+        `<div class="cv-seg" role="group" aria-label="${_esc(_tr('journal.lifeChart.rangeLabel', 'Time range'))}">` +
+        _JOURNEY_RANGES.map(r => {
+          const on = r[0] === statsTimeframe;
+          return `<button type="button" class="cv-opt${on ? ' on' : ''}" aria-pressed="${on}" onclick="setJournalRange(${r[0] === 'all' ? "'all'" : r[0]})">${_esc(_journeyRangeLabel(r[0]))}${r[0] === def ? ` <span class="cv-star" title="${_esc(defLabel)}" aria-label="${_esc(defLabel)}">★</span>` : ''}</button>`;
+        }).join('') +
+        `</div><div class="cv-note" aria-live="polite">${_esc(note)}</div>`;
     }
 
-    function _tfUpdateLabel() {
-      const lbl = document.getElementById('statsToggleLabel');
-      if (lbl) lbl.textContent = statsTimeframe === 'all' ? BB.t('journal.stats.showingAll') : BB.t('journal.stats.showingDays', { n: statsTimeframe });
-    }
-
-    function _showTimeframePicker() {
-      const menu = document.getElementById('timeframePickerMenu');
-      if (!menu) return;
-      const _FIXED = [30, 60, 90];
-      const isCustom = statsTimeframe !== 'all' && !_FIXED.includes(statsTimeframe);
-      const _row = (label, value, isActive) => {
-        const activeStyle = isActive ? 'background:#fff4e6;font-weight:700;color:var(--brand-primary-dark);' : 'background:white;font-weight:400;color:#212529;';
-        return `<button onclick="${value}" style="display:block;width:100%;padding:11px 18px;border:none;text-align:left;font-size:0.95em;cursor:pointer;border-bottom:1px solid #f1f3f5;${activeStyle}-webkit-tap-highlight-color:transparent;" onmouseover="this.style.background='#fff4e6'" onmouseout="this.style.background='${isActive ? '#fff4e6' : 'white'}'">
-          ${label}${isActive ? ' ✓' : ''}
-        </button>`;
-      };
-      menu.innerHTML =
-        _row('30 days', "_tfPickerSelect(30)", statsTimeframe === 30) +
-        _row('60 days', "_tfPickerSelect(60)", statsTimeframe === 60) +
-        _row('90 days', "_tfPickerSelect(90)", statsTimeframe === 90) +
-        `<div style="border-bottom:1px solid #f1f3f5;">
-          <button onclick="_tfShowCustomInput()" style="display:block;width:100%;padding:11px 18px;border:none;text-align:left;font-size:0.95em;cursor:pointer;${isCustom ? 'background:#fff4e6;font-weight:700;color:var(--brand-primary-dark);' : 'background:white;color:#212529;'}-webkit-tap-highlight-color:transparent;" onmouseover="this.style.background='#fff4e6'" onmouseout="this.style.background='${isCustom ? '#fff4e6' : 'white'}'">
-            ${isCustom ? `${statsTimeframe} days ✓ <span style="opacity:0.6;font-size:0.9em;">✏️</span>` : 'Custom days…'}
-          </button>
-          <div id="tfCustomRow" style="display:none;padding:8px 14px 12px;border-top:1px solid #f1f3f5;">
-            <div style="display:flex;gap:6px;align-items:center;">
-              <input id="tfCustomInput" type="number" min="1" max="3650" placeholder="${BB.t('journal.ui.eg180')}"
-                style="width:90px;padding:7px 10px;border:1.5px solid #dee2e6;border-radius:8px;font-size:0.95em;outline:none;"
-                onkeydown="if(event.key==='Enter')_tfPickerSelectCustom()"
-                onclick="event.stopPropagation()">
-              <button onclick="_tfPickerSelectCustom()" style="padding:7px 14px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;">OK</button>
-            </div>
-          </div>
-        </div>` +
-        _row('All time', "_tfPickerSelect('all')", statsTimeframe === 'all');
-      menu.style.display = '';
-      setTimeout(() => {
-        document.addEventListener('click', _tfPickerDismiss, { once: true, capture: true });
-      }, 0);
-    }
-    function _tfShowCustomInput() {
-      const row = document.getElementById('tfCustomRow');
-      if (row) {
-        row.style.display = '';
-        const inp = document.getElementById('tfCustomInput');
-        if (inp) {
-          const isCustom = statsTimeframe !== 'all' && ![30, 60, 90].includes(statsTimeframe);
-          if (isCustom) inp.value = statsTimeframe;
-          inp.focus(); inp.select();
+    function setJournalRange(r) {
+      _journeyRangeNote = '';
+      if (r === statsTimeframe) {
+        if (_storedJourneyRange() !== r) {
+          try { localStorage.setItem(_RANGE_KEY, String(r)); } catch (_) {}
+          _journeyRangeNote = BB.t('journal.lifeChart.viewNowDefault');
         }
+        _renderJourneyRanges();
+        return;
       }
-    }
-    function _tfPickerSelectCustom() {
-      const inp = document.getElementById('tfCustomInput');
-      const val = parseInt(inp ? inp.value : '', 10);
-      if (!val || val < 1) return;
-      _tfPickerSelect(val);
-    }
-    function _tfPickerSelect(tf) {
-      statsTimeframe = tf;
-      _tfUpdateLabel();
-      document.getElementById('timeframePickerMenu').style.display = 'none';
+      statsTimeframe = r;
+      _renderJourneyRanges();
       displayStats(_allEntries);
       displayChart(_allEntries);
-    }
-    function _tfPickerDismiss(e) {
-      const menu = document.getElementById('timeframePickerMenu');
-      if (menu && !menu.contains(e.target)) {
-        menu.style.display = 'none';
-      } else if (menu && menu.contains(e.target)) {
-        setTimeout(() => {
-          document.addEventListener('click', _tfPickerDismiss, { once: true, capture: true });
-        }, 0);
+      if (window.BBInsights && window.BBInsights.rangeChanged) {
+        try { window.BBInsights.rangeChanged(); } catch (e) { console.warn('life chart range', e); }
       }
     }
-    window._tfPickerSelect = _tfPickerSelect;
-    window._tfPickerSelectCustom = _tfPickerSelectCustom;
-    window._tfShowCustomInput = _tfShowCustomInput;
+    window.setJournalRange = setJournalRange;
+    // The life chart's pinch / ctrl-wheel / arrow-key zoom steps through the
+    // same ranges (js/journal-insights.js).
+    window.stepJournalRange = function (dir) {
+      const idx = Math.max(0, _JOURNEY_RANGES.findIndex(r => r[0] === statsTimeframe));
+      const n = Math.max(0, Math.min(_JOURNEY_RANGES.length - 1, idx + dir));
+      if (n !== idx) setJournalRange(_JOURNEY_RANGES[n][0]);
+    };
 
     function toggleJournal() {
       const journalCard = document.getElementById('journalCard');
@@ -14012,8 +14005,6 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     window.closeConfirmModal = closeConfirmModal;
     window.confirmDelete = confirmDelete;
     window.changePage = changePage;
-    window.toggleStatsTimeframe = toggleStatsTimeframe;
-    window._showTimeframePicker = _showTimeframePicker;
     window.showImportModal = showImportModal;
     window.closeImportModal = closeImportModal;
     window.selectImportFormat = selectImportFormat;

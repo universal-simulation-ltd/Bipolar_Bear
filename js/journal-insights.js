@@ -355,7 +355,13 @@
   function readSeen() { try { return JSON.parse(lsGet(SEEN_KEY) || '{}') || {}; } catch (_) { return {}; } }
 
   // ── Life chart (DOM) ──────────────────────────────────────────────────────
-  var RANGES = [[30, 'r1m'], [90, 'r3m'], [180, 'r6m'], [365, 'r1y']];
+  // The chart's span is the journal's 1M / 3M / 6M / 1Y / All range, shared
+  // with the stats above it (window.getJournalRangeDays in js/journal.js).
+  // 90 days only if that isn't there (tests).
+  function rangeDays() {
+    try { if (typeof root.getJournalRangeDays === 'function') return Math.max(2, root.getJournalRangeDays() || 90); } catch (_) {}
+    return 90;
+  }
   var _range = 90;
   var _entries = [];
   var _days = [];
@@ -471,6 +477,7 @@
       if (_days[ci]) centreT = _days[ci].t;
     }
 
+    _range = rangeDays();
     var today = dayStart(new Date());
     var minStart = new Date(today); minStart.setDate(minStart.getDate() - (_range - 1));
     _days = buildDays(_entries, { minStart: minStart });
@@ -480,10 +487,6 @@
     var avail = Math.max(160, (host.clientWidth || 320) - LABEL_W);
     _px = avail / _range;
     var g = buildSvg(_days, _px, hasMeds);
-
-    var rangeBtns = RANGES.map(function (r) {
-      return '<button type="button" class="lc-range' + (r[0] === _range ? ' on' : '') + '" data-range="' + r[0] + '" aria-pressed="' + (r[0] === _range) + '">' + esc(tr('lifeChart.' + r[1])) + '</button>';
-    }).join('');
 
     var legend =
       '<span class="lc-key"><i style="background:' + MOOD_COLORS.elevated + '"></i><i style="background:' + MOOD_COLORS.manic + '"></i>' + esc(moodName('elevated')) + ' / ' + esc(moodName('manic')) + '</span>' +
@@ -495,7 +498,6 @@
     host.innerHTML =
       '<div class="lc-head">' +
         '<div class="lc-title">' + esc(tr('lifeChart.title')) + '</div>' +
-        '<div class="lc-ranges" role="group" aria-label="' + esc(tr('lifeChart.rangeLabel')) + '">' + rangeBtns + '</div>' +
       '</div>' +
       '<div class="lc-sub">' + esc(tr('lifeChart.subtitle')) + '</div>' +
       '<div class="lc-frame">' + labelsHtml(g, hasMeds) +
@@ -575,17 +577,12 @@
     else applyView();
   }
 
-  function setRange(r) {
-    if (r === _range) return;
-    _range = r;
-    renderLifeChart(true);
-  }
+  // Pinch / ctrl-wheel / arrow-key zoom steps the shared range, which
+  // redraws the stats too and calls rangeChanged() back.
   function stepRange(dir) {
-    var idx = 0;
-    for (var i = 0; i < RANGES.length; i++) if (RANGES[i][0] === _range) idx = i;
-    var n = Math.max(0, Math.min(RANGES.length - 1, idx + dir));
-    setRange(RANGES[n][0]);
+    if (typeof root.stepJournalRange === 'function') root.stepJournalRange(dir);
   }
+  function rangeChanged() { if (_entries.length) renderLifeChart(true); }
 
   function showDay(host, idx) {
     var d = _days[idx];
@@ -605,9 +602,6 @@
   }
 
   function wireChart(host, scroller) {
-    host.querySelectorAll('.lc-range').forEach(function (b) {
-      b.addEventListener('click', function () { setRange(Number(b.dataset.range)); });
-    });
     var svg = scroller.querySelector('svg');
     var downX = null;
     svg.addEventListener('pointerdown', function (e) { downX = e.clientX; });
@@ -841,6 +835,7 @@
     render: render,
     noteSaved: noteSaved,
     onStatsOpen: onStatsOpen,
+    rangeChanged: rangeChanged,
     syncSettingUI: syncSettingUI,
     drawLifeChartPdf: drawLifeChartPdf,
     // pure helpers, exposed for tests

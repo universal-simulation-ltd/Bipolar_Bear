@@ -1765,7 +1765,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'incognitoMode', 'pdfHideByDefault',
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
-          'earlyWarnEnabled', 'bbEarlyWarnSeen',
+          'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',

@@ -1223,7 +1223,13 @@
 //       placeholder for the board check-in. css/journal.css, css/index.css,
 //       css/anonymous.css, journal.html, index.html, js/journal.js,
 //       js/journal-insights.js, js/index.js, js/anonymous.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v249';
+// v250: one 1M / 3M / 6M / 1Y / All range (tabs, tap twice = default,
+//       bbJournalRange) drives the journal stats, calendar, life chart and
+//       feedback; it replaces the 30/60/90 dropdown and the life chart's own
+//       range buttons. Export PDF / Backup / Import / page numbers / feedback
+//       tabs in the cream look. css/journal.css, css/dark.css, journal.html,
+//       js/journal.js, js/journal-insights.js, js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v250';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

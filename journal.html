@@ -546,24 +546,16 @@
     <div class="card" id="journalCard" style="display: none;">
       <div class="entries-header">
         <h2 data-i18n="journal.stats.heading">Your Journey</h2>
-        <div style="display: flex; gap: 10px;">
-          <div id="timeframePickerWrapper" style="position:relative;">
-            <button id="statsToggleBtn" class="stats-toggle-btn"
-              onclick="_showTimeframePicker()"
-              style="padding: 10px 20px; background: white; color: var(--brand-primary-dark); border: 2px solid var(--brand-primary-dark); border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); -webkit-tap-highlight-color:transparent; user-select:none; display:flex; align-items:center; gap:8px;">
-              <span id="statsToggleLabel" style="white-space:normal;word-break:break-word;text-align:center;">Showing 30d</span>
-              <span style="font-size:1em;opacity:0.7;flex-shrink:0;">≡</span>
-            </button>
-            <div id="timeframePickerMenu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:white;border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.18);z-index:200;min-width:160px;overflow:hidden;border:1.5px solid #e9ecef;"></div>
-          </div>
-        </div>
       </div>
+      <!-- 1M / 3M / 6M / 1Y / All — one range for the stats, calendar, life
+           chart and feedback (js/journal.js _renderJourneyRanges) -->
+      <div id="journeyRanges" class="seg-switch" style="display:none;"></div>
 
       <div id="statsAndCalendarBlock">
         <div class="stats" id="stats"></div>
 
         <!-- Calendar / life chart switch — js/journal-insights.js -->
-        <div id="calViewSwitch" style="display:none;"></div>
+        <div id="calViewSwitch" class="seg-switch" style="display:none;"></div>
         <div class="chart-container" id="chart"></div>
         <div id="monthCalendar"></div>
         <!-- Life chart — rendered by js/journal-insights.js -->
@@ -779,6 +771,7 @@
           • 🎨 Lighter home buttons, in the same cream as the Quick check-in — and the journal's buttons to match<br>
           • 📋 Your entries fold away under "See individual entries"<br>
           • 📅 Switch between the calendar and the life chart — tap your choice twice to make it the default<br>
+          • 🗓️ One set of 1M / 3M / 6M / 1Y / All tabs for your stats, calendar and life chart — tap one twice to make it the default<br>
           • 💛 The board's greeting on the home screen
         </div>
         <div style="margin-bottom:14px;">
