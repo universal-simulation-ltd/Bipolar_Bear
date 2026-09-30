@@ -2400,45 +2400,60 @@
 .ew-care a { color: #5c7cfa; font-weight: 600; }
 .ew-device { font-size: 0.72em; color: #adb5bd; margin-top: 4px; }
 
-/* ── Pills on the orange page: the home buttons' colours (James, 2026-09-30) ──
-   Dark warm text on cream instead of white on dark brown. The entry pill and
-   any pill you can act on (missing entries to fill, log the other day) are
-   solid cream like Mood Journal; status-only pills (streak, "no missing
-   entries") take Survival Kit's soft see-through cream — #5a2a00 on that
-   blend ≈ 7.5:1. Dark mode mirrors home: the dark surface with the orange ring
-   for the main pill, a faint neutral fill for the rest. */
+/* ── The landing stack on the orange page: one family (James, 2026-09-30) ──
+   "View yesterday's entry" and "Open Journal" are the same button: one width,
+   one radius, one type size, the home buttons' solid cream. What sits between
+   them follows home, where stats are plain dark text under the buttons, not
+   pills: the streak and "No missing entries ✓" are text, and only something
+   you can act on (missing entries to fill, log the other day) is a pill — a
+   small solid cream one. #5a2a00 on the orange ≈ 7:1. Dark mode mirrors home:
+   the dark surface with the orange ring. */
+#editTodayBtn,
+#journalToggleBtn {
+  box-sizing: border-box;
+  width: min(100%, 300px);
+  justify-content: center;
+  padding: 14px 20px !important;
+  border-radius: 16px !important;
+  font-family: inherit;
+  font-size: 1.05em !important;
+  line-height: 1.3;
+}
 #editTodayBtn {
   background: #fff8ef !important;
-  border-color: transparent !important;
+  border: 2px solid transparent !important;
   box-shadow: 0 6px 20px rgba(0,0,0,0.16);
 }
-#entryCompleteLabel { color: #5a2a00 !important; text-shadow: none !important; }
+#entryCompleteLabel { color: #5a2a00 !important; text-shadow: none !important; font-size: 1em !important; font-weight: 700 !important; }
+#editTodayBtn > span:first-child { font-size: 1.1em !important; line-height: 1; }
+#completionActionsRow { gap: 6px 12px !important; margin-top: 12px !important; }
 #completionActionsRow button {
-  background: rgba(255,248,239,0.35) !important;
-  border: 1.5px solid rgba(255,248,239,0.6) !important;
+  background: none !important;
+  border: 0 !important;
+  padding: 4px 2px !important;
+  border-radius: 999px !important;
   color: #5a2a00 !important;
   text-shadow: none !important;
   box-shadow: none !important;
+  font-family: inherit;
+  font-size: 0.85em !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
 }
 #completionActionsRow button[style*="var(--brand-btn)"] {
   background: #fff8ef !important;
-  border-color: transparent !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  padding: 6px 14px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12) !important;
 }
 :root.theme-dark #editTodayBtn {
   background: var(--dk-surface-2) !important;
-  border-color: rgba(255,149,0,0.55) !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+  box-shadow: var(--brand-btn-ring), 0 6px 20px rgba(0,0,0,0.45);
 }
 :root.theme-dark #entryCompleteLabel { color: var(--dk-text) !important; }
-:root.theme-dark #completionActionsRow button {
-  background: rgba(255,255,255,0.035) !important;
-  border-color: rgba(255,255,255,0.08) !important;
-  color: var(--dk-text-2) !important;
-}
+:root.theme-dark #completionActionsRow button { color: var(--dk-text-2) !important; }
 :root.theme-dark #completionActionsRow button[style*="var(--brand-btn)"] {
   background: var(--dk-surface-2) !important;
-  border-color: rgba(255,149,0,0.55) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(255,149,0,0.55) !important;
   color: var(--dk-text) !important;
 }
 

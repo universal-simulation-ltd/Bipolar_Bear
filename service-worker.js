@@ -1229,7 +1229,11 @@
 //       range buttons. Export PDF / Backup / Import / page numbers / feedback
 //       tabs in the cream look. css/journal.css, css/dark.css, journal.html,
 //       js/journal.js, js/journal-insights.js, js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v250';
+// v251: Journal landing — "View yesterday's entry" and "Open Journal" share one
+//       width, radius, font and size; the streak and "No missing entries" are
+//       plain dark text like home's stats, and only actionable items (missing
+//       entries, log the other day) are small cream pills. Touches css/journal.css.
+const CACHE_NAME = 'bipolarbear-v251';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
