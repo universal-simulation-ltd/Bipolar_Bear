@@ -259,16 +259,34 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.22);
     }
 
-    /* Home buttons: opaque burnt-orange fill so the white label clears WCAG AA
-       (4.5:1). The old rgba(255,255,255,0.28) wash over the #ffaa33→#ff8833
-       gradient gave white text only ~1.6–2:1. Both gradient stops pass on
-       their own: #c24a0c ≈ 5.0:1, #a8430a ≈ 6.1:1 against white. */
+    /* Home buttons wear the quick check-in card's colours — cream with dark
+       warm text (James, 2026-09-30: the burnt-orange fill read "very dark").
+       Still well past WCAG AA: #5a2a00 on #fff8ef ≈ 11.6:1. The earlier
+       white-on-translucent wash (~1.6–2:1) is why they went dark in the
+       first place; dark text on a light fill fixes both. The transparent
+       border keeps the old 3px so nothing shifts. */
     .btn-journal,
     .btn-survival,
     .btn-anonymous {
-      background: linear-gradient(135deg, #c24a0c 0%, #a8430a 100%);
-      color: white;
-      border: 3px solid rgba(255, 255, 255, 0.62);
+      background: #fff8ef;
+      color: #5a2a00;
+      border: 3px solid transparent;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
+      text-shadow: none;
+    }
+    .btn-journal .entry-tick,
+    .btn-survival .entry-tick,
+    .btn-anonymous .entry-tick {
+      border-color: rgba(168, 67, 10, 0.45);
+      background: transparent;
+      color: rgba(168, 67, 10, 0.55);
+    }
+    .btn-journal .entry-tick[data-done="true"],
+    .btn-survival .entry-tick[data-done="true"],
+    .btn-anonymous .entry-tick[data-done="true"] {
+      border: 2px solid #c24a0c;
+      background: #c24a0c;
+      color: #fff;
     }
     .btn-anonymous {
       transition: opacity 0.2s, border-color 0.2s, background 0.2s;
@@ -276,7 +294,7 @@
     /* Locked (signed out): a dashed outline with dark warm text rather than
        faded white, so the label still reads at ≥5:1 on the gradient. */
     .btn-anonymous.locked {
-      background: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 248, 239, 0.35);
       color: #5a2a00;
       text-shadow: none;
       border: 3px dashed rgba(90, 42, 0, 0.45);

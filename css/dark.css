@@ -110,13 +110,21 @@ html.theme-dark #bbAccountVersion, html.theme-dark #bbAuthVersion, html.theme-da
    Home (index.html)
    ══════════════════════════════════════════════════════════════════════════ */
 html.theme-dark .logo-img { box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
+/* Same surface as the dark quick check-in card (see .quick-checkin below). */
 html.theme-dark .btn-journal,
 html.theme-dark .btn-survival,
 html.theme-dark .btn-anonymous {
-  background: linear-gradient(135deg, #a8430a 0%, #8a3708 100%);
-  border-color: rgba(255,170,90,0.45);
+  background: var(--dk-surface);
+  color: var(--dk-text);
+  border-color: transparent;
   box-shadow: 0 6px 20px rgba(0,0,0,0.45);
 }
+html.theme-dark .btn-journal .entry-tick,
+html.theme-dark .btn-survival .entry-tick,
+html.theme-dark .btn-anonymous .entry-tick { border-color: rgba(255,170,90,0.45); color: rgba(255,170,90,0.6); }
+html.theme-dark .btn-journal .entry-tick[data-done="true"],
+html.theme-dark .btn-survival .entry-tick[data-done="true"],
+html.theme-dark .btn-anonymous .entry-tick[data-done="true"] { border-color: #c24a0c; background: #c24a0c; color: #fff; }
 html.theme-dark .btn-anonymous.locked {
   background: rgba(255,255,255,0.04);
   color: var(--dk-muted);

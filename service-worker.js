@@ -1205,7 +1205,10 @@
 //       anonymous.html, css/*.css, js/index.js, js/journal.js,
 //       js/anonymous.js, js/shared/i18n.js, functions/index.js,
 //       scripts/build-anonymous.js, privacy.html.
-const CACHE_NAME = 'bipolarbear-v244';
+// v245: home buttons (Mood Journal / Survival Kit / Bipolar Anonymous) take
+//       the quick check-in card's cream + dark-brown instead of burnt orange
+//       (light) and its dark surface (dark). Touches css/index.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v245';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
