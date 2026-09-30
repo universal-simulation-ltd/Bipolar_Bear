@@ -1211,7 +1211,10 @@
 // v246: Survival Kit + Bipolar Anonymous home buttons go soft (the locked
 //       state's see-through cream, solid pale outline) so Mood Journal stays
 //       the main button. Touches css/index.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v246';
+// v247: dark mode — the warm outline moves to Mood Journal / the quick
+//       check-in card (lighter surface + orange ring); Survival Kit and
+//       Anonymous get a neutral hairline, the locked dashes fade. css/dark.css.
+const CACHE_NAME = 'bipolarbear-v247';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
