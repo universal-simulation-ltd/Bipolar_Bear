@@ -44,17 +44,17 @@
    }
   },
   "releaseNotes": {
-   "en": "A small behind-the-scenes update: the UNI·SIM community count can now tell the app from the website. It still sends only a random install ID — nothing about you or your journal.",
-   "es": "Una pequeña actualización interna: el contador de la comunidad UNI·SIM ahora distingue la app de la web. Sigue enviando solo un ID de instalación aleatorio, nada sobre ti ni tu diario.",
-   "fr": "Une petite mise à jour en coulisses : le compteur de la communauté UNI·SIM distingue désormais l’app du site web. Il n’envoie toujours qu’un identifiant d’installation aléatoire, rien sur toi ni sur ton journal.",
-   "de": "Ein kleines Update im Hintergrund: Der UNI·SIM-Community-Zähler unterscheidet jetzt zwischen App und Website. Er sendet weiterhin nur eine zufällige Installationskennung – nichts über dich oder dein Tagebuch.",
-   "it": "Un piccolo aggiornamento dietro le quinte: il contatore della community UNI·SIM ora distingue l’app dal sito web. Invia sempre solo un ID di installazione casuale, niente su di te o sul tuo diario.",
-   "pt": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM passa a distinguir a app do site. Continua a enviar apenas um ID de instalação aleatório, nada sobre ti nem sobre o teu diário.",
-   "pt-BR": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM agora diferencia o app do site. Ele continua enviando só um ID de instalação aleatório, nada sobre você ou seu diário.",
-   "nl": "Een kleine update achter de schermen: de UNI·SIM-communityteller ziet nu het verschil tussen de app en de website. Hij verstuurt nog steeds alleen een willekeurige installatie-ID, niets over jou of je dagboek.",
-   "pl": "Mała zmiana pod maską: licznik społeczności UNI·SIM odróżnia teraz aplikację od strony internetowej. Nadal wysyła tylko losowy identyfikator instalacji, nic o tobie ani o twoim dzienniku.",
-   "sv": "En liten uppdatering bakom kulisserna: UNI·SIM-gemenskapens räknare skiljer nu på appen och webbplatsen. Den skickar fortfarande bara ett slumpmässigt installations-ID, inget om dig eller din dagbok.",
-   "zh": "一次幕后小更新：UNI·SIM 社区计数器现在可以区分应用和网站。它仍然只发送一个随机的安装 ID，不会发送任何关于你或你日记的信息。"
+   "en": "• Quick check-in on the home screen: turn it on in Profile and log your mood in one tap\n• Dark mode, and lighter, calmer buttons\n• A life chart, and one set of range tabs for your stats, calendar and chart\n• The check-in now fits on one screen\n• A medication reminder (in the app) that asks again every hour until you mark it taken",
+   "es": "• Registro rápido en la pantalla de inicio: actívalo en Perfil y anota tu ánimo con un toque\n• Modo oscuro y botones más ligeros y tranquilos\n• Un gráfico de vida y una sola fila de periodos para tus estadísticas, calendario y gráfico\n• El registro ahora cabe en una sola pantalla\n• Un recordatorio de medicación (en la app) que vuelve a avisarte cada hora hasta que la marques como tomada",
+   "fr": "• Humeur express sur l’écran d’accueil : active-la dans Profil et note ton humeur en un geste\n• Mode sombre, et des boutons plus légers et plus apaisants\n• Un graphique de vie, et une seule rangée de périodes pour tes stats, ton calendrier et le graphique\n• Le suivi tient désormais sur un seul écran\n• Un rappel de médicament (dans l’app) qui te relance chaque heure jusqu’à ce que tu le marques comme pris",
+   "de": "• Schnell-Check-in auf dem Startbildschirm: im Profil einschalten und die Stimmung mit einem Tippen erfassen\n• Dunkelmodus und hellere, ruhigere Buttons\n• Ein Lebensdiagramm und eine gemeinsame Zeitraum-Leiste für Statistiken, Kalender und Diagramm\n• Der Check-in passt jetzt auf einen Bildschirm\n• Eine Medikamenten-Erinnerung (in der App), die stündlich nachfragt, bis du sie als eingenommen markierst",
+   "it": "• Registrazione rapida nella schermata iniziale: attivala in Profilo e registra il tuo umore con un tocco\n• Modalità scura e pulsanti più leggeri e tranquilli\n• Un grafico della vita e un’unica fila di periodi per statistiche, calendario e grafico\n• La registrazione ora sta in una sola schermata\n• Un promemoria per i farmaci (nell’app) che ti richiama ogni ora finché non lo segni come preso",
+   "pt": "• Registo rápido no ecrã inicial: ativa-o no Perfil e regista o teu humor com um toque\n• Modo escuro e botões mais leves e tranquilos\n• Um gráfico de vida e uma só fila de períodos para as tuas estatísticas, calendário e gráfico\n• O registo cabe agora num só ecrã\n• Um lembrete de medicação (na app) que volta a avisar-te de hora a hora até o marcares como tomado",
+   "pt-BR": "• Registro rápido na tela inicial: ative no Perfil e registre seu humor com um toque\n• Modo escuro e botões mais leves e tranquilos\n• Um gráfico de vida e uma só fileira de períodos para suas estatísticas, calendário e gráfico\n• O registro agora cabe em uma só tela\n• Um lembrete de medicação (no app) que avisa de novo a cada hora até você marcar como tomado",
+   "nl": "• Snelle check-in op het startscherm: zet hem aan in Profiel en leg je stemming vast met één tik\n• Donkere modus en lichtere, rustigere knoppen\n• Een levensgrafiek en één rij periodes voor je statistieken, kalender en grafiek\n• De check-in past nu op één scherm\n• Een medicijnherinnering (in de app) die elk uur opnieuw vraagt tot je hem als ingenomen markeert",
+   "pl": "• Szybki wpis na ekranie głównym: włącz go w Profilu i zapisz nastrój jednym stuknięciem\n• Tryb ciemny oraz jaśniejsze, spokojniejsze przyciski\n• Wykres życia i jeden rząd okresów dla statystyk, kalendarza i wykresu\n• Wpis mieści się teraz na jednym ekranie\n• Przypomnienie o lekach (w aplikacji), które ponawia się co godzinę, aż oznaczysz je jako przyjęte",
+   "sv": "• Snabb incheckning på startskärmen: slå på den i Profil och logga ditt humör med ett tryck\n• Mörkt läge och ljusare, lugnare knappar\n• Ett livsdiagram och en gemensam rad med perioder för statistik, kalender och diagram\n• Incheckningen får nu plats på en skärm\n• En medicinpåminnelse (i appen) som frågar igen varje timme tills du markerar den som tagen",
+   "zh": "• 主屏幕上的快速签到：在个人资料中开启，一键记录情绪\n• 深色模式，以及更轻盈、更柔和的按钮\n• 人生图表，以及统计、日历和图表共用的一排时间范围\n• 签到现在一屏即可完成\n• 用药提醒（应用内）：每小时再提醒一次，直到你标记为已服用"
   }
  },
  "anonymous": {
@@ -102,17 +102,17 @@
    }
   },
   "releaseNotes": {
-   "en": "A small behind-the-scenes update: the UNI·SIM community count can now tell the app from the website. It still sends only a random install ID — nothing about you or your posts.",
-   "es": "Una pequeña actualización interna: el contador de la comunidad UNI·SIM ahora distingue la app de la web. Sigue enviando solo un ID de instalación aleatorio, nada sobre ti ni tus publicaciones.",
-   "fr": "Une petite mise à jour en coulisses : le compteur de la communauté UNI·SIM distingue désormais l’app du site web. Il n’envoie toujours qu’un identifiant d’installation aléatoire, rien sur toi ni sur tes publications.",
-   "de": "Ein kleines Update im Hintergrund: Der UNI·SIM-Community-Zähler unterscheidet jetzt zwischen App und Website. Er sendet weiterhin nur eine zufällige Installationskennung – nichts über dich oder deine Beiträge.",
-   "it": "Un piccolo aggiornamento dietro le quinte: il contatore della community UNI·SIM ora distingue l’app dal sito web. Invia sempre solo un ID di installazione casuale, niente su di te o sui tuoi post.",
-   "pt": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM passa a distinguir a app do site. Continua a enviar apenas um ID de instalação aleatório, nada sobre ti nem sobre as tuas publicações.",
-   "nl": "Een kleine update achter de schermen: de UNI·SIM-communityteller ziet nu het verschil tussen de app en de website. Hij verstuurt nog steeds alleen een willekeurige installatie-ID, niets over jou of je berichten.",
-   "pl": "Mała zmiana pod maską: licznik społeczności UNI·SIM odróżnia teraz aplikację od strony internetowej. Nadal wysyła tylko losowy identyfikator instalacji, nic o tobie ani o twoich postach.",
-   "sv": "En liten uppdatering bakom kulisserna: UNI·SIM-gemenskapens räknare skiljer nu på appen och webbplatsen. Den skickar fortfarande bara ett slumpmässigt installations-ID, inget om dig eller dina inlägg.",
-   "zh": "一次幕后小更新：UNI·SIM 社区计数器现在可以区分应用和网站。它仍然只发送一个随机的安装 ID，不会发送任何关于你或你帖子的信息。",
-   "pt-BR": "Uma pequena atualização nos bastidores: o contador da comunidade UNI·SIM agora diferencia o app do site. Ele continua enviando só um ID de instalação aleatório, nada sobre você ou suas publicações."
+   "en": "• The daily check-in uses Bipolar Bear's five moods, and can be filled in from your journal if you link it\n• A lighter, easier-to-read greeting card\n• Your streaks now live in Your Moniker, with new show/hide switches\n• Dark mode",
+   "es": "• El registro diario usa los cinco estados de ánimo de Bipolar Bear y puede rellenarse desde tu diario si lo vinculas\n• Una tarjeta de bienvenida más clara y fácil de leer\n• Tus rachas ahora están en Tu apodo, con nuevos interruptores para mostrar u ocultar\n• Modo oscuro",
+   "fr": "• Le suivi du jour utilise les cinq humeurs de Bipolar Bear, et peut se remplir depuis ton journal si tu le relies\n• Une carte d’accueil plus claire et plus lisible\n• Tes séries sont désormais dans Ton pseudo, avec de nouveaux interrupteurs afficher/masquer\n• Mode sombre",
+   "de": "• Der tägliche Check-in nutzt die fünf Stimmungen von Bipolar Bear und kann aus deinem Tagebuch ausgefüllt werden, wenn du es verknüpfst\n• Eine hellere, leichter lesbare Begrüßungskarte\n• Deine Serien findest du jetzt unter Dein Pseudonym, mit neuen Schaltern zum Ein- und Ausblenden\n• Dunkelmodus",
+   "it": "• La registrazione giornaliera usa i cinque stati d’animo di Bipolar Bear e può essere compilata dal tuo diario se lo colleghi\n• Una scheda di benvenuto più chiara e facile da leggere\n• Le tue serie ora sono in Il tuo nickname, con nuovi interruttori mostra/nascondi\n• Modalità scura",
+   "pt": "• O registo diário usa os cinco estados de humor do Bipolar Bear e pode ser preenchido a partir do teu diário, se o ligares\n• Um cartão de boas-vindas mais claro e fácil de ler\n• As tuas sequências estão agora em O teu pseudónimo, com novos botões para mostrar ou ocultar\n• Modo escuro",
+   "nl": "• De dagelijkse check-in gebruikt de vijf stemmingen van Bipolar Bear en kan vanuit je dagboek worden ingevuld als je het koppelt\n• Een lichtere, beter leesbare welkomstkaart\n• Je reeksen staan nu onder Je bijnaam, met nieuwe schakelaars om ze te tonen of te verbergen\n• Donkere modus",
+   "pl": "• Codzienny wpis korzysta z pięciu nastrojów Bipolar Bear i może być uzupełniany z twojego dziennika, jeśli go połączysz\n• Jaśniejsza, czytelniejsza karta powitalna\n• Twoje serie są teraz w sekcji Twój pseudonim, z nowymi przełącznikami pokaż/ukryj\n• Tryb ciemny",
+   "sv": "• Den dagliga incheckningen använder Bipolar Bears fem humör och kan fyllas i från din dagbok om du länkar den\n• Ett ljusare, lättläst välkomstkort\n• Dina serier finns nu under Ditt smeknamn, med nya reglage för att visa eller dölja\n• Mörkt läge",
+   "zh": "• 每日签到使用 Bipolar Bear 的五种情绪，关联日记后可自动填写\n• 更明亮、更易读的问候卡片\n• 你的连续记录移到了“你的昵称”中，并新增显示/隐藏开关\n• 深色模式",
+   "pt-BR": "• O registro diário usa os cinco humores do Bipolar Bear e pode ser preenchido pelo seu diário, se você vincular\n• Um cartão de boas-vindas mais claro e fácil de ler\n• Suas sequências agora ficam em Seu apelido, com novas opções de mostrar ou ocultar\n• Modo escuro"
   }
  }
 }

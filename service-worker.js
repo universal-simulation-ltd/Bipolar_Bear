@@ -1238,7 +1238,10 @@
 //       cream was "too much"). Touches css/journal.css.
 // v253: "View yesterday's entry" isn't highlighted — no fill, outline or
 //       shadow, just dark text like the stats. Touches css/journal.css.
-const CACHE_NAME = 'bipolarbear-v253';
+// v254: release 1.39 (build 39) for Bipolar Bear and Bipolar Anonymous —
+//       _APP_VERSION 1.39, version.json web 1.39 (app stays 1.38 until 1.39 is
+//       live), store What's New in 11 languages for both apps.
+const CACHE_NAME = 'bipolarbear-v254';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

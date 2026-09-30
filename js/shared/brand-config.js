@@ -21,7 +21,7 @@
  * what's-new popup, fab.js feedback metadata, and any page that needs it
  * without depending on js/index.js loading first.
  */
-window._APP_VERSION = '1.38';
+window._APP_VERSION = '1.39';
 
 window.BB_BRAND = {
   // Slug used by storage prefixes, cache names, and build artefacts.

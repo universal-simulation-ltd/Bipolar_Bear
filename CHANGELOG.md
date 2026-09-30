@@ -4,7 +4,8 @@
 > `CACHE_NAME` notes in `service-worker.js` (v179 – v199) are the record for
 > that stretch.
 
-## Unreleased — web live on push; the store apps get it with the next build
+## v1.39 — everything below until v1.38 (submitted to both stores 2026-09-30)
+- Version bump: `_APP_VERSION` 1.39, iOS (app + widget) and Android build 39 for both apps (Bipolar Anonymous 1.39 (39)), `service-worker.js` `CACHE_NAME` v254, `version.json` web 1.39 / app 1.38 (1.38 is live; app → 1.39 once 1.39 is). Store What's New in all 11 languages for both apps.
 - 🗓️ **30 Sep 2026 batch** (`CACHE_NAME` v244; web live on push, the store apps with 1.39).
   - **Quick check-in widget (opt-in).** Profile → Customise → 🐻 Quick check-in (`bbHomeQuickCheckin`, synced as `homeQuickCheckinEnabled`, default off). When on, the five-bear card *replaces* the Mood Journal button: it gains a "📔 Mood Journal ›" header that opens the journal, and the streak line and last-7-days strip sit under it only when Show stats is on. Before this the bears showed for everyone under the button.
   - **The check-in fits one screen.** On phones (<920px) the focused check-in is exactly the viewport minus the safe areas: the card starts 12px below the notch / Dynamic Island and stops 18px above the home indicator, so its mood-tinted surface reads as a card against the orange page. Nothing scrolls the page; on the review step the answer list takes the leftover height and scrolls inside itself so Clear / Save stay on screen; short phones (≤760pt tall) get smaller heroes. Checked in WebKit at 393×852 (59/34 insets) and 375×667, plain and wheel mode.
