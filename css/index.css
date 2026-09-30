@@ -291,6 +291,15 @@
     .btn-anonymous {
       transition: opacity 0.2s, border-color 0.2s, background 0.2s;
     }
+    /* Secondary buttons: the soft see-through cream of the locked state, with a
+       solid pale outline instead of the dashes, so Mood Journal stays the main
+       event (James, 2026-09-30). #5a2a00 on the blend (~#ffc88f) ≈ 7.5:1. */
+    .btn-survival,
+    .btn-anonymous:not(.locked) {
+      background: rgba(255, 248, 239, 0.35);
+      border: 3px solid rgba(255, 248, 239, 0.6);
+      box-shadow: none;
+    }
     /* Locked (signed out): a dashed outline with dark warm text rather than
        faded white, so the label still reads at ≥5:1 on the gradient. */
     .btn-anonymous.locked {
