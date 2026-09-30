@@ -1245,7 +1245,9 @@
 //       Set PIN dialog's dots; the missing-entries "none missing" line was
 //       black on dark, and its dates were US English. Touches css/dark.css,
 //       js/journal.js.
-const CACHE_NAME = 'bipolarbear-v255';
+// v256: French speaks tu everywhere (was a vous/tu mix — 427 strings in
+//       js/shared/i18n.js).
+const CACHE_NAME = 'bipolarbear-v256';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

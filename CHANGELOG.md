@@ -7,6 +7,7 @@
 ## Next release (1.40) — unreleased
 - 🌙 **Dark mode for the PIN setup screen** ("Protect your data — choose a 4-digit PIN", shown to guests on their first save) — it stayed bright orange. The Set PIN dialog's dots and key presses follow dark mode too. (`CACHE_NAME` v255)
 - **Missing entries popup:** "No missing entries in the last 30 days!" was black on the dark card; the dates list is in the app's language instead of US English, and "(Today)" is translated.
+- 🇫🇷 **French speaks tu everywhere.** The app mixed vous and tu ("Votre Parcours" beside "Connecte-toi"); both apps' store listings already use tu, so all 427 vous-form strings in `js/shared/i18n.js` (journal, home, Survival Kit, board, wiki, privacy policy) now use tu, as do the board's push notifications (`functions/index.js`, deployed) and the home-screen widget (native). Kept formal on purpose: a quotation, "Tenez-moi informé" (the user addressing the team), and one plural "you and your loved one". (`CACHE_NAME` v256)
 - 🤖 **Android back swipe goes home instead of closing the app** (Survival Kit and journal). The back handlers were already written, but `@capacitor/app` was never installed in `bipolarbear-native`, so they never registered — native change, needs the 1.40 build. The widget's `bipolarbear://journal` deep link (same plugin) starts working with it.
 
 ## v1.39 — everything below until v1.38 (submitted to both stores 2026-09-30)
