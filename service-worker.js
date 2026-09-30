@@ -1236,7 +1236,9 @@
 // v252: those two buttons and the missing-entries pill take home's Bipolar
 //       Anonymous look — see-through cream, pale outline, no shadow (solid
 //       cream was "too much"). Touches css/journal.css.
-const CACHE_NAME = 'bipolarbear-v252';
+// v253: "View yesterday's entry" isn't highlighted — no fill, outline or
+//       shadow, just dark text like the stats. Touches css/journal.css.
+const CACHE_NAME = 'bipolarbear-v253';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

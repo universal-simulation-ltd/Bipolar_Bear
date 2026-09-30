@@ -2427,9 +2427,19 @@
   box-shadow: none !important;
   backdrop-filter: none !important;
 }
+/* "View yesterday's entry" isn't highlighted (James, 2026-09-30): no fill,
+   outline or shadow — dark text on the orange like the stats under it, still
+   tappable. Open Journal keeps the see-through button. */
+#editTodayBtn,
+:root.theme-dark #editTodayBtn {
+  background: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  padding: 6px 12px !important;
+}
 #entryCompleteLabel { color: #5a2a00 !important; text-shadow: none !important; font-size: 1em !important; font-weight: 700 !important; }
 #editTodayBtn > span:first-child { font-size: 1.1em !important; line-height: 1; }
-#completionActionsRow { gap: 6px 12px !important; margin-top: 12px !important; }
+#completionActionsRow { gap: 6px 12px !important; margin-top: 6px !important; }
 #completionActionsRow button {
   background: none !important;
   border: 0 !important;
@@ -2449,9 +2459,8 @@
   padding: 5px 13px !important;
 }
 @media (hover: hover) and (pointer: fine) {
-  #editTodayBtn:hover, #journalToggleBtn:hover { background: rgba(255,248,239,0.5) !important; transform: none !important; }
+  #journalToggleBtn:hover { background: rgba(255,248,239,0.5) !important; transform: none !important; }
 }
-:root.theme-dark #editTodayBtn,
 :root.theme-dark #journalToggleBtn,
 :root.theme-dark #completionActionsRow button[style*="var(--brand-btn)"] {
   background: rgba(255,255,255,0.035) !important;
