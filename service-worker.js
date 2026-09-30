@@ -1247,7 +1247,11 @@
 //       js/journal.js.
 // v256: French speaks tu everywhere (was a vous/tu mix — 427 strings in
 //       js/shared/i18n.js).
-const CACHE_NAME = 'bipolarbear-v256';
+// v257: German (du), Dutch (je), Portuguese (pt-PT tu), Spanish privacy
+//       policy (tú) and Chinese (你) address the user one way throughout, like
+//       their store listings; every privacy policy names the Moniker screen by
+//       its real title. Touches js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v257';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
