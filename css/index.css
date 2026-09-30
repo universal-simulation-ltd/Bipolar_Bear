@@ -265,6 +265,17 @@
        white-on-translucent wash (~1.6–2:1) is why they went dark in the
        first place; dark text on a light fill fixes both. The transparent
        border keeps the old 3px so nothing shifts. */
+    /* Greeting above the Mood Journal button — the Anonymous board's words. */
+    .home-greeting {
+      text-align: center;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95em;
+      line-height: 1.45;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+      margin: 0 8px 14px;
+    }
+    .home-greeting:empty { display: none; }
     .btn-journal,
     .btn-survival,
     .btn-anonymous {

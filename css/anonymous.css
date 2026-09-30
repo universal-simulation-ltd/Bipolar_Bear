@@ -1086,6 +1086,14 @@
     .ml-img { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; }
     .mood-note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
     .mood-you { color: var(--dark); display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; }
+    /* Placeholder while the check-in loads (moodPlaceholderHtml): same
+       layout as the real thing, quietly pulsing, so nothing below moves. */
+    .mood-loading .mood-btns,
+    .mood-loading .mood-bar,
+    .mood-loading .mood-legend { opacity: 0.5; animation: moodPulse 1.4s ease-in-out infinite; }
+    .mood-loading .mood-btn { cursor: default; }
+    @keyframes moodPulse { 50% { opacity: 0.28; } }
+    @media (prefers-reduced-motion: reduce) { .mood-loading .mood-btns, .mood-loading .mood-bar, .mood-loading .mood-legend { animation: none; } }
     html.theme-dark .mood-block { box-shadow: none; }
     html.theme-dark .mood-btn { background: rgba(255,255,255,0.06); }
 

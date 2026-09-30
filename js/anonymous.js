@@ -1102,7 +1102,7 @@ const MOODS = [
   { k: 'depressed', key: 'mood.depressed', c: '#5c7cfa' },
 ];
 const _moodImg = (k, cls) => `<img class="${cls || 'mb-img'}" src="images/moods/sm/${k}.png" alt="" draggable="false">`;
-const _moodState = { ready: false, counts: null, checkedIn: false, via: null, day: '' };
+const _moodState = { ready: false, failed: false, counts: null, checkedIn: false, via: null, day: '' };
 function _ukDay() {
   try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date()); }
   catch (e) { return new Date().toISOString().slice(0, 10); }
@@ -1116,8 +1116,28 @@ function _myMood() {
 // Settings (Your Moniker sheet). Both default ON; stored as '0' when off.
 function _moodAskShown()     { return BB.storage.get('Anon_moodAsk') !== '0'; }
 function _journalCheckinOn() { return BB.storage.get('Anon_journalCheckin') !== '0'; }
+// Holds the check-in's place on the greeting card while anonMoodCheckin
+// answers, so the feed under it doesn't jump when the answer lands (James,
+// 2026-09-30). It takes the shape the answer will probably have: the tally
+// when this device already knows today's mood (board or journal), otherwise
+// the five bears, dimmed and not yet tappable.
+function moodPlaceholderHtml() {
+  const known = _myMood() || _journalMoodForToday();
+  if (!known) {
+    return `<div class="mood-block mood-loading" aria-busy="true"><div class="mood-ask">${esc(_wt('anon.ux.moodAsk'))}</div><div class="mood-btns">`
+      + MOODS.map(m => `<button class="mood-btn" disabled tabindex="-1" style="--mc:${m.c}">${_moodImg(m.k)}<span class="mb-l">${esc(_wt(m.key))}</span></button>`).join('')
+      + `</div><div class="mood-note">${esc(_wt('anon.ux.moodPrivate'))}</div></div>`;
+  }
+  const you = MOODS.find(m => m.k === known);
+  return `<div class="mood-block mood-loading" aria-busy="true"><div class="mood-ask">${esc(_wt('anon.ux.moodToday'))}</div>`
+    + `<div class="mood-bar"></div>`
+    + `<div class="mood-legend">${MOODS.map(m => `<span class="ml-i">${_moodImg(m.k, 'ml-img')}<b>–</b></span>`).join('')}</div>`
+    + `<div class="mood-note mood-you">${esc(_wt('anon.ux.moodYouLabel'))} ${_moodImg(you.k, 'ml-img')} <b>${esc(_wt(you.key))}</b></div>`
+    + `</div>`;
+}
 function moodBlockHtml() {
-  if (!_moodAskShown() || !_moodState.ready) return '<div class="mood-block"></div>';
+  if (!_moodAskShown() || _moodState.failed) return '<div class="mood-block"></div>';
+  if (!_moodState.ready) return moodPlaceholderHtml();
   const mine = _myMood();
   if (!_moodState.checkedIn && !mine) {
     return `<div class="mood-block"><div class="mood-ask">${esc(_wt('anon.ux.moodAsk'))}</div><div class="mood-btns">`
@@ -1167,15 +1187,23 @@ function _journalMoodForToday() {
 async function loadMood() {
   if (!_moodAskShown()) return;
   try {
-    let res = await _callFn('anonMoodCheckin', {});
+    // Capped, so a slow callable (the SDK waits up to 70s) can't leave the
+    // placeholder pulsing — the card falls back to a plain greeting.
+    let res = await Promise.race([
+      _callFn('anonMoodCheckin', {}),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 12000)),
+    ]);
     const jm = !res.checkedIn && !_myMood() ? _journalMoodForToday() : null;
     if (jm) {
       res = await _callFn('anonMoodCheckin', { mood: jm, source: 'journal' });
       if (res.via === 'journal') { try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: jm })); } catch (e) {} }
     }
-    Object.assign(_moodState, { ready: true, counts: res.counts || {}, checkedIn: !!res.checkedIn, via: res.via || null, day: res.day || '' });
+    Object.assign(_moodState, { ready: true, failed: false, counts: res.counts || {}, checkedIn: !!res.checkedIn, via: res.via || null, day: res.day || '' });
   } catch (e) {
-    // Offline or the function isn't there: the card just stays a greeting.
+    // Offline or the function isn't there: the card just stays a greeting
+    // (the placeholder goes).
+    _moodState.failed = true;
+    _repaintMood();
     return;
   }
   _repaintMood();
@@ -4817,10 +4845,18 @@ function renderPosts(posts) {
   if (window.BB && BB.translate) BB.translate.scan(list);
 }
 
+// The daily greeting breaks after its first sentence so it reads cleaner:
+// "Hope your afternoon is going well." / "You're doing great. 💛" (James,
+// 2026-09-30). The home page's copy does the same (js/index.js).
+function greetingHtml(text) {
+  const m = String(text || '').match(/^(.*?[.!?。！？])\s*(\S[\s\S]*)$/);
+  return m ? esc(m[1]) + '<br>' + esc(m[2]) : esc(text);
+}
+
 function renderSystem(p) {
   return `<div class="sys-card">
     <div class="sys-emoji">${esc(p.icon) || '☀️'}</div>
-    <div class="sys-text">${esc(p.text)}</div>
+    <div class="sys-text">${p.id === 'sys_daily' ? greetingHtml(p.text) : esc(p.text)}</div>
     <div class="sys-meta">BipolarBear${p.time ? ' · ' + esc(p.time) : (p.timestamp ? ' · ' + timeAgo(p.timestamp) : '')}</div>
     ${p.id === 'sys_daily' ? moodBlockHtml() : ''}
   </div>`;

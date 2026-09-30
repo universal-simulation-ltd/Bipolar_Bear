@@ -72,7 +72,13 @@
       medsUnsure: 'meds unsure',
       autoFilled: 'auto-filled',
       pdfTitle: 'Life chart — last 90 days',
-      pdfNote: 'Bars above the line are elevated/manic days, below it low/depressed days. Blue bars show hours slept; red marks show days medication was missed or unsure. Gaps are days with no entry.'
+      pdfNote: 'Bars above the line are elevated/manic days, below it low/depressed days. Blue bars show hours slept; red marks show days medication was missed or unsure. Gaps are days with no entry.',
+      viewLabel: 'View',
+      viewCalendar: '📅 Calendar',
+      viewLife: '📈 Life chart',
+      viewTapAgain: 'Tap again to make this your default',
+      viewNowDefault: 'Now your default view',
+      viewDefault: 'Default view'
     },
     earlyWarn: {
       settingTitle: '🌱 Early-warning nudges',
@@ -446,8 +452,12 @@
     var host = document.getElementById('lifeChart');
     if (!host) return;
     var logged = (_entries || []).filter(function (e) { return e && e.mood != null && e.mood !== ''; });
-    if (logged.length < 2) { host.innerHTML = ''; host.style.display = 'none'; return; }
+    if (logged.length < 2) { host.innerHTML = ''; host.style.display = 'none'; _lifeOk = false; applyView(); return; }
     host.style.display = '';
+    // Show/hide via the switch BEFORE measuring, so a freshly chosen life
+    // chart is laid out at its real width.
+    _lifeOk = true;
+    applyView();
 
     var oldScroller = host.querySelector('.lc-scroll');
     var centreT = null;
@@ -503,6 +513,66 @@
       scroller.scrollLeft = scroller.scrollWidth; // newest at the right edge
     }
     wireChart(host, scroller);
+  }
+
+  // ── Calendar / life chart switch ────────────────────────────────────────
+  // One view at a time under the stats (#calViewSwitch in journal.html). Tap
+  // the other choice to switch; tap the choice already showing to make it the
+  // default for next time (James, 2026-09-30). The default is per device
+  // (localStorage), like the life chart's range. With fewer than two logged
+  // moods there is no life chart, so the switch hides and the calendar shows.
+  // Hiding is by class on #statsAndCalendarBlock (css/journal.css), so it never
+  // fights the inline display journal.js sets on #chart.
+  var VIEW_KEY = 'bbJournalView';
+  var _view = null;      // the view showing; read from the default on first use
+  var _lifeOk = false;   // enough entries for a life chart
+  var _viewNote = '';    // one-off confirmation after a default is set
+
+  function storedView() {
+    try { return localStorage.getItem(VIEW_KEY) === 'life' ? 'life' : 'calendar'; } catch (_) { return 'calendar'; }
+  }
+
+  function applyView() {
+    var block = document.getElementById('statsAndCalendarBlock');
+    var sw = document.getElementById('calViewSwitch');
+    if (!block || !sw) return;
+    if (_view == null) _view = storedView();
+    var view = _lifeOk ? _view : 'calendar';
+    block.classList.toggle('cv-life', view === 'life');
+    if (!_lifeOk) { sw.style.display = 'none'; sw.innerHTML = ''; return; }
+    sw.style.display = '';
+    var def = storedView();
+    var opt = function (v, key) {
+      var on = v === view;
+      return '<button type="button" class="cv-opt' + (on ? ' on' : '') + '" data-view="' + v + '" aria-pressed="' + on + '">' +
+        esc(tr('lifeChart.' + key)) +
+        (v === def ? ' <span class="cv-star" title="' + esc(tr('lifeChart.viewDefault')) + '" aria-label="' + esc(tr('lifeChart.viewDefault')) + '">★</span>' : '') +
+        '</button>';
+    };
+    var note = _viewNote || (view !== def ? tr('lifeChart.viewTapAgain') : '');
+    sw.innerHTML =
+      '<div class="cv-seg" role="group" aria-label="' + esc(tr('lifeChart.viewLabel')) + '">' +
+        opt('calendar', 'viewCalendar') + opt('life', 'viewLife') +
+      '</div>' +
+      '<div class="cv-note" aria-live="polite">' + esc(note) + '</div>';
+    sw.querySelectorAll('.cv-opt').forEach(function (b) {
+      b.addEventListener('click', function () { pickView(b.getAttribute('data-view')); });
+    });
+  }
+
+  function pickView(v) {
+    _viewNote = '';
+    if (v === _view) {
+      if (storedView() !== v) {
+        try { localStorage.setItem(VIEW_KEY, v); } catch (_) {}
+        _viewNote = tr('lifeChart.viewNowDefault');
+      }
+      applyView();
+      return;
+    }
+    _view = v;
+    if (v === 'life') renderLifeChart(false); // it was hidden, so re-measure (calls applyView)
+    else applyView();
   }
 
   function setRange(r) {

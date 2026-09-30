@@ -1216,7 +1216,14 @@
 //       Anonymous get a neutral hairline, the locked dashes fade. css/dark.css.
 // v248: the quick check-in's last-7-days dots show regardless of Show stats
 //       (stats = the text lines only). Touches css/index.css, index.html.
-const CACHE_NAME = 'bipolarbear-v248';
+// v249: journal buttons in the home look (cream / dark surface), "See
+//       individual entries" under Personalised Feedback, a Calendar / Life
+//       chart switch (tap twice = default), the board greeting above Mood
+//       Journal on home (break after the first sentence, board too), and a
+//       placeholder for the board check-in. css/journal.css, css/index.css,
+//       css/anonymous.css, journal.html, index.html, js/journal.js,
+//       js/journal-insights.js, js/index.js, js/anonymous.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v249';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

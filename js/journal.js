@@ -2771,17 +2771,27 @@ window.addEventListener('pageshow', () => {
         const _pageButtons = _pageNums.map(p =>
           `<button class="pagination-btn" onclick="goToPage(${p})" style="${p === currentPage ? 'background:var(--brand-btn);color:white;border-color:var(--brand-primary);' : ''}">${p}</button>`
         ).join('');
-        const paginationHtml = `
-          <div style="margin-top: 15px;">
-            <div class="pagination" style="justify-content: center; margin-bottom: 10px; flex-wrap:wrap; gap:4px;">
+        // The entry-by-entry log (entries, pages, Backup / Import) sits behind
+        // "See individual entries" under the Personalised Feedback bear; Export
+        // PDF and the account row stay visible (James, 2026-09-30).
+        const entriesListHtml = `
+          <div id="entriesReveal" style="${_entriesListOpen ? '' : 'display:none;'}">
+            ${html}
+            <div class="pagination" style="justify-content: center; margin: 15px 0 10px; flex-wrap:wrap; gap:4px;">
               <button class="pagination-btn" onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''} title="${BB.t('journal.ui.firstPage')}">«</button>
               ${_pageButtons}
               <button class="pagination-btn" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} title="${BB.t('journal.ui.lastPage')}">»</button>
             </div>
             <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-              <button onclick="exportPDF()" class="btn-export-pdf" style="padding: 10px 20px; background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.exportPdf')}</button>
               <button onclick="document.getElementById('exportModal').classList.add('active')" class="btn-export-backup" style="padding: 10px 20px; background: white; color: #51cf66; border: 2px solid #51cf66; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.backupData')}</button>
               <button onclick="showImportModal()" class="btn-export-import" style="padding: 10px 20px; background: white; color: #74c0fc; border: 2px solid #74c0fc; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.importBtn')}</button>
+            </div>
+          </div>
+        `;
+        const paginationHtml = `
+          <div style="margin-top: 15px;">
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+              <button onclick="exportPDF()" class="btn-export-pdf" style="padding: 10px 20px; background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">${BB.t('journal.ui.exportPdf')}</button>
             </div>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
               ${currentUser ? `
@@ -2802,7 +2812,11 @@ window.addEventListener('pageshow', () => {
           </div>
         `;
 
-        document.getElementById('entries').innerHTML = html + paginationHtml;
+        const entriesToggleHtml = `
+          <div style="text-align:center;margin:4px 0 10px;">
+            <button id="entriesRevealBtn" class="entries-reveal-btn" onclick="toggleEntriesList()" aria-expanded="${_entriesListOpen}" aria-controls="entriesReveal">${BB.t(_entriesListOpen ? 'journal.ui.hideEntries' : 'journal.ui.seeEntries')}</button>
+          </div>`;
+        document.getElementById('entries').innerHTML = entriesToggleHtml + entriesListHtml + paginationHtml;
         
         // Update toggle button text and visibility (only show after 30 entries)
         const toggleBtn = document.getElementById('statsToggleBtn');
@@ -5197,9 +5211,13 @@ window.addEventListener('pageshow', () => {
       if (card)   {
         card.style.background = bg;
         card.style.setProperty('--fm-accent', accent);
-        // Filled white-label buttons (Next on notes, Save): the brand orange
-        // can't carry white text (~2.2:1) — use the burnt orange instead.
-        card.style.setProperty('--fm-accent-btn', accent === 'var(--brand-primary)' ? 'var(--brand-btn)' : accent);
+        // Filled buttons (Next on notes, Save): the brand accent uses the
+        // page's --brand-btn (cream, dark label — css/journal.css); a mood
+        // accent keeps its colour with a white label.
+        const _brandAccent = accent === 'var(--brand-primary)';
+        card.style.setProperty('--fm-accent-btn', _brandAccent ? 'var(--brand-btn)' : accent);
+        card.style.setProperty('--fm-accent-btn-text', _brandAccent ? 'var(--brand-btn-text)' : '#fff');
+        card.style.setProperty('--fm-accent-btn-ring', _brandAccent ? 'var(--brand-btn-ring)' : 'none');
       }
       if (sticky) { sticky.style.background = bg; }
       const fullCard = document.getElementById('entryFormCard');
@@ -11173,6 +11191,20 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       loadEntries();
     }
     window.goToPage = goToPage;
+
+    // Collapsed on every visit; remembered across re-renders (paging, edits).
+    var _entriesListOpen = false; // var: loadEntries (earlier in the file) may render first
+    function toggleEntriesList() {
+      _entriesListOpen = !_entriesListOpen;
+      const list = document.getElementById('entriesReveal');
+      const btn = document.getElementById('entriesRevealBtn');
+      if (list) list.style.display = _entriesListOpen ? '' : 'none';
+      if (btn) {
+        btn.textContent = BB.t(_entriesListOpen ? 'journal.ui.hideEntries' : 'journal.ui.seeEntries');
+        btn.setAttribute('aria-expanded', String(_entriesListOpen));
+      }
+    }
+    window.toggleEntriesList = toggleEntriesList;
 
     function toggleStatsTimeframe() {
       const _idx = _TIMEFRAME_CYCLE.indexOf(statsTimeframe);

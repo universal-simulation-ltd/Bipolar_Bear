@@ -622,7 +622,8 @@
       padding: 14px;
       margin: 14px 0 min(7vh, 60px);
       background: var(--fm-accent-btn, var(--brand-btn));
-      color: #fff;
+      color: var(--fm-accent-btn-text, #fff);
+      box-shadow: var(--fm-accent-btn-ring, none);
       border: none; border-radius: 14px;
       font-family: inherit; font-size: 1em; font-weight: 700;
       cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -650,8 +651,8 @@
     }
     .fm-done-actions .fm-wheel-emoji { font-size: 1.5em; line-height: 1.1; }
     .fm-done-del  { border-color: #ffc9c9 !important; color: #e03131 !important; background: #fff5f5 !important; }
-    .fm-done-save { --wb-color: var(--fm-accent, var(--brand-primary)); background: var(--fm-accent-btn, var(--brand-btn)) !important; color: #fff !important; border-color: transparent !important; }
-    .fm-done-save.grey { background: #adb5bd !important; }
+    .fm-done-save { --wb-color: var(--fm-accent, var(--brand-primary)); background: var(--fm-accent-btn, var(--brand-btn)) !important; color: var(--fm-accent-btn-text, #fff) !important; border-color: transparent !important; box-shadow: var(--fm-accent-btn-ring, none); }
+    .fm-done-save.grey { background: #adb5bd !important; color: #fff !important; box-shadow: none; }
     .fm-wheel-btn {
       scroll-snap-align: center;
       touch-action: pan-x;
@@ -1052,8 +1053,8 @@
       width: 100%;
       padding: 15px;
       background: var(--brand-btn);
-      color: #fff;
-      border: 3px solid rgba(255, 255, 255, 0.55);
+      color: var(--brand-btn-text);
+      border: 3px solid transparent;
       border-radius: 10px;
       font-size: 1.1em;
       font-weight: 600;
@@ -1500,7 +1501,7 @@
     @media (hover: hover) and (pointer: fine) {
       .auth-btn:hover {
         background: var(--brand-btn);
-        color: white;
+        color: var(--brand-btn-text);
         transform: translateY(-2px);
         box-shadow: 0 5px 16px rgba(255, 149, 0, 0.35);
       }
@@ -1952,7 +1953,7 @@
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       }
       .confirm-btn-yes:hover { background: #c92a2a; color: white; }
-      #saveConfirmModal .confirm-btn-yes:hover { background: var(--brand-btn); border-color: transparent; color: white !important; }
+      #saveConfirmModal .confirm-btn-yes:hover { background: var(--brand-btn); border-color: transparent; color: var(--brand-btn-text) !important; }
       .confirm-btn-no:hover { background: #f8f9fa; border-color: #adb5bd; }
     }
 
@@ -1980,7 +1981,7 @@
     @media (hover: hover) and (pointer: fine) {
       .pagination-btn:hover:not(:disabled) {
         background: var(--brand-btn);
-        color: white;
+        color: var(--brand-btn-text);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
         transform: translateY(-2px);
       }
@@ -2049,7 +2050,7 @@
     /* Button & card hover — desktop pointer devices only */
     /* Opaque burnt orange (css/theme.css --brand-btn): white on the old
        rgba(255,255,255,0.2) wash over the orange page was ~1.7:1. */
-    .home-link-journal { color:white; text-decoration:none; background:var(--brand-btn); padding:8px 16px; border-radius:20px; font-size:0.9em; font-weight:600; transition:background 0.2s; }
+    .home-link-journal { color:var(--brand-btn-text); text-decoration:none; background:var(--brand-btn); padding:8px 16px; border-radius:20px; font-size:0.9em; font-weight:600; transition:background 0.2s; }
     .journal-toggle-btn { transition: background 0.2s, transform 0.2s; }
     .stats-toggle-btn   { transition: background 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s; }
     .btn-outline-orange { transition: background 0.2s, color 0.2s; }
@@ -2062,11 +2063,11 @@
     @media (hover: hover) and (pointer: fine) {
       .home-link-journal:hover  { background: var(--brand-btn-hover); }
       .journal-toggle-btn:hover { background: var(--brand-btn-hover) !important; transform: translateY(-2px); }
-      .stats-toggle-btn:hover   { background: var(--brand-btn-hover) !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
-      .btn-outline-orange:hover { background: var(--brand-btn) !important; color: white !important; }
+      .stats-toggle-btn:hover   { background: var(--brand-btn-hover) !important; color: var(--brand-btn-text) !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
+      .btn-outline-orange:hover { background: var(--brand-btn) !important; color: var(--brand-btn-text) !important; }
       .btn-outline-red:hover    { background: #ff3b30 !important; color: white !important; }
       .stat-card[onclick]:hover { transform: scale(1.05); }
-      .btn-export-pdf:hover    { background: var(--brand-btn) !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
+      .btn-export-pdf:hover    { background: var(--brand-btn) !important; color: var(--brand-btn-text) !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .btn-export-backup:hover { background: #51cf66 !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .btn-export-import:hover { background: #74c0fc !important; color: white !important; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25) !important; }
       .logout-btn-list:hover   { border-color: #adb5bd !important; }
@@ -2409,13 +2410,47 @@
 .ew-care a { color: #5c7cfa; font-weight: 600; }
 .ew-device { font-size: 0.72em; color: #adb5bd; margin-top: 4px; }
 
-/* ── Status pills on the orange page: white text needs a dark fill (AA ≥4.5:1) ── */
-#editTodayBtn, #startOtherEntryBtn {
-  background: rgba(90,42,0,0.6) !important;
-  border-color: rgba(255,255,255,0.35) !important;
-  color: #fff !important;
+/* ── Pills on the orange page: the home buttons' colours (James, 2026-09-30) ──
+   Dark warm text on cream instead of white on dark brown. The entry pill and
+   any pill you can act on (missing entries to fill, log the other day) are
+   solid cream like Mood Journal; status-only pills (streak, "no missing
+   entries") take Survival Kit's soft see-through cream — #5a2a00 on that
+   blend ≈ 7.5:1. Dark mode mirrors home: the dark surface with the orange ring
+   for the main pill, a faint neutral fill for the rest. */
+#editTodayBtn {
+  background: #fff8ef !important;
+  border-color: transparent !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.16);
 }
-#entryCompleteLabel { color: #fff !important; }
+#entryCompleteLabel { color: #5a2a00 !important; text-shadow: none !important; }
+#completionActionsRow button {
+  background: rgba(255,248,239,0.35) !important;
+  border: 1.5px solid rgba(255,248,239,0.6) !important;
+  color: #5a2a00 !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+#completionActionsRow button[style*="var(--brand-btn)"] {
+  background: #fff8ef !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+:root.theme-dark #editTodayBtn {
+  background: var(--dk-surface-2) !important;
+  border-color: rgba(255,149,0,0.55) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+:root.theme-dark #entryCompleteLabel { color: var(--dk-text) !important; }
+:root.theme-dark #completionActionsRow button {
+  background: rgba(255,255,255,0.035) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  color: var(--dk-text-2) !important;
+}
+:root.theme-dark #completionActionsRow button[style*="var(--brand-btn)"] {
+  background: var(--dk-surface-2) !important;
+  border-color: rgba(255,149,0,0.55) !important;
+  color: var(--dk-text) !important;
+}
 
 /* Personalised Feedback: 1M / 3M / 6M / 1Y / All — the life chart's range
    control, reused (showPersonalisedFeedback in js/journal.js). */
@@ -2511,3 +2546,72 @@ html.theme-dark .fm-meds-reminder.on { border-color: var(--brand-primary); color
   font-size: 0.72em; background: rgba(255,255,255,0.55); opacity: 0.6; filter: grayscale(0.4);
 }
 html.theme-dark .fm-chip-future { border-color: var(--dk-line, #4a3d31); background: rgba(255,255,255,0.04); }
+
+/* ── Button colours: the home page's look (James, 2026-09-30) ──
+   The journal's filled "dark" buttons were burnt orange with white labels.
+   They now wear the home buttons' colours: cream with dark warm text in light
+   mode (#5a2a00 on #fff8ef ≈ 11.6:1), the dark surface with cream text and the
+   orange ring in dark mode. Scoped to this page — css/theme.css keeps the
+   burnt orange for Survival Kit. Inside the cream cards a thin warm ring stands
+   in for the fill contrast the orange page gives the page-level buttons.
+   Much of the markup sets `background:var(--brand-btn); color:white` inline,
+   hence the attribute match. Mood-coloured buttons (log form accent) keep
+   their white labels: journal.js only points --fm-accent-btn-text at
+   --brand-btn-text for the brand accent. */
+:root {
+  --brand-btn: #fff8ef;
+  --brand-btn-hover: #ffefdc;
+  --brand-btn-text: #5a2a00;
+  --brand-btn-ring: inset 0 0 0 2px rgba(168, 67, 10, 0.35);
+}
+:root.theme-dark {
+  --brand-btn: var(--dk-surface-2);
+  --brand-btn-hover: var(--dk-surface-3);
+  --brand-btn-text: var(--dk-text);
+  --brand-btn-ring: inset 0 0 0 2px rgba(255, 149, 0, 0.55);
+}
+html [style*="var(--brand-btn)"] {
+  color: var(--brand-btn-text) !important;
+  text-shadow: none !important;
+  box-shadow: var(--brand-btn-ring) !important;
+}
+.submit-btn { box-shadow: var(--brand-btn-ring), 0 3px 12px rgba(0, 0, 0, 0.12); }
+.bbm-yes { color: var(--brand-btn-text) !important; box-shadow: var(--brand-btn-ring); }
+/* On the orange page: exactly the home buttons — no ring in light mode. */
+#journalToggleBtn,
+.home-link-journal {
+  border-color: transparent !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16) !important;
+}
+:root.theme-dark #journalToggleBtn,
+:root.theme-dark .home-link-journal {
+  box-shadow: var(--brand-btn-ring), 0 6px 20px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ── Calendar / life chart switch (js/journal-insights.js) ── */
+#calViewSwitch { text-align: center; margin: 14px 0 4px; }
+#calViewSwitch .cv-seg { display: inline-flex; border: 1.5px solid #e9ecef; border-radius: 12px; overflow: hidden; background: #fff; }
+#calViewSwitch .cv-opt { background: #fff; border: 0; padding: 8px 14px; font-family: inherit; font-size: 0.88em; font-weight: 600; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+#calViewSwitch .cv-opt + .cv-opt { border-left: 1px solid #e9ecef; }
+#calViewSwitch .cv-opt.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
+#calViewSwitch .cv-star { color: var(--brand-primary); font-size: 0.9em; }
+#calViewSwitch .cv-note { min-height: 1.3em; margin-top: 5px; font-size: 0.75em; color: #adb5bd; font-style: italic; }
+#statsAndCalendarBlock.cv-life #chart,
+#statsAndCalendarBlock.cv-life #monthCalendar { display: none !important; }
+#statsAndCalendarBlock:not(.cv-life) #lifeChart { display: none !important; }
+#statsAndCalendarBlock.cv-life #lifeChart { margin-top: 8px; }
+html.theme-dark #calViewSwitch .cv-seg { border-color: var(--dk-line); background: var(--dk-surface); }
+html.theme-dark #calViewSwitch .cv-opt { background: var(--dk-surface); color: var(--dk-muted); }
+html.theme-dark #calViewSwitch .cv-opt + .cv-opt { border-left-color: var(--dk-line); }
+html.theme-dark #calViewSwitch .cv-opt.on { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.55); }
+html.theme-dark #calViewSwitch .cv-note { color: var(--dk-muted); }
+
+/* ── "See individual entries" (js/journal.js, under the feedback bear) ── */
+.entries-reveal-btn {
+  padding: 10px 20px; border-radius: 12px; border: 0; cursor: pointer;
+  background: var(--brand-btn); color: var(--brand-btn-text);
+  box-shadow: var(--brand-btn-ring);
+  font-family: inherit; font-size: 0.95em; font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) { .entries-reveal-btn:hover { background: var(--brand-btn-hover); } }

@@ -2877,3 +2877,29 @@ function _handleIndexJournalNav() {
       if (!confirm(_tr('pin.resetConfirm2', 'Last chance — all entries and data will be deleted. Continue?'))) return;
       window._nukeGuestData();
     }
+
+    // Home greeting above the Mood Journal button: the Anonymous board's
+    // time-of-day line (James, 2026-09-30), with a break after the first
+    // sentence — "Hope your afternoon is going well." / "You're doing great. 💛".
+    // Same hours as todaySystemPost() in js/anonymous.js.
+    (function () {
+      function _render() {
+        const el = document.getElementById('homeGreeting');
+        if (!el) return;
+        const h = new Date().getHours();
+        const key = h >= 5 && h < 12 ? 'greetMorning' : h >= 12 && h < 17 ? 'greetAfternoon' : h >= 17 && h < 21 ? 'greetEvening' : 'greetNight';
+        const text = _tr('anon.feed.' + key, '');
+        el.textContent = '';
+        if (!text || text === 'anon.feed.' + key) return;
+        const m = text.match(/^(.*?[.!?。！？])\s*(\S[\s\S]*)$/);
+        const lines = m ? [m[1], m[2]] : [text];
+        lines.forEach((line, i) => {
+          if (i) el.appendChild(document.createElement('br'));
+          el.appendChild(document.createTextNode(line));
+        });
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _render); else _render();
+      document.addEventListener('bb:languagechange', _render);
+      // Keep it right if the app sits open across a greeting boundary.
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) _render(); });
+    })();

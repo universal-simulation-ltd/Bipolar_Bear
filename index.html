@@ -135,6 +135,9 @@
         📶 <strong data-i18n="home.offlineTitle">Offline mode</strong> <span data-i18n="home.offlineBody">— Journal and Survival Kit still work.</span><br>
         <span style="opacity:0.8;" data-i18n="home.offlineSync">Your data will sync automatically when you reconnect.</span>
       </div>
+      <!-- Time-of-day greeting, the same words as the top of Bipolar Anonymous
+           (anon.feed.greet*) — filled by _renderHomeGreeting() in js/index.js. -->
+      <div id="homeGreeting" class="home-greeting" aria-live="polite"></div>
       <div class="btn-container" id="journalContainer">
         <a href="journal.html" onclick="event.preventDefault(); localStorage.setItem('bbPrivacyNoteDismissed','1'); const _pn=document.getElementById('privacyNote'); if(_pn)_pn.style.display='none'; location.replace('journal.html')" class="btn btn-journal" id="journalBtn" style="position:relative;">
           <span class="icon">📔</span>
