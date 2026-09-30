@@ -1208,7 +1208,12 @@ exports.translateAnonTexts = onCall(
 // marker holds no mood, and sweepAnonMoodSeen deletes it two days later.
 
 const REACTION_KINDS  = ['hug', 'same', 'strong'];
-const MOOD_KINDS      = ['low', 'flat', 'okay', 'high'];
+// The board check-in uses Bipolar Bear's own five moods (30 Sep 2026), so a
+// journal entry can check in for its owner with no translation. The first
+// release asked Low / Flat / Okay / Racing; a cached client may still send those,
+// and today's totals may still hold them, so they fold into the nearest mood.
+const MOOD_KINDS      = ['manic', 'elevated', 'stable', 'low', 'depressed'];
+const MOOD_LEGACY     = { low: 'low', flat: 'stable', okay: 'stable', high: 'elevated' };
 const MOOD_COL        = 'bbAnonMood';       // {day}: totals per mood
 const MOOD_SEEN_COL   = 'bbAnonMoodSeen';   // {day}_{uid}: checked-in marker
 const BANNED_COL      = 'bbAnonBanned';     // doc id = lowercased monika
@@ -1340,33 +1345,42 @@ exports.voteAnonPoll = onCall(
 );
 
 // ── Daily mood check-in ──────────────────────────────────────────────────────
-// { mood? } → { day, counts, checkedIn }. With no mood it just reads today's
-// totals (the board shows them once you've checked in). One check-in per
-// session per UK day; a second is ignored rather than moved, which is what
-// lets the marker carry no mood at all.
+// { mood?, source? } → { day, counts, checkedIn, via }. With no mood it just
+// reads today's totals (the board shows them once you've checked in). One
+// check-in per account per UK day; a second is ignored rather than moved, which
+// is what lets the marker carry no mood at all. source: 'journal' is Bipolar
+// Bear checking in for a linked account after a journal entry is saved — the
+// marker then says so (still no mood), so the board can explain the tick.
 exports.anonMoodCheckin = onCall(
   { region: REGION, invoker: 'public' },
   async (request) => {
     requireAuth(request);
-    const mood = request.data && request.data.mood != null ? String(request.data.mood) : null;
-    if (mood !== null && !MOOD_KINDS.includes(mood)) {
-      throw new HttpsError('invalid-argument', 'Unknown mood.');
-    }
+    const raw  = request.data && request.data.mood != null ? String(request.data.mood) : null;
+    const mood = raw === null ? null : (MOOD_KINDS.includes(raw) ? raw : (MOOD_LEGACY[raw] || ''));
+    if (mood === '') throw new HttpsError('invalid-argument', 'Unknown mood.');
+    const via      = request.data && request.data.source === 'journal' ? 'journal' : 'board';
     const day      = boardDay();
     const totalRef = db.collection(MOOD_COL).doc(day);
     const seenRef  = db.collection(MOOD_SEEN_COL).doc(`${day}_${request.auth.uid}`);
     const out = await db.runTransaction(async (tx) => {
       const [totSnap, seenSnap] = await Promise.all([tx.get(totalRef), tx.get(seenRef)]);
+      const doc = totSnap.exists ? totSnap.data() : {};
       const counts = {};
-      MOOD_KINDS.forEach((k) => { counts[k] = Number((totSnap.exists && totSnap.data()[k]) || 0); });
+      MOOD_KINDS.forEach((k) => { counts[k] = Number(doc[k] || 0); });
+      // Fold today's old-style totals into the new moods (read-side only).
+      Object.keys(MOOD_LEGACY).forEach((old) => {
+        if (!MOOD_KINDS.includes(old)) counts[MOOD_LEGACY[old]] += Number(doc[old] || 0);
+      });
       let checkedIn = seenSnap.exists;
+      let seenVia   = seenSnap.exists ? (seenSnap.data().via || 'board') : null;
       if (mood !== null && !checkedIn) {
         counts[mood] += 1;
-        tx.set(totalRef, { [mood]: counts[mood], day }, { merge: true });
-        tx.set(seenRef, { day });
+        tx.set(totalRef, { [mood]: admin.firestore.FieldValue.increment(1), day }, { merge: true });
+        tx.set(seenRef, { day, via });
         checkedIn = true;
+        seenVia = via;
       }
-      return { counts, checkedIn };
+      return { counts, checkedIn, via: seenVia };
     });
     return { day, ...out };
   }

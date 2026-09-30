@@ -439,6 +439,9 @@
   <div class="sheet">
     <div class="sheet-icon">🐻</div>
     <div class="sheet-title" data-i18n="anon.monikaSettings.title">Your Moniker</div>
+    <!-- Your figures — 🔥 streak, 🧘 stable days, 🎂 time as a member. Moved
+         here from the header pill (30 Sep 2026); filled by _paintMsStats(). -->
+    <div id="ms-stats" class="ms-stats" style="display:none;"></div>
 
     <span class="sheet-label" data-i18n="anon.monikaSettings.monikaName">Moniker Name</span>
     <div class="input-wrap" style="margin-bottom:16px;">
@@ -502,6 +505,26 @@
       <div style="flex:1;">
         <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.savedTitle">Saved posts</div>
         <div id="ms-saved-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+      </div>
+      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+    </button>
+
+    <!-- Daily check-in: show / hide "How are you today?" on the board -->
+    <button id="ms-checkin-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
+      <img src="images/moods/sm/stable.png" alt="" style="width:22px;height:22px;object-fit:contain;">
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.moodAsk">How are you today?</div>
+        <div id="ms-checkin-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+      </div>
+      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+    </button>
+
+    <!-- Bipolar Bear accounts only: let the journal answer the check-in -->
+    <button id="ms-jcheckin-btn" style="display:none;width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;align-items:center;gap:10px;font-family:inherit;">
+      <span style="font-size:20px;">📔</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.journalCheckinTitle">Check in from my journal</div>
+        <div id="ms-jcheckin-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
       </div>
       <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
     </button>

@@ -518,6 +518,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             if (typeof d.homeSurvivalEnabled === 'boolean') BB.storage.set('SurvivalBtnEnabled', d.homeSurvivalEnabled ? '1' : '0');
             if (typeof d.homeAnonEnabled     === 'boolean') BB.storage.set('AnonBtnEnabled',     d.homeAnonEnabled     ? '1' : '0');
             if (typeof d.homeStatsEnabled    === 'boolean') BB.storage.set('HomeStatsEnabled',   d.homeStatsEnabled    ? '1' : '0');
+            if (typeof d.homeQuickCheckinEnabled === 'boolean') BB.storage.set('HomeQuickCheckin', d.homeQuickCheckinEnabled ? '1' : '0');
             if (typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
             const _ap = d.anonProfile || {};
             if (typeof _ap.visitStreak === 'number') {
@@ -896,9 +897,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const _survival = document.getElementById('survivalContainer');
       if (_survival) _survival.style.display = (step < 6 || !_showSurvival) ? 'none' : '';
 
-      // Footer link: visible from step 12
-      const _footerLink = document.querySelector('.footer-link');
-      if (_footerLink && _footerLink.parentElement) _footerLink.parentElement.style.display = step >= 12 ? '' : 'none';
+      // Footer (community count): visible from step 12
+      const _footer = document.getElementById('homeFooter');
+      if (_footer) _footer.style.display = step >= 12 ? '' : 'none';
 
       // is-new-user class: steps 0-3 only
       if (step < 4) document.body.classList.add('is-new-user');
@@ -1415,6 +1416,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         homeSurvivalEnabled: BB.storage.get('SurvivalBtnEnabled') === '1',
         homeAnonEnabled:     BB.storage.get('AnonBtnEnabled') === '1',
         homeStatsEnabled:    BB.storage.get('HomeStatsEnabled') === '1',
+        homeQuickCheckinEnabled: BB.storage.get('HomeQuickCheckin') === '1',
       }, { merge: true }).catch(() => {});
     }
 
@@ -1455,6 +1457,27 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       _syncHomeCustomise();
     }
     window._toggleHomeStats = _toggleHomeStats;
+
+    /** Paint the "Quick check-in" pill toggle to match HomeQuickCheckin. */
+    function _paintQuickCheckinToggle() {
+      const btn = document.getElementById('idxQuickCheckinToggle');
+      if (!btn) return;
+      const on = BB.storage.get('HomeQuickCheckin') === '1';
+      btn.style.background = on ? 'var(--brand-primary)' : '#ccc';
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const thumb = btn.querySelector('span');
+      if (thumb) thumb.style.left = on ? '23px' : '3px';
+    }
+
+    /** Toggle the quick check-in widget (replaces the Mood Journal button). */
+    function _toggleHomeQuickCheckin() {
+      const nowEnabled = BB.storage.get('HomeQuickCheckin') !== '1';
+      BB.storage.set('HomeQuickCheckin', nowEnabled ? '1' : '0');
+      _paintQuickCheckinToggle();
+      if (typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
+      _syncHomeCustomise();
+    }
+    window._toggleHomeQuickCheckin = _toggleHomeQuickCheckin;
 
     /** Switch between the Customise / Account / Danger panels. */
     function _profileShowPanel(name) {
@@ -1507,6 +1530,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       }
       _renderHomeBtnToggles();
       _paintShowStatsToggle();
+      _paintQuickCheckinToggle();
       const email = (currentUser && currentUser.email) || '';
       const _e1 = document.getElementById('idxProfileEmailCustomise');
       const _e2 = document.getElementById('idxProfileEmail');
@@ -1518,7 +1542,10 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const langSel = document.getElementById('idxLangSelect');
       if (langSel && window.BB && window.BB.i18n) langSel.value = window.BB.i18n.getLang();
       const verEl = document.getElementById('idxProfileVersion');
-      if (verEl) verEl.textContent = (window.BB && window.BB.versionLabel) ? window.BB.versionLabel() : '';
+      if (verEl) {
+        const _v = (window.BB && window.BB.versionLabel) ? window.BB.versionLabel() : '';
+        verEl.textContent = (_v ? _v + ' · ' : '') + _tr('home.changelogLink', 'Changelog');
+      }
       _profileShowPanel('customise');
       document.getElementById('idxProfileModal').classList.add('active');
     };
@@ -1717,7 +1744,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',
          'bbFabsUnlocked','bbFabFirstRunDone',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
-         'bbSurvivalBtnEnabled','bbAnonBtnEnabled','bbHomeStatsEnabled',
+         'bbSurvivalBtnEnabled','bbAnonBtnEnabled','bbHomeStatsEnabled','bbHomeQuickCheckin',
          'bbCustomiseNewPending','bbCustomiseNewSeen',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',
@@ -2153,17 +2180,29 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // (the journal's own first-entry tutorial runs from the Mood Journal
       // button), shown to everyone past it — i.e. whenever the Mood Journal
       // button is the normal home button. Called from _applyOnboardingGating.
+      // Opt-in (Profile → Customise → Quick check-in). When shown, the card
+      // takes the Mood Journal button's place: the button's container is hidden
+      // and its streak line moves to sit under the card, so "Show stats" still
+      // puts the figures under whatever the journal's home entry point is.
+      const journalBox = document.getElementById('journalContainer');
+      const streakBadge = document.getElementById('journalStreakBadge');
       window._renderQuickCheckin = function () {
         let step = 12;
         try { step = window.BB.onboarding.getStep(); } catch (_) {}
-        card.style.display = step >= 4 ? '' : 'none';
-        if (step >= 4) render();
+        const on = step >= 4 && BB.storage.get('HomeQuickCheckin') === '1';
+        card.style.display = on ? '' : 'none';
+        if (journalBox) journalBox.style.display = on ? 'none' : '';
+        if (streakBadge) {
+          if (on && streakBadge.previousElementSibling !== card) card.after(streakBadge);
+          else if (!on && journalBox && streakBadge.parentElement !== journalBox) journalBox.appendChild(streakBadge);
+        }
+        if (on) render();
       };
 
       let navigating = false;
       card.addEventListener('click', function (ev) {
         const bear = ev.target.closest && ev.target.closest('.qc-bear');
-        const week = ev.target.closest && ev.target.closest('#qcWeek');
+        const week = ev.target.closest && (ev.target.closest('#qcWeek') || ev.target.closest('#qcOpen'));
         if (!bear && !week) return;
         if (navigating) return;
         if (bear && card.getAttribute('data-done') === 'true') return;

@@ -29,6 +29,7 @@
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/meds-reminder.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
   <script src="js/shared/user-count.js"></script>
@@ -644,6 +645,7 @@
     <div class="confirm-content" style="max-width:500px;">
       <h3 style="margin-bottom:4px;"><img src="images/moods/AI_Bear.png" style="max-width: 50px" ><br>Personalised Feedback</h3>
       <p style="color:#6c757d;font-size:0.8em;margin-bottom:8px;">Based on your journal data only — not medical advice.</p>
+      <div id="feedbackRanges" class="fb-ranges" role="group" aria-label="Time range" data-i18n-title="journal.lifeChart.rangeLabel"></div>
       <div id="feedbackBody" style="max-height:62vh;overflow-y:auto;"></div>
       <p onclick="const b=document.getElementById('rInfoBox');const open=b.style.display!=='none';b.style.display=open?'none':'block';document.getElementById('rInfoChevron').textContent=open?'▼':'▲';if(!open)this.scrollIntoView({behavior:'smooth',block:'start'});" style="color:#6c757d;font-size:0.8em;margin-top:12px;margin-bottom:0;cursor:pointer;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;">
         <span>ℹ️</span>
@@ -763,7 +765,18 @@
       <h3 style="margin-bottom:16px;">📋 Changelog</h3>
       <div style="text-align:left; font-size:0.9em; color:#495057; line-height:1.7;">
         <div style="margin-bottom:14px;">
-          <strong style="color:var(--brand-primary);">v1.38</strong><br>
+          <strong style="color:var(--brand-primary);">v1.39</strong><br>
+          • 🐻 <strong>Quick check-in on home</strong> — turn it on in Profile to log your mood in one tap; it takes the Mood Journal button's place, with your streak and last 7 days underneath<br>
+          • 📱 Every step of the check-in now fits on one screen, below the notch and clear of the bottom edge<br>
+          • 🔝 The chips along the top show every step from the first page, and follow the wheel as you spin it<br>
+          • 🔔 <strong>Medication reminder</strong> (in the app) — set it on the medication step; it asks again every hour until you tap ✅ Taken<br>
+          • 📊 Personalised Feedback has 1M / 3M / 6M / 1Y / All buttons, like the life chart<br>
+          • 📈 <strong>Life chart</strong>, 🌙 <strong>dark mode</strong>, early-warning nudges (opt-in) and a Survival Kit tile grid<br>
+          • 💬 Bipolar Anonymous: Bipolar Bear's five moods on the daily check-in (filled in from your journal if you like), an easier-to-read greeting card, and your streaks moved into Your Moniker<br>
+          • 👤 The version and changelog now live in Profile<br>
+        </div>
+        <div style="margin-bottom:14px;">
+          <strong style="color:#6c757d;">v1.38</strong><br>
           • 📊 Behind the scenes: the UNI·SIM community count now tells the app from the website — still only a random install ID, nothing about you<br>
         </div>
         <div style="margin-bottom:14px;">
@@ -927,8 +940,9 @@
           • ✨ Empty dock slots show a + placeholder; tap to add Stats, Celebrity, Goals, or Quick Note<br>
         </div>
       </div>
-      <div class="confirm-buttons" style="margin-top:16px;">
-        <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('changelogModal').classList.remove('active')">Close</button>
+      <a href="https://www.jamesmarkey.co.uk/" target="_blank" rel="noopener noreferrer" class="bb-credit" style="margin-top:14px;" data-i18n="home.madeBy">Being built by James Markey MBE</a>
+      <div class="confirm-buttons" style="margin-top:12px;">
+        <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('changelogModal').classList.remove('active')" data-i18n="common.close">Close</button>
       </div>
     </div>
   </div>

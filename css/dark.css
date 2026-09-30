@@ -140,6 +140,8 @@ html.theme-dark .quick-checkin[data-done="true"] .qc-done-note,
 html.theme-dark .qc-bear,
 html.theme-dark .qc-week { color: var(--dk-text); }
 html.theme-dark .qc-week { border-top-color: var(--dk-line); }
+html.theme-dark .qc-head { color: var(--dk-text); border-bottom-color: var(--dk-line); }
+html.theme-dark .qc-head .qc-chev { color: #f0c79a; }
 html.theme-dark .qc-week-title,
 html.theme-dark .qc-wd { color: #f0c79a; }
 html.theme-dark .qc-bear:active,
@@ -434,3 +436,7 @@ html.theme-dark :is([style*="solid #e9ecef"], [style*="dashed #e9ecef"], [style*
   [style*="solid rgb(233, 236, 239)"], [style*="solid rgb(222, 226, 230)"]):not([style*="border-left"]) {
   border-left-color: var(--dk-line) !important;
 }
+html.theme-dark .fb-ranges { border-color: var(--dk-line); }
+html.theme-dark .fb-range { background: var(--dk-surface); color: var(--dk-muted); }
+html.theme-dark .fb-range + .fb-range { border-left-color: var(--dk-line); }
+html.theme-dark .fb-range.on { background: rgba(255,149,0,0.18); color: #ffb347; }

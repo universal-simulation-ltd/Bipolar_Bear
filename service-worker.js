@@ -1189,7 +1189,23 @@
 //       (reactAnonPost, createAnonPoll, voteAnonPoll, anonMoodCheckin);
 //       privacy §2 gains s2li10. Touches anonymous.html, css/anonymous.css,
 //       js/anonymous.js, js/shared/i18n.js, privacy.html (commit 55d5ec4).
-const CACHE_NAME = 'bipolarbear-v243';
+// v244: 30 Sep 2026 batch. Bipolar Bear: opt-in Quick check-in widget on home
+//       (replaces the Mood Journal button; stats under it), the focused
+//       check-in fits one screen (framed below the notch, clear of the home
+//       indicator; review list scrolls inside), summary chips on every step
+//       with the wheel's value shown live, a native medication reminder
+//       (js/shared/meds-reminder.js, new — hourly until ✅ Taken), range
+//       buttons on Personalised Feedback, "Being built by" moved to Profile +
+//       the changelog, v1.39 changelog block. Bipolar Anonymous: reactions
+//       removed, lighter greeting card with the check-in on a white panel,
+//       check-in uses Bipolar Bear's five moods (images/moods/sm/*, new) and
+//       can be answered by a linked journal (anonMoodCheckin source:'journal'),
+//       show/hide + journal switches and your streaks moved into Your Moniker.
+//       privacy s2li10 updated. Touches index.html, journal.html,
+//       anonymous.html, css/*.css, js/index.js, js/journal.js,
+//       js/anonymous.js, js/shared/i18n.js, functions/index.js,
+//       scripts/build-anonymous.js, privacy.html.
+const CACHE_NAME = 'bipolarbear-v244';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1228,6 +1244,7 @@ const STATIC_ASSETS = [
   './js/shared/user-count.js',
   './js/shared/auth-splash.js',
   './js/shared/anon-push.js',
+  './js/shared/meds-reminder.js',
 
   // NOTE: firebase-messaging-sw.js is deliberately NOT precached either — it
   // is a service worker in its own right, registered by js/shared/anon-push.js,

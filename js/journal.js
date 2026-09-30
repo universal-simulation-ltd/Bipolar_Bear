@@ -520,6 +520,11 @@ window.addEventListener('pageshow', () => {
               if (localStorage.getItem('incognitoMode') === 'true') BB.storage.remove('_recentMoods');
               if (d.achievementToastsEnabled !== undefined) localStorage.setItem('achievementToastsEnabled', d.achievementToastsEnabled ? 'true' : 'false');
               if (d.earlyWarnEnabled !== undefined) localStorage.setItem('earlyWarnEnabled', d.earlyWarnEnabled ? 'true' : 'false');
+              // Bipolar Anonymous: is this account on the board, and may the
+              // journal answer its daily check-in? (_anonJournalCheckin)
+              const _ap = (d.anonProfile && typeof d.anonProfile === 'object') ? d.anonProfile : {};
+              if (_ap.monika) BB.storage.set('Anon_linked', '1'); else BB.storage.remove('Anon_linked');
+              if (_ap.journalCheckin !== undefined) BB.storage.set('Anon_journalCheckin', _ap.journalCheckin ? '1' : '0');
               if (d.unlockedAchievements) {
                 localStorage.setItem('unlockedAchievements', JSON.stringify(d.unlockedAchievements));
                 _achievementsInitialized = false; // reset so next checkAchievements re-baselines without toasting
@@ -2165,6 +2170,34 @@ window.addEventListener('pageshow', () => {
       }
     })();
 
+    // Bipolar Anonymous "How are you today?", answered by the journal (30 Sep
+    // 2026). Only for an account that also has a board moniker (Anon_linked,
+    // from userSettings.anonProfile.monika) and hasn't switched it off on the
+    // board (anonProfile.journalCheckin === false → Anon_journalCheckin '0').
+    // Only an entry for today or yesterday counts, and only its mood category
+    // leaves the device — into the board's daily totals, where the server keeps
+    // no record of who picked what. One check-in per account per UK day; the
+    // server ignores any after the first.
+    async function _anonJournalCheckin(entry) {
+      try {
+        if (!currentUser) return;
+        if (BB.storage.get('Anon_linked') !== '1' && !BB.storage.get('Anon_monika')) return;
+        if (BB.storage.get('Anon_journalCheckin') === '0') return;
+        const cat = _moodCat(entry.mood);
+        if (!['manic', 'elevated', 'stable', 'low', 'depressed'].includes(cat)) return;
+        const d = new Date(entry.date); d.setHours(0, 0, 0, 0);
+        const t = new Date(); t.setHours(0, 0, 0, 0);
+        const ago = Math.round((t - d) / 86400000);
+        if (ago < 0 || ago > 1) return;
+        if (typeof firebase === 'undefined' || !firebase.app || typeof firebase.app().functions !== 'function') return;
+        const res = await firebase.app().functions('europe-west1').httpsCallable('anonMoodCheckin')({ mood: cat, source: 'journal' });
+        // Same device as the board (inside Bipolar Bear): let it say "You: …".
+        if (res && res.data && res.data.via === 'journal' && res.data.day) {
+          BB.storage.set('Anon_mood', JSON.stringify({ day: res.data.day, mood: cat }));
+        }
+      } catch (e) { console.warn('[journal] board check-in skipped', e); }
+    }
+
     async function saveEntry() {
       if (!_hasMood()) {
         alert(BB.t('journal.toast.selectMood'));
@@ -2329,6 +2362,7 @@ window.addEventListener('pageshow', () => {
         if (_wasNewEntry && !entry.autoFilled) _reviewCandidateMood = entry.mood;
         // Opt-in early-warning check runs on the reloaded entries (js/journal-insights.js).
         if (window.BBInsights) window.BBInsights.noteSaved();
+        if (currentUser && !entry.autoFilled) _anonJournalCheckin(entry);
         loadEntries();
         nativeHaptic('success');
       } catch (error) {
@@ -5279,18 +5313,15 @@ window.addEventListener('pageshow', () => {
       if (_topBar) _topBar.style.display = 'flex';
       if (_stepCounter) _stepCounter.style.display = '';
       document.getElementById('fmStepCounter').textContent = BB.t('journal.fm.stepCounter', { n: _fmStepIndex+1, total: _fmSteps.length });
-      // Summary bar of completed steps (a fresh session has no chips yet on step 0
-      // — a lone dashed placeholder would just be noise)
+      // Summary bar: every step's chip, on every page including the first
+      // (30 Sep 2026 — it used to be hidden until a step was answered).
+      _fmChipPreview = null;
       _fmBuildSummaryBar();
       // Fresh first step: no summary chips to fill the band under the top nav, so
       // the flexible header spacer would otherwise leave a large dead gap between
       // the step counter and the question. Collapse it (see .fm-fresh-first CSS)
       // so the header rides up under the counter instead of floating over a void.
       const _freshFirstStep = _fmStepIndex === 0 && _fmHighWater === 0;
-      if (_freshFirstStep) {
-        const _sumBar = document.getElementById('fmSummaryBar');
-        if (_sumBar) _sumBar.style.display = 'none';
-      }
       document.getElementById('focusedModeCard').classList.toggle('fm-fresh-first', _freshFirstStep);
       // Title / subtitle / eyebrow
       document.getElementById('fmTitle').textContent    = step.title;
@@ -5633,6 +5664,7 @@ window.addEventListener('pageshow', () => {
         if (best && !best.classList.contains('center')) {
           btns.forEach(b => b.classList.toggle('center', b === best));
           _fmHeroPreview(best);
+          _fmSetChipPreview(best.dataset.val);
           // Dial needle takes the colour of the slot it points at.
           const _arrow = wheel.parentElement && wheel.parentElement.querySelector('.fm-dial-arrow');
           if (_arrow) _arrow.style.borderTopColor = best.dataset.color || '';
@@ -6251,6 +6283,15 @@ window.addEventListener('pageshow', () => {
         }
 
         case 'medication': {
+          // 🔔 Medication reminder pill (native apps only — see
+          // js/shared/meds-reminder.js). One line, so the step still fits.
+          const _mrPill = (window.BB && BB.medsReminder && BB.medsReminder.isAvailable()) ? (() => {
+            const _mr = BB.medsReminder.settings();
+            const _lbl = _mr.enabled
+              ? BB.t('medsReminder.pillOn', { time: _mr.time })
+              : BB.t('medsReminder.pillOff');
+            return `<div style="text-align:center;margin:4px 0 8px;"><button type="button" id="fmMedsReminderBtn" class="fm-meds-reminder${_mr.enabled ? ' on' : ''}" onclick="BB.medsReminder.openSettings(function(){ window._fmRerenderStep && window._fmRerenderStep(); })">${_lbl}</button></div>`;
+          })() : '';
           let medListHtml = '';
           try {
             const _ml = JSON.parse(localStorage.getItem('currentMedList') || '[]');
@@ -6268,7 +6309,7 @@ window.addEventListener('pageshow', () => {
               <div style="text-align:center;margin-bottom:${_medHintDone ? '14' : '4'}px;">
                 <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
                 ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;margin-bottom:10px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
-              </div>`;
+              </div>${_mrPill}`;
             const _mdOpts = [
               { val:'not-taken', label:BB.t('journal.med.notTaken'), hover:'fm-hover-orange', color:'var(--brand-primary)' },
               { val:'unsure',    label:BB.t('journal.med.unsure'),   hover:'fm-hover-grey',   color:'#adb5bd' },
@@ -6285,6 +6326,7 @@ window.addEventListener('pageshow', () => {
               ${medListHtml}
               <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:${_medHintDone ? 'var(--brand-primary)' : 'rgba(255,255,255,0.9)'};font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
               ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,255,255,0.9);font-family:'Georgia',serif;letter-spacing:0.01em;text-shadow:0 1px 4px rgba(0,0,0,0.5);">${BB.t('journal.hint.logMed')}</span></div>`}
+              ${_mrPill}
             </div>`;
           // Built as a real 5-pill wheel — Not taken, Not taken, Unsure,
           // Taken, Taken — so it runs the EXACT same native-scroll + CSS-snap
@@ -6696,7 +6738,7 @@ window.addEventListener('pageshow', () => {
                 <span class="fm-wheel-emoji">${_saveEmoji}</span><span class="fm-wheel-label">${_saveLabel}</span>
               </button>
             </div>`;
-          return `${_heroHtml}${_doneDate ? `<div style="text-align:center;font-size:0.92em;color:#6c757d;margin-bottom:10px;">📅 ${_doneDate}</div>` : ''}${_dayFillNote}<div style="display:block;background:#f8f9fa;border-radius:14px;padding:16px;border-left:4px solid ${mc};max-width:100%;text-align:left;">
+          return `${_heroHtml}${_doneDate ? `<div style="text-align:center;font-size:0.92em;color:#6c757d;margin-bottom:10px;">📅 ${_doneDate}</div>` : ''}${_dayFillNote}<div class="fm-done-list" style="display:block;background:#f8f9fa;border-radius:14px;padding:16px;border-left:4px solid ${mc};max-width:100%;text-align:left;">
             ${rows.map(r=>{const idx=_fmSteps.findIndex(s=>s.id===r.step);const editBtn=idx>=0?`<button onclick="_fmReturnToDone=true;_fmGoTo(${idx})" style="background:none;border:none;color:#6c757d;font-size:0.82em;cursor:pointer;padding:2px 4px;-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="${BB.t('journal.ui.editTitle')}">✏️</button>`:'';if(r.note){return `<details style="padding:3px 0;"><summary style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;">${r.wrap?`<span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>`:`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>`}${editBtn}<span style="font-size:0.65em;color:#adb5bd;flex-shrink:0;margin-left:2px;transition:transform 0.15s;" class="bb-note-chev">▶</span></summary><div style="font-size:0.82em;color:#495057;padding:5px 0 3px 12px;font-style:italic;word-break:break-word;line-height:1.4;">📝 ${r.note}</div></details>`;}return r.wrap?`<div style="padding:3px 0;"><div style="display:flex;align-items:center;gap:8px;font-size:0.9em;color:#495057;"><span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>${editBtn}</div></div>`:`<div style="padding:3px 0;"><div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>${editBtn}</div></div>`;}).join('')}
           </div>${_privRow}${_suggestion}${_actions}`;
         }
@@ -6726,14 +6768,45 @@ window.addEventListener('pageshow', () => {
       });
     }
 
+    // The wheel's centred slot on the current step, shown live in that step's
+    // chip while spinning (James, 30 Sep 2026: "on mood when the wheel is on
+    // stable show it as stable and when on low show low"). A preview only —
+    // nothing is committed until the pill is tapped, exactly as before.
+    let _fmChipPreview = null; // { idx, val }
+    function _fmSetChipPreview(val) {
+      const prev = _fmChipPreview;
+      _fmChipPreview = { idx: _fmStepIndex, val: val };
+      if (!prev || prev.idx !== _fmChipPreview.idx || prev.val !== val) _fmBuildSummaryBar();
+    }
+    // Placeholder glyphs for steps not reached yet, so the row shows the whole
+    // check-in from the first page.
+    const _FM_CHIP_ICONS = { mood: '🐻', sleep: '🛌', energy: '⚡', medication: '💊', notes: '📝', more_data: '➕' };
+
     function _fmBuildSummaryBar() {
       const bar = document.getElementById('fmSummaryBar');
       if (!bar) return;
       const chips = [];
-      for (let i = 0; i <= _fmHighWater; i++) {
+      // Every step's chip from the first page on — reached steps as before,
+      // later ones as a faint placeholder (not tappable: the check-in still
+      // runs in order). The current step's chip follows the wheel live.
+      const _pv = _fmChipPreview && _fmChipPreview.idx === _fmStepIndex ? _fmChipPreview.val : null;
+      const _num = v => (typeof v === 'string' && /^-?\d+(\.\d+)?$/.test(v)) ? Number(v) : v;
+      const _saved = { selectedMood, selectedEnergy, selectedSleep, selectedMedication, _fmEnergyClear, _fmSleepClear };
+      for (let i = 0; i < _fmSteps.length; i++) {
         const s = _fmSteps[i];
-        if (!s) continue;
+        if (!s || s.id === 'done') continue;
         const isCurrent = i === _fmStepIndex;
+        if (i > _fmHighWater && !isCurrent) {
+          const _ic = _FM_CHIP_ICONS[s.id];
+          if (_ic) chips.push(`<span class="fm-chip-future" aria-hidden="true">${_ic}</span>`);
+          continue;
+        }
+        if (isCurrent && _pv != null) {
+          if (s.id === 'mood') selectedMood = _num(_pv);
+          else if (s.id === 'energy') { selectedEnergy = _num(_pv); _fmEnergyClear = false; }
+          else if (s.id === 'sleep') { selectedSleep = _num(_pv); _fmSleepClear = false; }
+          else if (s.id === 'medication') selectedMedication = _pv;
+        }
         let html = null, borderColor = '#dee2e6';
         if (s.id === 'mood' && selectedMood != null && selectedMood !== '') {
           const col = _FM_MOOD_COLORS[_moodCat(selectedMood)] || '#adb5bd';
@@ -6770,6 +6843,9 @@ window.addEventListener('pageshow', () => {
         }
         // For steps that were visited but not answered, show a blank dashed chip
         // so the user can see the gap and tap back to fill it in.
+        if (isCurrent && _pv != null) {
+          ({ selectedMood, selectedEnergy, selectedSleep, selectedMedication, _fmEnergyClear, _fmSleepClear } = _saved);
+        }
         const _canBeBlank = ['mood','energy','sleep','medication'].includes(s.id);
         const _isBlank = html === null && _canBeBlank;
         if (_isBlank) { html = '—'; borderColor = '#dee2e6'; }
@@ -7233,6 +7309,8 @@ window.addEventListener('pageshow', () => {
     window._fmNext    = _fmNext;
     window._fmSkip    = _fmSkip;
     window._fmAdvance = _fmAdvance;
+    // Repaint the current step in place (the meds step's 🔔 pill after its sheet saves).
+    window._fmRerenderStep = function () { try { _renderFocusedStep(); } catch (_) {} };
     window._fmGoToDone = _fmGoToDone;
     window._fmGoTo    = _fmGoTo;
     window._fmRefreshSleep = _fmRefreshSleep;
@@ -7544,12 +7622,40 @@ window.addEventListener('pageshow', () => {
       return results;
     }
 
-    function showPersonalisedFeedback() {
+    // The feedback popup has its own period, switched by the 1M / 3M / 6M / 1Y /
+    // All buttons at its top (same look as the life chart's). It opens on the
+    // stats page's timeframe (30 → 1M, 90 → 3M …, 60/120 → the next range up
+    // that holds them) and works from _allEntries, so it isn't limited to the
+    // entries the stats page happens to have loaded.
+    const _FB_RANGES = [[30, 'journal.lifeChart.r1m'], [90, 'journal.lifeChart.r3m'], [180, 'journal.lifeChart.r6m'], [365, 'journal.lifeChart.r1y'], ['all', 'journal.feedback.all']];
+    let _fbRange = null;
+    function _fbRangeFromStats() {
+      if (statsTimeframe === 'all') return 'all';
+      const n = Number(statsTimeframe) || 30;
+      const hit = _FB_RANGES.find(r => r[0] !== 'all' && r[0] >= n);
+      return hit ? hit[0] : 'all';
+    }
+    function _fbRangeLabel(key, fallback) { const t = BB.t(key); return t && t !== key ? t : fallback; }
+
+    function showPersonalisedFeedback(range) {
       const modal = document.getElementById('feedbackModal');
       const body  = document.getElementById('feedbackBody');
+      const rangesEl = document.getElementById('feedbackRanges');
+      _fbRange = range !== undefined ? range : _fbRangeFromStats();
 
-      const sorted = [...currentStatsEntries].sort((a, b) => new Date(a.date) - new Date(b.date));
-      const _isLimited = statsTimeframe !== 'all';
+      if (rangesEl) {
+        rangesEl.innerHTML = _FB_RANGES.map(r =>
+          `<button type="button" class="fb-range${r[0] === _fbRange ? ' on' : ''}" aria-pressed="${r[0] === _fbRange}" onclick="showPersonalisedFeedback(${r[0] === 'all' ? "'all'" : r[0]})">${_fbRangeLabel(r[1], r[0] === 'all' ? 'All' : '')}</button>`
+        ).join('');
+      }
+
+      const source = (_allEntries && _allEntries.length) ? _allEntries : currentStatsEntries;
+      let pool = source;
+      if (_fbRange !== 'all') {
+        const since = new Date(); since.setHours(0, 0, 0, 0); since.setDate(since.getDate() - (_fbRange - 1));
+        pool = source.filter(e => new Date(e.date) >= since);
+      }
+      const sorted = [...pool].sort((a, b) => new Date(a.date) - new Date(b.date));
 
       if (sorted.length < 7) {
         body.innerHTML = `<div style="text-align:center;padding:30px 0;color:#6c757d;">
@@ -7561,16 +7667,17 @@ window.addEventListener('pageshow', () => {
       }
 
       const insights = computeInsights(sorted);
-
-      const _limitedBanner = _isLimited ? `<div style="font-size:0.8em;color:#adb5bd;text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">Based on last ${statsTimeframe} days — more data gives better insights</div>` : '';
+      const _basis = `<div style="font-size:0.8em;color:#868e96;text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">${_fbRange === 'all'
+        ? BB.t('journal.feedback.basedAll', { n: sorted.length })
+        : BB.t('journal.feedback.basedDays', { days: _fbRange, n: sorted.length })}</div>`;
 
       if (insights.length === 0) {
-        body.innerHTML = _limitedBanner + `<div style="text-align:center;padding:30px 0;color:#6c757d;">
+        body.innerHTML = _basis + `<div style="text-align:center;padding:30px 0;color:#6c757d;">
           <div style="font-size:2em;margin-bottom:12px;">📊</div>
           <div>${BB.t('journal.ui.noStrongPatterns')}</div>
         </div>`;
       } else {
-        body.innerHTML = _limitedBanner + insights.map(i => `
+        body.innerHTML = _basis + insights.map(i => `
           <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;margin-bottom:10px;border-radius:12px;background:#f8f9fa;border-left:4px solid ${i.accent};">
             <div style="font-size:1.4em;line-height:1.2;flex-shrink:0;">${i.icon}</div>
             <div>
@@ -7581,7 +7688,7 @@ window.addEventListener('pageshow', () => {
           </div>
         `).join('');
       }
-
+      body.scrollTop = 0;
       modal.classList.add('active');
     }
 
@@ -10914,6 +11021,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           if (_delNotifPlugin) {
             _delNotifPlugin.cancel({ notifications: [{ id: 1 }, { id: 2 }] }).catch(() => {});
           }
+          // Medication reminder (js/shared/meds-reminder.js): forget + cancel.
+          if (window.BB && BB.medsReminder) BB.medsReminder.clear().catch(() => {});
         } catch(_) {}
         // Clear dynamic tracking/label keys
         Object.keys(localStorage).filter(k =>

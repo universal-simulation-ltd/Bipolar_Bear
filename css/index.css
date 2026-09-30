@@ -306,6 +306,18 @@
       color: #5a2a00;
       text-shadow: none;
     }
+    /* Header link to the journal — the card stands in for the Mood Journal
+       button, so it has to lead there too. */
+    .qc-head {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      width: 100%; margin: -2px 0 6px; padding: 4px 6px 8px;
+      background: none; border: none; border-bottom: 1px solid #f1dcc2;
+      font: inherit; font-size: 1.02em; font-weight: 800; color: #5a2a00;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .qc-head .qc-chev { font-size: 1.25em; line-height: 1; color: #a8430a; margin-left: 2px; }
+    .qc-head:focus-visible { outline: 3px solid #a8430a; outline-offset: 2px; border-radius: 10px; }
+    .quick-checkin[data-done="true"] .qc-head { margin-bottom: 4px; }
     .qc-prompt {
       font-size: 0.95em;
       font-weight: 800;
@@ -474,6 +486,10 @@
        (streaks, survival progress, anon messages) under the home buttons.
        !important overrides the inline display set by _revealBadge(). */
     .buttons.bb-hide-stats .btn-subnote { display: none !important; }
+    /* The quick check-in's last-7-days strip is a stat too. */
+    .buttons.bb-hide-stats .qc-week { display: none !important; }
+    /* Streak line moved under the quick check-in card (_renderQuickCheckin). */
+    .quick-checkin + #journalStreakBadge { margin-top: 8px; }
     .btn-subnote-muted {
       display: block;
       text-align: center;

@@ -141,3 +141,18 @@ html.bb-auth-restoring #bbAuthSplash[data-leaving="1"] { opacity: 0; }
   .bb-splash-ring .bb-ring-run { animation: none; stroke-dasharray: none; stroke: rgba(255, 255, 255, 0.55); }
   html.bb-auth-restoring #bbAuthSplash { transition: none; }
 }
+
+/* "Being built by James Markey MBE" — a quiet credit line under the version
+   (Profile) and at the foot of the changelog. Moved off the home screen on
+   30 Sep 2026; deliberately small and grey. */
+.bb-credit {
+  display: block;
+  margin: 4px auto 0;
+  text-align: center;
+  font-size: 0.68em;
+  color: #868e96;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+}
+.bb-credit:hover { text-decoration: underline; }
+html.theme-dark .bb-credit { color: #a8998a; }

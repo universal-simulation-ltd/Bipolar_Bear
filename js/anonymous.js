@@ -1006,12 +1006,12 @@ function setupPullToRefresh() {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Reactions, polls and the daily mood check-in
+// Polls and the daily mood check-in
 // ─────────────────────────────────────────────────────────────────
-// All three write through callables in functions/index.js (reactAnonPost,
-// createAnonPoll, voteAnonPoll, anonMoodCheckin), so no Firestore rules change
-// is involved. As with 💛, only totals live on the server: which posts this
-// device reacted to, and how it voted, are remembered here in localStorage.
+// Both write through callables in functions/index.js (createAnonPoll,
+// voteAnonPoll, anonMoodCheckin), so no Firestore rules change is involved.
+// As with 💛, only totals live on the server: how this device voted is
+// remembered here in localStorage.
 async function _callFn(name, data) {
   if (typeof firebase === 'undefined' || !firebase.app) throw new Error('offline');
   await _ensureAuthSession();
@@ -1019,81 +1019,23 @@ async function _callFn(name, data) {
   return res.data || {};
 }
 
-const REACTIONS = [
-  { k: 'hug',    e: '🫂', key: 'anon.ux.reactHug' },
-  { k: 'same',   e: '🙋', key: 'anon.ux.reactSame' },
-  { k: 'strong', e: '💪', key: 'anon.ux.reactStrong' },
-];
+// The gentle reactions (🫂 🙋 💪) were withdrawn on 30 Sep 2026 — 💛 is the
+// one reaction. reactAnonPost stays deployed so an older cached client fails
+// quietly, and any counts already on posts are simply no longer drawn.
 function _loadMap(key) {
   try { const o = JSON.parse(BB.storage.get(key) || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; }
   catch (e) { return {}; }
 }
-const reactedPosts = _loadMap('Anon_reacted');   // postId → ['hug', …]
 const votedPolls   = _loadMap('Anon_votes');     // postId → option index
 function _saveMap(key, obj) { try { BB.storage.set(key, JSON.stringify(obj)); } catch (e) {} }
+try { BB.storage.remove('Anon_reacted'); } catch (e) {}
 
-// The reaction chips beside 💛, plus the ☺ button that opens the picker.
-function reactionRowHtml(p) {
-  if (!_isThreadable(p)) return '';
-  const own  = p.name === profile.monika;
-  const mine = reactedPosts[p.id] || [];
-  const r    = p.reactions || {};
-  const chips = REACTIONS.map(x => {
-    const n = num(r[x.k], 0);
-    if (!n && !mine.includes(x.k)) return '';
-    return `<button class="react-chip${mine.includes(x.k) ? ' mine' : ''}" data-react="${x.k}" data-rid="${esc(p.id)}"`
-      + ` title="${esc(_wt(x.key))}"${own ? ' disabled' : ''}>${x.e} <span>${Math.max(n, mine.includes(x.k) ? 1 : 0)}</span></button>`;
-  }).join('');
-  return `<div class="react-row">${chips}</div>`;
-}
-// The ☺+ that opens the picker sits in the action row; the chips get their
-// own line above it, so a post with every reaction doesn't push ⋯ to a new row.
-function reactionAddHtml(p) {
-  if (!_isThreadable(p) || p.name === profile.monika) return '';
-  return `<button class="react-add" data-react-open="${esc(p.id)}" title="${esc(_wt('anon.ux.reactAdd'))}" aria-label="${esc(_wt('anon.ux.reactAdd'))}">☺︎<span>+</span></button>`;
-}
-function reactionPickerHtml(p) {
-  if (!_isThreadable(p) || p.name === profile.monika) return '';
-  return `<div class="react-picker">${REACTIONS.map(x =>
-    `<button class="react-pick" data-react="${x.k}" data-rid="${esc(p.id)}"><span class="rp-e">${x.e}</span><span class="rp-l">${esc(_wt(x.key))}</span></button>`
-  ).join('')}</div>`;
-}
 function _repaintCard(id) {
   const card = document.querySelector(`#post-list .post-card[data-pid="${CSS.escape(id)}"]`);
   const p = _findPost(id);
   if (!card || !p) return;
-  const row = card.querySelector('.react-row');
-  if (row) row.outerHTML = reactionRowHtml(p);
   const poll = card.querySelector('.poll');
   if (poll) poll.outerHTML = pollHtml(p);
-}
-async function toggleReaction(id, kind) {
-  const p = _findPost(id);
-  if (!p || !REACTIONS.some(x => x.k === kind)) return;
-  if (p.name === profile.monika) { showHint(_wt('anon.ux.cantReactOwn')); return; }
-  const mine  = reactedPosts[id] || [];
-  const on    = !mine.includes(kind);
-  const delta = on ? 1 : -1;
-  const prevCount = num((p.reactions || {})[kind], 0);
-  // Optimistic: the chip moves now, the server's total lands a moment later.
-  reactedPosts[id] = on ? mine.concat(kind) : mine.filter(k => k !== kind);
-  if (!reactedPosts[id].length) delete reactedPosts[id];
-  p.reactions = Object.assign({}, p.reactions, { [kind]: Math.max(0, prevCount + delta) });
-  _saveMap('Anon_reacted', reactedPosts);
-  if (on) _haptic();
-  _repaintCard(id);
-  try {
-    const res = await _callFn('reactAnonPost', { postId: id, kind, delta });
-    p.reactions = Object.assign({}, p.reactions, { [kind]: num(res.count, 0) });
-  } catch (e) {
-    console.warn('[Anonymous] reaction failed', e);
-    reactedPosts[id] = mine;
-    if (!mine.length) delete reactedPosts[id];
-    p.reactions = Object.assign({}, p.reactions, { [kind]: prevCount });
-    _saveMap('Anon_reacted', reactedPosts);
-    showHint(_wt('anon.ux.reactFailed'));
-  }
-  _repaintCard(id);
 }
 
 // A poll under the post text. Before you vote: plain option buttons. After:
@@ -1148,27 +1090,38 @@ async function votePoll(id, option) {
 
 // The daily check-in on the greeting card. One tap, once a day; afterwards the
 // card shows how the board as a whole is doing. Only totals are stored.
+// The five moods are Bipolar Bear's own (same names, bears and colours as the
+// journal), so a member with a linked Bipolar Bear account is checked in by
+// their journal entry — see _journalCheckin() here and _anonJournalCheckin()
+// in js/journal.js. Hidden entirely with Your Moniker → "How are you today?".
 const MOODS = [
-  { k: 'low',  e: '😔', key: 'anon.ux.moodLow',  c: '#7986cb' },
-  { k: 'flat', e: '😐', key: 'anon.ux.moodFlat', c: '#a1887f' },
-  { k: 'okay', e: '🙂', key: 'anon.ux.moodOkay', c: '#81c784' },
-  { k: 'high', e: '⚡', key: 'anon.ux.moodHigh', c: '#ffb74d' },
+  { k: 'manic',     key: 'mood.manic',     c: '#ff6b6b' },
+  { k: 'elevated',  key: 'mood.elevated',  c: '#d2be00' },
+  { k: 'stable',    key: 'mood.stable',    c: '#51cf66' },
+  { k: 'low',       key: 'mood.low',       c: '#845ef7' },
+  { k: 'depressed', key: 'mood.depressed', c: '#5c7cfa' },
 ];
-const _moodState = { ready: false, counts: null, checkedIn: false, day: '' };
+const _moodImg = (k, cls) => `<img class="${cls || 'mb-img'}" src="images/moods/sm/${k}.png" alt="" draggable="false">`;
+const _moodState = { ready: false, counts: null, checkedIn: false, via: null, day: '' };
 function _ukDay() {
   try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date()); }
   catch (e) { return new Date().toISOString().slice(0, 10); }
 }
 function _myMood() {
-  try { const m = JSON.parse(BB.storage.get('Anon_mood') || 'null'); return m && m.day === _ukDay() ? m.mood : null; }
-  catch (e) { return null; }
+  try {
+    const m = JSON.parse(BB.storage.get('Anon_mood') || 'null');
+    return m && m.day === _ukDay() && MOODS.some(x => x.k === m.mood) ? m.mood : null;
+  } catch (e) { return null; }
 }
+// Settings (Your Moniker sheet). Both default ON; stored as '0' when off.
+function _moodAskShown()     { return BB.storage.get('Anon_moodAsk') !== '0'; }
+function _journalCheckinOn() { return BB.storage.get('Anon_journalCheckin') !== '0'; }
 function moodBlockHtml() {
-  if (!_moodState.ready) return '<div class="mood-block"></div>';
+  if (!_moodAskShown() || !_moodState.ready) return '<div class="mood-block"></div>';
   const mine = _myMood();
   if (!_moodState.checkedIn && !mine) {
     return `<div class="mood-block"><div class="mood-ask">${esc(_wt('anon.ux.moodAsk'))}</div><div class="mood-btns">`
-      + MOODS.map(m => `<button class="mood-btn" data-mood="${m.k}"><span class="mb-e">${m.e}</span><span class="mb-l">${esc(_wt(m.key))}</span></button>`).join('')
+      + MOODS.map(m => `<button class="mood-btn" data-mood="${m.k}" style="--mc:${m.c}">${_moodImg(m.k)}<span class="mb-l">${esc(_wt(m.key))}</span></button>`).join('')
       + `</div><div class="mood-note">${esc(_wt('anon.ux.moodPrivate'))}</div></div>`;
   }
   const counts = _moodState.counts || {};
@@ -1177,23 +1130,50 @@ function moodBlockHtml() {
     const n = num(counts[m.k], 0);
     return n ? `<span style="flex:${n};background:${m.c}" title="${esc(_wt(m.key))}: ${n}"></span>` : '';
   }).join('') : '';
-  const legend = MOODS.map(m => `<span class="ml-i">${m.e} ${num(counts[m.k], 0)}</span>`).join('');
+  const legend = MOODS.map(m => `<span class="ml-i" title="${esc(_wt(m.key))}">${_moodImg(m.k, 'ml-img')}<b>${num(counts[m.k], 0)}</b></span>`).join('');
   const you = mine ? MOODS.find(m => m.k === mine) : null;
   const countLabel = total === 1 ? _wt('anon.ux.moodOne') : _wt('anon.ux.moodCount', { n: total });
+  let note = '';
+  if (you) note = `<div class="mood-note mood-you">${esc(_wt('anon.ux.moodYouLabel'))} ${_moodImg(you.k, 'ml-img')} <b>${esc(_wt(you.key))}</b>${_moodState.via === 'journal' ? ' · ' + esc(_wt('anon.ux.moodFromJournal')) : ''}</div>`;
+  else if (_moodState.via === 'journal') note = `<div class="mood-note mood-you">✓ ${esc(_wt('anon.ux.moodViaJournal'))}</div>`;
   return `<div class="mood-block"><div class="mood-ask">${esc(_wt('anon.ux.moodToday'))} · ${esc(countLabel)}</div>`
     + (bar ? `<div class="mood-bar">${bar}</div>` : '')
     + `<div class="mood-legend">${legend}</div>`
-    + (you ? `<div class="mood-note">${esc(_wt('anon.ux.moodYou', { m: you.e + ' ' + _wt(you.key) }))}</div>` : '')
+    + note
     + `</div>`;
 }
 function _repaintMood() {
   const el = document.querySelector('#post-list .sys-card .mood-block');
   if (el) el.outerHTML = moodBlockHtml();
 }
-async function loadMood() {
+// The main app's journal leaves bb_recentMoods ({"YYYY-MM-DD": mood}) on this
+// device after it loads your entries (never while a PIN or incognito is on).
+// Used when the board is opened inside Bipolar Bear itself, so an entry saved
+// before the journal learned to check in still counts. The separate Bipolar
+// Anonymous app has no journal on the device — there the journal's own save
+// (js/journal.js) is what checks in.
+function _journalMoodForToday() {
+  if (!_bbUser || !_journalCheckinOn()) return null;
   try {
-    const res = await _callFn('anonMoodCheckin', {});
-    Object.assign(_moodState, { ready: true, counts: res.counts || {}, checkedIn: !!res.checkedIn, day: res.day || '' });
+    const map = JSON.parse(BB.storage.get('_recentMoods') || 'null');
+    if (!map || typeof map !== 'object') return null;
+    const d = new Date(); const key = x => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`;
+    const today = key(d); d.setDate(d.getDate() - 1); const yday = key(d);
+    const m = map[today] || map[yday];
+    const cat = m === 'good' ? 'stable' : m;
+    return MOODS.some(x => x.k === cat) ? cat : null;
+  } catch (e) { return null; }
+}
+async function loadMood() {
+  if (!_moodAskShown()) return;
+  try {
+    let res = await _callFn('anonMoodCheckin', {});
+    const jm = !res.checkedIn && !_myMood() ? _journalMoodForToday() : null;
+    if (jm) {
+      res = await _callFn('anonMoodCheckin', { mood: jm, source: 'journal' });
+      if (res.via === 'journal') { try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: jm })); } catch (e) {} }
+    }
+    Object.assign(_moodState, { ready: true, counts: res.counts || {}, checkedIn: !!res.checkedIn, via: res.via || null, day: res.day || '' });
   } catch (e) {
     // Offline or the function isn't there: the card just stays a greeting.
     return;
@@ -1206,12 +1186,12 @@ async function checkInMood(kind) {
   try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
   const counts = Object.assign({}, _moodState.counts);
   counts[kind] = num(counts[kind], 0) + 1;
-  Object.assign(_moodState, { counts, checkedIn: true });
+  Object.assign(_moodState, { counts, checkedIn: true, via: 'board' });
   _haptic('success');
   _repaintMood();
   try {
     const res = await _callFn('anonMoodCheckin', { mood: kind });
-    Object.assign(_moodState, { counts: res.counts || counts, checkedIn: true, day: res.day || '' });
+    Object.assign(_moodState, { counts: res.counts || counts, checkedIn: true, via: res.via || 'board', day: res.day || '' });
   } catch (e) {
     console.warn('[Anonymous] mood check-in failed', e);
     BB.storage.remove('Anon_mood');
@@ -1227,19 +1207,6 @@ function setupInteractions() {
   const list = document.getElementById('post-list');
   if (!list) return;
   list.addEventListener('click', e => {
-    const open = e.target.closest('[data-react-open]');
-    if (open) {
-      const card = open.closest('.post-card');
-      if (card) card.classList.toggle('picker-open');
-      return;
-    }
-    const r = e.target.closest('[data-react]');
-    if (r && !r.disabled) {
-      const card = r.closest('.post-card');
-      if (card) card.classList.remove('picker-open');
-      toggleReaction(r.dataset.rid, r.dataset.react);
-      return;
-    }
     const v = e.target.closest('[data-vote]');
     if (v) { votePoll(v.dataset.pid, parseInt(v.dataset.vote, 10)); return; }
     const m = e.target.closest('[data-mood]');
@@ -1781,6 +1748,7 @@ async function _bbRestoreProfile(uid) {
     // BB-app users who joined before this gate shipped never saw the terms,
     // so they must accept once, exactly as a new user does.
     if (ap.termsAccepted) BB.storage.set('Anon_agreedTerms', 'true');
+    if (ap.journalCheckin !== undefined) BB.storage.set('Anon_journalCheckin', ap.journalCheckin ? '1' : '0');
     if (ap.colorKey)                 BB.storage.set('Anon_colorKey',    ap.colorKey);
     if (ap.customInit !== undefined) BB.storage.set('Anon_initials',    ap.customInit || '');
     if (ap.showMeds   !== undefined) BB.storage.set('Anon_showMeds',    ap.showMeds   ? 'true' : 'false');
@@ -2169,11 +2137,9 @@ function initBoard() {
 
 function renderUserPill() {
   const m  = profile.monika;
-  const s  = profile.streak;
   const g1 = profile.grad1;
   const g2 = profile.grad2;
   const av = profile.avatarInitials();
-  const bday = _birthdayCompact(profile.joinedAt);
   document.getElementById('board-user-pill').innerHTML = `
     <div class="pill-row" style="display:flex;align-items:center;gap:5px;">
       <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,${g1},${g2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0;">${esc(av)}</div>
@@ -2181,11 +2147,9 @@ function renderUserPill() {
         <span class="pill-name" style="font-size:12px;color:rgba(0,0,0,0.75);font-weight:600;">[${esc(m)}]</span>
         ${profile.isAdmin ? '<span style="background:rgba(0,0,0,0.55);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;line-height:1.2;">ADMIN</span>' : ''}
       </div>
-      <span class="pill-badge">🔥</span>
-      <span class="pill-badge" style="font-size:11px;color:rgba(0,0,0,0.6);">${s}d</span>
-      ${profile.showStable && profile.stableStreak > 0 ? `<span class="pill-badge">🧘</span><span class="pill-badge" style="font-size:11px;color:rgba(0,0,0,0.6);">${profile.stableStreak}d</span>` : ''}
-      ${bday ? `<span class="pill-badge" title="${esc(_wt('anon.ui.bbBirthday'))}">🎂</span><span class="pill-badge" style="font-size:11px;color:rgba(0,0,0,0.6);">${bday}</span>` : ''}
     </div>`;
+  // The 🔥 / 🧘 / 🎂 figures used to follow the name here; they moved into
+  // Your Moniker (#ms-stats, _paintMsStats) to give the header row room.
   _fitBoardLogo();
 }
 
@@ -4902,17 +4866,14 @@ function renderArchivedTopic(p) {
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
     ${pollHtml(p)}
-    ${reactionRowHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(a.name)}">
         💛 <span>${likes}</span>
       </button>
-      ${reactionAddHtml(p)}
       ${commentBtnHtml(p, commentCount)}
       <div style="flex:1"></div>
       ${moreMenuHtml(deleteBtn)}
     </div>
-    ${reactionPickerHtml(p)}
   </div>`;
 }
 
@@ -4994,12 +4955,10 @@ function renderPost(p) {
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
     ${p.isSeed ? '' : pollHtml(p)}
-    ${p.isSeed ? '' : reactionRowHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}"${p.name === profile.monika ? ` data-self="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
         💛 <span>${likes}</span>
       </button>
-      ${p.isSeed ? '' : reactionAddHtml(p)}
       ${commentBtn}
       <div style="flex:1"></div>
       ${p.isSeed ? '' : moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
@@ -5007,7 +4966,6 @@ function renderPost(p) {
           + `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>`
           + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''))}
     </div>
-    ${p.isSeed ? '' : reactionPickerHtml(p)}
   </div>`;
 }
 
@@ -5775,6 +5733,10 @@ function openMonikaSettings() {
   _paintSavedStatus();
   _paintThemeStatus();
 
+  // Your figures (moved here from the header) and the daily check-in switches
+  _paintMsStats();
+  _paintCheckinStatus();
+
   // Medication status row
   const msStatus = document.getElementById('ms-med-status');
   if (msStatus) {
@@ -5871,6 +5833,48 @@ function openMonikaSettings() {
 document.getElementById('ms-cancel').addEventListener('click', () => closeOv('ov-monika'));
 document.getElementById('ms-saved-btn').addEventListener('click', openSaved);
 document.getElementById('ms-theme-btn').addEventListener('click', cycleTheme);
+
+// ── Your figures + the daily check-in switches (Your Moniker sheet) ──
+function _paintMsStats() {
+  const el = document.getElementById('ms-stats');
+  if (!el) return;
+  const chips = [];
+  const streak = num(profile.streak, 0);
+  chips.push(`<span class="ms-stat"><span class="ms-stat-e">🔥</span><b>${streak}</b><span>${esc(_wt('anon.ux.statStreak'))}</span></span>`);
+  if (_bbUser && profile.stableStreak > 0) {
+    chips.push(`<span class="ms-stat"><span class="ms-stat-e">🧘</span><b>${num(profile.stableStreak, 0)}</b><span>${esc(_wt('anon.ux.statStable'))}</span></span>`);
+  }
+  const bday = _birthdayCompact(profile.joinedAt || _resolveJoinedAt());
+  if (bday) chips.push(`<span class="ms-stat"><span class="ms-stat-e">🎂</span><b>${esc(bday)}</b><span>${esc(_wt('anon.ux.statMember'))}</span></span>`);
+  el.innerHTML = chips.join('');
+  el.style.display = chips.length ? '' : 'none';
+}
+function _paintCheckinStatus() {
+  const a = document.getElementById('ms-checkin-status');
+  if (a) a.textContent = _wt(_moodAskShown() ? 'anon.ux.checkinShown' : 'anon.ux.checkinHidden');
+  const jBtn = document.getElementById('ms-jcheckin-btn');
+  // Only an account that is also a Bipolar Bear account has a journal to use.
+  if (jBtn) jBtn.style.display = _bbUser && _moodAskShown() ? 'flex' : 'none';
+  const j = document.getElementById('ms-jcheckin-status');
+  if (j) j.textContent = _wt(_journalCheckinOn() ? 'anon.ux.journalCheckinOn' : 'anon.ux.journalCheckinOff');
+}
+document.getElementById('ms-checkin-btn').addEventListener('click', () => {
+  BB.storage.set('Anon_moodAsk', _moodAskShown() ? '0' : '1');
+  _paintCheckinStatus();
+  if (_moodAskShown()) { loadMood(); } else { _repaintMood(); }
+});
+document.getElementById('ms-jcheckin-btn').addEventListener('click', () => {
+  const on = !_journalCheckinOn();
+  BB.storage.set('Anon_journalCheckin', on ? '1' : '0');
+  _paintCheckinStatus();
+  // Synced, because the journal that does the checking in may be on another
+  // device (or in the other app). js/journal.js reads anonProfile.journalCheckin.
+  if (db && _bbUser) {
+    db.collection('userSettings').doc(_bbUser.uid)
+      .set({ anonProfile: { journalCheckin: on } }, { merge: true }).catch(() => {});
+  }
+  if (on) loadMood();
+});
 
 document.getElementById('ms-signout').addEventListener('click', () => {
   // Standalone sign-out: clear all bbAnon_* identity/session state. Profile

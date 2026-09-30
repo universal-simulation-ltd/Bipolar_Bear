@@ -134,6 +134,11 @@ fs.writeFileSync(brandPath, brand);
 // from anything that probes /favicon.ico.
 copyDir('icons');
 
+// ─── 7a. Mood bears (small) ─────────────────────────────────────────
+// The daily check-in on the greeting card uses Bipolar Bear's five mood
+// bears; these are ~20 KB thumbnails of images/moods/*.png.
+copyDir('images/moods/sm');
+
 // ─── 7b. Wiki data ──────────────────────────────────────────────────
 // JSON files fetched at runtime by the Wiki tab renderers in
 // js/anonymous.js (renderWikiGroups / renderWikiWisdom).
