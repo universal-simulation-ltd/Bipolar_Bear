@@ -1102,7 +1102,9 @@ const MOODS = [
   { k: 'depressed', key: 'mood.depressed', c: '#5c7cfa' },
 ];
 const _moodImg = (k, cls) => `<img class="${cls || 'mb-img'}" src="images/moods/sm/${k}.png" alt="" draggable="false">`;
-const _moodState = { ready: false, failed: false, counts: null, checkedIn: false, via: null, day: '' };
+const _moodState = { ready: false, failed: false, counts: null, checkedIn: false, via: null, day: '', showAll: false, flashAt: 0 };
+// How long "✓ Checked in" stays beside the heading after a tap (it fades out).
+const MOOD_FLASH_MS = 3500;
 function _ukDay() {
   try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date()); }
   catch (e) { return new Date().toISOString().slice(0, 10); }
@@ -1128,12 +1130,25 @@ function moodPlaceholderHtml() {
       + MOODS.map(m => `<button class="mood-btn" disabled tabindex="-1" style="--mc:${m.c}">${_moodImg(m.k)}<span class="mb-l">${esc(_wt(m.key))}</span></button>`).join('')
       + `</div><div class="mood-note">${esc(_wt('anon.ux.moodPrivate'))}</div></div>`;
   }
-  const you = MOODS.find(m => m.k === known);
   return `<div class="mood-block mood-loading" aria-busy="true"><div class="mood-ask">${esc(_wt('anon.ux.moodToday'))}</div>`
-    + `<div class="mood-bar"></div>`
-    + `<div class="mood-legend">${MOODS.map(m => `<span class="ml-i">${_moodImg(m.k, 'ml-img')}<b>–</b></span>`).join('')}</div>`
-    + `<div class="mood-note mood-you">${esc(_wt('anon.ux.moodYouLabel'))} ${_moodImg(you.k, 'ml-img')} <b>${esc(_wt(you.key))}</b></div>`
+    + `<div class="mood-same">${_moodImg(known, 'ms-img')}<span></span></div>`
+    + `<button class="mood-all" disabled tabindex="-1">${esc(_wt('anon.ux.moodSeeAll'))}</button>`
     + `</div>`;
+}
+// After checking in, the card leads with how many others picked the same mood,
+// not a tally to measure yourself against. A member said the bar made them
+// feel everyone else was doing better than them (2026-10-01) — and the people
+// at their lowest are the least likely to check in, so the bar flatters the
+// day. The whole board is one tap away (closed again on every visit), and
+// "You: Depressed" no longer sits under it.
+function _moodSameHtml(k, counts) {
+  const m = MOODS.find(x => x.k === k);
+  const others = Math.max(0, num(counts[k], 0) - 1);
+  const MARK = '%MOOD%';
+  const line = others
+    ? esc(_wt('anon.ux.moodSame', { count: others, mood: MARK })) + ' ' + esc(_wt('anon.ux.moodNotAlone'))
+    : esc(_wt('anon.ux.moodSameNone', { mood: MARK }));
+  return `<div class="mood-same">${_moodImg(k, 'ms-img')}<span>${line.replace(MARK, `<b>${esc(_wt(m.key))}</b>`)}</span></div>`;
 }
 function moodBlockHtml() {
   if (!_moodAskShown() || _moodState.failed) return '<div class="mood-block"></div>';
@@ -1151,15 +1166,19 @@ function moodBlockHtml() {
     return n ? `<span style="flex:${n};background:${m.c}" title="${esc(_wt(m.key))}: ${n}"></span>` : '';
   }).join('') : '';
   const legend = MOODS.map(m => `<span class="ml-i" title="${esc(_wt(m.key))}">${_moodImg(m.k, 'ml-img')}<b>${num(counts[m.k], 0)}</b></span>`).join('');
-  const you = mine ? MOODS.find(m => m.k === mine) : null;
   const countLabel = total === 1 ? _wt('anon.ux.moodOne') : _wt('anon.ux.moodCount', { n: total });
-  let note = '';
-  if (you) note = `<div class="mood-note mood-you">${esc(_wt('anon.ux.moodYouLabel'))} ${_moodImg(you.k, 'ml-img')} <b>${esc(_wt(you.key))}</b>${_moodState.via === 'journal' ? ' · ' + esc(_wt('anon.ux.moodFromJournal')) : ''}</div>`;
-  else if (_moodState.via === 'journal') note = `<div class="mood-note mood-you">✓ ${esc(_wt('anon.ux.moodViaJournal'))}</div>`;
-  return `<div class="mood-block"><div class="mood-ask">${esc(_wt('anon.ux.moodToday'))} · ${esc(countLabel)}</div>`
-    + (bar ? `<div class="mood-bar">${bar}</div>` : '')
-    + `<div class="mood-legend">${legend}</div>`
-    + note
+  // A negative delay picks the fade up where it was, so a feed re-render
+  // mid-fade doesn't restart it.
+  const since = Date.now() - _moodState.flashAt;
+  const flash = since < MOOD_FLASH_MS
+    ? `<span class="mood-flash" style="animation-delay:-${since}ms">${esc(_wt('anon.ux.moodCheckedIn'))}</span>` : '';
+  const open = _moodState.showAll;
+  return `<div class="mood-block"><div class="mood-ask"><span>${esc(_wt('anon.ux.moodToday'))} · ${esc(countLabel)}</span>${flash}</div>`
+    + (mine ? _moodSameHtml(mine, counts) : '')
+    + (open && bar ? `<div class="mood-bar">${bar}</div>` : '')
+    + (open ? `<div class="mood-legend">${legend}</div>` : '')
+    + (_moodState.via === 'journal' ? `<div class="mood-note">✓ ${esc(_wt('anon.ux.moodViaJournal'))}</div>` : '')
+    + `<button class="mood-all" data-mood-all aria-expanded="${open}">${esc(_wt(open ? 'anon.ux.moodHideAll' : 'anon.ux.moodSeeAll'))}</button>`
     + `</div>`;
 }
 function _repaintMood() {
@@ -1214,7 +1233,7 @@ async function checkInMood(kind) {
   try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
   const counts = Object.assign({}, _moodState.counts);
   counts[kind] = num(counts[kind], 0) + 1;
-  Object.assign(_moodState, { counts, checkedIn: true, via: 'board' });
+  Object.assign(_moodState, { counts, checkedIn: true, via: 'board', flashAt: Date.now() });
   _haptic('success');
   _repaintMood();
   try {
@@ -1238,7 +1257,14 @@ function setupInteractions() {
     const v = e.target.closest('[data-vote]');
     if (v) { votePoll(v.dataset.pid, parseInt(v.dataset.vote, 10)); return; }
     const m = e.target.closest('[data-mood]');
-    if (m) checkInMood(m.dataset.mood);
+    if (m) { checkInMood(m.dataset.mood); return; }
+    if (e.target.closest('[data-mood-all]')) {
+      _moodState.showAll = !_moodState.showAll;
+      _repaintMood();
+      // The repaint replaces the button, so keep keyboard focus on it.
+      const b = document.querySelector('#post-list .sys-card [data-mood-all]');
+      if (b) b.focus({ preventScroll: true });
+    }
   });
 }
 

@@ -1251,7 +1251,12 @@
 //       policy (tú) and Chinese (你) address the user one way throughout, like
 //       their store listings; every privacy policy names the Moniker screen by
 //       its real title. Touches js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v257';
+// v258: the board's daily check-in leads with "N others picked <your mood>
+//       today too" instead of the whole-board bar with "You: <mood>" under it
+//       (a member felt everyone else was doing better); the bar is behind
+//       "See the whole board", and "✓ Checked in" fades out beside the heading.
+//       Touches js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v258';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
