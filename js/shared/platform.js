@@ -61,9 +61,38 @@
     document.documentElement.classList.add(isIOS() ? 'is-ios' : 'is-android');
   }
 
+  /**
+   * Hands the home-screen widget the same last-7-days mood dots the home
+   * page draws (BLOCK 3c of js/index.js). The source is the device-only
+   * `bb_recentMoods` map ({"YYYY-MM-DD": mood}) the journal leaves behind,
+   * under the same rules: nothing is sent — and the widget's copy is
+   * cleared — with incognito mode on or an app / guest PIN set, because the
+   * widget sits on the phone's home screen outside the app's PIN gate.
+   * Called after every write / removal of that map, and on each home load
+   * as a catch-all for the clear-lists that remove it directly.
+   */
+  function syncWidgetMoods() {
+    if (!isNative()) return;
+    var map = {};
+    try {
+      var s = window.BB && window.BB.storage;
+      var blocked = localStorage.getItem('incognitoMode') === 'true'
+        || !s || s.get('NativePinEnabled') === '1' || !!s.get('GuestPinSalt');
+      var cached = blocked ? null : JSON.parse(s.get('_recentMoods') || 'null');
+      if (cached && typeof cached === 'object') map = cached;
+    } catch (_) {}
+    var payload = { recentMoods: JSON.stringify(map) };
+    try {
+      var wk = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.setSharedData;
+      if (wk) { wk.postMessage(payload); return; }
+      var plugin = _cap() && _cap().Plugins && _cap().Plugins.BipolarBearWidget;
+      if (plugin && plugin.setSharedData) plugin.setSharedData(payload);
+    } catch (_) {}
+  }
+
   // Canonical namespace.
   window.BB = window.BB || {};
-  window.BB.platform = { isNative: isNative, isIOS: isIOS, isAndroid: isAndroid };
+  window.BB.platform = { isNative: isNative, isIOS: isIOS, isAndroid: isAndroid, syncWidgetMoods: syncWidgetMoods };
 
   // Legacy globals — keep existing inline call sites working.
   window.isNative = isNative;

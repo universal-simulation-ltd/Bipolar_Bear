@@ -435,6 +435,7 @@ window.addEventListener('pageshow', () => {
           _justLoggedIn = true;
           BB.storage.remove('_entryStatus');
           BB.storage.remove('_recentMoods');
+          try { BB.platform.syncWidgetMoods(); } catch (_) {}
           migrateGoodMoodToStable(user);
           // Load user settings from Firestore, then derive key + migrate + load entries
           // Race against 5 s — if Firestore hangs here _authResolved is already true so
@@ -518,6 +519,7 @@ window.addEventListener('pageshow', () => {
               if (d.incognitoMode !== undefined) localStorage.setItem('incognitoMode', d.incognitoMode ? 'true' : 'false');
               else if (d.pdfHideByDefault !== undefined) localStorage.setItem('incognitoMode', d.pdfHideByDefault ? 'true' : 'false');
               if (localStorage.getItem('incognitoMode') === 'true') BB.storage.remove('_recentMoods');
+              try { BB.platform.syncWidgetMoods(); } catch (_) {}
               if (d.achievementToastsEnabled !== undefined) localStorage.setItem('achievementToastsEnabled', d.achievementToastsEnabled ? 'true' : 'false');
               if (d.earlyWarnEnabled !== undefined) localStorage.setItem('earlyWarnEnabled', d.earlyWarnEnabled ? 'true' : 'false');
               // Bipolar Anonymous: is this account on the board, and may the
@@ -914,6 +916,7 @@ window.addEventListener('pageshow', () => {
       _pendingAuthPassword = null;
       BB.storage.remove('NativePinEnabled');
       BB.storage.remove('_recentMoods'); // home strip's per-device mood cache
+      try { BB.platform.syncWidgetMoods(); } catch (_) {}
       if (isNative()) {
         const _ss = window.Capacitor?.Plugins?.SecureStorage;
         if (_ss) {
@@ -1822,7 +1825,11 @@ window.addEventListener('pageshow', () => {
         });
         if (Object.keys(out).length) BB.storage.set('_recentMoods', JSON.stringify(out));
         else BB.storage.remove('_recentMoods');
-      } catch (_) {}
+      } catch (_) {
+      } finally {
+        // Same dots on the native home-screen widget (cleared when blocked).
+        try { BB.platform.syncWidgetMoods(); } catch (_) {}
+      }
     }
     // Re-evaluate after a privacy setting changes (incognito / PIN on or off).
     function _refreshRecentMoods() { _writeRecentMoods(_allEntries); }
@@ -3664,6 +3671,7 @@ window.addEventListener('pageshow', () => {
           BB.storage.set('PinLinkedUID', currentUser ? currentUser.uid : 'guest');
           sessionStorage.setItem('bbPinUnlocked', '1');
           BB.storage.remove('_recentMoods'); // home paints before the PIN unlock
+          try { BB.platform.syncWidgetMoods(); } catch (_) {}
           _guestCryptoKey = await _guestDeriveKey(_guestPinSetupFirst, saltB64);
           await _guestExportKeyToSession(_guestCryptoKey);
           const overlay = document.getElementById('guestPinSetupOverlay');
@@ -3868,6 +3876,7 @@ window.addEventListener('pageshow', () => {
               BB.storage.set('NativePinEnabled', '1');
               sessionStorage.setItem('bbPinUnlocked', '1');
               BB.storage.remove('_recentMoods'); // home paints before the PIN unlock
+              try { BB.platform.syncWidgetMoods(); } catch (_) {}
               _nativePinSetupMode = false;
               closePinSetup();
               _updateNativePinBtn();
@@ -11022,6 +11031,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         // Clear home-screen tick caches so buttons show as unchecked
         BB.storage.remove('_entryStatus');
         BB.storage.remove('_recentMoods');
+        try { BB.platform.syncWidgetMoods(); } catch (_) {}
         localStorage.removeItem('moodDefinitions');
         localStorage.removeItem('copingStrategies');
         localStorage.removeItem('moodMemories');

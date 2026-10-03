@@ -1260,7 +1260,11 @@
 //       Anonymous board's report/contact links is inbox@unisim.co.uk (was
 //       bipolar@unisim.co.uk). Touches privacy.html, anonymous.html,
 //       js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v259';
+// v260: the native home-screen widgets draw the home page's "Last 7 days"
+//       mood dots. The web side hands them the device-only bb_recentMoods map
+//       (BB.platform.syncWidgetMoods — "{}" under incognito / a PIN / after
+//       logout). Touches js/shared/platform.js, js/journal.js, js/index.js.
+const CACHE_NAME = 'bipolarbear-v260';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

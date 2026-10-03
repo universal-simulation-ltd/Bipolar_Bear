@@ -1265,6 +1265,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         'UserCounted', 'Anon_counted',
       ];
       bbKeysToRemove.forEach(k => BB.storage.remove(k));
+      try { BB.platform.syncWidgetMoods(); } catch (_) {}
 
       // Non-prefixed user-data keys: shared across variants, cleared via
       // raw localStorage.
@@ -1754,6 +1755,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         BB.storage.remove('_draft');
         BB.storage.remove('_entryStatus');
         BB.storage.remove('_recentMoods');
+        try { BB.platform.syncWidgetMoods(); } catch (_) {}
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
          'rememberThis','myCommitments','customReminders','currentMedList',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
@@ -2032,6 +2034,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
 // ── BLOCK 3c: quick check-in bears + last-7-days mood strip ──
     (function() {
+      // Every home load re-sends the native widget's 7-day dots, so a clear
+      // done anywhere (logout, reset, PIN on) reaches the home screen too.
+      try { BB.platform.syncWidgetMoods(); } catch (_) {}
       const card = document.getElementById('quickCheckin');
       if (!card) return;
       const MOODS = ['manic', 'elevated', 'stable', 'low', 'depressed'];
