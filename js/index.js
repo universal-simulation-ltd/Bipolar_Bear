@@ -2908,3 +2908,13 @@ function _handleIndexJournalNav() {
       // Keep it right if the app sits open across a greeting boundary.
       document.addEventListener('visibilitychange', () => { if (!document.hidden) _render(); });
     })();
+
+// ── Offline: register the service worker from home too ──
+// It used to be registered only by the journal and Survival Kit, so someone
+// who only ever opened home (or the board) had no offline copy of the
+// Survival Kit's crisis box. Web only — the native shells bundle the files.
+if ('serviceWorker' in navigator && !(window.isNative && window.isNative())) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}

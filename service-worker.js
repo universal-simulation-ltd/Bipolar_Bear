@@ -7,9 +7,8 @@
  * offline persistence and we don't want to fight it.
  *
  * Bump CACHE_NAME whenever a precached asset changes; old caches are deleted
- * on activate. Currently registered from journal.html and survival-kit.html
- * (see `navigator.serviceWorker.register('/service-worker.js')` in those
- * files); the other pages still benefit because the cache is shared per-origin.
+ * on activate. Registered from every app page (js/index.js, js/journal.js,
+ * js/survival-kit.js, js/anonymous.js); the cache is shared per-origin.
  *
  * @file service-worker.js
  */
@@ -1264,7 +1263,20 @@
 //       mood dots. The web side hands them the device-only bb_recentMoods map
 //       (BB.platform.syncWidgetMoods — "{}" under incognito / a PIN / after
 //       logout). Touches js/shared/platform.js, js/journal.js, js/index.js.
-const CACHE_NAME = 'bipolarbear-v260';
+// v261: crisis lines follow the country the phone is in (new
+//       js/shared/crisis.js — 16 countries, else findahelpline.com; the UK
+//       markup is unchanged), a "Need help now?" button on both PIN lock
+//       screens, and Samaritans in the Survival Kit crisis box. Offline fix:
+//       the edge 307s /journal.html → /journal, so the precached copies were
+//       redirected responses that Chrome refuses for a navigation — journal,
+//       Survival Kit and the board all failed offline. They're now stored
+//       clean, looked up under both spellings, and a page whose network
+//       request stalls (lie-fi) is served from cache after 5 s. Registered
+//       from index.html and anonymous.html too. Touches service-worker.js,
+//       index.html, journal.html, survival-kit.html, anonymous.html, fab.js,
+//       js/index.js, js/journal.js, js/survival-kit.js, js/anonymous.js,
+//       js/shared/i18n.js, js/shared/crisis.js.
+const CACHE_NAME = 'bipolarbear-v261';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1298,6 +1310,7 @@ const STATIC_ASSETS = [
   './js/shared/medications.js',
   './js/shared/version-check.js',
   './js/shared/i18n.js',
+  './js/shared/crisis.js',
   './js/shared/translate.js',
   './js/shared/guest-data.js',
   './js/shared/user-count.js',
@@ -1354,14 +1367,55 @@ self.addEventListener('install', (event) => {
   // Take over as soon as installation finishes — we don't need the old SW
   // to keep serving while the new one warms up.
   self.skipWaiting();
+  // One by one rather than cache.addAll: a single missing file shouldn't
+  // leave the whole precache empty, and each response is stored de-redirected
+  // (see _clean) because the edge 307s /journal.html → /journal.
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) => cache.addAll(STATIC_ASSETS))
-      // Best-effort: a missing file shouldn't block install.
-      .catch(() => {})
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(STATIC_ASSETS.map((u) =>
+        fetch(u, { cache: 'reload' })
+          .then((res) => (res.ok ? _clean(res).then((r) => cache.put(u, r)) : null))
+          .catch(() => null)
+      ))
+    )
   );
 });
+
+/**
+ * A response that came through a redirect can't be handed back for a page
+ * navigation — Chrome rejects it ("a redirected response was used for a
+ * request whose redirect mode is not 'follow'") and shows its offline error
+ * instead of the cached page. Copy it into a fresh, un-redirected Response.
+ */
+function _clean(res) {
+  if (!res || !res.redirected) return Promise.resolve(res);
+  return res.blob().then((body) => new Response(body, {
+    status: res.status, statusText: res.statusText, headers: res.headers,
+  }));
+}
+
+/**
+ * Cached copy of a same-origin request. Pages are looked up under both
+ * spellings (/journal.html and /journal, which the edge redirects between)
+ * and without their query string (journal.html?mood=low).
+ */
+function _fromCache(req) {
+  const isNav = req.mode === 'navigate';
+  const opts = isNav ? { ignoreSearch: true } : undefined;
+  return caches.match(req, opts).then((hit) => {
+    if (hit || !isNav) return hit;
+    const u = new URL(req.url);
+    if (u.pathname.endsWith('.html')) u.pathname = u.pathname.slice(0, -5);
+    else if (!u.pathname.endsWith('/')) u.pathname += '.html';
+    else return undefined;
+    return caches.match(u.href, opts);
+  }).then(_clean);
+}
+
+// How long a request may stall before a cached copy is served instead. A
+// phone on one bar can sit on a request for a minute before it fails, which
+// is the worst moment for the Survival Kit's crisis box not to open.
+const NETWORK_TIMEOUT_MS = 5000;
 
 self.addEventListener('activate', (event) => {
   // Drop every cache that isn't ours, then claim open clients so the new SW
@@ -1388,29 +1442,36 @@ self.addEventListener('fetch', (event) => {
   const url = req.url;
   if (BYPASS_HOSTS.some((h) => url.includes(h))) return;
 
-  event.respondWith(
-    fetch(req)
-      .then((response) => {
-        // Cache successful responses for next time.
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
-        }
-        return response;
-      })
-      .catch(() =>
-        // Network failed: serve from cache. For top-level navigations,
-        // fall back to index.html so the app shell renders rather than a
-        // bare offline error.
-        caches.match(req).then((cached) => {
-          if (cached) return cached;
-          if (req.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-          return new Response('', { status: 503, statusText: 'Offline' });
-        })
-      )
-  );
+  const network = fetch(req).then((response) => {
+    // Cache successful responses for next time.
+    if (response.ok) {
+      const clone = response.clone();
+      caches.open(CACHE_NAME).then((cache) => cache.put(req, clone)).catch(() => {});
+    }
+    return response;
+  });
+
+  // Network failed: serve from cache. For top-level navigations, fall back
+  // to index.html so the app shell renders rather than a bare offline error.
+  const offline = () => _fromCache(req).then((cached) => {
+    if (cached) return cached;
+    if (req.mode === 'navigate') return caches.match('./index.html').then(_clean);
+    return new Response('', { status: 503, statusText: 'Offline' });
+  });
+
+  event.respondWith(new Promise((resolve) => {
+    let done = false;
+    const finish = (r) => { if (!done) { done = true; resolve(r); } };
+    // Stalled network: after NETWORK_TIMEOUT_MS serve the cached copy if
+    // there is one (the fetch carries on and refreshes the cache); with no
+    // cached copy keep waiting for the network.
+    const timer = setTimeout(() => {
+      _fromCache(req).then((cached) => { if (cached) finish(cached); }).catch(() => {});
+    }, NETWORK_TIMEOUT_MS);
+    network
+      .then((r) => { clearTimeout(timer); finish(r); })
+      .catch(() => { clearTimeout(timer); offline().then(finish, () => finish(Response.error())); });
+  }));
 });
 
 self.addEventListener('message', (event) => {

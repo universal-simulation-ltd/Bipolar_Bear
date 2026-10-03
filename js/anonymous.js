@@ -6137,3 +6137,11 @@ document.getElementById('ms-save').addEventListener('click', async () => {
 // Boot — driven by onAuthStateChanged; fallback if Firebase blocked
 // ─────────────────────────────────────────────────────────────────
 setTimeout(() => { if (!_anonInitialBoot) boot(null); }, 2500);
+
+// Offline copy of the board and its 🛟 Help sheet (web only — the native
+// shells bundle the files, and the Anonymous bundle has no service worker).
+if ('serviceWorker' in navigator && !(window.isNative && window.isNative())) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+  });
+}
