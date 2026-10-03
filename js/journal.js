@@ -1354,6 +1354,7 @@ window.addEventListener('pageshow', () => {
         } else if (_ecEl) {
           _ecEl.style.display = 'none';
         }
+        _applyDepressedCrisisLines();
         document.getElementById('depressedSupportModal').classList.add('active');
         _fmMoodPop('depressed');
       } else {
@@ -1369,6 +1370,24 @@ window.addEventListener('pageshow', () => {
           _fmAdvance();
         }
       }
+    }
+    // The "You matter" card's crisis line is Samaritans (UK). Anywhere else
+    // show that country's lines (js/shared/crisis.js), or findahelpline.com.
+    function _applyDepressedCrisisLines() {
+      const C = window.BB && BB.crisis;
+      const box = document.getElementById('depressedCrisisLines');
+      if (!C || !box) return;
+      const g = C.get();
+      if (g.uk) return;
+      box.textContent = '';
+      g.lines.forEach(l => box.appendChild(C.row(l, {
+        rowStyle: 'display:flex;align-items:center;gap:12px;background:#f0f4ff;border:1.5px solid #5c7cfa;border-radius:12px;padding:12px 16px;text-decoration:none;color:#495057;',
+        icoStyle: 'font-size:1.4em;',
+        textTag: 'div',
+        textStyle: 'text-align:left;',
+        nameStyle: 'font-weight:700;font-size:0.95em;color:#5c7cfa;',
+        subStyle: 'font-size:0.82em;color:#6c757d;',
+      })));
     }
     function _fmDismissDepressedMsg() {
       document.getElementById('depressedSupportModal').classList.remove('active');
@@ -1394,6 +1413,7 @@ window.addEventListener('pageshow', () => {
         } else if (_ecEl) {
           _ecEl.style.display = 'none';
         }
+        _applyDepressedCrisisLines();
         document.getElementById('depressedSupportModal').classList.add('active');
       } else {
         _fmAdvance();

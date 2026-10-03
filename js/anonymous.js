@@ -799,7 +799,36 @@ document.getElementById('saved-close').addEventListener('click', () => closeOv('
 // ─────────────────────────────────────────────────────────────────
 // Need help now
 // ─────────────────────────────────────────────────────────────────
-document.getElementById('board-help-btn').addEventListener('click', () => { _haptic(); openOv('ov-help'); });
+// The sheet's markup is the UK's (Samaritans, Shout, NHS 111, 999). On a
+// phone anywhere else, swap in that country's lines from js/shared/crisis.js
+// — or, for a country it doesn't list, findahelpline.com — so nobody in
+// crisis is handed a number that won't connect. Rebuilt on every open so a
+// language change is picked up.
+function _applyCrisisLines() {
+  const C = window.BB && BB.crisis;
+  const sheet = document.querySelector('#ov-help .sheet');
+  if (!C || !sheet) return;
+  const g = C.get();
+  if (g.uk) return;
+  const cls = { row: 'help-row', ico: 'help-ico', name: 'help-name', sub: 'help-sub' };
+  const link = sheet.querySelector('.help-link');
+  sheet.querySelectorAll('.help-row').forEach(el => el.remove());
+  const sub = sheet.querySelector('.sheet-sub');
+  if (sub) { sub.removeAttribute('data-i18n'); sub.textContent = C.dangerSub(); }
+  g.lines.forEach(l => sheet.insertBefore(C.row(l, cls), link));
+  if (g.emergency) {
+    const r = C.row({ name: BB.t('crisis.emergency'), href: 'tel:' + g.emergency, icon: '🚑',
+      sub: BB.t('crisis.callN', { n: g.emergency }) }, cls);
+    r.classList.add('help-urgent');
+    sheet.insertBefore(r, link);
+  }
+  if (link) {
+    link.removeAttribute('data-i18n');
+    link.textContent = BB.t('crisis.elsewhere');
+    link.style.display = g.cc ? '' : 'none'; // the find-a-helpline row is already the link
+  }
+}
+document.getElementById('board-help-btn').addEventListener('click', () => { _haptic(); _applyCrisisLines(); openOv('ov-help'); });
 document.getElementById('help-close').addEventListener('click', () => closeOv('ov-help'));
 
 // ─────────────────────────────────────────────────────────────────

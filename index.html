@@ -20,6 +20,7 @@
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/crisis.js"></script>
   <script src="js/shared/meds-reminder.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
@@ -612,8 +613,8 @@
   
 
   <!-- Guest PIN unlock overlay (shown on index when journal data is encrypted) -->
-  <div id="guestPinOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:center;padding:24px;">
-    <img src="icons/AppIcon.png" width="72" height="72" style="border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+  <div id="guestPinOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+    <img src="icons/AppIcon.png" width="72" height="72" style="margin-top:auto;flex-shrink:0;border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
     <h2 style="color:white;margin-bottom:6px;font-size:1.3em;">Bipolar Bear</h2>
     <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.88em;margin-bottom:12px;" data-i18n="pin.title">Enter your PIN to continue</p>
     <button onclick="document.getElementById('pinE2eeModal').style.display='flex'" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;border-radius:20px;padding:5px 14px;font-size:0.78em;cursor:pointer;margin-bottom:22px;-webkit-tap-highlight-color:transparent;" data-i18n="pin.moreInfo">🔐 More info</button>
@@ -648,7 +649,11 @@
       <button onclick="idxPinKey('0')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">0</button>
       <button onclick="idxPinDel()" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.2em;cursor:pointer;">⌫</button>
     </div>
-    <button onclick="idxPinForgot()" style="background:none;border:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.78em;cursor:pointer;margin-top:8px;padding:4px 12px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
+    <div style="display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;align-items:center;margin-top:4px;margin-bottom:auto;flex-shrink:0;">
+      <button onclick="idxPinForgot()" style="background:none;border:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
+      <!-- Help stays one tap away even when the app is locked (fab.js openChatModal). -->
+      <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
+    </div>
   </div>
 
   <!-- Screen dimmer: fades in after 3 min idle on PIN page to save battery -->

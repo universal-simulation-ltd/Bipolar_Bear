@@ -104,6 +104,7 @@ const SHARED_MODULES = [
   'js/shared/brand-config.js',
   'js/shared/firebase-config.js',
   'js/shared/i18n.js',
+  'js/shared/crisis.js',
   'js/shared/translate.js',
   'js/shared/medications.js',
   'js/shared/version-check.js',

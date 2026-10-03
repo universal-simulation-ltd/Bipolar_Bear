@@ -413,6 +413,7 @@
           <div style="font-size:2em;margin-bottom:8px;">🆘</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:6px;" data-i18n="fab.crisis.title">Crisis Support</div>
           <p style="font-size:0.84em;color:#6c757d;margin-bottom:14px;" data-i18n="fab.crisis.body">If you're struggling and need to talk to someone:</p>
+          <div id="chatModalLines">
           <a href="tel:116123" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:14px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">📞</span>
             <div>
@@ -420,9 +421,10 @@
               <div style="color:#6c757d;font-size:0.82em;margin-top:1px;" data-i18n="fab.crisis.samaritansInfo">116 123 · Free · 24/7</div>
             </div>
           </a>
+          </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <button onclick="closeChatModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
-            <button onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
+            <button id="chatModalHide" onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -968,7 +970,51 @@
   // Thin show/hide handlers wired to inline `onclick=` attributes.
 
   /** @returns {void} */
-  window.openChatModal = function () { document.getElementById('chatModal').classList.add('open'); };
+  /**
+   * Opens the 🆘 sheet. Its markup is the UK's (Samaritans); on a phone
+   * anywhere else the row is swapped for that country's crisis lines plus its
+   * emergency number (js/shared/crisis.js), or findahelpline.com where the
+   * country isn't listed. `fromLock` is the PIN lock screen's "Need help now?"
+   * link: the sheet then sits above the lock overlay and drops the
+   * "Hide this button" option, which means nothing there.
+   */
+  window.openChatModal = function (fromLock) {
+    const modal = document.getElementById('chatModal');
+    if (!modal) return;
+    const C = window.BB && BB.crisis;
+    const box = document.getElementById('chatModalLines');
+    if (C && box) {
+      const g = C.get();
+      if (!g.uk) {
+        const cls = {
+          rowStyle: 'display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;',
+          icoStyle: 'font-size:1.6em;line-height:1;',
+          textTag: 'div',
+          nameStyle: 'font-weight:700;font-size:0.95em;',
+          subStyle: 'color:#6c757d;font-size:0.82em;margin-top:1px;',
+        };
+        box.textContent = '';
+        g.lines.forEach(l => box.appendChild(C.row(l, cls)));
+        if (g.emergency) {
+          box.appendChild(C.row({ name: BB.t('crisis.emergency'), href: 'tel:' + g.emergency, icon: '🚑',
+            sub: BB.t('crisis.callN', { n: g.emergency }) }, cls));
+        }
+        if (g.cc) {
+          const more = document.createElement('a');
+          more.href = g.findUrl; more.target = '_blank'; more.rel = 'noopener';
+          more.style.cssText = 'display:block;font-size:0.8em;color:#6c757d;margin:2px 0 14px;';
+          more.textContent = BB.t('crisis.elsewhere');
+          box.appendChild(more);
+        } else if (box.lastChild) {
+          box.lastChild.style.marginBottom = '14px';
+        }
+      }
+    }
+    const hide = document.getElementById('chatModalHide');
+    if (hide) hide.style.display = fromLock ? 'none' : '';
+    modal.style.zIndex = fromLock ? '10003' : '';
+    modal.classList.add('open');
+  };
   /** @returns {void} */
   window.closeChatModal = function () { document.getElementById('chatModal').classList.remove('open'); };
   /** @returns {void} */

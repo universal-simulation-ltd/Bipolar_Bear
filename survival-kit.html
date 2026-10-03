@@ -23,6 +23,7 @@
   <script src="js/shared/debug.js"></script>
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/crisis.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
   <script src="js/shared/user-count.js"></script>
@@ -895,8 +896,12 @@ Try 69 then 6 halved (3) and 9 upside down (6), hashtag.</p>
              sk.anon.ukGroups key so the existing 10 locale translations of
              this label still resolve. -->
         <a href="https://www.bipolaruk.org/listing/category/online-support-groups-parent-category" target="_blank" class="crisis-btn" data-i18n="sk.anon.ukGroups">Bipolar UK Groups ↗</a>
-        <a href="tel:111" class="crisis-btn" data-i18n="sk.crisis.call111">📞 Call 111</a>
-        <a href="tel:999" class="crisis-btn" data-i18n="sk.crisis.emergency999">🚨 999 Emergency</a>
+        <!-- UK lines. On a phone anywhere else js/survival-kit.js
+             _skApplyCrisisLines() swaps them for that country's
+             (js/shared/crisis.js). -->
+        <span id="skCrisisLines"><a href="tel:116123" class="crisis-btn">📞 Samaritans 116 123</a></span>
+        <a href="tel:111" class="crisis-btn" id="skCrisis111" data-i18n="sk.crisis.call111">📞 Call 111</a>
+        <a href="tel:999" class="crisis-btn" id="skCrisisEmergency" data-i18n="sk.crisis.emergency999">🚨 999 Emergency</a>
         <div id="emergencyContactArea" style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.25);"></div>
       </div>
     </div>

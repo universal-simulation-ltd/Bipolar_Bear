@@ -199,6 +199,46 @@ function _sktMood(moodKey) {
     }
     window.skGoToHelp = skGoToHelp;
 
+    // The crisis box's phone buttons are the UK's (Samaritans, NHS 111, 999).
+    // On a phone anywhere else, show that country's crisis lines and
+    // emergency number instead (js/shared/crisis.js), or findahelpline.com
+    // for a country it doesn't list. Re-run on a language change.
+    function _skApplyCrisisLines() {
+      const C = window.BB && BB.crisis;
+      const box = document.getElementById('skCrisisLines');
+      if (!C || !box) return;
+      const g = C.get();
+      if (g.uk) return;
+      box.textContent = '';
+      g.lines.forEach(l => {
+        const a = document.createElement('a');
+        a.className = 'crisis-btn';
+        a.href = l.href;
+        if (l.external) { a.target = '_blank'; a.rel = 'noopener'; }
+        // Number after the name unless the name already carries it (988, 113…).
+        const digits = (x) => String(x || '').replace(/\D/g, '');
+        const showNum = l.number && digits(l.name).indexOf(digits(l.number)) < 0;
+        a.textContent = l.icon + ' ' + l.name + (showNum ? ' ' + l.number : '');
+        a.title = l.sub;
+        box.appendChild(a);
+      });
+      const n111 = document.getElementById('skCrisis111');
+      if (n111) n111.style.display = 'none';
+      const em = document.getElementById('skCrisisEmergency');
+      if (em) {
+        em.removeAttribute('data-i18n');
+        if (g.emergency) {
+          em.href = 'tel:' + g.emergency;
+          em.textContent = BB.t('crisis.emergencyBtn', { n: g.emergency });
+        } else {
+          em.style.display = 'none';
+        }
+      }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _skApplyCrisisLines);
+    else _skApplyCrisisLines();
+    document.addEventListener('bb:languagechange', _skApplyCrisisLines);
+
     // Route a "#id" to the right view. Returns true if it was handled.
     function _skRouteHash(hash, fromLoad) {
       const id = String(hash || '').replace(/^#/, '');
