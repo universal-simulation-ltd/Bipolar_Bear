@@ -1256,7 +1256,11 @@
 //       (a member felt everyone else was doing better); the bar is behind
 //       "See the whole board", and "✓ Checked in" fades out beside the heading.
 //       Touches js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v258';
+// v259: the contact address on the privacy policy (all languages) and the
+//       Anonymous board's report/contact links is inbox@unisim.co.uk (was
+//       bipolar@unisim.co.uk). Touches privacy.html, anonymous.html,
+//       js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v259';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
