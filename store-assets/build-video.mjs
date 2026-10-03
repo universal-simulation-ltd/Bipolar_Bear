@@ -15,7 +15,7 @@
 // The app's name is the only text (the original's tagline and Play badge are
 // gone), so one video serves every listing language.
 //
-//   node build-video.mjs bear                  → out/promo-video.mp4            (1920×1080, 8 s, silent)
+//   node build-video.mjs bear                  → out/promo-video.mp4            (1920×1080, 9 s, silent)
 //   node build-video.mjs anonymous             → out/anonymous/promo-video.mp4
 //   node build-video.mjs bear --stills 1,3,5   PNG frames to look at first
 //
@@ -32,7 +32,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repo = path.resolve(here, '..');
-const W = 1920, H = 1080, FPS = 30, SECONDS = 8;
+const W = 1920, H = 1080, FPS = 30, SECONDS = 9;
 const argv = process.argv.slice(2);
 const stillsArg = argv.indexOf('--stills');
 const stills = stillsArg >= 0 ? argv.splice(stillsArg, 2)[1].split(',').map(Number) : null;
@@ -211,7 +211,7 @@ ${theme.phones.map((_, i) => phone(i)).join('\n')}
 
     // The camera: open on the start of the line, pan along it as the faces
     // arrive, then pull back to show the whole line.
-    const pan = inOutCubic(seg(t, 1.7, 4.7)), back = inOutCubic(seg(t, 6.25, 7.0))
+    const pan = inOutCubic(seg(t, 1.7, 4.7)), back = inOutCubic(seg(t, 7.25, 8.0))
     const tx = lerp(lerp(0, -(WW - W + 60), pan), 330, back), ty = lerp(0, 300, back), s = lerp(1, 0.55, back)
     $('world').style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + s + ')'
 
@@ -225,7 +225,7 @@ ${theme.phones.map((_, i) => phone(i)).join('\n')}
     const title = $('title')
     title.style.transformOrigin = '0 0'
     if (back > 0) {
-      title.style.transform = 'translate(0,' + lerp(40, 70, back) + 'px) scale(' + 0.82 * outBack(seg(t, 6.45, 7.0)) + ')'
+      title.style.transform = 'translate(0,' + lerp(40, 70, back) + 'px) scale(' + 0.82 * outBack(seg(t, 7.45, 8.0)) + ')'
       title.style.opacity = 1
     } else {
       const out = inOutCubic(seg(t, 1.7, 2.6))
@@ -256,14 +256,15 @@ ${theme.phones.map((_, i) => phone(i)).join('\n')}
     const bp = seg(t, 4.25, 5.5)
     ring(bursts[FACES.length], PEAK.x, PEAK.y - 60, 80 + 520 * outCubic(bp), bp > 0 && bp < 1 ? 0.7 * (1 - bp) : 0, 5)
 
-    // A dip into the app: phones spring up over the line, then drop away.
+    // A dip into the app: phones spring up over the line, hold for about
+    // 1.5 s so they can be taken in (James, 2026-10-04), then drop away.
     PHONES.forEach(({ t0, dx, top, rot }, i) => {
       const el = $('phone' + i)
-      const p = outBack(seg(t, t0, t0 + 0.6)), o = inBack(seg(t, 6.0 + i * 0.06, 6.45 + i * 0.06))
+      const p = outBack(seg(t, t0, t0 + 0.6)), o = inBack(seg(t, 7.0 + i * 0.06, 7.45 + i * 0.06))
       el.style.transform = 'translate(' + (W / 2 - 195 + dx) + 'px,' + (top + 1100 * (1 - p) + 1150 * o) + 'px) rotate(' + (rot + (1 - p) * (rot || 4) * 2) + 'deg)'
       el.style.visibility = t > t0 && o < 1 ? 'visible' : 'hidden'
     })
-    $('world').style.filter = 'blur(' + (6 * seg(t, 4.9, 5.3) * (1 - seg(t, 6.0, 6.4))) + 'px)'
+    $('world').style.filter = 'blur(' + (6 * seg(t, 4.9, 5.3) * (1 - seg(t, 7.0, 7.4))) + 'px)'
   }
   window.render(0)
 })()
