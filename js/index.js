@@ -892,6 +892,11 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // phase, so it is intentionally not touched here.)
       const _anonContainer = document.getElementById('anonymousContainer');
       if (_anonContainer) _anonContainer.style.display = (_fabsUnlocked && _showAnon) ? '' : 'none';
+      // The 💬 streak on the quick check-in card and the widget follows the
+      // button: refresh both whenever its visibility is (re)applied.
+      const _qcStreaks = document.querySelector('#qcWeek .qc-week-streaks');
+      if (_qcStreaks && BB._qcWeekStreaks) _qcStreaks.innerHTML = BB._qcWeekStreaks();
+      try { BB.platform.syncWidgetMoods(); } catch (_) {}
 
       // Survival kit: opt-in — shown only once enabled (and after step 6 onboarding gate)
       const _survival = document.getElementById('survivalContainer');
@@ -2139,7 +2144,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // when it is live. Refreshed by _updateStreakBadge too.
       function qcWeekStreaks() {
         const journal = parseInt(BB.storage.get('CurrentStreak') || '0', 10);
-        const anon = BB.anonLiveStreak();
+        // Only while the Bipolar Anonymous button is on the home page.
+        const anon = BB.anonButtonShown() ? BB.anonLiveStreak() : 0;
         return (journal > 0 ? '<span>🔥 ' + journal + '</span>' : '') +
                (anon > 0 ? '<span>💬 ' + anon + '</span>' : '');
       }

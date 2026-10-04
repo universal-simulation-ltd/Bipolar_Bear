@@ -135,6 +135,20 @@ window.BB.storage = {
  * `AnonVisitDate`. Any caller can keep its own "no streak → just the monika"
  * branch by treating a 0 return the same as an absent streak.
  */
+/**
+ * True when the home page shows the Bipolar Anonymous button: the home buttons
+ * are unlocked and Profile → Customise has it on — the same rule as
+ * _applyOnboardingGating in js/index.js. The Anonymous streak (💬) on the home
+ * card and the home-screen widget only shows while this is true.
+ */
+window.BB.anonButtonShown = function () {
+  try {
+    return window.BB.storage.get('FabsUnlocked') === '1' && window.BB.storage.get('AnonBtnEnabled') === '1';
+  } catch (_) {
+    return false;
+  }
+};
+
 window.BB.anonLiveStreak = function () {
   try {
     var streak = parseInt(window.BB.storage.get('Anon_streak') || '0', 10);

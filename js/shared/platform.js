@@ -88,7 +88,9 @@
     // midnight without the app being opened. Sent like the journal streak,
     // which the widget shows whatever the PIN setting.
     try {
-      payload.anonStreak = parseInt((window.BB.storage.get('Anon_streak') || '0'), 10) || 0;
+      // Nothing while the home page hides the Bipolar Anonymous button.
+      var anonOn = !window.BB.anonButtonShown || window.BB.anonButtonShown();
+      payload.anonStreak = anonOn ? (parseInt((window.BB.storage.get('Anon_streak') || '0'), 10) || 0) : 0;
       payload.anonVisitDate = window.BB.storage.get('AnonVisitDate') || '';
     } catch (_) {}
     try {

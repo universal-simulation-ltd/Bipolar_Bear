@@ -1289,7 +1289,10 @@
 //   Anonymous streaks (🔥 / 💬) like the widget, and syncWidgetMoods hands the
 //   widget the Anonymous visit streak. Touches js/index.js, js/shared/platform.js,
 //   css/index.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v264';
+// v265: the 💬 Anonymous streak (home card + widget) only shows while the
+//   Bipolar Anonymous button is on the home page (new BB.anonButtonShown in
+//   brand-config.js). Touches js/index.js, js/shared/platform.js, brand-config.js.
+const CACHE_NAME = 'bipolarbear-v265';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
