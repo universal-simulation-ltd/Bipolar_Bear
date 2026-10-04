@@ -1283,7 +1283,9 @@
 //       on both PIN lock screens; feeds the native "Call for support" widget.
 //       Touches index.html, journal.html, survival-kit.html, js/index.js,
 //       js/journal.js, js/shared/i18n.js, css/survival-kit.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v262';
+// v263: v1.40 — version bump (scripts/bump-version.sh 40): refreshes the precached
+//   brand-config.js (_APP_VERSION='1.40'). iOS 1.40 (40) submitted 2026-10-04.
+const CACHE_NAME = 'bipolarbear-v263';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
