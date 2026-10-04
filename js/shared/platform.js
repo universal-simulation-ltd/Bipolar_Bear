@@ -82,6 +82,15 @@
       if (cached && typeof cached === 'object') map = cached;
     } catch (_) {}
     var payload = { recentMoods: JSON.stringify(map) };
+    // The Bipolar Anonymous visit streak and the UTC day it was last counted
+    // (js/anonymous.js _updateAnonStreak). The widget applies the same lapse
+    // rule as BB.anonLiveStreak(), so it stops showing a broken streak at
+    // midnight without the app being opened. Sent like the journal streak,
+    // which the widget shows whatever the PIN setting.
+    try {
+      payload.anonStreak = parseInt((window.BB.storage.get('Anon_streak') || '0'), 10) || 0;
+      payload.anonVisitDate = window.BB.storage.get('AnonVisitDate') || '';
+    } catch (_) {}
     try {
       var wk = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.setSharedData;
       if (wk) { wk.postMessage(payload); return; }

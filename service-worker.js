@@ -1285,7 +1285,11 @@
 //       js/journal.js, js/shared/i18n.js, css/survival-kit.css, css/dark.css.
 // v263: v1.40 — version bump (scripts/bump-version.sh 40): refreshes the precached
 //   brand-config.js (_APP_VERSION='1.40'). iOS 1.40 (40) submitted 2026-10-04.
-const CACHE_NAME = 'bipolarbear-v263';
+// v264: the home card's "Last 7 days" line shows the journal and Bipolar
+//   Anonymous streaks (🔥 / 💬) like the widget, and syncWidgetMoods hands the
+//   widget the Anonymous visit streak. Touches js/index.js, js/shared/platform.js,
+//   css/index.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v264';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

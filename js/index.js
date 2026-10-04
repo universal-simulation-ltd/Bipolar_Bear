@@ -1086,6 +1086,10 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         }
       }
 
+      // The same two streaks on the quick check-in card's "Last 7 days" line.
+      const qcStreaks = document.querySelector('#qcWeek .qc-week-streaks');
+      if (qcStreaks && BB._qcWeekStreaks) qcStreaks.innerHTML = BB._qcWeekStreaks();
+
       // Anonymous badge: 👋 monika + 💬 streak
       const anonBadge = document.getElementById('anonStreakBadge');
       if (anonBadge) {
@@ -2129,6 +2133,18 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         catch (_) { return new Intl.DateTimeFormat('en', { weekday: style }); }
       }
 
+      // "🔥 797  💬 63" on the right of the "Last 7 days" line, as the
+      // home-screen widget shows it: the journal streak, then the Bipolar
+      // Anonymous visit streak (💬, as on the Anonymous badge), each only
+      // when it is live. Refreshed by _updateStreakBadge too.
+      function qcWeekStreaks() {
+        const journal = parseInt(BB.storage.get('CurrentStreak') || '0', 10);
+        const anon = BB.anonLiveStreak();
+        return (journal > 0 ? '<span>🔥 ' + journal + '</span>' : '') +
+               (anon > 0 ? '<span>💬 ' + anon + '</span>' : '');
+      }
+      window.BB._qcWeekStreaks = qcWeekStreaks;
+
       function renderWeek() {
         const btn = document.getElementById('qcWeek');
         if (!btn) return;
@@ -2148,7 +2164,10 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           { day: long.format(x.d), mood: x.mood ? moodName(x.mood) : noEntry })).join(', ');
         btn.setAttribute('aria-label', qt('home.quick.weekLabel', 'Last 7 days — open Mood Journal') + '. ' + spoken);
         btn.innerHTML =
-          '<span class="qc-week-title" aria-hidden="true">' + _escHtml(qt('home.quick.last7', 'Last 7 days')) + '</span>' +
+          '<span class="qc-week-head" aria-hidden="true">' +
+            '<span class="qc-week-title">' + _escHtml(qt('home.quick.last7', 'Last 7 days')) + '</span>' +
+            '<span class="qc-week-streaks">' + qcWeekStreaks() + '</span>' +
+          '</span>' +
           '<span class="qc-week-days" aria-hidden="true">' + days.map(x =>
             '<span class="qc-day">' +
               '<span class="qc-dot' + (x.mood ? '' : ' qc-dot-empty') + '"' +

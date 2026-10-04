@@ -171,6 +171,7 @@ html.theme-dark .qc-week { border-top-color: var(--dk-line); }
 html.theme-dark .qc-head { color: var(--dk-text); border-bottom-color: var(--dk-line); }
 html.theme-dark .qc-head .qc-chev { color: #f0c79a; }
 html.theme-dark .qc-week-title,
+html.theme-dark .qc-week-streaks,
 html.theme-dark .qc-wd { color: #f0c79a; }
 html.theme-dark .qc-bear:active,
 html.theme-dark .qc-bear.qc-picked { background: var(--dk-surface-3); }

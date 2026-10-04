@@ -449,6 +449,13 @@
     }
     .quick-checkin[data-done="true"] .qc-week { margin-top: 6px; }
     .qc-week:focus-visible { outline: 3px solid #a8430a; outline-offset: 2px; border-radius: 10px; }
+    .qc-week-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
     .qc-week-title {
       display: block;
       font-size: 0.66em;
@@ -456,7 +463,15 @@
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #8a4500;
-      margin-bottom: 5px;
+    }
+    /* The journal and Bipolar Anonymous streaks, as on the home-screen widget. */
+    .qc-week-streaks {
+      display: flex;
+      gap: 10px;
+      font-size: 0.7em;
+      font-weight: 800;
+      color: #8a4500;
+      white-space: nowrap;
     }
     .qc-week-days {
       display: flex;
