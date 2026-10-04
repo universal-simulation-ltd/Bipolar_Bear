@@ -269,6 +269,13 @@ Device-only caches that must NEVER be synced to Firestore:
   because the home screen paints before the PIN unlock. Cleared on logout,
   sign-in, `deleteAllEntries()` and index.js's logout / reset lists.
 
+My safety plan (`js/shared/safety-plan.js`, DOCS §2.16) is NOT device-only:
+`bbSafetyPlan` syncs, but only as `userSettings/{uid}.safetyPlanEnc`, encrypted
+with the journal's E2E data key. Never write the plan in plaintext to Firestore
+or to any other collection, and never call SecureStorage from that module (the
+journal reads the Keychain once per session). Its opt-ins (`bbSafetyPlanOnLock`,
+the widget contact, `bbLowMoodSupportOff`) all default off / unticked.
+
 ## When adding a new feature
 
 If it adds a localStorage key, also consider updating:

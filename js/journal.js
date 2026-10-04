@@ -917,6 +917,8 @@ window.addEventListener('pageshow', () => {
       BB.storage.remove('NativePinEnabled');
       BB.storage.remove('_recentMoods'); // home strip's per-device mood cache
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
+      // The safety plan is synced (encrypted) to the account, so it goes with it.
+      try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
       if (isNative()) {
         const _ss = window.Capacitor?.Plugins?.SecureStorage;
         if (_ss) {
@@ -2733,6 +2735,11 @@ window.addEventListener('pageshow', () => {
 
         // Life chart + opt-in early warnings (js/journal-insights.js)
         if (window.BBInsights) { try { window.BBInsights.render(entries); } catch (e) { console.warn('insights', e); } }
+
+        // "Things have been hard lately" card: needs the decrypted moods and
+        // their autoFilled flags, so the journal is where it gets worked out
+        // (js/shared/safety-plan.js; home only reads the resulting date).
+        if (window.BB && BB.lowMoodSupport) { try { BB.lowMoodSupport.evaluateEntries(entries); } catch (e) { console.warn('low-mood support', e); } }
 
         // Update date picker outline status
         updateDatePickerStatus(entries);
@@ -11052,6 +11059,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         BB.storage.remove('_entryStatus');
         BB.storage.remove('_recentMoods');
         try { BB.platform.syncWidgetMoods(); } catch (_) {}
+        try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
         localStorage.removeItem('moodDefinitions');
         localStorage.removeItem('copingStrategies');
         localStorage.removeItem('moodMemories');
@@ -11158,7 +11166,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
               earlyWarnEnabled: false,
-              moodDefinitions: {}, copingStrategies: {},
+              moodDefinitions: {}, copingStrategies: {}, safetyPlanEnc: null,
               onboardingStep: 0,
               helpedVoted: false,
               healthSyncEnabled: false,

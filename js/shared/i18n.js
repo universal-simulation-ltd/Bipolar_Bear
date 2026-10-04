@@ -59,6 +59,89 @@
         elsewhere: "Somewhere else? Find a helpline near you →",
         needHelp: "🆘 Need help now?",
       },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "My safety plan",
+          lockBtn: "🛟 My safety plan",
+          intro: "Write this while you're feeling OK, so it's ready if a hard moment comes. Start anywhere: a few words in one section is a good start.",
+          viewIntro: "You made this plan for moments like this. Take it one step at a time, starting at the top.",
+          emptyAll: "You haven't written a safety plan yet.",
+          write: "Write my plan",
+          edit: "Edit",
+          done: "Done",
+          close: "Close",
+          add: "Add",
+          remove: "Remove {item}",
+          name: "Name",
+          phone: "Phone number",
+          call: "Call {name}",
+          onLock: "Show my safety plan on the lock screen",
+          onLockDesc: "Lets you read it without your PIN. Anyone holding your phone could read it too.",
+          onWidget: "Call from the home-screen widget",
+          widgetHelp: "Add the “Call for support” widget to your home screen to call this person in one tap.",
+          savedSignedIn: "Saved on this phone and, end-to-end encrypted, to your account. Only you can read it.",
+          savedGuest: "Saved on this phone only.",
+          delete: "Delete my safety plan",
+          deleteConfirm: "Delete your whole safety plan? This can't be undone.",
+          crisisHeading: "Someone to talk to, any time",
+          source: "Based on the Stanley-Brown Safety Plan, the approach behind the NHS-backed Staying Safe plan.",
+          bannerSub: "Warning signs, people to call, reasons to keep going",
+          bannerSubEmpty: "Write it now, while you're feeling OK",
+          widgetTitle: "Call for support",
+          widgetEmpty: "Choose someone in My safety plan",
+          fromPlan: "From my safety plan"
+        },
+        sec: {
+          warningSigns: {
+            title: "Warning signs",
+            hint: "Thoughts, feelings or situations that tell me a hard time might be starting",
+            ph: "e.g. not sleeping, keeping away from people"
+          },
+          coping: {
+            title: "Things I can do on my own",
+            hint: "To take my mind off things for a while, without needing anyone else",
+            ph: "e.g. a walk, a hot shower, my playlist"
+          },
+          distraction: {
+            title: "People and places that take my mind off things",
+            hint: "Somewhere to go or someone to be with. I don't have to talk about how I feel",
+            ph: "e.g. the café on the corner, my cousin"
+          },
+          helpPeople: {
+            title: "People I can ask for help",
+            hint: "Friends or family I can tell how I'm really feeling"
+          },
+          professionals: {
+            title: "Professionals and services",
+            hint: "My GP, care team or crisis team, and a helpline that's open 24/7"
+          },
+          safeEnv: {
+            title: "Making where I am safer",
+            hint: "Ways to make my surroundings safer while things feel hard, like asking someone I trust to look after things I might use to hurt myself",
+            ph: "e.g. stay at a friend's tonight"
+          },
+          reasons: {
+            title: "My reasons for living",
+            hint: "People, pets, plans and hopes: whatever matters to me",
+            ph: "e.g. my dog, seeing my niece grow up"
+          }
+        },
+        low: {
+          title: "It looks like things have been hard lately",
+          body: "Your last few check-ins have been really low. That can be exhausting, and you don't have to get through it on your own. If it would help to talk, these are here for you, any time.",
+          yourPeople: "Your people",
+          openPlan: "🛟 Open my safety plan",
+          makePlan: "🛟 Make a safety plan",
+          notNow: "Not now",
+          dontSuggest: "Don't suggest this again",
+          turnedOff: "Okay. You can turn this back on any time in {settings} → {where}.",
+          settingTitle: "💙 Don't suggest support when I've had low days",
+          settingDesc: "When several of your recent check-ins are {mood}, Bipolar Bear gently shows people you can talk to, at most once every few days. Worked out on this phone only.",
+          close: "Close",
+          region: "Support suggestion"
+        }
+      },
       privacy: {
         backLink: "← Back to Bipolar Bear",
         title: "🔒 Privacy Policy",
@@ -1954,6 +2037,89 @@
         findSub: "Líneas de ayuda gratuitas y confidenciales en tu país",
         elsewhere: "¿Estás en otro sitio? Encuentra una línea de ayuda cerca →",
         needHelp: "🆘 ¿Necesitas ayuda ahora?",
+      },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Mi plan de seguridad",
+          lockBtn: "🛟 Mi plan de seguridad",
+          intro: "Escríbelo cuando te sientas bien, para tenerlo listo si llega un momento difícil. Empieza por donde quieras: unas pocas palabras en un apartado ya son un buen comienzo.",
+          viewIntro: "Hiciste este plan para momentos como este. Ve paso a paso, empezando por arriba.",
+          emptyAll: "Todavía no has escrito un plan de seguridad.",
+          write: "Escribir mi plan",
+          edit: "Editar",
+          done: "Hecho",
+          close: "Cerrar",
+          add: "Añadir",
+          remove: "Quitar {item}",
+          name: "Nombre",
+          phone: "Número de teléfono",
+          call: "Llamar a {name}",
+          onLock: "Mostrar mi plan de seguridad en la pantalla de bloqueo",
+          onLockDesc: "Podrás leerlo sin tu PIN. Cualquiera que tenga tu móvil también podría leerlo.",
+          onWidget: "Llamar desde el widget de la pantalla de inicio",
+          widgetHelp: "Añade el widget «Llamar para pedir apoyo» a tu pantalla de inicio para llamar a esta persona con un toque.",
+          savedSignedIn: "Guardado en este móvil y, con cifrado de extremo a extremo, en tu cuenta. Solo tú puedes leerlo.",
+          savedGuest: "Guardado solo en este móvil.",
+          delete: "Borrar mi plan de seguridad",
+          deleteConfirm: "¿Borrar todo tu plan de seguridad? No se puede deshacer.",
+          crisisHeading: "Alguien con quien hablar, a cualquier hora",
+          source: "Basado en el Plan de Seguridad de Stanley-Brown, el enfoque del plan Staying Safe que respalda el NHS.",
+          bannerSub: "Señales de alerta, personas a quien llamar, razones para seguir",
+          bannerSubEmpty: "Escríbelo ahora, mientras te sientes bien",
+          widgetTitle: "Llamar para pedir apoyo",
+          widgetEmpty: "Elige a alguien en Mi plan de seguridad",
+          fromPlan: "De mi plan de seguridad"
+        },
+        sec: {
+          warningSigns: {
+            title: "Señales de alerta",
+            hint: "Pensamientos, sentimientos o situaciones que me avisan de que puede empezar un momento difícil",
+            ph: "p. ej., no dormir, alejarme de la gente"
+          },
+          coping: {
+            title: "Cosas que puedo hacer por mi cuenta",
+            hint: "Para distraerme un rato, sin necesitar a nadie",
+            ph: "p. ej., un paseo, una ducha caliente, mi lista de música"
+          },
+          distraction: {
+            title: "Personas y lugares que me ayudan a distraerme",
+            hint: "Un sitio al que ir o alguien con quien estar. No tengo que hablar de cómo me siento",
+            ph: "p. ej., la cafetería de la esquina, mi prima"
+          },
+          helpPeople: {
+            title: "Personas a las que puedo pedir ayuda",
+            hint: "Amigos o familia a quienes puedo contar cómo me siento de verdad"
+          },
+          professionals: {
+            title: "Profesionales y servicios",
+            hint: "Mi médico de cabecera, mi equipo de salud mental o de crisis, y una línea de ayuda abierta 24/7"
+          },
+          safeEnv: {
+            title: "Hacer más seguro el lugar donde estoy",
+            hint: "Formas de hacer más seguro mi entorno cuando todo cuesta, como pedir a alguien de confianza que guarde cosas que podría usar para hacerme daño",
+            ph: "p. ej., quedarme esta noche en casa de una amiga"
+          },
+          reasons: {
+            title: "Mis razones para vivir",
+            hint: "Personas, mascotas, planes y esperanzas: lo que me importa",
+            ph: "p. ej., mi perro, ver crecer a mi sobrina"
+          }
+        },
+        low: {
+          title: "Parece que lo has pasado mal últimamente",
+          body: "Tus últimos registros han sido muy bajos. Eso puede ser agotador, y no tienes que afrontarlo sin apoyo. Si te ayudaría hablar, aquí tienes con quién, a cualquier hora.",
+          yourPeople: "Tu gente",
+          openPlan: "🛟 Abrir mi plan de seguridad",
+          makePlan: "🛟 Hacer un plan de seguridad",
+          notNow: "Ahora no",
+          dontSuggest: "No volver a sugerirlo",
+          turnedOff: "De acuerdo. Puedes volver a activarlo cuando quieras en {settings} → {where}.",
+          settingTitle: "💙 No sugerir apoyo cuando he tenido días bajos",
+          settingDesc: "Cuando varios de tus registros recientes son «{mood}», Bipolar Bear te muestra con calma personas con quien hablar, como mucho una vez cada pocos días. Se calcula solo en este móvil.",
+          close: "Cerrar",
+          region: "Sugerencia de apoyo"
+        }
       },
       privacy: {
         backLink: "← Volver a Bipolar Bear",
@@ -3874,6 +4040,89 @@
         elsewhere: "Ailleurs ? Trouve une ligne d’écoute près de chez toi →",
         needHelp: "🆘 Besoin d’aide maintenant ?",
       },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Mon plan de sécurité",
+          lockBtn: "🛟 Mon plan de sécurité",
+          intro: "Écris-le quand tu te sens bien, pour qu'il soit prêt si un moment difficile arrive. Commence où tu veux : quelques mots dans une rubrique, c'est déjà un bon début.",
+          viewIntro: "Tu as fait ce plan pour des moments comme celui-ci. Avance pas à pas, en commençant par le haut.",
+          emptyAll: "Tu n'as pas encore écrit de plan de sécurité.",
+          write: "Écrire mon plan",
+          edit: "Modifier",
+          done: "Terminé",
+          close: "Fermer",
+          add: "Ajouter",
+          remove: "Retirer {item}",
+          name: "Nom",
+          phone: "Numéro de téléphone",
+          call: "Appeler {name}",
+          onLock: "Afficher mon plan de sécurité sur l'écran de verrouillage",
+          onLockDesc: "Tu pourras le lire sans ton code PIN. Toute personne qui a ton téléphone en main pourrait le lire aussi.",
+          onWidget: "Appeler depuis le widget de l'écran d'accueil",
+          widgetHelp: "Ajoute le widget « Appeler pour du soutien » à ton écran d'accueil pour appeler cette personne d'un seul geste.",
+          savedSignedIn: "Enregistré sur ce téléphone et, chiffré de bout en bout, sur ton compte. Personne d'autre que toi ne peut le lire.",
+          savedGuest: "Enregistré uniquement sur ce téléphone.",
+          delete: "Supprimer mon plan de sécurité",
+          deleteConfirm: "Supprimer tout ton plan de sécurité ? C'est définitif.",
+          crisisHeading: "Quelqu'un à qui parler, à toute heure",
+          source: "Inspiré du plan de sécurité Stanley-Brown, la méthode du plan Staying Safe soutenu par le NHS.",
+          bannerSub: "Signes d'alerte, personnes à appeler, raisons de continuer",
+          bannerSubEmpty: "Écris-le maintenant, pendant que tu te sens bien",
+          widgetTitle: "Appeler pour du soutien",
+          widgetEmpty: "Choisis quelqu'un dans Mon plan de sécurité",
+          fromPlan: "De mon plan de sécurité"
+        },
+        sec: {
+          warningSigns: {
+            title: "Signes d'alerte",
+            hint: "Pensées, émotions ou situations qui me montrent qu'un moment difficile commence peut-être",
+            ph: "ex. : ne plus dormir, m'isoler"
+          },
+          coping: {
+            title: "Ce que je peux faire de mon côté",
+            hint: "Pour me changer les idées un moment, sans avoir besoin de personne",
+            ph: "ex. : une balade, une douche chaude, ma playlist"
+          },
+          distraction: {
+            title: "Personnes et lieux qui me changent les idées",
+            hint: "Un endroit où aller ou quelqu'un avec qui être. Pas besoin de parler de ce que je ressens",
+            ph: "ex. : le café du coin, ma cousine"
+          },
+          helpPeople: {
+            title: "Personnes à qui je peux demander de l'aide",
+            hint: "Des amis ou de la famille à qui je peux dire comment je me sens vraiment"
+          },
+          professionals: {
+            title: "Professionnels et services",
+            hint: "Mon médecin traitant, mon équipe de soins ou de crise, et une ligne d'écoute ouverte 24 h/24"
+          },
+          safeEnv: {
+            title: "Rendre mon environnement plus sûr",
+            hint: "Des façons de rendre mon environnement plus sûr quand ça ne va pas, comme demander à une personne de confiance de garder ce que je pourrais utiliser pour me faire du mal",
+            ph: "ex. : dormir chez une amie ce soir"
+          },
+          reasons: {
+            title: "Mes raisons de vivre",
+            hint: "Des personnes, des animaux, des projets, des espoirs : ce qui compte pour moi",
+            ph: "ex. : mon chien, voir grandir ma nièce"
+          }
+        },
+        low: {
+          title: "On dirait que c'est dur en ce moment",
+          body: "Tes dernières entrées étaient très basses. C'est épuisant, et tu n'as pas à traverser ça sans soutien. Si parler peut t'aider, voici vers qui te tourner, à toute heure.",
+          yourPeople: "Tes proches",
+          openPlan: "🛟 Ouvrir mon plan de sécurité",
+          makePlan: "🛟 Faire un plan de sécurité",
+          notNow: "Pas maintenant",
+          dontSuggest: "Ne plus le proposer",
+          turnedOff: "D'accord. Tu peux le réactiver quand tu veux dans {settings} → {where}.",
+          settingTitle: "💙 Ne pas me proposer de soutien quand j'ai eu des jours difficiles",
+          settingDesc: "Quand plusieurs de tes entrées récentes sont « {mood} », Bipolar Bear te montre en douceur des personnes à qui parler, au plus une fois tous les quelques jours. Calculé uniquement sur ce téléphone.",
+          close: "Fermer",
+          region: "Proposition de soutien"
+        }
+      },
       privacy: {
         backLink: "← Retour à Bipolar Bear",
         title: "🔒 Politique de confidentialité",
@@ -5737,6 +5986,89 @@
         elsewhere: "Woanders? Finde eine Hotline in deiner Nähe →",
         needHelp: "🆘 Brauchst du jetzt Hilfe?",
       },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Mein Sicherheitsplan",
+          lockBtn: "🛟 Mein Sicherheitsplan",
+          intro: "Schreib ihn, wenn es dir gut geht, damit er bereitliegt, falls ein schwerer Moment kommt. Fang an, wo du willst: Ein paar Worte in einem Abschnitt sind schon ein guter Anfang.",
+          viewIntro: "Du hast diesen Plan für Momente wie diesen gemacht. Geh ihn Schritt für Schritt durch, von oben nach unten.",
+          emptyAll: "Du hast noch keinen Sicherheitsplan geschrieben.",
+          write: "Meinen Plan schreiben",
+          edit: "Bearbeiten",
+          done: "Fertig",
+          close: "Schließen",
+          add: "Hinzufügen",
+          remove: "{item} entfernen",
+          name: "Name",
+          phone: "Telefonnummer",
+          call: "{name} anrufen",
+          onLock: "Meinen Sicherheitsplan auf dem Sperrbildschirm zeigen",
+          onLockDesc: "So kannst du ihn ohne PIN lesen. Das kann dann aber auch jeder, der dein Handy in der Hand hat.",
+          onWidget: "Über das Widget auf dem Home-Bildschirm anrufen",
+          widgetHelp: "Füge das Widget „Unterstützung anrufen“ zu deinem Home-Bildschirm hinzu, um diese Person mit einem Tippen anzurufen.",
+          savedSignedIn: "Auf diesem Handy gespeichert und, Ende-zu-Ende-verschlüsselt, in deinem Konto. Nur du kannst ihn lesen.",
+          savedGuest: "Nur auf diesem Handy gespeichert.",
+          delete: "Meinen Sicherheitsplan löschen",
+          deleteConfirm: "Deinen ganzen Sicherheitsplan löschen? Das lässt sich nicht rückgängig machen.",
+          crisisHeading: "Jemand zum Reden, rund um die Uhr",
+          source: "Nach dem Stanley-Brown-Sicherheitsplan, dem Ansatz hinter dem vom NHS unterstützten Staying-Safe-Plan.",
+          bannerSub: "Warnzeichen, Menschen zum Anrufen, Gründe weiterzumachen",
+          bannerSubEmpty: "Schreib ihn jetzt, solange es dir gut geht",
+          widgetTitle: "Unterstützung anrufen",
+          widgetEmpty: "Wähle jemanden in „Mein Sicherheitsplan“",
+          fromPlan: "Aus meinem Sicherheitsplan"
+        },
+        sec: {
+          warningSigns: {
+            title: "Warnzeichen",
+            hint: "Gedanken, Gefühle oder Situationen, die mir zeigen, dass eine schwere Zeit anfangen könnte",
+            ph: "z. B. nicht schlafen, mich zurückziehen"
+          },
+          coping: {
+            title: "Was ich allein tun kann",
+            hint: "Um mich eine Weile abzulenken, ohne dass ich jemanden brauche",
+            ph: "z. B. ein Spaziergang, eine heiße Dusche, meine Playlist"
+          },
+          distraction: {
+            title: "Menschen und Orte, die mich ablenken",
+            hint: "Ein Ort, an den ich gehen kann, oder jemand, bei dem ich sein kann. Ich muss nicht darüber reden, wie es mir geht",
+            ph: "z. B. das Café an der Ecke, meine Cousine"
+          },
+          helpPeople: {
+            title: "Menschen, die ich um Hilfe bitten kann",
+            hint: "Freunde oder Familie, denen ich sagen kann, wie es mir wirklich geht"
+          },
+          professionals: {
+            title: "Fachleute und Dienste",
+            hint: "Meine Hausarztpraxis, mein Behandlungs- oder Krisenteam und eine Hotline, die rund um die Uhr erreichbar ist"
+          },
+          safeEnv: {
+            title: "Meine Umgebung sicherer machen",
+            hint: "Wege, meine Umgebung sicherer zu machen, wenn es mir schlecht geht, zum Beispiel jemanden, dem ich vertraue, bitten, Dinge aufzubewahren, mit denen ich mir schaden könnte",
+            ph: "z. B. heute Nacht bei einer Freundin schlafen"
+          },
+          reasons: {
+            title: "Meine Gründe zu leben",
+            hint: "Menschen, Haustiere, Pläne und Hoffnungen: was mir wichtig ist",
+            ph: "z. B. mein Hund, meine Nichte aufwachsen sehen"
+          }
+        },
+        low: {
+          title: "Es sieht so aus, als wäre es in letzter Zeit schwer gewesen",
+          body: "Deine letzten Einträge waren sehr niedrig. Das kann erschöpfend sein, und du musst da nicht allein durch. Wenn Reden helfen würde, sind diese Menschen für dich da, jederzeit.",
+          yourPeople: "Deine Menschen",
+          openPlan: "🛟 Meinen Sicherheitsplan öffnen",
+          makePlan: "🛟 Einen Sicherheitsplan machen",
+          notNow: "Nicht jetzt",
+          dontSuggest: "Nicht mehr vorschlagen",
+          turnedOff: "Okay. Du kannst das jederzeit wieder einschalten unter {settings} → {where}.",
+          settingTitle: "💙 Keine Unterstützung vorschlagen, wenn ich schwere Tage hatte",
+          settingDesc: "Wenn mehrere deiner letzten Einträge „{mood}“ sind, zeigt Bipolar Bear dir behutsam Menschen, mit denen du reden kannst, höchstens alle paar Tage einmal. Wird nur auf diesem Handy berechnet.",
+          close: "Schließen",
+          region: "Vorschlag für Unterstützung"
+        }
+      },
       privacy: {
         backLink: "← Zurück zu Bipolar Bear",
         title: "🔒 Datenschutzerklärung",
@@ -7582,6 +7914,89 @@
         findSub: "Linee d’aiuto gratuite e riservate nel tuo paese",
         elsewhere: "Sei altrove? Trova una linea d’aiuto vicina →",
         needHelp: "🆘 Ti serve aiuto ora?",
+      },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Il mio piano di sicurezza",
+          lockBtn: "🛟 Il mio piano di sicurezza",
+          intro: "Scrivilo quando stai bene, così sarà pronto se arriva un momento difficile. Inizia da dove vuoi: poche parole in una sezione sono già un buon inizio.",
+          viewIntro: "Hai preparato questo piano per momenti come questo. Procedi un passo alla volta, partendo dall'alto.",
+          emptyAll: "Non hai ancora scritto un piano di sicurezza.",
+          write: "Scrivi il mio piano",
+          edit: "Modifica",
+          done: "Fatto",
+          close: "Chiudi",
+          add: "Aggiungi",
+          remove: "Rimuovi {item}",
+          name: "Nome",
+          phone: "Numero di telefono",
+          call: "Chiama {name}",
+          onLock: "Mostra il mio piano di sicurezza nella schermata di blocco",
+          onLockDesc: "Potrai leggerlo senza PIN. Ma potrebbe leggerlo anche chiunque abbia in mano il tuo telefono.",
+          onWidget: "Chiama dal widget della schermata Home",
+          widgetHelp: "Aggiungi il widget «Chiama per un supporto» alla schermata Home per chiamare questa persona con un tocco.",
+          savedSignedIn: "Salvato su questo telefono e, con crittografia end-to-end, nel tuo account. Puoi leggerlo solo tu.",
+          savedGuest: "Salvato solo su questo telefono.",
+          delete: "Elimina il mio piano di sicurezza",
+          deleteConfirm: "Eliminare tutto il tuo piano di sicurezza? Non si può annullare.",
+          crisisHeading: "Qualcuno con cui parlare, a qualsiasi ora",
+          source: "Basato sul piano di sicurezza Stanley-Brown, l'approccio del piano Staying Safe sostenuto dal NHS.",
+          bannerSub: "Segnali d'allarme, persone da chiamare, motivi per andare avanti",
+          bannerSubEmpty: "Scrivilo ora, mentre stai bene",
+          widgetTitle: "Chiama per un supporto",
+          widgetEmpty: "Scegli qualcuno in Il mio piano di sicurezza",
+          fromPlan: "Dal mio piano di sicurezza"
+        },
+        sec: {
+          warningSigns: {
+            title: "Segnali d'allarme",
+            hint: "Pensieri, emozioni o situazioni che mi dicono che potrebbe iniziare un momento difficile",
+            ph: "es. non dormire, allontanarmi dalle persone"
+          },
+          coping: {
+            title: "Cose che posso fare per conto mio",
+            hint: "Per distrarmi un po', senza bisogno di nessuno",
+            ph: "es. una passeggiata, una doccia calda, la mia playlist"
+          },
+          distraction: {
+            title: "Persone e luoghi che mi aiutano a distrarmi",
+            hint: "Un posto dove andare o qualcuno con cui stare. Non devo per forza parlare di come mi sento",
+            ph: "es. il bar all'angolo, mia cugina"
+          },
+          helpPeople: {
+            title: "Persone a cui posso chiedere aiuto",
+            hint: "Amici o familiari a cui posso dire come mi sento davvero"
+          },
+          professionals: {
+            title: "Professionisti e servizi",
+            hint: "Il mio medico di base, il mio team di cura o di crisi, e una linea d'ascolto attiva 24 ore su 24"
+          },
+          safeEnv: {
+            title: "Rendere più sicuro il posto in cui sono",
+            hint: "Modi per rendere più sicuro l'ambiente intorno a me quando le cose sono difficili, come chiedere a una persona di fiducia di custodire ciò che potrei usare per farmi del male",
+            ph: "es. stanotte dormire da un'amica"
+          },
+          reasons: {
+            title: "I miei motivi per vivere",
+            hint: "Persone, animali, progetti e speranze: ciò che conta per me",
+            ph: "es. il mio cane, veder crescere mia nipote"
+          }
+        },
+        low: {
+          title: "Sembra che ultimamente sia stata dura",
+          body: "Le tue ultime registrazioni sono state molto basse. Può essere sfiancante, e non devi affrontarlo senza aiuto. Se parlare ti può aiutare, ecco chi c'è per te, a qualsiasi ora.",
+          yourPeople: "Le tue persone",
+          openPlan: "🛟 Apri il mio piano di sicurezza",
+          makePlan: "🛟 Prepara un piano di sicurezza",
+          notNow: "Non ora",
+          dontSuggest: "Non suggerirlo più",
+          turnedOff: "Va bene. Puoi riattivarlo quando vuoi in {settings} → {where}.",
+          settingTitle: "💙 Non suggerire supporto quando ho avuto giorni difficili",
+          settingDesc: "Quando diverse delle tue registrazioni recenti sono «{mood}», Bipolar Bear ti mostra con delicatezza persone con cui parlare, al massimo una volta ogni pochi giorni. Calcolato solo su questo telefono.",
+          close: "Chiudi",
+          region: "Suggerimento di supporto"
+        }
       },
       privacy: {
         backLink: "← Torna a Bipolar Bear",
@@ -9429,6 +9844,89 @@
         elsewhere: "Noutro lugar? Encontra uma linha de apoio perto de ti →",
         needHelp: "🆘 Precisas de ajuda agora?",
       },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "O meu plano de segurança",
+          lockBtn: "🛟 O meu plano de segurança",
+          intro: "Escreve-o quando te sentes bem, para estar pronto se chegar um momento difícil. Começa por onde quiseres: umas palavras numa secção já são um bom começo.",
+          viewIntro: "Fizeste este plano para momentos como este. Vai passo a passo, a começar por cima.",
+          emptyAll: "Ainda não escreveste um plano de segurança.",
+          write: "Escrever o meu plano",
+          edit: "Editar",
+          done: "Concluído",
+          close: "Fechar",
+          add: "Adicionar",
+          remove: "Remover {item}",
+          name: "Nome",
+          phone: "Número de telefone",
+          call: "Ligar a {name}",
+          onLock: "Mostrar o meu plano de segurança no ecrã de bloqueio",
+          onLockDesc: "Podes lê-lo sem o PIN. Qualquer pessoa com o teu telemóvel na mão também o poderia ler.",
+          onWidget: "Ligar a partir do widget do ecrã principal",
+          widgetHelp: "Adiciona o widget «Ligar para pedir apoio» ao ecrã principal para ligar a esta pessoa com um toque.",
+          savedSignedIn: "Guardado neste telemóvel e, com encriptação ponto a ponto, na tua conta. Só tu o podes ler.",
+          savedGuest: "Guardado apenas neste telemóvel.",
+          delete: "Apagar o meu plano de segurança",
+          deleteConfirm: "Apagar todo o teu plano de segurança? Não é possível anular.",
+          crisisHeading: "Alguém com quem falar, a qualquer hora",
+          source: "Baseado no Plano de Segurança Stanley-Brown, a abordagem por trás do plano Staying Safe apoiado pelo NHS.",
+          bannerSub: "Sinais de alerta, pessoas a quem ligar, razões para continuar",
+          bannerSubEmpty: "Escreve-o agora, enquanto te sentes bem",
+          widgetTitle: "Ligar para pedir apoio",
+          widgetEmpty: "Escolhe alguém em O meu plano de segurança",
+          fromPlan: "Do meu plano de segurança"
+        },
+        sec: {
+          warningSigns: {
+            title: "Sinais de alerta",
+            hint: "Pensamentos, sentimentos ou situações que me dizem que pode estar a começar uma fase difícil",
+            ph: "ex.: não dormir, afastar-me das pessoas"
+          },
+          coping: {
+            title: "Coisas que posso fazer por mim",
+            hint: "Para me distrair um bocado, sem precisar de ninguém",
+            ph: "ex.: uma caminhada, um duche quente, a minha playlist"
+          },
+          distraction: {
+            title: "Pessoas e lugares que me ajudam a distrair",
+            hint: "Um sítio para onde ir ou alguém com quem estar. Não tenho de falar sobre como me sinto",
+            ph: "ex.: o café da esquina, a minha prima"
+          },
+          helpPeople: {
+            title: "Pessoas a quem posso pedir ajuda",
+            hint: "Amigos ou família a quem posso dizer como me sinto de verdade"
+          },
+          professionals: {
+            title: "Profissionais e serviços",
+            hint: "O meu médico de família, a minha equipa de saúde mental ou de crise, e uma linha de apoio aberta 24 horas"
+          },
+          safeEnv: {
+            title: "Tornar o sítio onde estou mais seguro",
+            hint: "Formas de tornar o que me rodeia mais seguro quando as coisas estão difíceis, como pedir a alguém de confiança que guarde coisas que eu poderia usar para me magoar",
+            ph: "ex.: ficar esta noite em casa de uma amiga"
+          },
+          reasons: {
+            title: "As minhas razões para viver",
+            hint: "Pessoas, animais, planos e esperanças: o que é importante para mim",
+            ph: "ex.: o meu cão, ver a minha sobrinha crescer"
+          }
+        },
+        low: {
+          title: "Parece que as coisas têm estado difíceis",
+          body: "Os teus últimos registos foram muito em baixo. Isso pode ser esgotante, e não tens de passar por isto sem apoio. Se falar ajudar, aqui tens com quem, a qualquer hora.",
+          yourPeople: "As tuas pessoas",
+          openPlan: "🛟 Abrir o meu plano de segurança",
+          makePlan: "🛟 Fazer um plano de segurança",
+          notNow: "Agora não",
+          dontSuggest: "Não voltar a sugerir",
+          turnedOff: "Está bem. Podes voltar a ativar isto quando quiseres em {settings} → {where}.",
+          settingTitle: "💙 Não sugerir apoio quando tive dias em baixo",
+          settingDesc: "Quando vários dos teus registos recentes são «{mood}», o Bipolar Bear mostra-te com calma pessoas com quem falar, no máximo uma vez a cada poucos dias. Calculado só neste telemóvel.",
+          close: "Fechar",
+          region: "Sugestão de apoio"
+        }
+      },
       privacy: {
         backLink: "← Voltar ao Bipolar Bear",
         title: "🔒 Política de Privacidade",
@@ -11275,6 +11773,89 @@
         elsewhere: "Ergens anders? Vind een hulplijn bij jou in de buurt →",
         needHelp: "🆘 Heb je nu hulp nodig?",
       },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Mijn veiligheidsplan",
+          lockBtn: "🛟 Mijn veiligheidsplan",
+          intro: "Schrijf het als je je goed voelt, zodat het klaarligt als er een moeilijk moment komt. Begin waar je wilt: een paar woorden in één onderdeel is al een goed begin.",
+          viewIntro: "Je hebt dit plan gemaakt voor momenten als deze. Neem het stap voor stap door, van boven naar beneden.",
+          emptyAll: "Je hebt nog geen veiligheidsplan geschreven.",
+          write: "Mijn plan schrijven",
+          edit: "Bewerken",
+          done: "Klaar",
+          close: "Sluiten",
+          add: "Toevoegen",
+          remove: "{item} verwijderen",
+          name: "Naam",
+          phone: "Telefoonnummer",
+          call: "{name} bellen",
+          onLock: "Mijn veiligheidsplan op het vergrendelscherm tonen",
+          onLockDesc: "Dan kun je het zonder pincode lezen. Maar iedereen die je telefoon in handen heeft, kan het dan ook lezen.",
+          onWidget: "Bellen vanuit de widget op het beginscherm",
+          widgetHelp: "Zet de widget ‘Bellen voor steun’ op je beginscherm om deze persoon met één tik te bellen.",
+          savedSignedIn: "Opgeslagen op deze telefoon en, end-to-end versleuteld, in je account. Alleen jij kunt het lezen.",
+          savedGuest: "Alleen op deze telefoon opgeslagen.",
+          delete: "Mijn veiligheidsplan verwijderen",
+          deleteConfirm: "Je hele veiligheidsplan verwijderen? Dit kan niet ongedaan worden gemaakt.",
+          crisisHeading: "Iemand om mee te praten, dag en nacht",
+          source: "Gebaseerd op het Stanley-Brown-veiligheidsplan, de aanpak achter het door de NHS gesteunde Staying Safe-plan.",
+          bannerSub: "Waarschuwingssignalen, mensen om te bellen, redenen om door te gaan",
+          bannerSubEmpty: "Schrijf het nu, nu je je goed voelt",
+          widgetTitle: "Bellen voor steun",
+          widgetEmpty: "Kies iemand in Mijn veiligheidsplan",
+          fromPlan: "Uit mijn veiligheidsplan"
+        },
+        sec: {
+          warningSigns: {
+            title: "Waarschuwingssignalen",
+            hint: "Gedachten, gevoelens of situaties die me laten merken dat er een moeilijke periode kan beginnen",
+            ph: "bijv. niet slapen, mensen uit de weg gaan"
+          },
+          coping: {
+            title: "Wat ik zelf kan doen",
+            hint: "Om even aan iets anders te denken, zonder iemand anders nodig te hebben",
+            ph: "bijv. een wandeling, een warme douche, mijn playlist"
+          },
+          distraction: {
+            title: "Mensen en plekken die me afleiden",
+            hint: "Een plek om naartoe te gaan of iemand om bij te zijn. Ik hoef niet te vertellen hoe ik me voel",
+            ph: "bijv. het café op de hoek, mijn nicht"
+          },
+          helpPeople: {
+            title: "Mensen die ik om hulp kan vragen",
+            hint: "Vrienden of familie aan wie ik kan vertellen hoe ik me echt voel"
+          },
+          professionals: {
+            title: "Hulpverleners en diensten",
+            hint: "Mijn huisarts, behandelteam of crisisdienst, en een hulplijn die dag en nacht open is"
+          },
+          safeEnv: {
+            title: "Mijn omgeving veiliger maken",
+            hint: "Manieren om mijn omgeving veiliger te maken als het moeilijk gaat, zoals iemand die ik vertrouw vragen om dingen te bewaren waarmee ik mezelf pijn zou kunnen doen",
+            ph: "bijv. vannacht bij een vriendin slapen"
+          },
+          reasons: {
+            title: "Mijn redenen om te leven",
+            hint: "Mensen, huisdieren, plannen en hoop: wat voor mij belangrijk is",
+            ph: "bijv. mijn hond, mijn nichtje zien opgroeien"
+          }
+        },
+        low: {
+          title: "Het lijkt erop dat het de laatste tijd zwaar was",
+          body: "Je laatste check-ins waren erg somber. Dat kan uitputtend zijn, en je hoeft er niet alleen doorheen. Als praten zou helpen, zijn deze mensen er voor je, dag en nacht.",
+          yourPeople: "Jouw mensen",
+          openPlan: "🛟 Mijn veiligheidsplan openen",
+          makePlan: "🛟 Een veiligheidsplan maken",
+          notNow: "Niet nu",
+          dontSuggest: "Niet meer voorstellen",
+          turnedOff: "Oké. Je kunt dit altijd weer aanzetten via {settings} → {where}.",
+          settingTitle: "💙 Geen steun voorstellen als ik sombere dagen had",
+          settingDesc: "Als een aantal van je recente check-ins ‘{mood}’ is, laat Bipolar Bear je rustig mensen zien met wie je kunt praten, hooguit eens in de paar dagen. Alleen op deze telefoon berekend.",
+          close: "Sluiten",
+          region: "Voorstel voor steun"
+        }
+      },
       privacy: {
         backLink: "← Terug naar Bipolar Bear",
         title: "🔒 Privacybeleid",
@@ -13120,6 +13701,89 @@
         findSub: "Bezpłatne, poufne telefony zaufania w Twoim kraju",
         elsewhere: "Gdzie indziej? Znajdź telefon zaufania w pobliżu →",
         needHelp: "🆘 Potrzebujesz teraz pomocy?",
+      },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Mój plan bezpieczeństwa",
+          lockBtn: "🛟 Mój plan bezpieczeństwa",
+          intro: "Napisz go, kiedy czujesz się dobrze, żeby był gotowy, gdy przyjdzie trudna chwila. Zacznij, od czego chcesz: kilka słów w jednej części to już dobry początek.",
+          viewIntro: "Ten plan powstał właśnie na takie chwile. Idź krok po kroku, od góry.",
+          emptyAll: "Nie masz jeszcze planu bezpieczeństwa.",
+          write: "Napisz mój plan",
+          edit: "Edytuj",
+          done: "Gotowe",
+          close: "Zamknij",
+          add: "Dodaj",
+          remove: "Usuń: {item}",
+          name: "Imię",
+          phone: "Numer telefonu",
+          call: "Zadzwoń: {name}",
+          onLock: "Pokazuj mój plan bezpieczeństwa na ekranie blokady",
+          onLockDesc: "Przeczytasz go bez PIN-u. Ale każdy, kto weźmie Twój telefon, też będzie mógł go przeczytać.",
+          onWidget: "Dzwoń z widżetu na ekranie głównym",
+          widgetHelp: "Dodaj widżet „Zadzwoń po wsparcie” do ekranu głównego, żeby dzwonić do tej osoby jednym dotknięciem.",
+          savedSignedIn: "Zapisany na tym telefonie i, zaszyfrowany end-to-end, na Twoim koncie. Tylko Ty możesz go przeczytać.",
+          savedGuest: "Zapisany tylko na tym telefonie.",
+          delete: "Usuń mój plan bezpieczeństwa",
+          deleteConfirm: "Usunąć cały plan bezpieczeństwa? Tego nie da się cofnąć.",
+          crisisHeading: "Ktoś, z kim możesz porozmawiać, o każdej porze",
+          source: "Na podstawie planu bezpieczeństwa Stanley-Brown, podejścia, na którym opiera się wspierany przez NHS plan Staying Safe.",
+          bannerSub: "Sygnały ostrzegawcze, osoby do kontaktu, powody, by iść dalej",
+          bannerSubEmpty: "Napisz go teraz, gdy czujesz się dobrze",
+          widgetTitle: "Zadzwoń po wsparcie",
+          widgetEmpty: "Wybierz kogoś w Moim planie bezpieczeństwa",
+          fromPlan: "Z mojego planu bezpieczeństwa"
+        },
+        sec: {
+          warningSigns: {
+            title: "Sygnały ostrzegawcze",
+            hint: "Myśli, uczucia lub sytuacje, które mówią mi, że może zaczynać się trudny czas",
+            ph: "np. brak snu, unikanie ludzi"
+          },
+          coping: {
+            title: "Co mogę zrobić na własną rękę",
+            hint: "Żeby na chwilę oderwać myśli, bez potrzeby angażowania kogokolwiek",
+            ph: "np. spacer, gorący prysznic, moja playlista"
+          },
+          distraction: {
+            title: "Ludzie i miejsca, które pomagają mi się oderwać",
+            hint: "Miejsce, do którego mogę pójść, albo ktoś, z kim mogę pobyć. Nie muszę mówić o tym, jak się czuję",
+            ph: "np. kawiarnia na rogu, moja kuzynka"
+          },
+          helpPeople: {
+            title: "Osoby, które mogę poprosić o pomoc",
+            hint: "Przyjaciele lub rodzina, którym mogę powiedzieć, jak naprawdę się czuję"
+          },
+          professionals: {
+            title: "Specjaliści i służby",
+            hint: "Mój lekarz rodzinny, zespół leczący lub kryzysowy i telefon zaufania czynny całą dobę"
+          },
+          safeEnv: {
+            title: "Bezpieczniejsze otoczenie",
+            hint: "Sposoby na bezpieczniejsze otoczenie, gdy jest ciężko, np. poproszenie zaufanej osoby, żeby przechowała rzeczy, które mogłyby posłużyć do zrobienia sobie krzywdy",
+            ph: "np. przenocować dziś u przyjaciółki"
+          },
+          reasons: {
+            title: "Moje powody, by żyć",
+            hint: "Ludzie, zwierzęta, plany i nadzieje: to, co jest dla mnie ważne",
+            ph: "np. mój pies, patrzeć, jak dorasta moja siostrzenica"
+          }
+        },
+        low: {
+          title: "Wygląda na to, że ostatnio jest ciężko",
+          body: "Twoje ostatnie wpisy były bardzo nisko. To może wyczerpywać, a nie musisz przechodzić przez to bez wsparcia. Jeśli rozmowa by pomogła, te osoby są dla Ciebie, o każdej porze.",
+          yourPeople: "Twoje osoby",
+          openPlan: "🛟 Otwórz mój plan bezpieczeństwa",
+          makePlan: "🛟 Przygotuj plan bezpieczeństwa",
+          notNow: "Nie teraz",
+          dontSuggest: "Nie proponuj tego więcej",
+          turnedOff: "Dobrze. Możesz to w każdej chwili włączyć z powrotem: {settings} → {where}.",
+          settingTitle: "💙 Nie proponuj wsparcia po moich gorszych dniach",
+          settingDesc: "Gdy kilka ostatnich wpisów to „{mood}”, Bipolar Bear delikatnie pokazuje osoby, z którymi możesz porozmawiać, najwyżej raz na kilka dni. Liczone tylko na tym telefonie.",
+          close: "Zamknij",
+          region: "Propozycja wsparcia"
+        }
       },
       privacy: {
         backLink: "← Powrót do Bipolar Bear",
@@ -14975,6 +15639,89 @@
         elsewhere: "Någon annanstans? Hitta en stödlinje nära dig →",
         needHelp: "🆘 Behöver du hjälp nu?",
       },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "Min säkerhetsplan",
+          lockBtn: "🛟 Min säkerhetsplan",
+          intro: "Skriv den när du mår okej, så att den finns till hands om en svår stund kommer. Börja var du vill: några ord i ett avsnitt är en bra början.",
+          viewIntro: "Du gjorde den här planen för stunder som den här. Ta ett steg i taget, uppifrån och ner.",
+          emptyAll: "Du har inte skrivit någon säkerhetsplan än.",
+          write: "Skriv min plan",
+          edit: "Redigera",
+          done: "Klar",
+          close: "Stäng",
+          add: "Lägg till",
+          remove: "Ta bort {item}",
+          name: "Namn",
+          phone: "Telefonnummer",
+          call: "Ring {name}",
+          onLock: "Visa min säkerhetsplan på låsskärmen",
+          onLockDesc: "Då kan du läsa den utan pinkod. Men det kan också den som håller i din telefon.",
+          onWidget: "Ring från widgeten på hemskärmen",
+          widgetHelp: "Lägg till widgeten ”Ring för stöd” på hemskärmen för att ringa den här personen med ett tryck.",
+          savedSignedIn: "Sparad på den här telefonen och, end-to-end-krypterad, på ditt konto. Bara du kan läsa den.",
+          savedGuest: "Sparad bara på den här telefonen.",
+          delete: "Radera min säkerhetsplan",
+          deleteConfirm: "Radera hela din säkerhetsplan? Det går inte att ångra.",
+          crisisHeading: "Någon att prata med, dygnet runt",
+          source: "Bygger på Stanley-Browns säkerhetsplan, metoden bakom NHS-stödda Staying Safe.",
+          bannerSub: "Varningstecken, personer att ringa, skäl att fortsätta",
+          bannerSubEmpty: "Skriv den nu, medan du mår okej",
+          widgetTitle: "Ring för stöd",
+          widgetEmpty: "Välj någon i Min säkerhetsplan",
+          fromPlan: "Från min säkerhetsplan"
+        },
+        sec: {
+          warningSigns: {
+            title: "Varningstecken",
+            hint: "Tankar, känslor eller situationer som säger mig att en svår period kan vara på väg",
+            ph: "t.ex. att inte sova, att dra mig undan"
+          },
+          coping: {
+            title: "Det jag kan göra på egen hand",
+            hint: "För att tänka på annat en stund, utan att behöva någon annan",
+            ph: "t.ex. en promenad, en varm dusch, min spellista"
+          },
+          distraction: {
+            title: "Personer och platser som får mig att tänka på annat",
+            hint: "Någonstans att gå eller någon att vara med. Jag behöver inte prata om hur jag mår",
+            ph: "t.ex. kaféet på hörnet, min kusin"
+          },
+          helpPeople: {
+            title: "Personer jag kan be om hjälp",
+            hint: "Vänner eller familj som jag kan berätta för hur jag egentligen mår"
+          },
+          professionals: {
+            title: "Vård och stödtjänster",
+            hint: "Min vårdcentral, mitt vård- eller kristeam och en stödlinje som är öppen dygnet runt"
+          },
+          safeEnv: {
+            title: "Göra min omgivning tryggare",
+            hint: "Sätt att göra omgivningen tryggare när det är tungt, till exempel att be någon jag litar på att ta hand om saker jag skulle kunna skada mig med",
+            ph: "t.ex. sova hos en vän i natt"
+          },
+          reasons: {
+            title: "Mina skäl att leva",
+            hint: "Människor, djur, planer och förhoppningar: det som betyder något för mig",
+            ph: "t.ex. min hund, att få se min systerdotter växa upp"
+          }
+        },
+        low: {
+          title: "Det verkar ha varit tungt på sistone",
+          body: "Dina senaste incheckningar har varit väldigt låga. Det kan vara utmattande, och du behöver inte ta dig igenom det ensam. Om det skulle hjälpa att prata finns de här för dig, dygnet runt.",
+          yourPeople: "Dina närmaste",
+          openPlan: "🛟 Öppna min säkerhetsplan",
+          makePlan: "🛟 Gör en säkerhetsplan",
+          notNow: "Inte nu",
+          dontSuggest: "Föreslå inte det här igen",
+          turnedOff: "Okej. Du kan slå på det igen när du vill under {settings} → {where}.",
+          settingTitle: "💙 Föreslå inte stöd när jag har haft tunga dagar",
+          settingDesc: "När flera av dina senaste incheckningar är ”{mood}” visar Bipolar Bear lugnt personer du kan prata med, högst en gång med några dagars mellanrum. Räknas bara ut på den här telefonen.",
+          close: "Stäng",
+          region: "Förslag om stöd"
+        }
+      },
       privacy: {
         backLink: "← Tillbaka till Bipolar Bear",
         title: "🔒 Integritetspolicy",
@@ -16820,6 +17567,89 @@
         findSub: "你所在国家的免费保密求助热线",
         elsewhere: "在其他地方？查找你附近的求助热线 →",
         needHelp: "🆘 现在需要帮助吗？",
+      },
+      // My safety plan + the low-days support card (js/shared/safety-plan.js).
+      safety: {
+        plan: {
+          title: "我的安全计划",
+          lockBtn: "🛟 我的安全计划",
+          intro: "趁你感觉还好的时候写下它，这样难熬的时刻到来时它就在手边。从哪里开始都可以：在一个部分写几个字就是很好的开始。",
+          viewIntro: "你为这样的时刻做了这个计划。从上往下，一步一步来。",
+          emptyAll: "你还没有写安全计划。",
+          write: "写我的计划",
+          edit: "编辑",
+          done: "完成",
+          close: "关闭",
+          add: "添加",
+          remove: "删除“{item}”",
+          name: "姓名",
+          phone: "电话号码",
+          call: "打给{name}",
+          onLock: "在锁屏界面显示我的安全计划",
+          onLockDesc: "这样不输入 PIN 也能查看。但拿着你手机的任何人也都能看到。",
+          onWidget: "从主屏幕小组件拨打",
+          widgetHelp: "把“打电话寻求支持”小组件添加到主屏幕，轻点一下就能打给这个人。",
+          savedSignedIn: "保存在这部手机上，并以端到端加密保存到你的账户。只有你能查看。",
+          savedGuest: "只保存在这部手机上。",
+          delete: "删除我的安全计划",
+          deleteConfirm: "要删除你的整个安全计划吗？此操作无法撤销。",
+          crisisHeading: "随时都有人可以倾诉",
+          source: "基于 Stanley-Brown 安全计划，这也是 NHS 支持的 Staying Safe 计划所采用的方法。",
+          bannerSub: "预警信号、可以联系的人、坚持下去的理由",
+          bannerSubEmpty: "趁你感觉还好，现在就写下来",
+          widgetTitle: "打电话寻求支持",
+          widgetEmpty: "在“我的安全计划”中选择一个人",
+          fromPlan: "来自我的安全计划"
+        },
+        sec: {
+          warningSigns: {
+            title: "预警信号",
+            hint: "提醒我难熬的时期可能要开始的想法、感受或情境",
+            ph: "例如：睡不着、躲着别人"
+          },
+          coping: {
+            title: "我自己能做的事",
+            hint: "不需要任何人，也能让我暂时转移注意力",
+            ph: "例如：散步、洗个热水澡、听我的歌单"
+          },
+          distraction: {
+            title: "能让我分散注意力的人和地方",
+            hint: "可以去的地方或可以待在一起的人。不必谈论我的感受",
+            ph: "例如：街角的咖啡馆、我的表姐"
+          },
+          helpPeople: {
+            title: "我可以求助的人",
+            hint: "我可以向他们说出真实感受的朋友或家人"
+          },
+          professionals: {
+            title: "专业人员和服务",
+            hint: "我的家庭医生、治疗团队或危机团队，以及一条 24 小时开放的求助热线"
+          },
+          safeEnv: {
+            title: "让我所在的环境更安全",
+            hint: "在难熬的时候让周围环境更安全的方法，比如请我信任的人替我保管可能用来伤害自己的东西",
+            ph: "例如：今晚去朋友家住"
+          },
+          reasons: {
+            title: "我活下去的理由",
+            hint: "人、宠物、计划和希望：对我重要的一切",
+            ph: "例如：我的狗、看着我的外甥女长大"
+          }
+        },
+        low: {
+          title: "看起来你最近过得很不容易",
+          body: "你最近几次的记录都很低落。这会让人筋疲力尽，而你不必独自扛着。如果倾诉会有帮助，下面这些人和热线随时都在。",
+          yourPeople: "你身边的人",
+          openPlan: "🛟 打开我的安全计划",
+          makePlan: "🛟 制定安全计划",
+          notNow: "暂时不用",
+          dontSuggest: "不再提示",
+          turnedOff: "好的。你可以随时在{settings} → {where}中重新开启。",
+          settingTitle: "💙 在我情绪低落的日子后不要提示支持",
+          settingDesc: "当你最近几次的记录中有多次为“{mood}”时，Bipolar Bear 会温和地显示可以倾诉的人，最多每隔几天一次。只在这部手机上计算。",
+          close: "关闭",
+          region: "支持建议"
+        }
       },
       privacy: {
         backLink: "← 返回 Bipolar Bear",

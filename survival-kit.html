@@ -24,6 +24,7 @@
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/i18n.js"></script>
   <script src="js/shared/crisis.js"></script>
+  <script src="js/shared/safety-plan.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
   <script src="js/shared/user-count.js"></script>
@@ -147,6 +148,17 @@
         <span class="sk-sos-text">
           <span class="sk-sos-title" data-i18n="sk.grid.sosTitle">Struggling right now?</span>
           <span class="sk-sos-sub" data-i18n="sk.grid.sosBody">Crisis lines and people who can help</span>
+        </span>
+        <span class="sk-sos-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <!-- My safety plan (js/shared/safety-plan.js): opens the plan, or the
+           editor when it is still empty. Not one of the 12 counted sections. -->
+      <button type="button" class="sk-sos sk-plan" onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.open()">
+        <span class="sk-sos-ico" aria-hidden="true">🛟</span>
+        <span class="sk-sos-text">
+          <span class="sk-sos-title" id="skPlanTitle" data-i18n="safety.plan.title">My safety plan</span>
+          <span class="sk-sos-sub" id="skPlanSub">Write it now, while you're feeling OK</span>
         </span>
         <span class="sk-sos-arrow" aria-hidden="true">›</span>
       </button>

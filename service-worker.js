@@ -1276,7 +1276,14 @@
 //       index.html, journal.html, survival-kit.html, anonymous.html, fab.js,
 //       js/index.js, js/journal.js, js/survival-kit.js, js/anonymous.js,
 //       js/shared/i18n.js, js/shared/crisis.js.
-const CACHE_NAME = 'bipolarbear-v261';
+// v262: My safety plan (Stanley-Brown format) and the gentle "things have
+//       been hard lately" card after several Depressed check-ins (new
+//       js/shared/safety-plan.js). The plan lives on the device and, signed
+//       in, end-to-end encrypted in userSettings.safetyPlanEnc; opt-in button
+//       on both PIN lock screens; feeds the native "Call for support" widget.
+//       Touches index.html, journal.html, survival-kit.html, js/index.js,
+//       js/journal.js, js/shared/i18n.js, css/survival-kit.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v262';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1311,6 +1318,7 @@ const STATIC_ASSETS = [
   './js/shared/version-check.js',
   './js/shared/i18n.js',
   './js/shared/crisis.js',
+  './js/shared/safety-plan.js',
   './js/shared/translate.js',
   './js/shared/guest-data.js',
   './js/shared/user-count.js',

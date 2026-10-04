@@ -1266,6 +1266,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       ];
       bbKeysToRemove.forEach(k => BB.storage.remove(k));
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
+      // The safety plan is synced (encrypted) to the account, so it goes with it.
+      try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
 
       // Non-prefixed user-data keys: shared across variants, cleared via
       // raw localStorage.
@@ -1756,6 +1758,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         BB.storage.remove('_entryStatus');
         BB.storage.remove('_recentMoods');
         try { BB.platform.syncWidgetMoods(); } catch (_) {}
+        try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
          'rememberThis','myCommitments','customReminders','currentMedList',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
@@ -1820,7 +1823,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false, earlyWarnEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
-              moodDefinitions: {}, copingStrategies: {},
+              moodDefinitions: {}, copingStrategies: {}, safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,
               personalHintDone: false,
               homeSurvivalEnabled: false, homeAnonEnabled: false, homeStatsEnabled: false,

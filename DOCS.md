@@ -183,6 +183,9 @@ userSettings/
     personalHintDone    bool            — personal info hint dismissed
     survivalKitVisited  bool            — user has visited the survival kit (deprecated — now localStorage only)
     firstName           string?         — deprecated; name now from personalDetails
+    safetyPlanEnc       {_enc,_iv,updatedAt}? — My safety plan (§2.16), AES-GCM under the
+                                          journal's E2E data key; the plaintext never
+                                          leaves the device. null after a reset.
 
 personalDetails/
   {uid}
@@ -430,6 +433,15 @@ bbGuestPinSalt          string        — legacy key (replaced by bbPinCode)
 bbPinLinkedUID          string        — Firebase Auth UID that this PIN belongs to
                                         Cleared on sign-in if UID doesn't match,
                                         preventing lock-out when switching accounts
+
+── My safety plan + low-days card (§2.16, js/shared/safety-plan.js) ───────
+bbSafetyPlan            JSON          — the plan (device copy; synced only encrypted)
+bbSafetyPlanSyncedAt    ms string     — updatedAt of the copy last pushed/pulled
+bbSafetyPlanOnLock      "1"           — opt-in: plan readable from the PIN screens
+bbLowMoodSupportOff     "1"           — "Don't suggest support when I've had low days"
+bbLowMoodDue            "YYYY-MM-DD"  — the journal last found the low-days pattern
+bbLowMoodShown          "YYYY-MM-DD"  — the card first showed in this 4-day window
+bbLowMoodDismissed      "YYYY-MM-DD"  — the card was closed that day
 
 ── Bipolar Anonymous ────────────────────────────────────────────────────────
 bbAnon_verified         "true"        — user has completed email verification for the board
@@ -1120,6 +1132,78 @@ Post text is sent to Google Cloud Translation, and nothing else is: no email
 address, no moniker, no post id. It is disclosed in the privacy policy §6
 (`privacy.s6li3`, all ten languages). Board posts were already plaintext on
 Firestore — this does not change what a post is, only where its text is read.
+
+### 2.16 My Safety Plan and the Low-Days Card
+
+Both live in `js/shared/safety-plan.js` (loaded by index, journal and the
+Survival Kit, after `i18n.js` and `crisis.js`; strings under `safety.*`). Pure
+helpers are tested by `node scripts/test-safety-plan.js`.
+
+#### My safety plan
+
+Opened from the **🛟 My safety plan** banner under the Survival Kit's SOS
+banner (not one of the 12 counted sections), from the low-days card, from
+`survival-kit.html#safety-plan`, and — opt-in — from both PIN lock screens.
+Seven sections in the Stanley-Brown order (the approach behind the NHS-backed
+Staying Safe plan): warning signs, things I can do on my own, people and
+places that take my mind off things, people I can ask for help (name +
+number), professionals and services (name + number), making where I am safer,
+my reasons for living. A full-screen dialog (`role=dialog`, focus trapped,
+Esc closes) with a read view (tap-to-call contacts, then the country's crisis
+lines and emergency number from `crisis.js`) and an edit view that saves on
+every add / remove. All text goes in through `textContent`.
+
+**Storage — and why.** The plan must open instantly, offline, and (if opted
+in) before the PIN unlock, so the working copy is on the device
+(`bbSafetyPlan`), like the rest of the Survival Kit. Signed in, it is also
+written to the user's own `userSettings/{uid}` — but only as `safetyPlanEnc`,
+AES-GCM ciphertext under the same end-to-end data key as the journal entries
+(`sessionStorage.bb_user_key`, placed there by `js/journal.js`). So the plan is
+unreadable to anyone else even if the Firestore rules were loosened, and it is
+in no new or shared collection. The module never calls SecureStorage itself
+(the journal reads the Keychain once per session; a second caller could take
+that attempt away), so until the journal has run in this session the plan
+just stays local and is pushed later (it retries for ~20 s after sign-in).
+Guests: device only. Sync rule: a device that has never synced takes the
+account's copy if it has content (the `guest-data.js` "never overwrite the
+account" rule); after that the newer `updatedAt` wins. Cleared on logout and
+reset with the other Survival Kit data; `safetyPlanEnc: null` on reset.
+
+**Lock screen (opt-in, unticked by default).** "Show my safety plan on the
+lock screen" (`bbSafetyPlanOnLock`) un-hides a `.bbsp-lockbtn` beside "Need
+help now?" on `#guestPinOverlay` and `#pinOverlay`; it opens the plan
+read-only (no Edit) above the lock (z-index 10005).
+
+**Widget.** On native, each contact with a number gets a "Call from the
+home-screen widget" tick (one at most). `BB.safetyPlan.syncWidget()` sends
+`setSharedData({ safetyCall: JSON })` — `{kind: contact|crisis|none, title,
+name, sub, tel, empty}`, already localised — on every page load and save. With
+no contact ticked the widget offers the country's first crisis line. The
+native "Call for support" widget is in `bipolarbear-native`.
+
+#### The low-days card
+
+The journal calls `BB.lowMoodSupport.evaluateEntries(entries)` after each
+`loadEntries()`. Rule: of the last **5 logged days within the last 10**
+(auto-filled estimates ignored; one mood per day, the latest), **3 or more were
+Depressed** (the lowest of the five moods, 0–1 on the spectrum) **and the most
+recent is still Low or Depressed**. Low alone never triggers it — people with
+bipolar log Low often, and crisis lines for an ordinary low week would be
+alarming and would soon be ignored. When due, the journal stores only the
+date (`bbLowMoodDue`); the home page reads that and never sees moods.
+
+The card (`#lowMoodSupportSlot` on home and in the journal) is calm and
+dismissible: "It looks like things have been hard lately", up to two of the
+person's own contacts (or the Personal Details emergency contact), then up to
+two crisis lines for the country, a button to open or make the plan, **Not
+now** and **Don't suggest this again**. Never a pop-up, never a push. At most
+once every 4 days: once shown it stays for the rest of that day until
+closed, then not again for 4 days. Never drawn while a PIN overlay is up.
+Off via Journal → Settings → Journal Options → "Don't suggest support when
+I've had low days" (`bbLowMoodSupportOff`, unticked = suggestions on). Device
+only; nothing is synced. Wording follows the Samaritans guidance for online
+services: kind, no assumptions, short, two or three signposts, 24/7 services,
+the person in control.
 
 ## 3. Algorithm Flowcharts
 

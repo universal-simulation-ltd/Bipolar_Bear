@@ -21,6 +21,7 @@
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
   <script src="js/shared/crisis.js"></script>
+  <script src="js/shared/safety-plan.js"></script>
   <script src="js/shared/meds-reminder.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
@@ -175,6 +176,10 @@
         <div id="qcDoneNote" class="qc-done-note"></div>
         <button type="button" id="qcWeek" class="qc-week" style="display:none;"></button>
       </div>
+      <!-- "Things have been hard lately" card: only after several Depressed
+           check-ins, at most every few days, never while the PIN lock is up
+           (js/shared/safety-plan.js, BB.lowMoodSupport). -->
+      <div id="lowMoodSupportSlot"></div>
       <div id="journalStartHint" style="display:none; flex-direction:column; align-items:center; gap:2px; pointer-events:none; animation:hintFade 2.4s ease-in-out infinite; margin-top:-4px;">
         <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
           <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -653,6 +658,8 @@
       <button onclick="idxPinForgot()" style="background:none;border:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
       <!-- Help stays one tap away even when the app is locked (fab.js openChatModal). -->
       <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
+      <!-- Opt-in (Survival Kit → My safety plan → "Show my safety plan on the lock screen"): js/shared/safety-plan.js un-hides it. -->
+      <button type="button" class="bbsp-lockbtn" hidden onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.openViewer({fromLock:true})" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="safety.plan.lockBtn">🛟 My safety plan</button>
     </div>
   </div>
 

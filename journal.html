@@ -30,6 +30,7 @@
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
   <script src="js/shared/crisis.js"></script>
+  <script src="js/shared/safety-plan.js"></script>
   <script src="js/shared/meds-reminder.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
@@ -528,6 +529,8 @@
         <polyline points="7,16 12,21 17,16" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
       </svg>
     </div>
+    <!-- "Things have been hard lately" card (js/shared/safety-plan.js) -->
+    <div id="lowMoodSupportSlot"></div>
     <!-- Early-warning nudge card (opt-in) — rendered by js/journal-insights.js -->
     <div id="earlyWarnSlot"></div>
     <div id="journalToggleSection" style="display:none; text-align: center; margin: 20px 0;">
@@ -1063,6 +1066,8 @@
       <button onclick="pinForgot()" style="background:none;border:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
       <!-- Help stays one tap away even when the app is locked (fab.js openChatModal). -->
       <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
+      <!-- Opt-in (Survival Kit → My safety plan → "Show my safety plan on the lock screen"): js/shared/safety-plan.js un-hides it. -->
+      <button type="button" class="bbsp-lockbtn" hidden onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.openViewer({fromLock:true})" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="safety.plan.lockBtn">🛟 My safety plan</button>
     </div>
   </div>
 
@@ -1675,6 +1680,8 @@
 
         <!-- Early-warning nudges toggle (opt-in, unticked by default) — rendered by js/journal-insights.js -->
         <div id="earlyWarnSettingRow"></div>
+        <!-- "Don't suggest support when I've had low days" (unticked = on) — js/shared/safety-plan.js -->
+        <div id="lowMoodSupportSettingRow"></div>
 
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 

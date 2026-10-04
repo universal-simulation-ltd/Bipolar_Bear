@@ -1092,6 +1092,18 @@
     .sk-sos-sub { font-size: 0.84em; opacity: 0.92; line-height: 1.35; }
     .sk-sos-arrow { flex-shrink: 0; font-size: 1.9em; line-height: 1; opacity: 0.85; margin-top: -3px; }
 
+    /* "My safety plan" — sits under the SOS banner; calm, not alarming */
+    .sk-sos + .sk-plan { margin-top: -8px; }
+    .sk-plan {
+      background: #fff;
+      color: #2f3e8f;
+      border: 1.5px solid #c5d0fa;
+      box-shadow: 0 3px 12px rgba(92,124,250,0.14);
+    }
+    .sk-plan .sk-sos-ico { background: #eef1fb; }
+    .sk-plan .sk-sos-sub { color: #4a5578; opacity: 1; }
+    .sk-plan:active { box-shadow: 0 1px 4px rgba(92,124,250,0.2); }
+
     /* Progress — same count as the home screen badge */
     .sk-progress { margin: 0 2px 14px; }
     .sk-progress-label {
@@ -1146,6 +1158,7 @@
     @media (hover: hover) and (pointer: fine) {
       .sk-tile:hover { box-shadow: 0 6px 18px rgba(255,136,51,0.18); border-color: var(--orange); }
       .sk-sos:hover { box-shadow: 0 6px 18px rgba(198,40,40,0.3); }
+      .sk-plan:hover { box-shadow: 0 6px 18px rgba(92,124,250,0.22); }
     }
     .sk-tile:focus-visible, .sk-sos:focus-visible, .sk-back-btn:focus-visible, .sk-tab:focus-visible {
       outline: 3px solid var(--orange);

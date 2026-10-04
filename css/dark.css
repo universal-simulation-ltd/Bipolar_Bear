@@ -336,6 +336,9 @@ html.theme-dark .link-btn.secondary { background: var(--dk-surface); }
 html.theme-dark .sk-tile-state { background: var(--dk-surface-2); border-color: var(--dk-line); }
 html.theme-dark .sk-tile.done .sk-tile-state { background: #40c057; border-color: #40c057; }
 html.theme-dark .sk-tile { box-shadow: 0 2px 12px rgba(0,0,0,0.35); }
+html.theme-dark .sk-plan { background: var(--dk-surface); color: #bac8ff; border-color: #3d4a80; box-shadow: 0 2px 12px rgba(0,0,0,0.35); }
+html.theme-dark .sk-plan .sk-sos-ico { background: #252b45; }
+html.theme-dark .sk-plan .sk-sos-sub { color: var(--dk-muted); }
 html.theme-dark .crisis-btn { background: #fff; }
 html.theme-dark .pill { background: var(--dk-surface-2); }
 html.theme-dark .mood-card.manic,     html.theme-dark .mood-detail-panel.manic     { background: rgba(255,68,68,0.14); }
