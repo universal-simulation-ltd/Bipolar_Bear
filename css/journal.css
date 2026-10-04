@@ -2373,6 +2373,16 @@
 #lifeChart .lc-c-meds { color: #e03131; }
 #lifeChart .lc-c-sleep { color: #4c6ef5; }
 #lifeChart .lc-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-x pan-y; scrollbar-width: thin; outline: none; }
+/* More chart either side: an edge fade and a ‹ / › while it can scroll that way. */
+#lifeChart .lc-scrollwrap { position: relative; flex: 1 1 auto; min-width: 0; --lc-bg: #fff; }
+#lifeChart .lc-scrollwrap::before, #lifeChart .lc-scrollwrap::after { content: ''; position: absolute; top: 0; bottom: 0; width: 34px; pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 1; }
+#lifeChart .lc-scrollwrap::before { left: 0; background: linear-gradient(90deg, var(--lc-bg), rgba(255,255,255,0)); }
+#lifeChart .lc-scrollwrap::after { right: 0; background: linear-gradient(270deg, var(--lc-bg), rgba(255,255,255,0)); }
+#lifeChart .lc-scrollwrap.can-l::before, #lifeChart .lc-scrollwrap.can-r::after { opacity: 1; }
+#lifeChart .lc-nudge { position: absolute; top: 50%; transform: translateY(-50%); z-index: 2; width: 30px; height: 30px; border-radius: 50%; border: 1px solid #e9ecef; background: #fff; color: #a8430a; font-size: 20px; line-height: 26px; font-weight: 700; padding: 0; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.12); display: none; }
+#lifeChart .lc-nudge-l { left: 2px; }
+#lifeChart .lc-nudge-r { right: 2px; }
+#lifeChart .lc-scrollwrap.can-l .lc-nudge-l, #lifeChart .lc-scrollwrap.can-r .lc-nudge-r { display: block; }
 #lifeChart .lc-svg { display: block; }
 #lifeChart .lc-grid { stroke: #f1f3f5; stroke-width: 1; }
 #lifeChart .lc-base { stroke: #ced4da; stroke-width: 1; }
@@ -2619,6 +2629,15 @@ html [style*="var(--brand-btn)"] {
 .seg-switch .cv-opt.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
 .seg-switch .cv-star { color: var(--brand-primary); font-size: 0.9em; }
 .seg-switch .cv-note { min-height: 1.3em; margin-top: 5px; font-size: 0.75em; color: #adb5bd; font-style: italic; }
+/* The custom range's start date (📅), under the range buttons when it is picked. */
+.seg-switch .cv-from { margin: 2px auto 6px; max-width: 360px; text-align: center; font-size: 0.85em; color: #495057; }
+.seg-switch .cv-from label { font-weight: 600; }
+.seg-switch .cv-from input[type=date] { margin-left: 6px; padding: 5px 8px; border: 2px solid #e9ecef; border-radius: 8px; font: inherit; color: #495057; background: #fff; }
+.seg-switch .cv-from-all { margin-left: 6px; padding: 5px 10px; border: 1px solid #e9ecef; border-radius: 8px; background: #fff; font: inherit; color: #a8430a; cursor: pointer; }
+.seg-switch .cv-from-hint { margin-top: 5px; font-size: 0.85em; color: #868e96; }
+html.theme-dark .seg-switch .cv-from { color: var(--dk-text); }
+html.theme-dark .seg-switch .cv-from input[type=date], html.theme-dark .seg-switch .cv-from-all { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text); }
+html.theme-dark .seg-switch .cv-from-hint { color: var(--dk-muted); }
 #statsAndCalendarBlock.cv-life #chart,
 #statsAndCalendarBlock.cv-life #monthCalendar { display: none !important; }
 #statsAndCalendarBlock:not(.cv-life) #lifeChart { display: none !important; }

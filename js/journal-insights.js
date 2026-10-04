@@ -58,6 +58,7 @@
       title: '📈 Life chart',
       subtitle: 'Your mood day by day — above the line is elevated, below is low — with sleep underneath. Swipe to move through time.',
       rangeLabel: 'Time range',
+      earlier: 'Earlier days', later: 'Later days',
       r1m: '1M', r3m: '3M', r6m: '6M', r1y: '1Y',
       stable: 'Stable',
       sleep: 'Sleep',
@@ -501,7 +502,13 @@
       '</div>' +
       '<div class="lc-sub">' + esc(tr('lifeChart.subtitle')) + '</div>' +
       '<div class="lc-frame">' + labelsHtml(g, hasMeds) +
-        '<div class="lc-scroll" tabindex="0">' + g.svg + '</div>' +
+        // The scroller in a frame that shows when there is more chart either
+        // side (James, 2026-10-04): an edge fade and a ‹ / › to step through.
+        '<div class="lc-scrollwrap">' +
+          '<div class="lc-scroll" tabindex="0">' + g.svg + '</div>' +
+          '<button type="button" class="lc-nudge lc-nudge-l" data-dir="-1" aria-label="' + esc(tr('lifeChart.earlier')) + '">‹</button>' +
+          '<button type="button" class="lc-nudge lc-nudge-r" data-dir="1" aria-label="' + esc(tr('lifeChart.later')) + '">›</button>' +
+        '</div>' +
       '</div>' +
       '<div class="lc-detail" aria-live="polite">' + esc(tr('lifeChart.tapHint')) + '</div>' +
       '<div class="lc-legend">' + legend + '</div>';
@@ -515,6 +522,23 @@
       scroller.scrollLeft = scroller.scrollWidth; // newest at the right edge
     }
     wireChart(host, scroller);
+
+    // More-chart cues: the fade and ‹ / › show on a side only while there is
+    // more to scroll that way, and hide at either end.
+    var wrap = host.querySelector('.lc-scrollwrap');
+    var edges = function () {
+      var max = scroller.scrollWidth - scroller.clientWidth;
+      wrap.classList.toggle('can-l', scroller.scrollLeft > 4);
+      wrap.classList.toggle('can-r', scroller.scrollLeft < max - 4);
+    };
+    scroller.addEventListener('scroll', edges, { passive: true });
+    Array.prototype.forEach.call(host.querySelectorAll('.lc-nudge'), function (b) {
+      b.addEventListener('click', function () {
+        scroller.scrollBy({ left: Number(b.getAttribute('data-dir')) * scroller.clientWidth * 0.8, behavior: 'smooth' });
+      });
+    });
+    edges();
+    requestAnimationFrame(edges);
   }
 
   // ── Calendar / life chart switch ────────────────────────────────────────

@@ -1297,7 +1297,12 @@
 //   today). Touches js/journal.js, js/shared/i18n.js.
 // v267: the Stability tile counts spectrum moods by band ("Stable (5)" is
 //   Stable), as Most Common does. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v267';
+// v268: Your Journey's last range is a custom one (📅 All / 📅 Jan 25): pick
+//   the start date under the range buttons (the synced statsStartDate), tiles
+//   read "(since Jan 2025)"; and the life chart shows an edge fade and a ‹ / ›
+//   while there is more chart that way. Touches js/journal.js,
+//   js/journal-insights.js, js/shared/i18n.js, css/journal.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v268';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

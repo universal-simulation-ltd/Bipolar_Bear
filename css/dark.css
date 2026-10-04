@@ -292,6 +292,10 @@ html.theme-dark .bb-switch .bb-slider:before { background: #f5ebdd; }
 
 /* Life chart + early-warning card (js/journal-insights.js) */
 html.theme-dark #lifeChart { background: var(--dk-surface); border-color: var(--dk-line); }
+html.theme-dark #lifeChart .lc-scrollwrap { --lc-bg: var(--dk-surface); }
+html.theme-dark #lifeChart .lc-scrollwrap::before { background: linear-gradient(90deg, var(--lc-bg), transparent); }
+html.theme-dark #lifeChart .lc-scrollwrap::after { background: linear-gradient(270deg, var(--lc-bg), transparent); }
+html.theme-dark #lifeChart .lc-nudge { background: var(--dk-surface-2); border-color: var(--dk-line); color: #f0c79a; }
 html.theme-dark #lifeChart .lc-title,
 html.theme-dark #lifeChart .lc-detail { color: var(--dk-text); }
 html.theme-dark #lifeChart .lc-sub,

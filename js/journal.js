@@ -3133,7 +3133,7 @@ window.addEventListener('pageshow', () => {
       const html = `
         <div class="stat-card" style="${cardStyle}" onclick="showStatDetail('total')">
           <div class="stat-number">${_stabilityPct}%</div>
-          <div class="stat-label">${BB.t('journal.stats.stability', { period: timeframeLabel })}${statsTimeframe === 'all' && sinceDateLabel ? `<br><span style="font-size:0.78em;font-weight:400;opacity:0.75;">since ${sinceDateLabel}</span>` : ''}</div>
+          <div class="stat-label">${BB.t('journal.stats.stability', { period: timeframeLabel })}${statsTimeframe === 'all' && !statsStartDate && sinceDateLabel ? `<br><span style="font-size:0.78em;font-weight:400;opacity:0.75;">since ${sinceDateLabel}</span>` : ''}</div>
         </div>
         <div class="stat-card" style="${cardStyle}" onclick="showStatDetail('moodSummary')">
           <div class="stat-number">
@@ -11272,7 +11272,22 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     }
     window.toggleEntriesList = toggleEntriesList;
 
+    // The custom range (James, 2026-10-04): "All" starts from the stats start
+    // date when one is set — e.g. after a manic episode someone doesn't want
+    // in their stats — chosen right under the range buttons. Same synced
+    // setting as Journal settings → All-Time Stats Start Date.
+    function _journeyFromFmt(opts) {
+      let lang = (window.BB && BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en';
+      if (lang === 'zh') lang = 'zh-Hans';
+      const d = new Date(statsStartDate + 'T00:00:00');
+      try { return new Intl.DateTimeFormat(lang, opts).format(d); }
+      catch (_) { return new Intl.DateTimeFormat('en-GB', opts).format(d); }
+    }
     function _journeyRangeLabel(r) {
+      if (r === 'all' && statsStartDate) {
+        const t = BB.t('journal.lifeChart.sinceDate', { date: _journeyFromFmt({ month: 'short', year: 'numeric' }) });
+        if (t && t !== 'journal.lifeChart.sinceDate') return t;
+      }
       const hit = _JOURNEY_RANGES.find(x => x[0] === r);
       if (!hit) return r === 'all' ? 'All' : `${r}d`;
       const t = BB.t(hit[1]);
@@ -11303,10 +11318,43 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         `<div class="cv-seg" role="group" aria-label="${_esc(_tr('journal.lifeChart.rangeLabel', 'Time range'))}">` +
         _JOURNEY_RANGES.map(r => {
           const on = r[0] === statsTimeframe;
-          return `<button type="button" class="cv-opt${on ? ' on' : ''}" aria-pressed="${on}" onclick="setJournalRange(${r[0] === 'all' ? "'all'" : r[0]})">${_esc(_journeyRangeLabel(r[0]))}${r[0] === def ? ` <span class="cv-star" title="${_esc(defLabel)}" aria-label="${_esc(defLabel)}">★</span>` : ''}</button>`;
+          // The last button is the custom range: 📅 and its start (or All).
+          const label = r[0] === 'all'
+            ? '📅 ' + (statsStartDate ? _journeyFromFmt({ month: 'short', year: '2-digit' }) : _tr(r[1], 'All'))
+            : _journeyRangeLabel(r[0]);
+          return `<button type="button" class="cv-opt${on ? ' on' : ''}" aria-pressed="${on}" onclick="setJournalRange(${r[0] === 'all' ? "'all'" : r[0]})">${_esc(label)}${r[0] === def ? ` <span class="cv-star" title="${_esc(defLabel)}" aria-label="${_esc(defLabel)}">★</span>` : ''}</button>`;
         }).join('') +
-        `</div><div class="cv-note" aria-live="polite">${_esc(note)}</div>`;
+        `</div><div class="cv-note" aria-live="polite">${_esc(note)}</div>` +
+        (statsTimeframe === 'all'
+          ? `<div class="cv-from">` +
+              `<label>${_esc(_tr('journal.lifeChart.fromLabel', 'Start from'))} ` +
+                `<input type="date" value="${_esc(statsStartDate || '')}" max="${_esc(new Date().toLocaleDateString('en-CA'))}" onchange="setJourneyFrom(this.value)"></label>` +
+              (statsStartDate ? ` <button type="button" class="cv-from-all" onclick="setJourneyFrom('')">${_esc(_tr('journal.lifeChart.showAll', 'Show all'))}</button>` : '') +
+              `<div class="cv-from-hint">${_esc(_tr('journal.lifeChart.fromHint', "Leave out older entries, such as an episode you don't want in your stats. Nothing is deleted."))}</div>` +
+            `</div>`
+          : '');
     }
+
+    // Set (or clear, with '') the custom range's start date: saved and synced
+    // like Journal settings' start date, and the stats, chart and life chart
+    // redraw from it.
+    function setJourneyFrom(val) {
+      statsStartDate = val || null;
+      if (statsStartDate) localStorage.setItem('statsStartDate', statsStartDate);
+      else localStorage.removeItem('statsStartDate');
+      const inp = document.getElementById('statsStartDateInput');
+      if (inp) inp.value = statsStartDate || '';
+      if (currentUser && db) {
+        db.collection('userSettings').doc(currentUser.uid).set({ statsStartDate: statsStartDate || null }, { merge: true }).catch(() => {});
+      }
+      _renderJourneyRanges();
+      displayStats(_allEntries);
+      displayChart(_allEntries);
+      if (window.BBInsights && window.BBInsights.rangeChanged) {
+        try { window.BBInsights.rangeChanged(); } catch (e) { console.warn('life chart range', e); }
+      }
+    }
+    window.setJourneyFrom = setJourneyFrom;
 
     function setJournalRange(r) {
       _journeyRangeNote = '';
@@ -13759,6 +13807,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         ).catch(() => {});
       }
       if (_allEntries) displayStats(_allEntries);
+      try { _renderJourneyRanges(); } catch (_) {}
       const btn = document.getElementById('statsStartDateInput').nextElementSibling.nextElementSibling;
       if (btn) { const orig = btn.textContent; btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = orig; }, 1500); }
     }
