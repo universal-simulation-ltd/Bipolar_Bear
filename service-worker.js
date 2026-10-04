@@ -1292,7 +1292,10 @@
 // v265: the 💬 Anonymous streak (home card + widget) only shows while the
 //   Bipolar Anonymous button is on the home page (new BB.anonButtonShown in
 //   brand-config.js). Touches js/index.js, js/shared/platform.js, brand-config.js.
-const CACHE_NAME = 'bipolarbear-v265';
+// v266: Your Journey's first tile is "Stability (period)": the share of logged
+//   days whose mood was Stable, each day once ("Total Days" counted entries and
+//   today). Touches js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v266';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

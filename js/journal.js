@@ -3116,13 +3116,23 @@ window.addEventListener('pageshow', () => {
       currentStatsEntries = statsEntries;
 
       const cardStyle = 'cursor:pointer;transition:transform 0.15s;';
-      const _totalStr = statsTimeframe !== 'all' ? `${statsEntries.length}/${statsTimeframe}` : `${statsEntries.length}`;
-      const _totalLen = _totalStr.length;
-      const _totalFontSize = _totalLen <= 5 ? '' : _totalLen <= 7 ? 'font-size:1.2em;' : _totalLen <= 9 ? 'font-size:1em;' : 'font-size:0.85em;';
+      // Stability: the share of logged DAYS in the range whose mood was Stable
+      // (James, 2026-10-04). It replaced "Total Days", which counted entries —
+      // a day with two entries counted twice (372/365 on 1Y) — and counted
+      // today, which "log yesterday" users can't log yet (89/90 with no gaps).
+      // Each day counts once, by its latest entry. Tapping it still opens the
+      // tracked-days detail.
+      const _dayMood = {};
+      statsEntries.forEach(e => {
+        const k = String(e.date).slice(0, 10);
+        if (!_dayMood[k] || (e.timestamp || 0) > _dayMood[k].t) _dayMood[k] = { t: e.timestamp || 0, mood: e.mood };
+      });
+      const _days = Object.values(_dayMood);
+      const _stabilityPct = _days.length ? Math.round((_days.filter(d => d.mood === 'stable').length / _days.length) * 100) : 0;
       const html = `
         <div class="stat-card" style="${cardStyle}" onclick="showStatDetail('total')">
-          <div class="stat-number" style="${_totalFontSize}">${_totalStr}</div>
-          <div class="stat-label">Total Days${sinceDateLabel ? `<br><span style="font-size:0.78em;font-weight:400;opacity:0.75;">since ${sinceDateLabel}</span>` : ''}</div>
+          <div class="stat-number">${_stabilityPct}%</div>
+          <div class="stat-label">${BB.t('journal.stats.stability', { period: timeframeLabel })}${statsTimeframe === 'all' && sinceDateLabel ? `<br><span style="font-size:0.78em;font-weight:400;opacity:0.75;">since ${sinceDateLabel}</span>` : ''}</div>
         </div>
         <div class="stat-card" style="${cardStyle}" onclick="showStatDetail('moodSummary')">
           <div class="stat-number">
