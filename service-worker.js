@@ -1295,7 +1295,9 @@
 // v266: Your Journey's first tile is "Stability (period)": the share of logged
 //   days whose mood was Stable, each day once ("Total Days" counted entries and
 //   today). Touches js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v266';
+// v267: the Stability tile counts spectrum moods by band ("Stable (5)" is
+//   Stable), as Most Common does. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v267';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
