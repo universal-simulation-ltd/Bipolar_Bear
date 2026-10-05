@@ -212,6 +212,23 @@ bbAnonPosts/
     reports     string[]? — UIDs that have reported this post
     reported    bool?     — flagged as reported
 
+Firestore rules
+  The rules are in firestore.rules at the repo root, tested against the
+  emulator by scripts/firestore-rules (`npm install && npm test` there; needs
+  the Firebase CLI and Java). Deploy with
+  `firebase deploy --only firestore:rules`. The suite holds every Firestore
+  call the shipped apps make, so add the call there when a client gains one.
+  legacyClients() at the top of the rules keeps app builds <= 1.39 working
+  (board writes without an owner uid, profile restore before sign-in); set it
+  to false once those builds are no longer in use.
+
+bbAnonLinks/
+  {uid}                   — written by verifyAnonCode (Admin SDK) only
+    emailHash   string    — sha256(email) this session proved with a code
+    verifiedAt  Timestamp
+  Never readable by clients; the rules use it to recognise the owner of
+  anonProfiles/{emailHash} (and the admin on the email-code path).
+
 anonVerify/
   {sessionId}             — created by sendAnonCode Cloud Function
     email       string    — email address the code was sent to
@@ -747,31 +764,12 @@ the listener at all. Publishing copies the suggestion into `bbAnonPosts` with
 `tab: 'announcements'`, still credited to the member who wrote it (plus
 `suggestedBy`), which is also what fires the new-announcement push.
 
-Required Firestore rules (the console is the source of truth; this is what they
-must say):
-
-```js
-match /bbAnonPosts/{postId} {
-  // …existing read/update rules…
-  allow create: if request.auth != null
-    && (request.resource.data.tab != 'announcements'
-        || request.auth.token.email == 'inbox@jamesmarkey.co.uk');
-}
-
-match /bbAnonAnnSuggestions/{id} {
-  allow read:   if request.auth != null;
-  allow create: if request.auth != null && request.resource.data.status == 'pending';
-  allow update: if request.auth != null
-    && request.auth.token.email == 'inbox@jamesmarkey.co.uk';   // publish / refuse
-  allow delete: if request.auth != null;                        // author dismissing
-}
-```
-
-`request.auth.token.email` only exists on the BipolarBear-account path — the
-standalone email-code path signs in anonymously — so the admin must be signed
-in with their BipolarBear account to publish an announcement or review the
-queue. The client already gates on the same email, so this rule is the
-server-side half of the same check, not a second behaviour.
+The Firestore rules that enforce this live in `firestore.rules` (see
+"Firestore rules" below): only the admin creates or moves a post into the
+Announcements tab and reviews the queue; a member may delete a suggestion only
+once it has been refused. The admin is the BipolarBear account
+(`request.auth.token.email`) or a session that entered an email code for the
+admin address (`bbAnonLinks`, written by `verifyAnonCode`).
 
 ### 2.12 Home Screen Badges (index.html)
 

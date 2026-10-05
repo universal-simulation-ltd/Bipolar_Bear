@@ -284,8 +284,13 @@ if (typeof firebase !== 'undefined') {
 // comment threads silently fail. Sign in anonymously so threads work too.
 // No-op when a session (BB account or a previous anonymous one) exists.
 let _anonAuthPromise = null;
+let _anonAuthSettled = false;
 function _ensureAuthSession() {
+  // A settled promise with no current user means the session ended since
+  // (account deleted, signed out) — sign in again rather than reuse it.
+  if (_anonAuthPromise && _anonAuthSettled && !_authUid()) _anonAuthPromise = null;
   if (!_anonAuthPromise) {
+    _anonAuthSettled = false;
     _anonAuthPromise = (async () => {
       try {
         if (typeof firebase !== 'undefined' && firebase.auth && !firebase.auth().currentUser) {
@@ -294,9 +299,24 @@ function _ensureAuthSession() {
       } catch (e) {
         console.warn('[Anonymous] anonymous sign-in failed', e);
       }
-    })();
+    })().finally(() => { _anonAuthSettled = true; });
   }
   return _anonAuthPromise;
+}
+
+// The Firebase uid of this session (anonymous or BipolarBear account), or null.
+function _authUid() {
+  try {
+    const u = typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser;
+    return u ? u.uid : null;
+  } catch (e) { return null; }
+}
+
+// Board documents carry their author's uid: the Firestore rules let only that
+// session delete or rename them. Left off if sign-in failed.
+function _withOwner(doc) {
+  const uid = _authUid();
+  return uid ? { ...doc, uid } : doc;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -371,7 +391,10 @@ async function boot(user) {
       setupAgree();
       return;
     }
-    if (savedEmail) await _anonRestoreProfile(savedEmail);
+    if (savedEmail) {
+      await _ensureAuthSession();
+      await _anonRestoreProfile(savedEmail);
+    }
     showScreen('board');
     initBoard();
   } else if (profile.verified) {
@@ -1436,6 +1459,9 @@ function setupVerify() {
       if (!window._anonSendCode) {
         throw new Error(_wt('anon.verifyMsg.serviceUnavailable'));
       }
+      // Sign in first: verifyAnonCode links the verified address to this
+      // session, which is what lets it read and save the profile below.
+      await _ensureAuthSession();
       const result = await window._anonSendCode({ email });
       _sessionId    = result.data.sessionId;
       _pendingEmail = email;
@@ -1509,6 +1535,7 @@ function setupVerify() {
         if (code !== REVIEW_CODE) throw new Error(_wt('anon.verifyMsg.incorrectDemo'));
         await _ensureAuthSession();
       } else {
+        await _ensureAuthSession();
         await window._anonVerifyCode({ sessionId: _sessionId, code });
       }
       // ✅ Verified
@@ -1661,7 +1688,12 @@ function setupMonika() {
     } catch (e) { /* network error — allow through */ }
     errEl.style.display = 'none';
     BB.storage.set('Anon_monika', monika);
-    if (db) db.collection(BB_BRAND.collections.monikas).doc(monika.toLowerCase()).set({ monika, createdAt: firebase.firestore.FieldValue.serverTimestamp() }).catch(() => {});
+    if (db) {
+      _ensureAuthSession()
+        .then(() => db.collection(BB_BRAND.collections.monikas).doc(monika.toLowerCase())
+          .set(_withOwner({ monika, createdAt: firebase.firestore.FieldValue.serverTimestamp() })))
+        .catch(() => {});
+    }
     _bbSaveProfile(); // persist monika to userSettings for cross-device recovery
     showScreen('meds');
     setupMeds();
@@ -4237,7 +4269,7 @@ async function approveSuggestion(id) {
   if (!x || !db || !profile.isAdmin) return;
   try {
     await _ensureAuthSession();
-    await db.collection(BB_BRAND.collections.posts).add({
+    await db.collection(BB_BRAND.collections.posts).add(_withOwner({
       name:        x.name,
       streak:      num(x.streak, 1),
       initials:    x.initials || initials(x.name || ''),
@@ -4253,7 +4285,7 @@ async function approveSuggestion(id) {
       isSystem:    false,
       suggestedBy: x.name,
       timestamp:   firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    }));
     await db.collection(BB_BRAND.collections.annSuggestions).doc(id).update({
       status:     'approved',
       reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -4662,7 +4694,7 @@ function setupThread() {
       try {
         await _ensureAuthSession(); // comment writes require request.auth
         const postRef = db.collection(BB_BRAND.collections.posts).doc(commentTargetId);
-        await postRef.collection('comments').add(comment);
+        await postRef.collection('comments').add(_withOwner(comment));
         sent = true;
         _threadStickToBottom = true; // follow your own comment down to the end
         // Your own reply is read the instant you send it. The thread listener
@@ -5288,10 +5320,11 @@ function setupCompose() {
           const res = await _callFn('createAnonPoll', { ...fields, options: pollOpts });
           docId = res.id || null;
         } else {
-          const ref = await db.collection(BB_BRAND.collections.posts).add({
+          await _ensureAuthSession(); // the post records its author's uid
+          const ref = await db.collection(BB_BRAND.collections.posts).add(_withOwner({
             ...entry,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          });
+          }));
           docId = ref.id;
         }
         // A post you just wrote starts read, with no replies outstanding — the
@@ -6023,13 +6056,13 @@ async function deleteAnonAccount() {
       if (monika) {
         try {
           const snap  = await db.collection(BB_BRAND.collections.posts).where('name', '==', monika).get();
-          // Chunk into batches of 450 (Firestore batch limit is 500).
-          let batch = db.batch(), n = 0;
-          for (const doc of snap.docs) {
-            batch.delete(doc.ref); n++;
-            if (n % 450 === 0) { await batch.commit(); batch = db.batch(); }
-          }
-          if (n % 450 !== 0) await batch.commit();
+          // Only posts this session wrote (or written before posts carried an
+          // owner uid) — anything else under the name isn't ours to delete.
+          // One by one, so a refused delete doesn't take the rest with it.
+          const uid = _authUid();
+          await Promise.all(snap.docs
+            .filter(doc => { const o = doc.get('uid'); return !o || o === uid; })
+            .map(doc => doc.ref.delete().catch(() => {})));
         } catch (e) { console.warn('[AnonDelete] posts', e); }
 
         // 2. Release the monika reservation so the name frees up.
@@ -6115,19 +6148,28 @@ document.getElementById('ms-save').addEventListener('click', async () => {
   if (db && oldMonika) {
     const col = COLOR_PRESETS.find(c => c.key === selKey) || COLOR_PRESETS[0];
     try {
-      const snap  = await db.collection(BB_BRAND.collections.posts).where('name', '==', oldMonika).get();
-      const batch = db.batch();
-      snap.docs.forEach(doc => batch.update(doc.ref, {
-        name:     newMonika,
-        initials: newInit || initials(newMonika),
-        grad1:    col.g1,
-        grad2:    col.g2,
-      }));
-      if (oldMonika.toLowerCase() !== newMonika.toLowerCase()) {
-        batch.delete(db.collection(BB_BRAND.collections.monikas).doc(oldMonika.toLowerCase()));
-        batch.set(db.collection(BB_BRAND.collections.monikas).doc(newMonika.toLowerCase()), { monika: newMonika, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await _ensureAuthSession();
+      const nameChanged = oldMonika.toLowerCase() !== newMonika.toLowerCase();
+      // Reserve the new name first: if someone else holds it, nothing moves.
+      if (nameChanged) {
+        await db.collection(BB_BRAND.collections.monikas).doc(newMonika.toLowerCase())
+          .set(_withOwner({ monika: newMonika, createdAt: firebase.firestore.FieldValue.serverTimestamp() }));
       }
-      await batch.commit();
+      // Rename this session's posts (and any from before posts carried an
+      // owner uid), one by one so a refused update doesn't stop the rest.
+      const uid   = _authUid();
+      const snap  = await db.collection(BB_BRAND.collections.posts).where('name', '==', oldMonika).get();
+      await Promise.all(snap.docs
+        .filter(doc => { const o = doc.get('uid'); return !o || o === uid; })
+        .map(doc => doc.ref.update({
+          name:     newMonika,
+          initials: newInit || initials(newMonika),
+          grad1:    col.g1,
+          grad2:    col.g2,
+        }).catch(() => {})));
+      if (nameChanged) {
+        await db.collection(BB_BRAND.collections.monikas).doc(oldMonika.toLowerCase()).delete().catch(() => {});
+      }
     } catch (e) { console.warn('[Monika] update posts failed', e); }
   }
   _anonSaveProfile(); _bbSaveProfile();
