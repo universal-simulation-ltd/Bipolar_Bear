@@ -1320,7 +1320,15 @@
 //   the Crisis Support (🆘) FAB by default. Touches index/journal/survival-kit
 //   .html, js/index.js, js/journal.js, js/survival-kit.js, js/shared/i18n.js,
 //   fab.js.
-const CACHE_NAME = 'bipolarbear-v271';
+// v272: first-run clarity. Home shows "🆘 Need help now?" until the dock (and
+//   its 🆘 FAB) unlocks; the welcome popup says what the app is and that no
+//   account is needed; the sign-in sheet says what an account adds; the guest
+//   PIN screen is translated throughout (its confirm step was English) and
+//   says to pick a PIN you'll remember; the Anonymous sign-up card says what
+//   the community is, that it's moderated, what to do first, and links to
+//   🛟 Help. Touches index.html, anonymous.html, fab.js, css/dark.css,
+//   js/index.js, js/journal.js, js/anonymous.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v272';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

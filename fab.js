@@ -614,6 +614,8 @@
       <div class="bb-auth-overlay" id="bbAuthModal" onclick="if(event.target===this)window.closeAuthModal()">
         <div class="bb-auth-box">
           <h3 id="bbAuthTitle" style="margin:0 0 14px;font-size:1.1em;color:#212529;text-align:center;" data-i18n="auth.welcome">Welcome to Bipolar Bear 🐻</h3>
+          <!-- What an account adds, at the moment someone is deciding whether to make one. -->
+          <p id="bbAuthWhy" style="margin:-6px 0 14px;font-size:0.82em;line-height:1.45;color:#6c757d;text-align:center;" data-i18n="auth.why">Optional and free. An account backs up your journal, end-to-end encrypted, so you can use it on your other devices. Anything you've logged so far comes with you.</p>
           <div id="bbAuthError" style="display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;"></div>
           <input type="email" id="bbAuthEmail" class="bb-auth-input" placeholder="Email" data-i18n-placeholder="auth.emailPlaceholder" autocomplete="email">
           <input type="password" id="bbAuthPassword" class="bb-auth-input" placeholder="Password" data-i18n-placeholder="auth.passwordPlaceholder" autocomplete="current-password">
@@ -1403,6 +1405,8 @@
     const email  = document.getElementById('bbAuthEmail');
     const pw     = document.getElementById('bbAuthPassword');
     if (title)  title.textContent = _bbT('auth.welcome', 'Welcome to Bipolar Bear 🐻');
+    const why = document.getElementById('bbAuthWhy');
+    if (why) why.textContent = _bbT('auth.why', why.textContent);
     if (submit) submit.textContent = _bbT('common.signIn', 'Sign In');
     if (toggle) toggle.innerHTML = _bbToggleHtml(false);
     if (err)    { err.style.display = 'none'; err.textContent = ''; }

@@ -3752,8 +3752,8 @@ window.addEventListener('pageshow', () => {
       _guestPinSetupStep = 'set';
       const overlay = document.getElementById('guestPinSetupOverlay');
       if (overlay) {
-        document.getElementById('guestPinSetupTitle').textContent = 'Protect your data';
-        document.getElementById('guestPinSetupDesc').textContent = 'Choose a 4-digit PIN to lock your journal.';
+        document.getElementById('guestPinSetupTitle').textContent = BB.t('journal.mods.protectData');
+        document.getElementById('guestPinSetupDesc').textContent = BB.t('journal.mods.choosePinDesc');
         document.getElementById('guestPinSetupError').textContent = '';
         _renderPinDots('guestPinSetupDots', 0, false);
         overlay.style.display = 'flex';
@@ -3780,8 +3780,8 @@ window.addEventListener('pageshow', () => {
         _guestPinSetupFirst = _guestPinSetupBuffer;
         _guestPinSetupBuffer = '';
         _guestPinSetupStep = 'confirm';
-        titleEl.textContent = 'Confirm your PIN';
-        descEl.textContent = 'Re-enter your PIN to confirm.';
+        titleEl.textContent = BB.t('journal.mods.confirmPinTitle');
+        descEl.textContent = BB.t('journal.mods.confirmPinDesc');
         errEl.textContent = '';
         _renderPinDots('guestPinSetupDots', 0, false);
       } else if (_guestPinSetupStep === 'confirm') {
@@ -3806,13 +3806,13 @@ window.addEventListener('pageshow', () => {
             cb();
           }
         } else {
-          errEl.textContent = 'PINs did not match. Try again.';
+          errEl.textContent = BB.t('journal.mods.pinMismatch');
           setTimeout(() => {
             _guestPinSetupBuffer = '';
             _guestPinSetupFirst = '';
             _guestPinSetupStep = 'set';
-            titleEl.textContent = 'Protect your data';
-            descEl.textContent = 'Choose a 4-digit PIN to lock your journal.';
+            titleEl.textContent = BB.t('journal.mods.protectData');
+            descEl.textContent = BB.t('journal.mods.choosePinDesc');
             errEl.textContent = '';
             _renderPinDots('guestPinSetupDots', 0, false);
           }, 800);
@@ -4050,7 +4050,7 @@ window.addEventListener('pageshow', () => {
           if (disableBtn) disableBtn.style.display = 'none';
           }
         } else {
-          errEl.textContent = 'PINs did not match. Try again.';
+          errEl.textContent = BB.t('journal.mods.pinMismatch');
           setTimeout(() => {
             _pinSetupBuffer = '';
             _pinSetupFirst = '';

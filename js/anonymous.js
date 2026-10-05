@@ -852,6 +852,8 @@ function _applyCrisisLines() {
   }
 }
 document.getElementById('board-help-btn').addEventListener('click', () => { _haptic(); _applyCrisisLines(); openOv('ov-help'); });
+// The same sheet from the sign-up screen, so help is there before joining.
+document.getElementById('verify-help-btn').addEventListener('click', () => { _haptic(); _applyCrisisLines(); openOv('ov-help'); });
 document.getElementById('help-close').addEventListener('click', () => closeOv('ov-help'));
 
 // ─────────────────────────────────────────────────────────────────

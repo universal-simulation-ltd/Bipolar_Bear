@@ -109,6 +109,7 @@ html.theme-dark .bb-account-box input, html.theme-dark .bb-account-box select {
   background: var(--dk-surface-2) !important; color: var(--dk-text) !important; border-color: var(--dk-line) !important;
 }
 html.theme-dark #bbAccountVersion, html.theme-dark #bbAuthVersion, html.theme-dark #bbFbMeta { color: var(--dk-muted) !important; }
+html.theme-dark #bbAuthWhy { color: var(--dk-text-2) !important; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Home (index.html)

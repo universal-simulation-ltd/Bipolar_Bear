@@ -188,6 +188,14 @@
         </svg>
         <span style="font-size:0.78em;font-weight:700;font-style:italic;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;" data-i18n="home.journalHint">🐻 Click here to get started!</span>
       </div>
+      <!-- First-run crisis link. The dock, and the 🆘 Crisis Support FAB in it,
+           stays hidden until the first journal entry, so without this someone
+           arriving unwell had no way to a crisis line from home. Shown only
+           while the dock is locked (_applyOnboardingGating() in js/index.js);
+           same pill as the PIN lock screen's, same sheet (fab.js openChatModal). -->
+      <div id="firstRunHelp" style="display:none;text-align:center;margin-top:28px;">
+        <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
+      </div>
 
       <div class="btn-container" id="survivalContainer">
         <a href="survival-kit.html" onclick="event.preventDefault(); _advanceOnboardingStep(12); location.replace('survival-kit.html');" class="btn btn-survival" id="survivalBtn" style="position:relative;">
