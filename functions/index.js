@@ -164,6 +164,33 @@ exports.sendAnonCode = onCall(
   }
 );
 
+// After a correct code, record what it proved so the Firestore rules can use it:
+//   bbAnonLinks/{uid}      — the caller's Firebase session owns sha256(email).
+//                            Lets that session read and write
+//                            anonProfiles/{sha256(email)}. Clients never read it.
+//   anonProfiles/{hash}    — `restoreUntil` a few minutes ahead, so app builds
+//                            that check the code before they have a Firebase
+//                            session (<= 1.39) can still restore the profile.
+// Best-effort: a failure here must not fail the verification itself.
+const RESTORE_WINDOW_MS = 10 * 60 * 1000;
+async function recordVerifiedEmail(request, email, now) {
+  if (!email) return;
+  const emailHash = anonEmailHash(email);
+  const writes = [
+    db.collection('anonProfiles').doc(emailHash).set({
+      restoreUntil: admin.firestore.Timestamp.fromMillis(now + RESTORE_WINDOW_MS),
+    }, { merge: true }),
+  ];
+  if (request.auth && request.auth.uid) {
+    writes.push(db.collection('bbAnonLinks').doc(request.auth.uid).set({
+      emailHash,
+      verifiedAt: admin.firestore.Timestamp.fromMillis(now),
+    }));
+  }
+  try { await Promise.all(writes); }
+  catch (e) { console.error('[verifyAnonCode] recording the verified email failed', e); }
+}
+
 // ── verifyAnonCode ───────────────────────────────────────────────────────────
 // The whole check runs inside a Firestore transaction so concurrent
 // attempts can't race past the MAX_ATTEMPTS budget. The attempts counter
@@ -214,8 +241,10 @@ exports.verifyAnonCode = onCall(
         uid:        request.auth ? request.auth.uid : (data.uid || null),
         verifiedAt: admin.firestore.Timestamp.fromMillis(now),
       });
-      return { kind: 'verified' };
+      return { kind: 'verified', email: data.email };
     });
+
+    if (outcome.kind === 'verified') await recordVerifiedEmail(request, outcome.email, now);
 
     switch (outcome.kind) {
       case 'verified':
@@ -1304,6 +1333,7 @@ exports.createAnonPoll = onCall(
       likes:     0,
       isSystem:  false,
       poll:      { options, votes: options.map(() => 0) },
+      uid:       request.auth.uid,   // owner, for self-delete / rename (firestore.rules)
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
     return { id: ref.id };

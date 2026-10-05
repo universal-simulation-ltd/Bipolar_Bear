@@ -1,0 +1,275 @@
+rules_version = '2';
+
+// Firestore security rules for the bipolarbear-app project.
+//
+// Tested by scripts/firestore-rules (emulator suite): run `npm test` there
+// before deploying. Deploy with `firebase deploy --only firestore:rules`.
+//
+// Compatibility switch: app builds up to and including 1.39 (Bipolar Bear and
+// Bipolar Anonymous) write board posts, comments and monika reservations
+// without an owner `uid`, and the standalone email-code path reads its
+// cross-device profile before it has a Firebase session. While those builds
+// are in use, legacyClients() stays true. Once they are gone, set it to false:
+// the test suite runs against both settings.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function legacyClients() { return true; }
+
+    // ── Identity ─────────────────────────────────────────────────────────
+
+    function signedIn() { return request.auth != null; }
+
+    // The token carries a verified email whose sha256(lower-case) is `hash`
+    // (Bipolar Bear accounts).
+    function tokenEmailHashIs(hash) {
+      return signedIn()
+        && request.auth.token.get('email_verified', false) == true
+        && request.auth.token.get('email', '') is string
+        && request.auth.token.get('email', '') != ''
+        && hashing.sha256(request.auth.token.get('email', '').trim().lower()).toHexString().lower() == hash;
+    }
+
+    // The session proved the address with an email code. bbAnonLinks is
+    // written only by the verifyAnonCode Cloud Function (Admin SDK).
+    function linkedEmailHashIs(hash) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/bbAnonLinks/$(request.auth.uid))
+        && get(/databases/$(database)/documents/bbAnonLinks/$(request.auth.uid)).data.emailHash == hash;
+    }
+
+    function ownsEmailHash(hash) {
+      return tokenEmailHashIs(hash) || linkedEmailHashIs(hash);
+    }
+
+    // Board admin: the admin's Bipolar Bear account, or a session that proved
+    // the admin address with an email code.
+    function isAdmin() {
+      return signedIn()
+        && (request.auth.token.get('email', '') == 'inbox@jamesmarkey.co.uk'
+            || linkedEmailHashIs('cc88532256c8a4beb05e227784b2669afcd1448dc28ac05b173d6c1fe0182bc7'));
+    }
+
+    // ── Shared helpers ───────────────────────────────────────────────────
+
+    function incoming() { return request.resource.data; }
+    function changedKeys() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // An integer field moved by exactly +1 or -1 (missing counts as 0).
+    function stepped(field) {
+      return incoming().get(field, 0) is int
+        && resource.data.get(field, 0) is int
+        && (incoming().get(field, 0) - resource.data.get(field, 0) == 1
+            || incoming().get(field, 0) - resource.data.get(field, 0) == -1);
+    }
+
+    // A new document either carries the writer's uid, or (legacy builds only)
+    // no uid at all.
+    function ownerOnCreate() {
+      return ('uid' in incoming())
+        ? (signedIn() && incoming().uid == request.auth.uid)
+        : legacyClients();
+    }
+
+    // An existing document belongs to the caller (or predates owner uids and
+    // legacy builds are still supported).
+    function ownsExisting() {
+      return ('uid' in resource.data)
+        ? (signedIn() && resource.data.uid == request.auth.uid)
+        : legacyClients();
+    }
+
+    function adminFlagOk() {
+      return incoming().get('isAdmin', false) == false || isAdmin();
+    }
+
+    // ── Cloud Functions only (Admin SDK bypasses rules) ──
+    match /anonVerify/{docId}      { allow read, write: if false; }
+    match /verifyRateLimit/{docId} { allow read, write: if false; }
+    match /betaSignups/{docId}     { allow read, write: if false; }
+    match /bbAnonLinks/{uid}       { allow read, write: if false; }
+
+    // ── Anonymous board ──────────────────────────────────────────────────
+    match /bbAnonPosts/{postId} {
+      allow read: if true;
+
+      function isTopicDoc() { return resource.data.get('isTopic', false) == true; }
+
+      function createShapeOk() {
+        return adminFlagOk()
+          && (incoming().get('tab', '') != 'announcements' || isAdmin())
+          && (incoming().get('pinned', false) == false || isAdmin())
+          && incoming().get('likes', 0) == 0
+          && incoming().get('commentCount', 0) == 0
+          && incoming().get('deleted', false) == false
+          && incoming().get('reported', false) == false
+          && incoming().get('wasTopic', false) == false
+          && !('poll' in incoming())               // polls: createAnonPoll callable
+          && incoming().get('timestamp', null) == request.time;
+      }
+
+      // The daily topic is written by whichever client first sees it is due,
+      // under a deterministic id.
+      function topicCreateOk() {
+        return signedIn()
+          && incoming().get('isTopic', false) == true
+          && incoming().get('dayStr', '') is string
+          && postId == 'topic-' + incoming().get('dayStr', '')
+          && incoming().get('tab', '') == 'general';
+      }
+
+      allow create: if createShapeOk()
+        && (incoming().get('isTopic', false) == true ? topicCreateOk() : ownerOnCreate());
+
+      // Updates any member may make to any post.
+      function likeOk()   { return changedKeys().hasOnly(['likes']) && stepped('likes'); }
+      function replyOk()  {
+        return changedKeys().hasOnly(['commentCount', 'lastActivity'])
+          && (!changedKeys().hasAny(['commentCount']) || stepped('commentCount'))
+          && (!changedKeys().hasAny(['lastActivity']) || incoming().lastActivity == request.time);
+      }
+      function reportOk() { return changedKeys().hasOnly(['reported']) && incoming().reported == true; }
+      // Retiring an old daily topic into an ordinary post.
+      function topicRetireOk() {
+        return isTopicDoc()
+          && changedKeys().hasOnly(['isTopic', 'wasTopic', 'isAdmin', 'name', 'initials', 'grad1', 'grad2', 'streak'])
+          && incoming().isTopic == false
+          && incoming().get('wasTopic', false) == true
+          && incoming().get('isAdmin', false) == false;
+      }
+      // The author renaming their monika.
+      function renameOk() {
+        return changedKeys().hasOnly(['name', 'initials', 'grad1', 'grad2'])
+          && !isTopicDoc()
+          && ownsExisting();
+      }
+
+      allow update: if likeOk() || replyOk() || reportOk() || topicRetireOk() || renameOk() || isAdmin();
+
+      // Retention sweep (7 days, with a day of slack for device clocks).
+      function expired() {
+        return resource.data.get('timestamp', null) is timestamp
+          && resource.data.timestamp < request.time - duration.value(6, 'd')
+          && resource.data.get('reported', false) != true
+          && resource.data.get('pinned', false) != true
+          && !isTopicDoc()
+          && (!(resource.data.get('lastActivity', null) is timestamp)
+              || resource.data.lastActivity < request.time - duration.value(6, 'd'));
+      }
+
+      allow delete: if (isTopicDoc() && resource.data.get('commentCount', 0) == 0)
+        || expired()
+        || (!isTopicDoc() && ownsExisting())
+        || isAdmin();
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if signedIn()
+          && adminFlagOk()
+          && incoming().get('timestamp', null) == request.time
+          && ownerOnCreate();
+        allow update: if isAdmin();
+        allow delete: if signedIn() && (ownsExisting() || isAdmin());
+      }
+    }
+
+    // Monika reservations: doc id = lower-cased monika.
+    match /bbAnonMonikas/{id} {
+      allow get: if true;
+      allow create: if incoming().get('monika', '') is string
+        && incoming().get('monika', '').lower() == id
+        && incoming().keys().hasOnly(['monika', 'createdAt', 'uid'])
+        && ownerOnCreate();
+      allow delete: if ownsExisting() || isAdmin();
+    }
+
+    // Cross-device profile for the email-code path, id = sha256(email).
+    // `restoreUntil` is stamped by verifyAnonCode: for a few minutes after a
+    // successful code, builds that read the profile before signing in can
+    // still restore it.
+    match /anonProfiles/{hash} {
+      function restoreWindowOpen() {
+        return legacyClients()
+          && resource != null
+          && resource.data.get('restoreUntil', null) is timestamp
+          && resource.data.restoreUntil > request.time;
+      }
+      allow get: if ownsEmailHash(hash) || restoreWindowOpen();
+      allow create: if ownsEmailHash(hash) && !('restoreUntil' in incoming());
+      allow update: if (ownsEmailHash(hash) || restoreWindowOpen())
+        && !changedKeys().hasAny(['restoreUntil']);
+      allow delete: if ownsEmailHash(hash) || legacyClients();
+    }
+
+    match /bbAnonReports/{docId} { allow create: if true; }
+
+    match /bbAnonBanned/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Member-suggested announcements awaiting the admin.
+    match /bbAnonAnnSuggestions/{id} {
+      allow read:   if signedIn();
+      allow create: if signedIn() && incoming().status == 'pending';
+      allow update: if isAdmin();                                // publish / refuse
+      allow delete: if isAdmin() || (signedIn() && resource.data.get('status', '') == 'rejected');
+    }
+
+    // Push registrations. One doc per FCM token, id = the token itself.
+    // Never readable; Cloud Functions read them with the Admin SDK. Delete
+    // is open so sign-out can remove it after the session has ended — it
+    // needs the unguessable token id.
+    match /bbAnonPush/{token} {
+      allow read: if false;
+      allow create, update: if signedIn()
+        && incoming().token == token
+        && incoming().keys().hasOnly(
+             ['token', 'prefs', 'monikaLower', 'emailHash', 'platform', 'bundle', 'lang', 'updatedAt']);
+      allow delete: if true;
+    }
+
+    // ── Live-now presence (no identity stored, just lastSeen) ──
+    match /bbPresence/{session} {
+      allow read: if true;
+      allow create, update: if incoming().keys().hasOnly(['lastSeen']);
+      allow delete: if true;
+    }
+    match /bbAnonPresence/{session} {
+      allow read: if true;
+      allow create, update: if incoming().keys().hasOnly(['lastSeen']);
+      allow delete: if true;
+    }
+
+    // ── Community counters: members move a count by one at a time ──
+    match /counters/{doc} {
+      allow read: if true;
+      allow create: if signedIn()
+        && incoming().keys().hasOnly(['count'])
+        && incoming().count is int
+        && incoming().count >= -1 && incoming().count <= 1;
+      allow update: if signedIn() && changedKeys().hasOnly(['count']) && stepped('count');
+    }
+
+    // ── Private per-user data ──
+    match /userSettings/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+    match /personalDetails/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+    match /entries/{docId} {
+      allow read, delete: if signedIn() && request.auth.uid == resource.data.userId;
+      allow create: if signedIn() && request.auth.uid == incoming().userId;
+      allow update: if signedIn()
+                    && request.auth.uid == resource.data.userId
+                    && request.auth.uid == incoming().userId;
+    }
+
+    // ── In-app feedback (write-only drop box) ──
+    match /feedback/{docId} { allow create: if signedIn(); }
+
+    // No catch-all: anything not matched above is denied.
+  }
+}

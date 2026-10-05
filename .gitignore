@@ -12,6 +12,9 @@
 # Node
 node_modules/
 
+# Firestore emulator (scripts/firestore-rules)
+firestore-debug.log
+
 # Generated / large binaries
 DOCS.pdf
 
