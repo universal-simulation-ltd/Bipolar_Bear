@@ -89,6 +89,8 @@ service cloud.firestore {
     match /verifyRateLimit/{docId} { allow read, write: if false; }
     match /betaSignups/{docId}     { allow read, write: if false; }
     match /bbAnonLinks/{uid}       { allow read, write: if false; }
+    // Universal ID ↔ Bipolar Bear account join (uidSignIn / uidLink).
+    match /uidLinks/{supabaseId}   { allow read, write: if false; }
 
     // ── Anonymous board ──────────────────────────────────────────────────
     match /bbAnonPosts/{postId} {

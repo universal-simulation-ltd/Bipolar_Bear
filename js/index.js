@@ -1565,6 +1565,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // Guest-only sign up / in button on the Customise page
       const _siBtn = document.getElementById('idxCustomiseSignIn');
       if (_siBtn) _siBtn.style.display = currentUser ? 'none' : '';
+      // A Universal ID account has no Bipolar Bear password, and its email is
+      // the Universal ID's (kept in step at each sign-in): nothing to change here.
+      const _uidOnly = !!(currentUser && window.BB && BB.uid && BB.uid.isUidOnly(currentUser));
+      ['idxPassToggleBtn', 'idxEmailToggleBtn'].forEach(id => {
+        const b = document.getElementById(id);
+        if (b && b.parentElement) b.parentElement.style.display = _uidOnly ? 'none' : '';
+      });
       const langSel = document.getElementById('idxLangSelect');
       if (langSel && window.BB && window.BB.i18n) langSel.value = window.BB.i18n.getLang();
       const verEl = document.getElementById('idxProfileVersion');
@@ -1728,7 +1735,16 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
       // Re-authenticate upfront for account deletion so a wrong password aborts
       // before we touch any data.
-      if (deleteAccount && currentUser) {
+      if (deleteAccount && currentUser && window.BB && BB.uid && BB.uid.isUidOnly(currentUser)) {
+        // A Universal ID account has no Bipolar Bear password to re-enter:
+        // sign in afresh from the Universal ID session instead.
+        if (!(await BB.uid.refreshFirebaseSignIn())) {
+          alert(_tr('uid.deleteSignInAgain', 'Please sign out, sign in again, and then delete your account.'));
+          return;
+        }
+        currentUser = firebase.auth().currentUser;
+        window.currentUser = currentUser;
+      } else if (deleteAccount && currentUser) {
         const _pw = prompt('Re-enter your password to confirm account deletion:');
         if (!_pw) return;
         try {

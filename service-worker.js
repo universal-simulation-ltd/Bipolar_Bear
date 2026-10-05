@@ -1328,12 +1328,19 @@
 //   the community is, that it's moderated, what to do first, and links to
 //   🛟 Help. Touches index.html, anonymous.html, fab.js, css/dark.css,
 //   js/index.js, js/journal.js, js/anonymous.js, js/shared/i18n.js.
-// v273: taken by the universal-id branch (Sign in with Universal ID), not yet on main.
+// v273: sign in with Universal ID (the UNI·SIM account): an emailed code or a
+//   password, joined to the Bipolar Bear account by uidSignIn / uidLink; an
+//   existing account proves its old password once. The journal asks for its
+//   journal password when a sign-in carried none, instead of showing nothing
+//   and saving unencrypted. New js/shared/universal-id.js; touches index /
+//   journal / survival-kit .html, fab.js, js/index.js, js/journal.js,
+//   js/shared/i18n.js, privacy.html. (Built on a branch; reached main as v275.)
 // v274: Bipolar Anonymous — the bear checks in first each day with a random
 //       mood, and is quietly left out of the totals at the third real
 //       check-in (anonMoodCheckin returns `bear`). Touches js/anonymous.js,
 //       functions/index.js.
-const CACHE_NAME = 'bipolarbear-v274';
+// v275: v273 and v274 together (the universal-id branch merged onto v274).
+const CACHE_NAME = 'bipolarbear-v275';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1372,6 +1379,7 @@ const STATIC_ASSETS = [
   './js/shared/translate.js',
   './js/shared/guest-data.js',
   './js/shared/user-count.js',
+  './js/shared/universal-id.js',
   './js/shared/auth-splash.js',
   './js/shared/anon-push.js',
   './js/shared/meds-reminder.js',

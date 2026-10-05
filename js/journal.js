@@ -626,8 +626,11 @@ window.addEventListener('pageshow', () => {
                     }
                     // If Keychain had the key it's the same data key — no action needed
                   } catch(e) {
-                    // Unwrap failed — password was changed via email reset, Firestore has stale wrap
-                    if (_userCryptoKey) {
+                    // Unwrap failed — password was changed via email reset, Firestore has stale wrap.
+                    // Unless the wrap is a journal password chosen on its own
+                    // (d.journalPw, see _promptJournalKey): then the sign-in
+                    // password was never meant to open it, so leave it be.
+                    if (_userCryptoKey && !d.journalPw) {
                       // Native: Keychain has the true data key — re-wrap with new password
                       const _newWrapSaltBytes = crypto.getRandomValues(new Uint8Array(16));
                       const _newWrapSalt = btoa(String.fromCharCode(..._newWrapSaltBytes));
@@ -701,6 +704,14 @@ window.addEventListener('pageshow', () => {
                 await _userExportKeyToSession(_userCryptoKey);
                 _pendingAuthPassword = null;
               }
+            }
+
+            // Still no key: a Universal ID sign-in (no password), or a password
+            // sign-in made on another page. Ask for the journal password rather
+            // than show an empty journal and save new entries unencrypted.
+            if (!_userCryptoKey) {
+              _userCryptoKey = await _userImportKeyFromSession();
+              if (!_userCryptoKey) await _promptJournalKey(user, doc.exists ? doc.data() : null);
             }
 
             // The account and its encryption key are in place: a save that was
@@ -904,7 +915,8 @@ window.addEventListener('pageshow', () => {
 
     // ── Auth hooks for shared fab.js modal ──
     // Capture password before sign-in so onAuthStateChanged can derive the encryption key
-    window._fabBeforeSignIn = function () {
+    window._fabBeforeSignIn = function (password) {
+      if (typeof password === 'string') { _pendingAuthPassword = password; return; }
       const pwEl = document.getElementById('bbAuthPassword');
       _pendingAuthPassword = pwEl ? pwEl.value : null;
     };
@@ -2343,6 +2355,15 @@ window.addEventListener('pageshow', () => {
         if (window._healthStepsByDate[dKey] != null) entry.steps = window._healthStepsByDate[dKey];
       }
 
+      // Signed in without the journal key: get it (journal password) before
+      // anything is written, rather than fall back to saving it unencrypted.
+      if (currentUser && !(await _requireUserKey())) {
+        // "Not now" has already left for home; otherwise the account could
+        // not be reached to unlock the key. Say so, and keep what was typed.
+        if (!_journalKeyDeclined) alert(BB.t('journalKey.offline'));
+        return;
+      }
+
       try {
         if (currentUser) {
           entry.userId = currentUser.uid;
@@ -2576,6 +2597,9 @@ window.addEventListener('pageshow', () => {
     }
 
     async function migrateGuestEntriesIfNeeded(user) {
+      // No journal key (the journal password was not given): leave guest
+      // entries on this device rather than upload them unencrypted.
+      if (!_userCryptoKey) return;
       // Collect and decrypt guest entries from localStorage
       const guestEntries = [];
       for (let i = 0; i < localStorage.length; i++) {
@@ -3652,6 +3676,159 @@ window.addEventListener('pageshow', () => {
       const wrapped = Uint8Array.from(atob(wrappedKeyB64),   c => c.charCodeAt(0));
       const rawDataKey = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, wrappingKey, wrapped);
       return crypto.subtle.importKey('raw', rawDataKey, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+    }
+
+    // ── Journal password ──
+    // The journal's data key is wrapped with a password (see the key-wrapping
+    // block in the auth listener). A password sign-in on this page hands that
+    // password over; a Universal ID sign-in (js/shared/universal-id.js) carries
+    // none, and nor does a password sign-in made on another page. Then the
+    // journal asks for it here — once per device on native (the key goes to
+    // the Keychain), once per browser session on the web.
+    //
+    // For anyone who has used Bipolar Bear before, the journal password IS the
+    // password they signed in with: the existing wrap is left exactly as it is.
+    // An account with no wrap yet chooses one, and `journalPw: true` records
+    // that it was chosen on its own, so a later password sign-in never
+    // re-wraps over it.
+    //
+    // "Not now" goes back to the home screen: a signed-in journal without its
+    // key could only show nothing and save unencrypted.
+
+    /** The journal key, asking for the journal password if needed. Resolves false if not given. */
+    async function _requireUserKey() {
+      if (_userCryptoKey) return true;
+      _userCryptoKey = await _userImportKeyFromSession();
+      if (_userCryptoKey) return true;
+      if (!currentUser || !db) return false;
+      let d = null;
+      try {
+        const doc = await db.collection('userSettings').doc(currentUser.uid).get();
+        d = doc.exists ? doc.data() : null;
+      } catch (e) { return false; }
+      return _promptJournalKey(currentUser, d);
+    }
+
+    /** Make `key` the journal key for this session (and this device's Keychain). */
+    async function _adoptUserKey(key) {
+      _userCryptoKey = key;
+      await _userExportKeyToSession(key);
+    }
+
+    /**
+     * Try a typed journal password against the account. Resolves the data key,
+     * or null when it is the wrong password.
+     */
+    async function _unlockWithJournalPassword(uid, d, password) {
+      if (d.wrappedKey && d.wrapSalt) {
+        try {
+          return await _unwrapDataKey(d.wrappedKey, d.wrappedKeyIv, await _userDeriveKey(password, d.wrapSalt));
+        } catch (e) { return null; }
+      }
+      // Oldest accounts: the key IS PBKDF2(password, encSalt) and there is no
+      // wrap to check it against, so check it against an encrypted entry.
+      const key = await _userDeriveKey(password, d.encSalt);
+      try {
+        const snap = await db.collection('entries').where('userId', '==', uid).limit(5).get();
+        const enc = snap.docs.map(x => x.data()).find(x => x._enc);
+        if (enc) await _userDecrypt(key, enc);
+      } catch (e) { return null; }
+      // Right: move it onto the key-wrapping scheme while we have the password.
+      const wrapSalt = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+      const wrapped = await _wrapDataKey(key, await _userDeriveKey(password, wrapSalt));
+      db.collection('userSettings').doc(uid).set({ wrapSalt, ...wrapped }, { merge: true }).catch(() => {});
+      return key;
+    }
+
+    /** Give an account with no journal key one, wrapped with a newly chosen journal password. */
+    async function _createJournalKey(uid, password) {
+      const key = await crypto.subtle.importKey('raw', crypto.getRandomValues(new Uint8Array(32)),
+        { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
+      const wrapSalt = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+      const wrapped = await _wrapDataKey(key, await _userDeriveKey(password, wrapSalt));
+      await db.collection('userSettings').doc(uid).set(
+        { wrapSalt, ...wrapped, encMigrated: true, journalPw: true }, { merge: true });
+      return key;
+    }
+
+    let _journalKeyPrompt = null; // one prompt at a time
+    let _journalKeyDeclined = false; // "Not now" was tapped (on its way home)
+
+    /**
+     * Ask for the journal password — to unlock the account's key, or to choose
+     * one when it has none. Resolves true once the key is in place; "Not now"
+     * leaves for the home screen.
+     * @param {firebase.User} user
+     * @param {?Object} d  userSettings data (null when there is none yet)
+     */
+    function _promptJournalKey(user, d) {
+      if (_journalKeyPrompt) return _journalKeyPrompt;
+      const settings = d || {};
+      const mode = (settings.wrappedKey || settings.encSalt) ? 'unlock' : 'create';
+      const t = (k) => BB.t('journalKey.' + k);
+      _journalKeyPrompt = new Promise((resolve) => {
+        const ov = document.createElement('div');
+        ov.id = 'bbJournalKeyOverlay';
+        ov.setAttribute('role', 'dialog');
+        ov.setAttribute('aria-modal', 'true');
+        ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10010;display:flex;align-items:center;justify-content:center;padding:20px;';
+        const box = document.createElement('div');
+        box.className = 'bb-auth-box';
+        box.style.cssText = 'background:white;border-radius:20px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.25);';
+        const el = (tag, css, text) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (text != null) n.textContent = text; return n; };
+        const inputCss = 'width:100%;padding:12px;border:2px solid #e9ecef;border-radius:10px;font-size:1em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;';
+        const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', t(mode === 'unlock' ? 'unlockTitle' : 'createTitle'));
+        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', t(mode === 'unlock' ? 'unlockBody' : 'createBody'));
+        const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:#6c757d;', t(mode === 'unlock' ? 'unlockHint' : 'createWarning'));
+        const pw = el('input', inputCss); pw.type = 'password'; pw.autocomplete = mode === 'unlock' ? 'current-password' : 'new-password';
+        pw.placeholder = t(mode === 'unlock' ? 'passwordPlaceholder' : 'newPasswordPlaceholder');
+        const pw2 = el('input', inputCss); pw2.type = 'password'; pw2.autocomplete = 'new-password';
+        pw2.placeholder = t('confirmPlaceholder');
+        if (mode === 'unlock') pw2.style.display = 'none';
+        const err = el('div', 'display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;');
+        const go = el('button', 'width:100%;padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin:4px 0 8px;', t(mode === 'unlock' ? 'unlock' : 'save'));
+        const later = el('button', 'width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;', t('notNow'));
+        const forgot = el('button', 'display:block;margin:10px auto 0;background:none;border:none;color:var(--brand-primary);font-size:0.82em;cursor:pointer;padding:4px;', t('forgot'));
+        const forgotText = el('p', 'display:none;margin:8px 0 0;font-size:0.8em;line-height:1.45;color:#6c757d;', t('forgotBody'));
+        if (mode !== 'unlock') { forgot.style.display = 'none'; }
+        [title, body, hint, err, pw, pw2, go, later, forgot, forgotText].forEach(n => box.appendChild(n));
+        ov.appendChild(box);
+        document.body.appendChild(ov);
+        setTimeout(() => pw.focus(), 50);
+
+        const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
+        const finish = () => { ov.remove(); _journalKeyPrompt = null; resolve(true); };
+        forgot.onclick = () => { forgotText.style.display = 'block'; forgot.style.display = 'none'; };
+        later.onclick = () => { _journalKeyDeclined = true; ov.remove(); _journalKeyPrompt = null; resolve(false); location.href = 'index.html'; };
+        const submit = async () => {
+          err.style.display = 'none';
+          const p = pw.value;
+          if (mode === 'create') {
+            if (p.length < 8) { showErr(t('tooShort')); return; }
+            if (p !== pw2.value) { showErr(t('mismatch')); return; }
+          } else if (!p) { return; }
+          go.disabled = true;
+          try {
+            if (mode === 'unlock') {
+              const key = await _unlockWithJournalPassword(user.uid, settings, p);
+              if (!key) { showErr(t('wrong')); go.disabled = false; pw.select(); return; }
+              await _adoptUserKey(key);
+            } else {
+              await _adoptUserKey(await _createJournalKey(user.uid, p));
+              // Anything this account saved before it had a key goes encrypted now.
+              await _encryptExistingEntries(user.uid);
+            }
+            finish();
+          } catch (e) {
+            console.error('Journal key failed', e);
+            showErr(t('failed'));
+            go.disabled = false;
+          }
+        };
+        go.onclick = submit;
+        [pw, pw2].forEach(n => n.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
+      });
+      return _journalKeyPrompt;
     }
 
     // Decode a single Firestore QueryDocumentSnapshot, decrypting if needed.
@@ -11139,7 +11316,17 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // Re-authenticate upfront for account deletion. If the user can't
       // confirm their password we abort BEFORE touching any data — leaves
       // them in a known-good state.
-      if (deleteAccount && currentUser) {
+      if (deleteAccount && currentUser && BB.uid && BB.uid.isUidOnly(currentUser)) {
+        // No Bipolar Bear password to re-enter (a Universal ID account): sign
+        // in afresh from the Universal ID session instead, which is what
+        // deleting requires.
+        if (!(await BB.uid.refreshFirebaseSignIn())) {
+          alert(BB.t('uid.deleteSignInAgain'));
+          return;
+        }
+        currentUser = firebase.auth().currentUser;
+        window.currentUser = currentUser;
+      } else if (deleteAccount && currentUser) {
         const _pw = prompt(BB.t('journal.dlg.reauthPrompt'));
         if (!_pw) return; // cancelled
         try {
@@ -12688,6 +12875,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     async function _autoFillPersist(entries) {
       if (currentUser && db) {
         if (!_userCryptoKey) _userCryptoKey = await _userImportKeyFromSession();
+        // Never write estimated days unencrypted: without the key, skip them.
+        if (!_userCryptoKey) return;
         const batch = db.batch();
         for (const entry of entries) {
           const withUid = { ...entry, userId: currentUser.uid };

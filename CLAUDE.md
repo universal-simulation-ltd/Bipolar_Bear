@@ -34,6 +34,13 @@ Plus four shared modules loaded in `<head>` of every page:
 - `js/shared/firebase-config.js` — `window.BB_FIREBASE_CONFIG`
 - `js/shared/onboarding.js`      — `BB.onboarding.getStep()` and `resolvePointerPosition()` (index + journal only)
 
+`js/shared/universal-id.js` (`BB.uid`) — the Universal ID sign-in (index,
+journal, survival-kit): a Supabase session swapped for a Firebase custom token
+by the `uidSignIn` / `uidLink` Cloud Functions. Signing in that way carries no
+password, so the journal asks for its **journal password** itself
+(`_promptJournalKey`). Never add a path that saves an entry without the key —
+see DOCS.md §2.17.
+
 `fab.js` is a self-contained IIFE that injects the floating action bar dock
 plus the auth/account modals. Loaded on `index`, `journal`, `survival-kit`
 (NOT `anonymous` — that page has its own yellow-themed UI).
@@ -226,6 +233,7 @@ anonProfiles/{sha256email}  Cross-device anon profile lookup (standalone path)
 bbPresence/{sessionId}      Live-now heartbeat, main app (lastSeen only)
 bbAnonPresence/{sessionId}  Live-now heartbeat, anonymous board
 betaSignups/{auto}          Beta access requests
+uidLinks/{supabaseUserId}   Universal ID ↔ Firebase uid join (Cloud Functions only; DOCS §2.17)
 feedback/{auto}             In-app feedback submissions
 ```
 

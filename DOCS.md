@@ -19,7 +19,7 @@
 | **Pages** | `index.html`, `journal.html`, `survival-kit.html`, `anonymous.html`, `beta.html` |
 | **Shared JS** | `fab.js` — FAB dock system loaded on every app page |
 | **Database** | Firebase Firestore (NoSQL, real-time sync) |
-| **Authentication** | Firebase Auth (email/password) |
+| **Authentication** | Universal ID (the UNI·SIM account, Supabase Auth) in front of Firebase Auth via custom tokens — §2.17; Firebase email/password still works |
 | **Backend** | Firebase Cloud Functions v2 (`functions/index.js`) — Node 22, deployed to `europe-west1` |
 | **Email** | Resend API (`resend` npm package) — transactional email for anonymous verification codes |
 | **Firebase plan** | **Blaze (pay-as-you-go)** required — Cloud Functions and Secret Manager need it |
@@ -543,6 +543,8 @@ Change email    →  re-auth required (current password), then firebase updateEm
 ```
 
 **Anonymous board** uses a separate email verification layer on top of Firebase Auth — see section 2.11.
+
+**Universal ID** (the UNI·SIM account) signs people in from the same sheet and hands them their Firebase account — see section 2.17.
 
 #### Loading splash while a session restores
 
@@ -1222,6 +1224,81 @@ I've had low days" (`bbLowMoodSupportOff`, unticked = suggestions on). Device
 only; nothing is synced. Wording follows the Samaritans guidance for online
 services: kind, no assumptions, short, two or three signposts, 24/7 services,
 the person in control.
+
+### 2.17 Universal ID sign-in (the UNI·SIM account)
+
+**Added 2026-10-05**, at James's ask: "a Universal ID front door, Firebase stays
+behind it". People sign in with Universal ID, the UNI·SIM account (Supabase
+Auth on the shared suite project), and get their Bipolar Bear **Firebase**
+account behind it. Firestore, its rules and the journal's end-to-end
+encryption are unchanged underneath.
+
+```
+fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
+  email ─► "Email me a sign-in code" ─►   POST /auth/v1/otp      (Supabase)
+  code  ─► 6 digits                  ─►   POST /auth/v1/verify   → UID session (localStorage bbUidSession)
+                                     ─►   uidSignIn (Cloud Function) ─► Supabase /auth/v1/user
+                                                 │
+            uidLinks/{supabaseUserId} exists ────┼─► custom token for that Firebase uid
+            Firebase account with this email,    │
+              has a password ────────────────────┼─► { status: 'link' } ─► "Connect your Bipolar
+                                                 │      Bear account": its password, once,
+                                                 │      then uidLink joins the two
+            none ────────────────────────────────┴─► createUser({email, emailVerified}) + link
+                                                     ─► custom token (created: true)
+  signInWithCustomToken ─► the page's onAuthStateChanged as usual
+```
+
+- **Routes on the sheet.** The main route is the emailed code, and it makes new
+  accounts too (no separate sign-up). "Use a password instead" tries a **Bipolar
+  Bear** password first (most people with a password have one), then a
+  **Universal ID** password. The old route still works, so nobody is locked out.
+- **Joining an existing account needs its password, never just the email.**
+  `personalDetails` is stored unencrypted, and an address can have been
+  registered by someone who never owned it. `uidLink` insists on a Firebase
+  *password* sign-in less than 15 minutes old with the same email.
+- **`uidLinks/{supabaseUserId}`** holds `{ firebaseUid, email, via, linkedAt }`.
+  Only Cloud Functions read or write it (the rules deny every client). A link
+  whose Firebase account has been deleted is removed at the next sign-in. An
+  account with no password is adopted only if no *other* Universal ID is joined
+  to it, so someone who changed their Universal ID email can't lose their
+  account to the address's next owner.
+- **Email kept in step.** Each `uidSignIn` copies the Universal ID's (confirmed)
+  email onto the Firebase account and marks it verified. That is what lets the
+  Bipolar Anonymous board skip its own code (`isReal && user.emailVerified` in
+  `boot()`) and what the rules' `tokenEmailHashIs()` reads.
+- **The journal password.** A Universal ID sign-in carries no password, so the
+  journal can't unwrap its data key at sign-in. `_promptJournalKey` in
+  `js/journal.js` asks for it instead: **unlock** (the account has a wrap: for
+  anyone who used Bipolar Bear before, it is the password they signed in with)
+  or **choose** (no wrap yet: a new 8+ character password, saved with
+  `journalPw: true`, after which any entries saved unencrypted get encrypted).
+  It's asked once per device on native (Keychain) and once per browser session
+  on the web. "Not now" goes back home, because a signed-in journal without its
+  key could only show nothing and save unencrypted. This also closes two
+  **older holes**. A password sign-in made on the home page never handed the
+  password to the journal, so entries were hidden and new ones went up
+  unencrypted (`saveEntry`, guest migration and auto-fill all fell back to
+  plaintext). And accounts created on the home page never got a key at all.
+  All three now refuse to write without the key. With `journalPw` set, a
+  password sign-in whose unwrap fails no longer re-wraps over the journal
+  password.
+- **Account screens.** A Universal ID-only account (no `password` provider) has
+  no Change password / Change email (`BB.uid.isUidOnly`). Deleting it signs in
+  afresh from the Universal ID session (`BB.uid.refreshFirebaseSignIn`) instead
+  of the password prompt. Deleting the Bipolar Bear account leaves the Universal
+  ID alone, because other UNI·SIM apps use it (privacy.html §6 says so).
+- **Privacy.** Supabase is told nothing about Bipolar Bear: no redirect URL, no
+  metadata, no product code. The user-count beat stays anonymous, because
+  privacy.html promises the install id "is never linked to your account". The
+  Supabase ↔ Firebase join exists only in `uidLinks`.
+- **Server setup.** `uidSignIn` mints custom tokens, which needs the functions'
+  runtime service account (`566288727451-compute@developer.gserviceaccount.com`)
+  to hold **Service Account Token Creator** (`roles/iam.serviceAccountTokenCreator`)
+  on itself. Without it, `uidSignIn` answers `INTERNAL` at that step.
+- **Not yet:** Google / Apple sign-in (needs the origins and native deep links),
+  Universal ID on the Bipolar Anonymous page and app, and a "Change journal
+  password" setting.
 
 ## 3. Algorithm Flowcharts
 
