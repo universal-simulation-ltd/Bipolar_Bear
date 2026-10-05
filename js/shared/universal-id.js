@@ -241,8 +241,9 @@
     }).then(function () {
       // The function marked the email verified: refresh the ID token so the
       // Firestore rules (and the Bipolar Anonymous board) see it now.
+      // reload() brings user.emailVerified up to date as well.
       var u = firebase.auth().currentUser;
-      return u ? u.getIdToken(true).then(function () {}) : undefined;
+      return u ? u.getIdToken(true).then(function () { return u.reload(); }) : undefined;
     });
   }
 
