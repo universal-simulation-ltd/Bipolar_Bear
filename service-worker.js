@@ -1312,7 +1312,15 @@
 //   record the author's uid (only that session can delete or rename them),
 //   and the board signs in before sending the email code and before restoring
 //   a profile. Touches js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v270';
+// v271: the app PIN is stored scrambled (PBKDF2, js/shared/pin-guard.js —
+//   new, precached; a plain PIN from an older build is upgraded on load, and
+//   the synced account PIN moves to userSettings.pinHash); 5 wrong PINs lock
+//   the keypad for 30 s → 1 / 5 / 15 / 60 min, surviving a reload; the PIN
+//   re-locks after more than a minute in the background; new installs show
+//   the Crisis Support (🆘) FAB by default. Touches index/journal/survival-kit
+//   .html, js/index.js, js/journal.js, js/survival-kit.js, js/shared/i18n.js,
+//   fab.js.
+const CACHE_NAME = 'bipolarbear-v271';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1354,6 +1362,7 @@ const STATIC_ASSETS = [
   './js/shared/auth-splash.js',
   './js/shared/anon-push.js',
   './js/shared/meds-reminder.js',
+  './js/shared/pin-guard.js',
 
   // NOTE: firebase-messaging-sw.js is deliberately NOT precached either — it
   // is a service worker in its own right, registered by js/shared/anon-push.js,

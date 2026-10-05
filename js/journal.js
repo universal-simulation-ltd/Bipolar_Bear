@@ -502,9 +502,22 @@ window.addEventListener('pageshow', () => {
                   else localStorage.removeItem('_labelOverride_' + key);
                 });
               }
-              if (d.pinEnabled && d.pinCode) {
+              // The PIN is synced scrambled (pinHash, see js/shared/pin-guard.js).
+              // Accounts last saved by an older build still carry it plain in
+              // pinCode: hash it now and drop the plain field.
+              const _fsPin = d.pinHash || d.pinCode;
+              if (d.pinEnabled && _fsPin) {
                 BB.storage.set('PinEnabled', '1');
-                BB.storage.set('PinCode', d.pinCode);
+                BB.storage.set('PinCode', _fsPin);
+                if (d.pinCode !== undefined && window.BB && BB.pin) {
+                  (BB.pin.isHashed(_fsPin) ? Promise.resolve(_fsPin) : BB.pin.hash(_fsPin)).then(h => {
+                    if (BB.storage.get('PinCode') === _fsPin) BB.storage.set('PinCode', h);
+                    return db.collection('userSettings').doc(user.uid).set({
+                      pinHash: h,
+                      pinCode: firebase.firestore.FieldValue.delete(),
+                    }, { merge: true });
+                  }).catch(() => {});
+                }
                 // User just authenticated via email — treat this session as unlocked
                 // so they aren't prompted again immediately after signing in
                 sessionStorage.setItem('bbPinUnlocked', '1');
@@ -3777,7 +3790,8 @@ window.addEventListener('pageshow', () => {
           const saltB64 = btoa(String.fromCharCode(...saltBytes));
           BB.storage.set('GuestPinSalt', saltB64);
           BB.storage.set('PinEnabled', '1');
-          BB.storage.set('PinCode', _guestPinSetupFirst);
+          BB.storage.set('PinCode', await BB.pin.hash(_guestPinSetupFirst));
+          BB.pin.clearFailures();
           BB.storage.set('PinLinkedUID', currentUser ? currentUser.uid : 'guest');
           sessionStorage.setItem('bbPinUnlocked', '1');
           BB.storage.remove('_recentMoods'); // home paints before the PIN unlock
@@ -3848,46 +3862,68 @@ window.addEventListener('pageshow', () => {
       if (btn) btn.textContent = text;
     }
 
-    function _syncPinToFirestore() {
+    // Mirror the PIN to userSettings — scrambled only (pinHash); the plain
+    // pinCode field older builds wrote is deleted. Builds before 2026-10-05
+    // read only pinCode, so on those the synced PIN simply reads as off.
+    async function _syncPinToFirestore() {
       if (!currentUser) return;
+      const uid = currentUser.uid;
       const enabled = BB.storage.get('PinEnabled') === '1';
-      const code = BB.storage.get('PinCode') || null;
-      db.collection('userSettings').doc(currentUser.uid).set(
-        { pinEnabled: enabled, pinCode: code },
+      let code = BB.storage.get('PinCode') || null;
+      if (code && !BB.pin.isHashed(code)) {
+        try { code = await BB.pin.hash(code); } catch (e) { return; }
+      }
+      const del = firebase.firestore.FieldValue.delete();
+      db.collection('userSettings').doc(uid).set(
+        { pinEnabled: enabled && !!code, pinHash: code || del, pinCode: del },
         { merge: true }
       ).catch(() => {});
     }
 
-    function pinKey(digit) {
+    async function pinKey(digit) {
+      const errEl = document.getElementById('pinError');
+      if (BB.pin.guard(errEl)) return; // locked after too many wrong PINs
       if (_pinBuffer.length >= 4) return;
       _pinBuffer += digit;
       _renderPinDots('pinDots', _pinBuffer.length, false);
-      if (_pinBuffer.length === 4) {
-        const saved = BB.storage.get('PinCode');
-        if (_pinBuffer === saved) {
-          sessionStorage.setItem('bbPinUnlocked', '1');
-          const el = document.getElementById('pinOverlay');
-          if (el) el.style.display = 'none';
-          // For guests, derive the encryption key then reload entries
-          if (!currentUser) {
-            const _enteredPin = _pinBuffer;
-            _pinBuffer = '';
-            const salt = BB.storage.get('GuestPinSalt');
-            if (salt) {
-              _guestDeriveKey(_enteredPin, salt).then(key => {
-                _guestCryptoKey = key;
-                return _guestExportKeyToSession(key);
-              }).then(() => loadEntries()).catch(e => console.error('Guest key derive failed', e));
-            }
-          }
-        } else {
-          document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
-          setTimeout(() => {
-            _pinBuffer = '';
-            _renderPinDots('pinDots', 0, false);
-            document.getElementById('pinError').textContent = '';
-          }, 800);
+      if (_pinBuffer.length < 4) return;
+      const entered = _pinBuffer;
+      const saved = BB.storage.get('PinCode');
+      let check = { ok: false, legacy: false };
+      try { check = await BB.pin.verify(entered, saved); } catch (e) { /* treated as wrong */ }
+      if (check.ok) {
+        BB.pin.clearFailures();
+        _pinBuffer = '';
+        _renderPinDots('pinDots', 0, false);
+        sessionStorage.setItem('bbPinUnlocked', '1');
+        const el = document.getElementById('pinOverlay');
+        if (el) el.style.display = 'none';
+        // A plain PIN from an older build: store (and sync) it scrambled now.
+        if (check.legacy) {
+          BB.pin.hash(entered).then(h => {
+            if (BB.storage.get('PinCode') === saved) BB.storage.set('PinCode', h);
+            if (currentUser) _syncPinToFirestore();
+          }).catch(() => {});
         }
+        // For guests, derive the encryption key then reload entries
+        if (!currentUser) {
+          const salt = BB.storage.get('GuestPinSalt');
+          if (salt) {
+            _guestDeriveKey(entered, salt).then(key => {
+              _guestCryptoKey = key;
+              return _guestExportKeyToSession(key);
+            }).then(() => loadEntries()).catch(e => console.error('Guest key derive failed', e));
+          }
+        }
+      } else {
+        const locked = BB.pin.recordFailure();
+        errEl.textContent = BB.t('pin.incorrect');
+        setTimeout(() => {
+          _pinBuffer = '';
+          _renderPinDots('pinDots', 0, false);
+          errEl.textContent = '';
+          if (locked) BB.pin.guard(errEl);
+        }, 800);
       }
     }
 
@@ -3905,6 +3941,7 @@ window.addEventListener('pageshow', () => {
       if (confirm(BB.t('journal.dlg.resetPin'))) {
         BB.storage.remove('PinCode');
         BB.storage.remove('PinEnabled');
+        BB.pin.clearFailures();
         _syncPinToFirestore();
         sessionStorage.setItem('bbPinUnlocked', '1');
         const el = document.getElementById('pinOverlay');
@@ -3941,6 +3978,8 @@ window.addEventListener('pageshow', () => {
     }
 
     async function pinSetupKey(digit) {
+      // Changing the PIN starts by checking the current one: same lockout.
+      if (_pinSetupStep === 'confirm_old' && BB.pin.guard(document.getElementById('pinSetupError'))) return;
       if (_pinSetupBuffer.length >= 4) return;
       _pinSetupBuffer += digit;
       _renderPinDots('pinSetupDots', _pinSetupBuffer.length, true);
@@ -3951,7 +3990,10 @@ window.addEventListener('pageshow', () => {
 
       if (_pinSetupStep === 'confirm_old') {
         // Verify existing PIN
-        if (_pinSetupBuffer === BB.storage.get('PinCode')) {
+        let _oldCheck = { ok: false };
+        try { _oldCheck = await BB.pin.verify(_pinSetupBuffer, BB.storage.get('PinCode')); } catch (e) {}
+        if (_oldCheck.ok) {
+          BB.pin.clearFailures();
           _pinSetupBuffer = '';
           _pinSetupStep = 'set';
           document.getElementById('pinSetupTitle').textContent = '🔒 New PIN';
@@ -3963,8 +4005,9 @@ window.addEventListener('pageshow', () => {
           const disableBtn = document.getElementById('pinDisableBtn');
           if (disableBtn) disableBtn.style.display = 'inline-block';
         } else {
-          errEl.textContent = 'Incorrect PIN.';
-          setTimeout(() => { _pinSetupBuffer = ''; _renderPinDots('pinSetupDots', 0, true); errEl.textContent = ''; }, 800);
+          const _locked = BB.pin.recordFailure();
+          errEl.textContent = BB.t('pin.incorrect');
+          setTimeout(() => { _pinSetupBuffer = ''; _renderPinDots('pinSetupDots', 0, true); errEl.textContent = ''; if (_locked) BB.pin.guard(errEl); }, 800);
         }
       } else if (_pinSetupStep === 'set') {
         _pinSetupFirst = _pinSetupBuffer;
@@ -3995,8 +4038,9 @@ window.addEventListener('pageshow', () => {
               setTimeout(() => { _pinSetupBuffer = ''; _pinSetupFirst = ''; _pinSetupStep = 'set'; desc.textContent = 'Choose a 4-digit PIN.'; _renderPinDots('pinSetupDots', 0, true); errEl.textContent = ''; }, 1200);
             }
           } else {
-          BB.storage.set('PinCode', _pinSetupFirst);
+          BB.storage.set('PinCode', await BB.pin.hash(_pinSetupFirst));
           BB.storage.set('PinEnabled', '1');
+          BB.pin.clearFailures();
           sessionStorage.setItem('bbPinUnlocked', '1');
           _syncPinToFirestore();
           closePinSetup();
@@ -4131,6 +4175,21 @@ window.addEventListener('pageshow', () => {
       );
       _resetNativeIdleTimer();
     }
+
+    // ── Re-lock after more than a minute in the background ──
+    // Same outcome as the idle relocks above: the guest / app PIN sends you to
+    // the lock screen on home (the entry draft is saved as you type).
+    BB.pin.watchBackground({
+      applies: () => (!currentUser && !!BB.storage.get('GuestPinSalt'))
+        || (isNative() && BB.storage.get('NativePinEnabled') === '1'),
+      relock: () => {
+        sessionStorage.removeItem('bbPinUnlocked');
+        sessionStorage.removeItem('bb_guest_key');
+        _guestCryptoKey = null;
+        _userCryptoKey = null;
+        location.replace('index.html');
+      },
+    });
 
     // ── Focused Mode state ──
     // _fmEnabled  — user's preference; true = focused mode opens by default.

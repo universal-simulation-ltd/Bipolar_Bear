@@ -445,8 +445,14 @@ bbAdvancedTutorialToastShown "1"      — advanced tutorial complete toast shown
 
 ── PIN Lock ─────────────────────────────────────────────────────────────────
 bbPinEnabled            "1"           — PIN lock is active
-bbPinCode               string        — SHA-256 hash of the PIN (never plaintext)
-bbGuestPinSalt          string        — legacy key (replaced by bbPinCode)
+bbPinCode               string        — the PIN scrambled: "pbkdf2$<iter>$<salt>$<hash>"
+                                        (js/shared/pin-guard.js). Builds before
+                                        2026-10-05 stored it plain; any page with
+                                        pin-guard.js replaces that on load
+bbGuestPinSalt          string        — guest PIN: salt for the journal encryption key
+bbPinFails              number        — wrong PINs in a row (cleared on a right one)
+bbPinLockUntil          ms timestamp  — keypad locked until then (5 wrong → 30 s,
+                                        then 1 / 5 / 15 / 60 min per further miss)
 bbPinLinkedUID          string        — Firebase Auth UID that this PIN belongs to
                                         Cleared on sign-in if UID doesn't match,
                                         preventing lock-out when switching accounts
@@ -576,7 +582,21 @@ listener resolves.
 
 ### 2.7 PIN Lock
 
-- PIN stored as **SHA-256 hash** in `localStorage.bbPinCode` — plaintext never persisted
+- PIN stored scrambled in `localStorage.bbPinCode` — PBKDF2-SHA256 (WebCrypto,
+  100,000 iterations, random 16-byte salt per PIN), as `pbkdf2$<iter>$<salt>$<hash>`;
+  `BB.pin.hash` / `BB.pin.verify` in `js/shared/pin-guard.js`. A plain PIN left by a
+  build before 2026-10-05 is hashed on page load (and on the next right unlock).
+  A 4-digit PIN has 10,000 values, so the hash keeps it from being read, not from
+  being guessed offline; the lockout below is what slows guessing on the keypad
+- The optional account PIN syncs as `userSettings/{uid}.pinHash`; the old plain
+  `pinCode` field is deleted when an account signs in or the PIN changes. Builds
+  before 2026-10-05 read only `pinCode`, so on those the synced PIN reads as off
+- Wrong PINs: 5 in a row lock the keypad (30 s, then 1 / 5 / 15 / 60 min for each
+  further miss), kept in `bbPinFails` / `bbPinLockUntil` so a reload doesn't reset
+  it; "Forgot PIN?" still works while locked
+- Re-lock: after 5 min idle, and when the page / app comes back after more than a
+  minute in the background (`visibilitychange`, Capacitor `pause`/`resume`, and
+  `@capacitor/app` `appStateChange` where installed) — `BB.pin.watchBackground`
 - Session unlock stored in `sessionStorage.bbPinUnlocked`
 - `sessionStorage` is cleared on `pagehide`, so PIN is required every time the page is opened
 - `bbPinLinkedUID` stores the Firebase Auth UID of the account that created the PIN

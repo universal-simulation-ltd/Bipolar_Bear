@@ -2678,3 +2678,29 @@ function _sktMood(moodKey) {
       );
       _resetIdleTimer();
     }
+
+// ── Re-lock after more than a minute in the background ──
+// Mirrors the PIN gate at the top of survival-kit.html: the guest PIN (when
+// nobody is signed in) or the native app PIN sends you back to the lock
+// screen on home.
+    if (window.BB && BB.pin) {
+      BB.pin.watchBackground({
+        applies: () => {
+          let signed = false;
+          try {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i);
+              if (k && k.indexOf('firebase:authUser:') === 0 && localStorage.getItem(k)) { signed = true; break; }
+            }
+          } catch (_) {}
+          const native = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+          return (!signed && !!BB.storage.get('GuestPinSalt'))
+            || (!!native && BB.storage.get('NativePinEnabled') === '1');
+        },
+        relock: () => {
+          sessionStorage.removeItem('bbPinUnlocked');
+          sessionStorage.removeItem('bb_guest_key');
+          location.replace('index.html');
+        },
+      });
+    }

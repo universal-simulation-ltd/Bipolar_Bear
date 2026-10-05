@@ -2726,23 +2726,39 @@ function _handleIndexJournalNav() {
         if (_pinOv) _pinOv.style.display = 'flex';
       }
 
+      // A lockout from wrong PINs survives a reload — show its countdown.
+      if (!unlocked && window.BB && BB.pin) BB.pin.guard(document.getElementById('idxPinError'));
+
+      function _relock() {
+        sessionStorage.removeItem('bbPinUnlocked');
+        sessionStorage.removeItem('bb_guest_key');
+        _idxPinBuf = '';
+        _idxRenderDots(0);
+        document.getElementById('idxPinError').textContent = '';
+        document.getElementById('guestPinOverlay').style.display = 'flex';
+        if (window.BB && BB.pin) BB.pin.guard(document.getElementById('idxPinError'));
+      }
+
       // Inactivity relock after 5 minutes
       let _idleTimer;
       function _resetIdleTimer() {
         clearTimeout(_idleTimer);
-        _idleTimer = setTimeout(() => {
-          sessionStorage.removeItem('bbPinUnlocked');
-          sessionStorage.removeItem('bb_guest_key');
-          _idxPinBuf = '';
-          _idxRenderDots(0);
-          document.getElementById('idxPinError').textContent = '';
-          document.getElementById('guestPinOverlay').style.display = 'flex';
-        }, 5 * 60 * 1000);
+        _idleTimer = setTimeout(_relock, 5 * 60 * 1000);
       }
       ['touchstart', 'mousedown', 'keydown', 'scroll'].forEach(ev =>
         document.addEventListener(ev, _resetIdleTimer, { passive: true })
       );
       if (unlocked) _resetIdleTimer(); // only start timer if currently unlocked
+
+      // …and when the app / tab comes back after more than a minute away.
+      if (window.BB && BB.pin) {
+        BB.pin.watchBackground({
+          applies: () => sessionStorage.getItem('bbPinUnlocked') === '1'
+            && ((!_hasCachedFbUser() && !!BB.storage.get('GuestPinSalt'))
+              || (_isNat && BB.storage.get('NativePinEnabled') === '1')),
+          relock: _relock,
+        });
+      }
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', _initPinLock);
@@ -2758,7 +2774,29 @@ function _handleIndexJournalNav() {
       });
     }
 
+    // Wrong PIN: count it (5 in a row locks the keypad for a while, see
+    // js/shared/pin-guard.js), say so, and clear the dots.
+    function _idxPinWrong(msgKey, msgFallback, delay) {
+      const errEl = document.getElementById('idxPinError');
+      const locked = window.BB && BB.pin ? BB.pin.recordFailure() : 0;
+      errEl.textContent = _tr(msgKey, msgFallback);
+      setTimeout(() => {
+        _idxPinBuf = '';
+        _idxRenderDots(0);
+        errEl.textContent = '';
+        if (locked && window.BB && BB.pin) BB.pin.guard(errEl);
+      }, delay || 800);
+    }
+
+    function _idxPinRight() {
+      if (window.BB && BB.pin) BB.pin.clearFailures();
+      sessionStorage.setItem('bbPinUnlocked', '1');
+      if (_afterPinUnlock()) return;
+      document.getElementById('guestPinOverlay').style.display = 'none';
+    }
+
     async function idxPinKey(digit) {
+      if (window.BB && BB.pin && BB.pin.guard(document.getElementById('idxPinError'))) return;
       if (_idxPinBuf.length >= 4) return;
       _idxPinBuf += digit;
       _idxRenderDots(_idxPinBuf.length);
@@ -2773,14 +2811,8 @@ function _handleIndexJournalNav() {
             _ss.getItem('bb_native_pin'),
             new Promise(r => setTimeout(() => r(null), 3000)),
           ]) : null;
-          if (_idxPinBuf !== stored) {
-            document.getElementById('idxPinError').textContent = _tr('pin.incorrect', 'Incorrect PIN. Try again.');
-            setTimeout(() => { _idxPinBuf = ''; _idxRenderDots(0); document.getElementById('idxPinError').textContent = ''; }, 800);
-            return;
-          }
-          sessionStorage.setItem('bbPinUnlocked', '1');
-          if (_afterPinUnlock()) return;
-          document.getElementById('guestPinOverlay').style.display = 'none';
+          if (_idxPinBuf !== stored) { _idxPinWrong('pin.incorrect', 'Incorrect PIN. Try again.'); return; }
+          _idxPinRight();
           return;
         } catch(e) {
           document.getElementById('idxPinError').textContent = _tr('pin.verifyFailed', 'Verification failed. Try again.');
@@ -2789,16 +2821,18 @@ function _handleIndexJournalNav() {
         }
       }
 
-      // Guest PIN: verify against localStorage
+      // Guest PIN: verify against the scrambled copy in localStorage (or, once,
+      // the plain PIN older builds stored — replaced by a hash right here).
       const saved = BB.storage.get('PinCode');
-      if (_idxPinBuf !== saved) {
-        document.getElementById('idxPinError').textContent = _tr('pin.incorrect', 'Incorrect PIN. Try again.');
-        setTimeout(() => {
-          _idxPinBuf = '';
-          _idxRenderDots(0);
-          document.getElementById('idxPinError').textContent = '';
-        }, 800);
-        return;
+      const entered = _idxPinBuf;
+      let check = { ok: entered === saved, legacy: true };
+      if (window.BB && BB.pin) {
+        try { check = await BB.pin.verify(entered, saved); }
+        catch (e) { _idxPinWrong('pin.verifyFailed', 'Verification failed. Try again.', 1200); return; }
+      }
+      if (!check.ok) { _idxPinWrong('pin.incorrect', 'Incorrect PIN. Try again.'); return; }
+      if (check.legacy && window.BB && BB.pin) {
+        try { BB.storage.set('PinCode', await BB.pin.hash(entered)); } catch (e) { /* keep the old copy; retried next unlock */ }
       }
 
       // Correct — derive key and store in session
@@ -2807,7 +2841,7 @@ function _handleIndexJournalNav() {
         try {
           const saltBytes = Uint8Array.from(atob(salt), c => c.charCodeAt(0));
           const keyMaterial = await crypto.subtle.importKey(
-            'raw', new TextEncoder().encode(_idxPinBuf), { name: 'PBKDF2' }, false, ['deriveKey']
+            'raw', new TextEncoder().encode(entered), { name: 'PBKDF2' }, false, ['deriveKey']
           );
           const key = await crypto.subtle.deriveKey(
             { name: 'PBKDF2', salt: saltBytes, iterations: 100000, hash: 'SHA-256' },
@@ -2817,9 +2851,7 @@ function _handleIndexJournalNav() {
           sessionStorage.setItem('bb_guest_key', btoa(String.fromCharCode(...new Uint8Array(raw))));
         } catch(e) { console.error('PIN derive failed', e); }
       }
-      sessionStorage.setItem('bbPinUnlocked', '1');
-      if (_afterPinUnlock()) return;
-      document.getElementById('guestPinOverlay').style.display = 'none';
+      _idxPinRight();
     }
 
     function idxPinDel() {
@@ -2909,6 +2941,7 @@ function _handleIndexJournalNav() {
         if (!confirm(_tr('pin.disableConfirm', 'This will disable the app PIN. Your journal data stays safe.\n\nContinue?'))) return;
         BB.storage.remove('NativePinEnabled');
         await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
+        if (window.BB && BB.pin) BB.pin.clearFailures();
         sessionStorage.setItem('bbPinUnlocked', '1');
         if (_afterPinUnlock()) return;
         document.getElementById('guestPinOverlay').style.display = 'none';
