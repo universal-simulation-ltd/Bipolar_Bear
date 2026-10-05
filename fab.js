@@ -617,11 +617,19 @@
           <!-- What an account adds, at the moment someone is deciding whether to make one. -->
           <p id="bbAuthWhy" style="margin:-6px 0 14px;font-size:0.82em;line-height:1.45;color:#6c757d;text-align:center;" data-i18n="auth.why">Optional and free. An account backs up your journal, end-to-end encrypted, so you can use it on your other devices. Anything you've logged so far comes with you.</p>
           <div id="bbAuthError" style="display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;"></div>
+          <!-- Universal ID sign-in (js/shared/universal-id.js). Steps: email → code,
+               or password; "link" proves an existing Bipolar Bear account once. -->
+          <p id="bbAuthStepText" style="display:none;margin:0 0 12px;font-size:0.85em;line-height:1.45;color:#495057;text-align:center;"></p>
           <input type="email" id="bbAuthEmail" class="bb-auth-input" placeholder="Email" data-i18n-placeholder="auth.emailPlaceholder" autocomplete="email">
-          <input type="password" id="bbAuthPassword" class="bb-auth-input" placeholder="Password" data-i18n-placeholder="auth.passwordPlaceholder" autocomplete="current-password">
-          <button id="bbAuthSubmit" style="width:100%;padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin-bottom:8px;" data-i18n="common.signIn">Sign In</button>
+          <input type="text" id="bbAuthCode" class="bb-auth-input" placeholder="123456" inputmode="numeric" autocomplete="one-time-code" maxlength="12" style="display:none;letter-spacing:0.3em;text-align:center;font-size:1.2em;">
+          <input type="password" id="bbAuthPassword" class="bb-auth-input" placeholder="Password" data-i18n-placeholder="auth.passwordPlaceholder" autocomplete="current-password" style="display:none;">
+          <button id="bbAuthSubmit" style="width:100%;padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin-bottom:8px;" data-i18n="uid.sendCode">Email me a sign-in code</button>
+          <div id="bbAuthLinks" style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px 10px;margin:-2px 0 8px;">
+            <button type="button" id="bbAuthAltA" style="background:none;border:none;color:var(--brand-primary);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
+            <button type="button" id="bbAuthAltB" style="background:none;border:none;color:var(--brand-primary);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
+          </div>
+          <p id="bbAuthUidNote" style="margin:0 0 12px;font-size:0.75em;line-height:1.4;color:#868e96;text-align:center;" data-i18n="uid.note">Bipolar Bear signs you in with Universal ID, the UNI·SIM account. New here? The same code makes your account.</p>
           <button onclick="window.closeAuthModal()" style="width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="auth.continueGuest">Continue as Guest</button>
-          <div id="bbAuthToggle" style="text-align:center;font-size:0.85em;color:#6c757d;cursor:pointer;padding:4px;">Don't have an account? <span style="color:var(--brand-primary);font-weight:600;">Sign up</span></div>
           <button onclick="(window._confirmDeleteGuestData||function(){})()" style="display:block;width:100%;margin-top:10px;background:none;border:none;color:#adb5bd;font-size:0.78em;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;text-align:center;" data-i18n="auth.deleteGuestData">🗑 Delete all guest data</button>
           <div id="bbAuthVersion" style="margin-top:8px;text-align:center;font-size:0.7em;color:#adb5bd;letter-spacing:0.02em;"></div>
         </div>
@@ -1374,47 +1382,99 @@
   // wires up optional hooks (_fabOnShowAuth, _fabOnCloseAuth, _fabOnSignOut,
   // _fabBeforeSignIn) before calling showAuthModal().
 
-  /** Whether the auth modal is currently in sign-up mode (toggled by the link). */
-  let _bbIsSignUp = false;
+  /** Which step the sign-in dialog is on: 'email' | 'code' | 'password' | 'link'. */
+  let _bbAuthStep = 'email';
+  /** The address the code went to, or whose Bipolar Bear account is being connected. */
+  let _bbAuthAddr = '';
+  /** A step's submit is in flight. */
+  let _bbAuthBusy = false;
 
   /** Translate a key, falling back to the English literal if i18n isn't ready. */
-  function _bbT(key, fallback) {
-    return (window.BB && window.BB.t) ? window.BB.t(key) : fallback;
+  function _bbT(key, fallback, vars) {
+    return (window.BB && window.BB.t) ? window.BB.t(key, vars) : fallback;
   }
 
-  /** Build the sign-in/up toggle prompt with its highlighted link word. */
-  function _bbToggleHtml(isSignUp) {
-    const prompt = isSignUp ? _bbT('auth.hasAccount', 'Already have an account?')
-                            : _bbT('auth.noAccount', "Don't have an account?");
-    const link   = isSignUp ? _bbT('auth.signInLink', 'Sign in')
-                            : _bbT('auth.signUpLink', 'Sign up');
-    return prompt + ' <span style="color:var(--brand-primary);font-weight:600;">' + link + '</span>';
+  function _bbAuthEl(id) { return document.getElementById(id); }
+
+  /** Show (or with no text, hide) the dialog's error line. */
+  function _bbAuthError(text) {
+    const err = _bbAuthEl('bbAuthError');
+    if (!err) return;
+    err.textContent = text || '';
+    err.style.display = text ? 'block' : 'none';
   }
 
   /**
-   * Show the sign-in / sign-up dialog. Resets all fields and switches to
-   * sign-in mode (reset by the toggle link). Fires `_fabOnShowAuth` if the
-   * page provided one.
+   * Lay the dialog out for one step of the Universal ID sign-in
+   * (js/shared/universal-id.js):
+   *   email    — "Email me a sign-in code" (the main route; it also makes accounts)
+   *   code     — type the 6-digit code
+   *   password — email + password: a Bipolar Bear password, else a Universal ID one
+   *   link     — this email already has a Bipolar Bear account: its password, once
+   */
+  function _bbAuthShowStep(step) {
+    _bbAuthStep = step;
+    _bbAuthError('');
+    const show = (id, on) => { const n = _bbAuthEl(id); if (n) n.style.display = on ? '' : 'none'; };
+    const title = _bbAuthEl('bbAuthTitle');
+    if (title) title.textContent = step === 'link'
+      ? _bbT('uid.linkTitle', 'Connect your Bipolar Bear account')
+      : _bbT('auth.welcome', 'Welcome to Bipolar Bear 🐻');
+    show('bbAuthWhy', step === 'email' || step === 'password');
+    const text = _bbAuthEl('bbAuthStepText');
+    if (text) {
+      text.textContent = step === 'code' ? _bbT('uid.codeSent', '', { email: _bbAuthAddr })
+                       : step === 'link' ? _bbT('uid.linkBody', '', { email: _bbAuthAddr })
+                       : '';
+      text.style.display = text.textContent ? '' : 'none';
+    }
+    show('bbAuthEmail', step === 'email' || step === 'password');
+    show('bbAuthCode', step === 'code');
+    show('bbAuthPassword', step === 'password' || step === 'link');
+    show('bbAuthUidNote', step === 'email' || step === 'password');
+    const submit = _bbAuthEl('bbAuthSubmit');
+    if (submit) {
+      submit.disabled = false;
+      submit.textContent = step === 'email' ? _bbT('uid.sendCode', 'Email me a sign-in code')
+                         : step === 'link'  ? _bbT('uid.connect', 'Connect and sign in')
+                         : _bbT('common.signIn', 'Sign In');
+    }
+    const alts = {
+      email:    ['usePassword', null],
+      code:     ['resend', 'differentEmail'],
+      password: ['useCode', null],
+      link:     ['forgotPassword', 'differentEmail'],
+    }[step];
+    ['bbAuthAltA', 'bbAuthAltB'].forEach((id, i) => {
+      const btn = _bbAuthEl(id);
+      if (!btn) return;
+      btn.dataset.action = alts[i] || '';
+      btn.textContent = alts[i] ? _bbT('uid.' + alts[i], alts[i]) : '';
+      btn.style.display = alts[i] ? '' : 'none';
+    });
+    const pw = _bbAuthEl('bbAuthPassword');
+    if (pw) {
+      pw.value = '';
+      pw.autocomplete = 'current-password';
+    }
+    const focus = step === 'code' ? 'bbAuthCode' : step === 'link' ? 'bbAuthPassword' : 'bbAuthEmail';
+    setTimeout(() => { const n = _bbAuthEl(focus); if (n && n.offsetParent) n.focus(); }, 30);
+  }
+
+  /**
+   * Show the sign-in dialog at its first step, fields cleared. Fires
+   * `_fabOnShowAuth` if the page provided one.
    */
   window.showAuthModal = function () {
-    _bbIsSignUp = false;
-    const title  = document.getElementById('bbAuthTitle');
-    const submit = document.getElementById('bbAuthSubmit');
-    const toggle = document.getElementById('bbAuthToggle');
-    const err    = document.getElementById('bbAuthError');
-    const email  = document.getElementById('bbAuthEmail');
-    const pw     = document.getElementById('bbAuthPassword');
-    if (title)  title.textContent = _bbT('auth.welcome', 'Welcome to Bipolar Bear 🐻');
-    const why = document.getElementById('bbAuthWhy');
+    const why = _bbAuthEl('bbAuthWhy');
     if (why) why.textContent = _bbT('auth.why', why.textContent);
-    if (submit) submit.textContent = _bbT('common.signIn', 'Sign In');
-    if (toggle) toggle.innerHTML = _bbToggleHtml(false);
-    if (err)    { err.style.display = 'none'; err.textContent = ''; }
-    if (email)  email.value = '';
-    if (pw)     pw.value = '';
-    const verEl = document.getElementById('bbAuthVersion');
+    ['bbAuthEmail', 'bbAuthCode', 'bbAuthPassword'].forEach(id => { const n = _bbAuthEl(id); if (n) n.value = ''; });
+    _bbAuthAddr = '';
+    _bbAuthBusy = false;
+    _bbAuthShowStep('email');
+    const verEl = _bbAuthEl('bbAuthVersion');
     if (verEl) verEl.textContent = (window.BB && window.BB.versionLabel) ? window.BB.versionLabel() : '';
-    const modal = document.getElementById('bbAuthModal');
+    const modal = _bbAuthEl('bbAuthModal');
     if (modal) modal.classList.add('active');
     if (typeof window._fabOnShowAuth === 'function') window._fabOnShowAuth();
   };
@@ -1456,6 +1516,13 @@
     if (emailToggle) emailToggle.style.display = '';
     if (newEmailEl)  newEmailEl.value  = '';
     if (emailPassEl) emailPassEl.value = '';
+    // A Universal ID account has no Bipolar Bear password, and its email is
+    // the Universal ID's (kept in step at each sign-in): nothing to change here.
+    const _uidOnly = !!(user && window.BB && window.BB.uid && window.BB.uid.isUidOnly(user));
+    ['bbAccountPassSection', 'bbAccountEmailSection'].forEach(id => {
+      const n = document.getElementById(id);
+      if (n) n.style.display = _uidOnly ? 'none' : '';
+    });
     const langSel = document.getElementById('bbLangSelect');
     if (langSel && window.BB && window.BB.i18n) langSel.value = window.BB.i18n.getLang();
     // Protected demo/owner account can't be deleted — mirrors the same guard
@@ -1587,56 +1654,167 @@
       });
   };
 
+  /** A Universal ID failure, in words. */
+  function _bbUidFailureText(reasonOrCode, retryAfter) {
+    switch (reasonOrCode) {
+      case 'bad_email':       return _bbT('uid.err.badEmail', 'Enter your email address.');
+      case 'invalid_code':    return _bbT('uid.err.badCode', 'That code is wrong or has expired. Check it, or send a new one.');
+      case 'bad_credentials': return _bbT('uid.err.badPassword', 'That email and password do not match.');
+      case 'rate_limited':    return retryAfter
+        ? _bbT('uid.err.waitSeconds', '', { n: retryAfter })
+        : _bbT('uid.err.tooMany', 'Too many tries. Wait a minute and try again.');
+      case 'network': case 'unavailable':
+        return _bbT('uid.err.network', 'Could not reach the sign-in service. Check your connection and try again.');
+      case 'unauthenticated': case 'no-session':
+        return _bbT('uid.err.sessionEnded', 'Your sign-in ran out. Start again.');
+      case 'already-exists':  return _bbT('uid.err.taken', '');
+      default:                return _bbT('uid.err.generic', 'Something went wrong. Try again.');
+    }
+  }
+
+  /** Close the dialog after a sign-in, telling the page about a brand-new account. */
+  function _bbAuthDone(created) {
+    window.closeAuthModal();
+    // Brand-new account: let the page react (index.js opens the profile popup
+    // to surface the customise toggles).
+    if (created && typeof window._fabOnSignUp === 'function') window._fabOnSignUp();
+  }
+
+  /** The Universal ID session is live: sign in to Bipolar Bear with it. */
+  async function _bbAuthFinishUid() {
+    const r = await window.BB.uid.finishSignIn();
+    if (r.status === 'link') {
+      _bbAuthAddr = r.email;
+      _bbAuthShowStep('link');
+      return;
+    }
+    _bbAuthDone(r.created);
+  }
+
+  /** Hand the typed password to the journal (it unlocks the journal key), or withdraw it. */
+  function _bbAuthOfferPassword(password) {
+    if (typeof window._fabBeforeSignIn === 'function') window._fabBeforeSignIn(password);
+  }
+
+  const _BB_WRONG_PASSWORD = ['auth/invalid-credential', 'auth/wrong-password', 'auth/user-not-found',
+    'auth/invalid-login-credentials', 'auth/invalid-email'];
+
+  /** Run the current step. */
+  async function _bbAuthSubmit() {
+    if (_bbAuthBusy) return;
+    const _fb = window.firebase;
+    if (!_fb || !_fb.auth || !window.BB || !window.BB.uid) return;
+    const auth  = _fb.auth();
+    const email = (_bbAuthEl('bbAuthEmail').value || '').trim();
+    const code  = (_bbAuthEl('bbAuthCode').value || '').trim();
+    const pw    = _bbAuthEl('bbAuthPassword').value || '';
+    const submit = _bbAuthEl('bbAuthSubmit');
+    _bbAuthError('');
+    _bbAuthBusy = true;
+    if (submit) submit.disabled = true;
+    try {
+      if (_bbAuthStep === 'email') {
+        const r = await window.BB.uid.sendCode(email);
+        if (!r.ok) { _bbAuthError(_bbUidFailureText(r.reason, r.retryAfter)); return; }
+        _bbAuthAddr = email;
+        _bbAuthEl('bbAuthCode').value = '';
+        _bbAuthShowStep('code');
+      } else if (_bbAuthStep === 'code') {
+        const r = await window.BB.uid.verifyCode(_bbAuthAddr, code);
+        if (!r.ok) { _bbAuthError(_bbUidFailureText(r.reason, r.retryAfter)); return; }
+        await _bbAuthFinishUid();
+      } else if (_bbAuthStep === 'password') {
+        if (!email || !pw) { _bbAuthError(_bbUidFailureText('bad_credentials')); return; }
+        // Most people with a password have a Bipolar Bear one: try that first
+        // (it also opens the journal key), then a Universal ID password.
+        _bbAuthOfferPassword(pw);
+        try {
+          await auth.signInWithEmailAndPassword(email, pw);
+          _bbAuthDone(false);
+          return;
+        } catch (e) {
+          _bbAuthOfferPassword('');
+          if (_BB_WRONG_PASSWORD.indexOf(e.code) === -1) { _bbAuthError(e.message); return; }
+        }
+        const r = await window.BB.uid.signInWithPassword(email, pw);
+        if (!r.ok) { _bbAuthError(_bbUidFailureText(r.reason, r.retryAfter)); return; }
+        await _bbAuthFinishUid();
+      } else if (_bbAuthStep === 'link') {
+        if (!pw) return;
+        _bbAuthOfferPassword(pw);
+        try {
+          await auth.signInWithEmailAndPassword(_bbAuthAddr, pw);
+        } catch (e) {
+          _bbAuthOfferPassword('');
+          _bbAuthError(_BB_WRONG_PASSWORD.indexOf(e.code) !== -1
+            ? _bbT('uid.err.wrongOldPassword', 'That is not the password for this Bipolar Bear account.')
+            : e.message);
+          return;
+        }
+        // Signed in to the old account either way; joining it to Universal ID
+        // is retried the next time they use a code if this fails.
+        try { await window.BB.uid.linkCurrentAccount(); }
+        catch (e) { console.warn('[auth] Universal ID link failed', e); }
+        _bbAuthDone(false);
+      }
+    } catch (e) {
+      _bbAuthError(_bbUidFailureText(e && e.code));
+    } finally {
+      _bbAuthBusy = false;
+      if (submit) submit.disabled = false;
+    }
+  }
+
+  /** The two small links under the button. */
+  async function _bbAuthAlt(action) {
+    _bbAuthError('');
+    if (action === 'usePassword') {
+      _bbAuthShowStep('password');
+    } else if (action === 'useCode') {
+      _bbAuthShowStep('email');
+    } else if (action === 'differentEmail') {
+      if (_bbAuthStep === 'link' && window.BB && window.BB.uid) window.BB.uid.signOut();
+      _bbAuthShowStep('email');
+    } else if (action === 'resend') {
+      const r = await window.BB.uid.sendCode(_bbAuthAddr);
+      _bbAuthError(r.ok ? '' : _bbUidFailureText(r.reason, r.retryAfter));
+      if (r.ok) {
+        const text = _bbAuthEl('bbAuthStepText');
+        if (text) text.textContent = _bbT('uid.codeResent', '', { email: _bbAuthAddr });
+      }
+    } else if (action === 'forgotPassword') {
+      try {
+        await window.firebase.auth().sendPasswordResetEmail(_bbAuthAddr);
+        const text = _bbAuthEl('bbAuthStepText');
+        if (text) text.textContent = _bbT('uid.resetSent', '', { email: _bbAuthAddr });
+      } catch (e) {
+        _bbAuthError(e.message || _bbUidFailureText('other'));
+      }
+    }
+  }
+
   /**
-   * Attach the toggle-mode and submit handlers for the auth modal. Called
+   * Attach the submit, link and Enter-key handlers for the auth modal. Called
    * once from `_injectHTML` after the modal markup is in the DOM.
-   *
-   * Submit behaviour:
-   *   - Sign in: Firebase `signInWithEmailAndPassword`, then close modal.
-   *   - Sign up: createUser, then close modal. Email verification is handled
-   *     on the Bipolar Anonymous board, not here.
    */
   function _bbWireAuthListeners() {
-    const toggle = document.getElementById('bbAuthToggle');
-    const submit = document.getElementById('bbAuthSubmit');
-    if (toggle) {
-      toggle.addEventListener('click', function () {
-        _bbIsSignUp = !_bbIsSignUp;
-        const titleEl  = document.getElementById('bbAuthTitle');
-        const submitEl = document.getElementById('bbAuthSubmit');
-        const errEl    = document.getElementById('bbAuthError');
-        if (titleEl)  titleEl.textContent  = _bbIsSignUp ? _bbT('auth.createAccount', 'Create Account') : _bbT('auth.welcome', 'Welcome to Bipolar Bear 🐻');
-        if (submitEl) submitEl.textContent = _bbIsSignUp ? _bbT('common.signUp', 'Sign Up') : _bbT('common.signIn', 'Sign In');
-        toggle.innerHTML = _bbToggleHtml(_bbIsSignUp);
-        if (errEl) errEl.style.display = 'none';
-      });
-    }
-    if (submit) {
-      submit.addEventListener('click', async function () {
-        const _fb = window.firebase;
-        if (!_fb || !_fb.auth) return;
-        const auth     = _fb.auth();
-        const email    = (document.getElementById('bbAuthEmail').value    || '').trim();
-        const password =  document.getElementById('bbAuthPassword').value || '';
-        const errEl    =  document.getElementById('bbAuthError');
-        if (errEl) errEl.style.display = 'none';
-        if (typeof window._fabBeforeSignIn === 'function') window._fabBeforeSignIn();
-        try {
-          if (_bbIsSignUp) {
-            await auth.createUserWithEmailAndPassword(email, password);
-            window.closeAuthModal();
-            // Brand-new account: let the page react (index.js opens the
-            // profile popup to surface the customise toggles).
-            if (typeof window._fabOnSignUp === 'function') window._fabOnSignUp();
-          } else {
-            await auth.signInWithEmailAndPassword(email, password);
-            window.closeAuthModal();
-          }
-        } catch (e) {
-          if (errEl) { errEl.textContent = e.message; errEl.style.display = 'block'; }
-        }
-      });
-    }
+    const submit = _bbAuthEl('bbAuthSubmit');
+    if (submit) submit.addEventListener('click', _bbAuthSubmit);
+    ['bbAuthAltA', 'bbAuthAltB'].forEach(id => {
+      const btn = _bbAuthEl(id);
+      if (btn) btn.addEventListener('click', () => _bbAuthAlt(btn.dataset.action));
+    });
+    ['bbAuthEmail', 'bbAuthCode', 'bbAuthPassword'].forEach(id => {
+      const n = _bbAuthEl(id);
+      if (n) n.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); _bbAuthSubmit(); } });
+    });
+    // Mail apps and SMS autofill hand over "123 456" as often as the six digits.
+    const code = _bbAuthEl('bbAuthCode');
+    if (code) code.addEventListener('input', () => {
+      const digits = code.value.replace(/\D/g, '');
+      if (digits !== code.value) code.value = digits;
+      if (digits.length === 6 && _bbAuthStep === 'code') _bbAuthSubmit();
+    });
   }
 
   // ── Hide permanently ──────────────────────────────────────────────────────

@@ -1434,3 +1434,172 @@ exports.sweepAnonMoodSeen = onSchedule(
     console.log(`[sweepAnonMoodSeen] removed ${removed} markers up to ${cutoff}`);
   }
 );
+
+// ── Universal ID ─────────────────────────────────────────────────────────────
+// The UNI·SIM sign-in in front of the Bipolar Bear account (2026-10-05). The
+// client (js/shared/universal-id.js) signs in to Universal ID — Supabase Auth on
+// the shared UNI·SIM project — and sends that session's access token here.
+// `uidSignIn` checks it with Supabase and answers with a Firebase custom token
+// for the Bipolar Bear account it belongs to. Everything underneath (Firestore,
+// its rules, the journal's end-to-end encryption) is unchanged.
+//
+// The Supabase user id ↔ Firebase uid join lives ONLY here, in `uidLinks`
+// (Cloud Functions only — the rules deny every client). Supabase is never told
+// that the person uses Bipolar Bear.
+//
+// ⚠️ An existing Bipolar Bear account with the same email is NEVER handed over
+// on the email alone: its personal details are stored unencrypted, and an
+// address may have been registered by someone who never owned it. The person
+// signs in with its old password once, and `uidLink` joins the two.
+//
+// Minting custom tokens needs the runtime service account to hold
+// roles/iam.serviceAccountTokenCreator on itself (DOCS.md §2.17).
+
+const SUPABASE_URL      = 'https://rygfxgalojojppxmhddo.supabase.co';
+// The PUBLISHABLE anon key, the same one every suite web bundle ships.
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5Z2Z4Z2Fsb2pvanBweG1oZGRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg3NTY4MjUsImV4cCI6MjA5NDMzMjgyNX0.hLy_vt9vY_rdPKF3nL32yAuMCD604E3CH5VM7D7CaNE';
+const UID_LINKS         = 'uidLinks';
+/** How recent the Bipolar Bear password sign-in behind `uidLink` must be. */
+const LINK_PASSWORD_MAX_AGE_S = 15 * 60;
+
+/**
+ * The Universal ID user behind an access token, asked of Supabase itself (so a
+ * revoked or signed-out session is refused). Only a real account with a
+ * confirmed email passes.
+ * @returns {Promise<{id: string, email: string}>}
+ */
+async function universalIdUser(token) {
+  if (typeof token !== 'string' || token.length < 20 || token.length > 8192) {
+    throw new HttpsError('invalid-argument', 'A Universal ID session is required.');
+  }
+  let res;
+  try {
+    res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    });
+  } catch (e) {
+    throw new HttpsError('unavailable', 'Universal ID could not be reached. Try again.');
+  }
+  if (res.status === 401 || res.status === 403) {
+    throw new HttpsError('unauthenticated', 'Your Universal ID sign-in has ended. Sign in again.');
+  }
+  if (!res.ok) throw new HttpsError('unavailable', 'Universal ID could not be reached. Try again.');
+  const u = await res.json();
+  const email = String(u.email || '').trim().toLowerCase();
+  if (!u.id || u.is_anonymous || !email || !(u.email_confirmed_at || u.confirmed_at)) {
+    throw new HttpsError('failed-precondition', 'This Universal ID has no confirmed email address.');
+  }
+  return { id: String(u.id), email };
+}
+
+/** A Firebase user, or null when there is no such user. */
+async function firebaseUserOrNull(lookup) {
+  try { return await lookup(); }
+  catch (e) { if (e.code === 'auth/user-not-found') return null; throw e; }
+}
+
+function hasPasswordSignIn(user) {
+  return (user.providerData || []).some((p) => p.providerId === 'password');
+}
+
+function writeUidLink(supabaseId, firebaseUid, email, via) {
+  return db.collection(UID_LINKS).doc(supabaseId).set({
+    firebaseUid, email, via, linkedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+}
+
+/**
+ * Keep the Firebase account's email in step with the Universal ID it is joined
+ * to (Universal ID lets people change theirs), and marked verified — Supabase
+ * proved it. The Firestore rules and the Bipolar Anonymous board read both.
+ */
+async function syncFirebaseEmail(fbUser, email) {
+  try {
+    if ((fbUser.email || '').toLowerCase() !== email) {
+      await admin.auth().updateUser(fbUser.uid, { email, emailVerified: true });
+    } else if (!fbUser.emailVerified) {
+      await admin.auth().updateUser(fbUser.uid, { emailVerified: true });
+    }
+  } catch (e) {
+    // Another Bipolar Bear account already has the new address: leave it be.
+    if (e.code !== 'auth/email-already-exists') console.warn('[uidSignIn] email sync failed', e.code || e);
+  }
+}
+
+exports.uidSignIn = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    const person  = await universalIdUser(request.data && request.data.token);
+    const linkRef = db.collection(UID_LINKS).doc(person.id);
+
+    // Twice at most: a parallel call can create the account between our look
+    // and our create, and the second pass then finds it.
+    for (let pass = 0; pass < 2; pass++) {
+      const link = await linkRef.get();
+      if (link.exists) {
+        const fb = await firebaseUserOrNull(() => admin.auth().getUser(link.data().firebaseUid));
+        if (fb) {
+          await syncFirebaseEmail(fb, person.email);
+          return { status: 'ok', customToken: await admin.auth().createCustomToken(fb.uid), created: false };
+        }
+        // The Bipolar Bear account was deleted since: start again below.
+        await linkRef.delete();
+      }
+
+      const existing = await firebaseUserOrNull(() => admin.auth().getUserByEmail(person.email));
+      if (existing) {
+        if (hasPasswordSignIn(existing)) return { status: 'link', email: person.email };
+        // No password to prove, so this function made it — but only adopt it
+        // if no OTHER Universal ID is joined to it (someone who has since
+        // changed their Universal ID email must not lose it to the address's
+        // next owner).
+        const others = await db.collection(UID_LINKS).where('firebaseUid', '==', existing.uid).limit(1).get();
+        if (!others.empty) {
+          throw new HttpsError('already-exists',
+            'This email belongs to another Bipolar Bear account. Email inbox@unisim.co.uk and we will sort it out.');
+        }
+        await writeUidLink(person.id, existing.uid, person.email, 'adopted');
+        continue;
+      }
+
+      try {
+        const created = await admin.auth().createUser({ email: person.email, emailVerified: true });
+        await writeUidLink(person.id, created.uid, person.email, 'created');
+        return { status: 'ok', customToken: await admin.auth().createCustomToken(created.uid), created: true };
+      } catch (e) {
+        if (e.code !== 'auth/email-already-exists') throw e;
+      }
+    }
+    throw new HttpsError('aborted', 'Sign-in clashed with another attempt. Try again.');
+  }
+);
+
+// Join the Bipolar Bear account signed in right now — by its password, moments
+// ago — to the caller's Universal ID. Any other Universal ID joined to the same
+// account is dropped: the password has just proved who owns it.
+exports.uidLink = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError('unauthenticated', 'Sign in with your Bipolar Bear password first.');
+    }
+    const person = await universalIdUser(request.data && request.data.token);
+    const claims = request.auth.token || {};
+    const viaPassword = claims.firebase && claims.firebase.sign_in_provider === 'password';
+    const ageS = Math.floor(Date.now() / 1000) - Number(claims.auth_time || 0);
+    if (!viaPassword || ageS > LINK_PASSWORD_MAX_AGE_S) {
+      throw new HttpsError('permission-denied', 'Sign in with your Bipolar Bear password first.');
+    }
+    const fb = await admin.auth().getUser(request.auth.uid);
+    if ((fb.email || '').toLowerCase() !== person.email) {
+      throw new HttpsError('permission-denied', 'This Bipolar Bear account has a different email address.');
+    }
+    const others = await db.collection(UID_LINKS).where('firebaseUid', '==', fb.uid).get();
+    const batch = db.batch();
+    others.docs.forEach((d) => { if (d.id !== person.id) batch.delete(d.ref); });
+    await batch.commit();
+    await writeUidLink(person.id, fb.uid, person.email, 'password');
+    if (!fb.emailVerified) await admin.auth().updateUser(fb.uid, { emailVerified: true });
+    return { status: 'ok' };
+  }
+);
