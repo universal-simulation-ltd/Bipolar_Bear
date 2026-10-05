@@ -1572,6 +1572,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         const b = document.getElementById(id);
         if (b && b.parentElement) b.parentElement.style.display = _uidOnly ? 'none' : '';
       });
+      const _uidLink = document.getElementById('idxUidLink');
+      if (_uidLink) _uidLink.style.display = (_uidOnly || (window.BB && BB.uid && BB.uid.hasSession())) ? 'block' : 'none';
       const langSel = document.getElementById('idxLangSelect');
       if (langSel && window.BB && window.BB.i18n) langSel.value = window.BB.i18n.getLang();
       const verEl = document.getElementById('idxProfileVersion');

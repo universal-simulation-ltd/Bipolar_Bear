@@ -684,6 +684,8 @@
                from wherever account management lives. This modal is the only
                account UI on survival-kit, and the one reviewers find first on
                index/journal, so the entry point belongs here. -->
+          <!-- Universal ID accounts: the password, email and two-step live on the UNI·SIM Hub. -->
+          <a id="bbAccountUidLink" href="https://app.unisim.co.uk/profile" target="_blank" rel="noopener" style="display:none;width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;text-align:center;text-decoration:none;-webkit-tap-highlight-color:transparent;" data-i18n="uid.manage">Manage your Universal ID ↗</a>
           <div id="bbAccountDeleteSection" style="margin-bottom:10px;padding-top:10px;border-top:1px solid #e9ecef;">
             <button onclick="window._bbAccountDelete()" style="width:100%;padding:12px;background:rgba(201,42,42,0.08);color:#c92a2a;border:2px solid #c92a2a;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.deleteAccount">🗑️ Delete account</button>
           </div>
@@ -1411,25 +1413,27 @@
    *   code     — type the 6-digit code
    *   password — email + password: a Bipolar Bear password, else a Universal ID one
    *   link     — this email already has a Bipolar Bear account: its password, once
+   *   twostep  — the Universal ID has an authenticator: its 6-digit code
    */
   function _bbAuthShowStep(step) {
     _bbAuthStep = step;
     _bbAuthError('');
     const show = (id, on) => { const n = _bbAuthEl(id); if (n) n.style.display = on ? '' : 'none'; };
     const title = _bbAuthEl('bbAuthTitle');
-    if (title) title.textContent = step === 'link'
-      ? _bbT('uid.linkTitle', 'Connect your Bipolar Bear account')
+    if (title) title.textContent = step === 'link' ? _bbT('uid.linkTitle', 'Connect your Bipolar Bear account')
+      : step === 'twostep' ? _bbT('uid.twoStepTitle', 'Two-step verification')
       : _bbT('auth.welcome', 'Welcome to Bipolar Bear 🐻');
     show('bbAuthWhy', step === 'email' || step === 'password');
     const text = _bbAuthEl('bbAuthStepText');
     if (text) {
       text.textContent = step === 'code' ? _bbT('uid.codeSent', '', { email: _bbAuthAddr })
                        : step === 'link' ? _bbT('uid.linkBody', '', { email: _bbAuthAddr })
+                       : step === 'twostep' ? _bbT('uid.twoStepBody', '')
                        : '';
       text.style.display = text.textContent ? '' : 'none';
     }
     show('bbAuthEmail', step === 'email' || step === 'password');
-    show('bbAuthCode', step === 'code');
+    show('bbAuthCode', step === 'code' || step === 'twostep');
     show('bbAuthPassword', step === 'password' || step === 'link');
     show('bbAuthUidNote', step === 'email' || step === 'password');
     const submit = _bbAuthEl('bbAuthSubmit');
@@ -1437,6 +1441,7 @@
       submit.disabled = false;
       submit.textContent = step === 'email' ? _bbT('uid.sendCode', 'Email me a sign-in code')
                          : step === 'link'  ? _bbT('uid.connect', 'Connect and sign in')
+                         : step === 'twostep' ? _bbT('common.continue', 'Continue')
                          : _bbT('common.signIn', 'Sign In');
     }
     const alts = {
@@ -1444,6 +1449,7 @@
       code:     ['resend', 'differentEmail'],
       password: ['useCode', null],
       link:     ['forgotPassword', 'differentEmail'],
+      twostep:  ['differentEmail', null],
     }[step];
     ['bbAuthAltA', 'bbAuthAltB'].forEach((id, i) => {
       const btn = _bbAuthEl(id);
@@ -1457,7 +1463,7 @@
       pw.value = '';
       pw.autocomplete = 'current-password';
     }
-    const focus = step === 'code' ? 'bbAuthCode' : step === 'link' ? 'bbAuthPassword' : 'bbAuthEmail';
+    const focus = (step === 'code' || step === 'twostep') ? 'bbAuthCode' : step === 'link' ? 'bbAuthPassword' : 'bbAuthEmail';
     setTimeout(() => { const n = _bbAuthEl(focus); if (n && n.offsetParent) n.focus(); }, 30);
   }
 
@@ -1523,6 +1529,8 @@
       const n = document.getElementById(id);
       if (n) n.style.display = _uidOnly ? 'none' : '';
     });
+    const uidLink = document.getElementById('bbAccountUidLink');
+    if (uidLink) uidLink.style.display = (_uidOnly || (window.BB && window.BB.uid && window.BB.uid.hasSession())) ? 'block' : 'none';
     const langSel = document.getElementById('bbLangSelect');
     if (langSel && window.BB && window.BB.i18n) langSel.value = window.BB.i18n.getLang();
     // Protected demo/owner account can't be deleted — mirrors the same guard
@@ -1668,6 +1676,7 @@
       case 'unauthenticated': case 'no-session':
         return _bbT('uid.err.sessionEnded', 'Your sign-in ran out. Start again.');
       case 'already-exists':  return _bbT('uid.err.taken', '');
+      case 'bad_two_step':    return _bbT('uid.err.badTwoStep', 'That code did not work. Type the newest one from your authenticator app.');
       default:                return _bbT('uid.err.generic', 'Something went wrong. Try again.');
     }
   }
@@ -1680,9 +1689,30 @@
     if (created && typeof window._fabOnSignUp === 'function') window._fabOnSignUp();
   }
 
+  /**
+   * If the Universal ID has an authenticator still owed a code, start that
+   * step and say so (true); otherwise false.
+   */
+  async function _bbAuthBeginTwoStep() {
+    const factor = await window.BB.uid.twoStepFactor();
+    if (!factor) return false;
+    await window.BB.uid.startTwoStep(factor);
+    _bbAuthEl('bbAuthCode').value = '';
+    _bbAuthShowStep('twostep');
+    return true;
+  }
+
   /** The Universal ID session is live: sign in to Bipolar Bear with it. */
   async function _bbAuthFinishUid() {
-    const r = await window.BB.uid.finishSignIn();
+    if (await _bbAuthBeginTwoStep()) return;
+    let r;
+    try {
+      r = await window.BB.uid.finishSignIn();
+    } catch (e) {
+      // The server is the lock: it refuses a session that skipped two-step.
+      if (e && e.details && e.details.reason === 'two-step' && await _bbAuthBeginTwoStep()) return;
+      throw e;
+    }
     if (r.status === 'link') {
       _bbAuthAddr = r.email;
       _bbAuthShowStep('link');
@@ -1722,6 +1752,14 @@
       } else if (_bbAuthStep === 'code') {
         const r = await window.BB.uid.verifyCode(_bbAuthAddr, code);
         if (!r.ok) { _bbAuthError(_bbUidFailureText(r.reason, r.retryAfter)); return; }
+        await _bbAuthFinishUid();
+      } else if (_bbAuthStep === 'twostep') {
+        const r = await window.BB.uid.verifyTwoStep(code);
+        if (!r.ok) {
+          _bbAuthEl('bbAuthCode').value = '';
+          _bbAuthError(_bbUidFailureText(r.reason === 'invalid_code' ? 'bad_two_step' : r.reason, r.retryAfter));
+          return;
+        }
         await _bbAuthFinishUid();
       } else if (_bbAuthStep === 'password') {
         if (!email || !pw) { _bbAuthError(_bbUidFailureText('bad_credentials')); return; }
@@ -1773,7 +1811,7 @@
     } else if (action === 'useCode') {
       _bbAuthShowStep('email');
     } else if (action === 'differentEmail') {
-      if (_bbAuthStep === 'link' && window.BB && window.BB.uid) window.BB.uid.signOut();
+      if ((_bbAuthStep === 'link' || _bbAuthStep === 'twostep') && window.BB && window.BB.uid) window.BB.uid.signOut();
       _bbAuthShowStep('email');
     } else if (action === 'resend') {
       const r = await window.BB.uid.sendCode(_bbAuthAddr);
@@ -1813,7 +1851,7 @@
     if (code) code.addEventListener('input', () => {
       const digits = code.value.replace(/\D/g, '');
       if (digits !== code.value) code.value = digits;
-      if (digits.length === 6 && _bbAuthStep === 'code') _bbAuthSubmit();
+      if (digits.length === 6 && (_bbAuthStep === 'code' || _bbAuthStep === 'twostep')) _bbAuthSubmit();
     });
   }
 

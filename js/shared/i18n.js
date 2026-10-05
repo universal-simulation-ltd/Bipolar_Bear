@@ -346,6 +346,9 @@
         why: "Optional and free. An account backs up your journal, end-to-end encrypted, so you can use it on your other devices. Anything you've logged so far comes with you.",
       },
       uid: {
+        twoStepTitle: "Two-step verification",
+        twoStepBody: "Your Universal ID has two-step verification on. Open your authenticator app and type the 6-digit code it shows for UNI·SIM.",
+        manage: "Manage your Universal ID ↗",
         sendCode: "Email me a sign-in code",
         note: "Bipolar Bear signs you in with Universal ID, the UNI·SIM account. New here? The same code makes your account.",
         usePassword: "Use a password instead",
@@ -361,6 +364,7 @@
         resetSent: "We've emailed {email} a link to set a new password. Your journal keeps its old password: you'll be asked for that one when you open it on a new device.",
         deleteSignInAgain: "Please sign out, sign in again, and then delete your account.",
         err: {
+          badTwoStep: "That code didn't work. Codes change every 30 seconds, so type the newest one.",
           badEmail: "Enter your email address.",
           badCode: "That code is wrong or has run out. Check it, or send a new one.",
           badPassword: "That email and password don't match.",
@@ -2382,6 +2386,9 @@
         why: "Opcional y gratis. Una cuenta guarda una copia de tu diario, cifrada de extremo a extremo, para que puedas usarlo en tus otros dispositivos. Lo que ya hayas registrado se viene contigo.",
       },
       uid: {
+        twoStepTitle: "Verificación en dos pasos",
+        twoStepBody: "Tu Universal ID tiene activada la verificación en dos pasos. Abre tu app de autenticación y escribe el código de 6 cifras que muestra para UNI·SIM.",
+        manage: "Gestionar tu Universal ID ↗",
         sendCode: "Envíame un código para entrar",
         note: "Bipolar Bear te identifica con Universal ID, la cuenta de UNI·SIM. ¿Eres nuevo? El mismo código crea tu cuenta.",
         usePassword: "Usar una contraseña",
@@ -2397,6 +2404,7 @@
         resetSent: "Hemos enviado a {email} un enlace para crear una contraseña nueva. Tu diario conserva su contraseña antigua: te la pediremos cuando lo abras en un dispositivo nuevo.",
         deleteSignInAgain: "Cierra sesión, vuelve a entrar y luego elimina tu cuenta.",
         err: {
+          badTwoStep: "Ese código no ha funcionado. Los códigos cambian cada 30 segundos: escribe el más reciente.",
           badEmail: "Escribe tu correo electrónico.",
           badCode: "Ese código no es correcto o ha caducado. Revísalo o pide uno nuevo.",
           badPassword: "El correo y la contraseña no coinciden.",
@@ -4382,6 +4390,9 @@
       pin: { title: 'Entre ton PIN pour continuer', moreInfo: '🔐 Plus d\'infos', whyTitle: '🔐 Pourquoi y a-t-il un PIN ?', forgot: 'PIN oublié ?', tapToWake: 'Appuyer pour réveiller', incorrect: 'PIN incorrect. Réessaie.', gotIt: 'Compris', verifyFailed: 'Échec de la vérification. Réessaie.', locked: 'Trop d\'essais. Réessaie dans {time}.', e2ee1: 'Tes entrées de journal sont <strong>chiffrées de bout en bout</strong> — brouillées avant de quitter ton appareil. Toi seul peux les lire. Même pas nous.', e2ee2: 'Vois cela comme un journal verrouillé qui ne s\'ouvre qu\'avec ta combinaison — ton <strong>mot de passe + PIN ensemble</strong> forment cette clé.', e2ee3: 'Pour les données personnelles et de santé mentale, ce niveau de confidentialité compte vraiment. Tes entrées restent privées, toujours.', disableConfirm: 'Cela désactivera le PIN de l\'app. Les données de ton journal restent en sécurité.\n\nContinuer ?', resetConfirm1: 'Ton PIN est la clé de chiffrement de ton journal. Sans lui, tes entrées ne peuvent pas être récupérées.\n\nCela supprimera définitivement toutes tes données et tu repartiras de zéro.\n\nEs-tu absolument sûr ?', resetConfirm2: 'Dernière chance — toutes les entrées et données seront supprimées. Continuer ?' },
       auth: { why: "Facultatif et gratuit. Un compte sauvegarde ton journal, chiffré de bout en bout, pour que tu puisses l'utiliser sur tes autres appareils. Ce que tu as déjà noté te suit.", welcome: 'Bienvenue sur Bipolar Bear 🐻', createAccount: 'Créer un compte', noAccount: 'Pas de compte ?', hasAccount: 'Déjà un compte ?', signUpLink: "S'inscrire", signInLink: 'Se connecter', continueGuest: 'Continuer en tant qu\'invité', emailPlaceholder: 'E-mail', passwordPlaceholder: 'Mot de passe', deleteGuestData: '🗑 Supprimer les données invité' },
       uid: {
+        twoStepTitle: "Validation en deux étapes",
+        twoStepBody: "Ton Universal ID a la validation en deux étapes activée. Ouvre ton app d'authentification et saisis le code à 6 chiffres affiché pour UNI·SIM.",
+        manage: "Gérer ton Universal ID ↗",
         sendCode: "M'envoyer un code de connexion",
         note: "Bipolar Bear te connecte avec Universal ID, le compte UNI·SIM. Nouveau ici ? Le même code crée ton compte.",
         usePassword: "Utiliser un mot de passe",
@@ -4397,6 +4408,7 @@
         resetSent: "Nous avons envoyé à {email} un lien pour choisir un nouveau mot de passe. Ton journal garde son ancien mot de passe : il te sera demandé quand tu l'ouvriras sur un nouvel appareil.",
         deleteSignInAgain: "Déconnecte-toi, reconnecte-toi, puis supprime ton compte.",
         err: {
+          badTwoStep: "Ce code n'a pas marché. Les codes changent toutes les 30 secondes : saisis le plus récent.",
           badEmail: "Saisis ton adresse e-mail.",
           badCode: "Ce code est faux ou a expiré. Vérifie-le ou demandes-en un nouveau.",
           badPassword: "L'adresse et le mot de passe ne correspondent pas.",
@@ -6382,6 +6394,9 @@
       pin: { title: 'PIN eingeben, um fortzufahren', moreInfo: '🔐 Mehr Info', whyTitle: '🔐 Warum gibt es einen PIN?', forgot: 'PIN vergessen?', tapToWake: 'Tippen zum Aufwecken', incorrect: 'Falscher PIN. Versuche es erneut.', gotIt: 'Verstanden', verifyFailed: 'Überprüfung fehlgeschlagen. Versuche es erneut.', locked: 'Zu viele Versuche. Versuche es in {time} erneut.', e2ee1: 'Deine Tagebucheinträge sind <strong>Ende-zu-Ende-verschlüsselt</strong> — verschlüsselt, bevor sie dein Gerät verlassen. Nur du kannst sie lesen. Nicht einmal wir.', e2ee2: 'Stell es dir wie ein abgeschlossenes Tagebuch vor, das sich nur mit deiner Kombination öffnet — dein <strong>Passwort + PIN zusammen</strong> bilden diesen Schlüssel.', e2ee3: 'Für persönliche und psychische Gesundheitsdaten ist dieses Maß an Privatsphäre wirklich wichtig. Deine Einträge bleiben immer privat.', disableConfirm: 'Dadurch wird der App-PIN deaktiviert. Deine Tagebuchdaten bleiben sicher.\n\nFortfahren?', resetConfirm1: 'Dein PIN ist der Verschlüsselungsschlüssel für dein Tagebuch. Ohne ihn können deine Einträge nicht wiederhergestellt werden.\n\nDies löscht dauerhaft alle deine Daten und du beginnst neu.\n\nBist du absolut sicher?', resetConfirm2: 'Letzte Chance — alle Einträge und Daten werden gelöscht. Fortfahren?' },
       auth: { why: "Freiwillig und kostenlos. Ein Konto sichert dein Tagebuch Ende-zu-Ende-verschlüsselt, damit du es auch auf deinen anderen Geräten nutzen kannst. Was du schon eingetragen hast, kommt mit.", welcome: 'Willkommen bei Bipolar Bear 🐻', noAccount: 'Kein Konto?', hasAccount: 'Schon ein Konto?', signUpLink: 'Registrieren', continueGuest: 'Als Gast fortfahren', createAccount: 'Konto erstellen', signInLink: 'Anmelden', emailPlaceholder: 'E-Mail', passwordPlaceholder: 'Passwort', deleteGuestData: '🗑 Alle Gastdaten löschen' },
       uid: {
+        twoStepTitle: "Bestätigung in zwei Schritten",
+        twoStepBody: "Für deine Universal ID ist die Bestätigung in zwei Schritten aktiv. Öffne deine Authenticator-App und gib den 6-stelligen Code für UNI·SIM ein.",
+        manage: "Universal ID verwalten ↗",
         sendCode: "Anmeldecode per E-Mail senden",
         note: "Bipolar Bear meldet dich mit Universal ID an, dem UNI·SIM-Konto. Neu hier? Derselbe Code legt dein Konto an.",
         usePassword: "Stattdessen Passwort verwenden",
@@ -6397,6 +6412,7 @@
         resetSent: "Wir haben {email} einen Link für ein neues Passwort geschickt. Dein Tagebuch behält sein altes Passwort: Danach wirst du gefragt, wenn du es auf einem neuen Gerät öffnest.",
         deleteSignInAgain: "Bitte melde dich ab, wieder an und lösche dann dein Konto.",
         err: {
+          badTwoStep: "Dieser Code hat nicht funktioniert. Codes wechseln alle 30 Sekunden – gib den neuesten ein.",
           badEmail: "Gib deine E-Mail-Adresse ein.",
           badCode: "Der Code ist falsch oder abgelaufen. Prüfe ihn oder fordere einen neuen an.",
           badPassword: "E-Mail und Passwort passen nicht zusammen.",
@@ -8365,6 +8381,9 @@
       pin: { title: 'Inserisci il tuo PIN per continuare', moreInfo: '🔐 Più info', whyTitle: '🔐 Perché c\'è un PIN?', forgot: 'PIN dimenticato?', tapToWake: 'Tocca per svegliare', incorrect: 'PIN non corretto. Riprova.', gotIt: 'Capito', verifyFailed: 'Verifica non riuscita. Riprova.', locked: 'Troppi tentativi. Riprova tra {time}.', e2ee1: 'Le tue voci del diario sono <strong>cifrate end-to-end</strong> — codificate prima di lasciare il tuo dispositivo. Solo tu puoi leggerle. Nemmeno noi.', e2ee2: 'Pensala come un diario chiuso a chiave che si apre solo con la tua combinazione — la tua <strong>password + PIN insieme</strong> formano quella chiave.', e2ee3: 'Per i dati personali e di salute mentale, questo livello di privacy conta davvero. Le tue voci restano sempre private.', disableConfirm: 'Questo disattiverà il PIN dell\'app. I dati del tuo diario restano al sicuro.\n\nContinuare?', resetConfirm1: 'Il tuo PIN è la chiave di cifratura del tuo diario. Senza di esso, le tue voci non possono essere recuperate.\n\nQuesto eliminerà definitivamente tutti i tuoi dati e ricomincerai da zero.\n\nSei assolutamente sicuro?', resetConfirm2: 'Ultima possibilità — tutte le voci e i dati saranno eliminati. Continuare?' },
       auth: { why: "Facoltativo e gratuito. Un account fa il backup del tuo diario, cifrato end-to-end, così puoi usarlo anche sugli altri tuoi dispositivi. Quello che hai già registrato viene con te.", welcome: 'Benvenuto su Bipolar Bear 🐻', noAccount: 'Non hai un account?', hasAccount: 'Hai già un account?', signUpLink: 'Registrati', continueGuest: 'Continua come ospite', createAccount: 'Crea account', signInLink: 'Accedi', emailPlaceholder: 'Email', passwordPlaceholder: 'Password', deleteGuestData: '🗑 Elimina tutti i dati ospite' },
       uid: {
+        twoStepTitle: "Verifica in due passaggi",
+        twoStepBody: "Il tuo Universal ID ha la verifica in due passaggi attiva. Apri l'app di autenticazione e inserisci il codice di 6 cifre mostrato per UNI·SIM.",
+        manage: "Gestisci il tuo Universal ID ↗",
         sendCode: "Inviami un codice di accesso",
         note: "Bipolar Bear ti fa accedere con Universal ID, l'account UNI·SIM. Sei nuovo? Lo stesso codice crea il tuo account.",
         usePassword: "Usa una password",
@@ -8380,6 +8399,7 @@
         resetSent: "Abbiamo inviato a {email} un link per impostare una nuova password. Il tuo diario mantiene la vecchia password: te la chiederemo quando lo aprirai su un nuovo dispositivo.",
         deleteSignInAgain: "Esci, accedi di nuovo e poi elimina l'account.",
         err: {
+          badTwoStep: "Quel codice non ha funzionato. I codici cambiano ogni 30 secondi: inserisci il più recente.",
           badEmail: "Inserisci il tuo indirizzo email.",
           badCode: "Il codice è sbagliato o scaduto. Controllalo o richiedine uno nuovo.",
           badPassword: "L'email e la password non corrispondono.",
@@ -10348,6 +10368,9 @@
       pin: { title: 'Introduz o teu PIN para continuar', moreInfo: '🔐 Mais informações', whyTitle: '🔐 Por que há um PIN?', forgot: 'Esqueceste o PIN?', tapToWake: 'Toca para acordar', incorrect: 'PIN incorreto. Tenta novamente.', gotIt: 'Entendi', verifyFailed: 'Falha na verificação. Tenta novamente.', locked: 'Demasiadas tentativas. Tenta novamente daqui a {time}.', e2ee1: 'As tuas entradas do diário são <strong>cifradas de ponta a ponta</strong> — codificadas antes de saírem do teu dispositivo. Só tu as podes ler. Nem nós.', e2ee2: 'Pensa nisto como um diário trancado que só abre com a tua combinação — a tua <strong>palavra-passe + PIN juntos</strong> formam essa chave.', e2ee3: 'Para dados pessoais e de saúde mental, este nível de privacidade importa mesmo. As tuas entradas permanecem sempre privadas.', disableConfirm: 'Isto irá desativar o PIN da app. Os dados do teu diário permanecem seguros.\n\nContinuar?', resetConfirm1: 'O teu PIN é a chave de cifragem do teu diário. Sem ele, as tuas entradas não podem ser recuperadas.\n\nIsto eliminará permanentemente todos os teus dados e começará do zero.\n\nTens a certeza absoluta?', resetConfirm2: 'Última oportunidade — todas as entradas e dados serão eliminados. Continuar?' },
       auth: { why: "Opcional e gratuito. Uma conta guarda uma cópia do teu diário, cifrada de ponta a ponta, para o poderes usar nos teus outros dispositivos. O que já registaste vem contigo.", welcome: 'Bem-vindo ao Bipolar Bear 🐻', noAccount: 'Não tens uma conta?', hasAccount: 'Já tens uma conta?', signUpLink: 'Regista-te', continueGuest: 'Continuar como Convidado', createAccount: 'Criar Conta', signInLink: 'Entrar', emailPlaceholder: 'E-mail', passwordPlaceholder: 'Palavra-passe', deleteGuestData: '🗑 Eliminar todos os dados de convidado' },
       uid: {
+        twoStepTitle: "Verificação em dois passos",
+        twoStepBody: "O teu Universal ID tem a verificação em dois passos ativa. Abre a tua app de autenticação e escreve o código de 6 dígitos que mostra para UNI·SIM.",
+        manage: "Gerir o teu Universal ID ↗",
         sendCode: "Enviar-me um código de acesso",
         note: "O Bipolar Bear inicia a tua sessão com o Universal ID, a conta UNI·SIM. És novo? O mesmo código cria a tua conta.",
         usePassword: "Usar uma palavra-passe",
@@ -10363,6 +10386,7 @@
         resetSent: "Enviámos a {email} uma ligação para definir uma nova palavra-passe. O teu diário mantém a palavra-passe antiga: vamos pedir-ta quando o abrires num dispositivo novo.",
         deleteSignInAgain: "Termina a sessão, volta a entrar e depois elimina a tua conta.",
         err: {
+          badTwoStep: "Esse código não funcionou. Os códigos mudam a cada 30 segundos: escreve o mais recente.",
           badEmail: "Introduz o teu e-mail.",
           badCode: "Esse código está errado ou expirou. Verifica-o ou pede um novo.",
           badPassword: "O e-mail e a palavra-passe não correspondem.",
@@ -12331,6 +12355,9 @@
       pin: { title: 'Voer je PIN in om door te gaan', moreInfo: '🔐 Meer info', whyTitle: '🔐 Waarom is er een PIN?', forgot: 'PIN vergeten?', tapToWake: 'Tik om te wekken', incorrect: 'Onjuiste PIN. Probeer opnieuw.', gotIt: 'Begrepen', verifyFailed: 'Verificatie mislukt. Probeer opnieuw.', locked: 'Te veel pogingen. Probeer het over {time} opnieuw.', e2ee1: 'Je dagboekvermeldingen zijn <strong>end-to-end versleuteld</strong> — versleuteld voordat ze je apparaat verlaten. Alleen jij kunt ze lezen. Zelfs wij niet.', e2ee2: 'Zie het als een dagboek met slot dat alleen opengaat met jouw combinatie — jouw <strong>wachtwoord + PIN samen</strong> vormen die sleutel.', e2ee3: 'Voor persoonlijke en geestelijke gezondheidsgegevens is dit niveau van privacy echt belangrijk. Je vermeldingen blijven altijd privé.', disableConfirm: 'Hiermee wordt de app-PIN uitgeschakeld. Je dagboekgegevens blijven veilig.\n\nDoorgaan?', resetConfirm1: 'Je PIN is de versleutelingssleutel voor je dagboek. Zonder deze kunnen je vermeldingen niet worden hersteld.\n\nHiermee worden al je gegevens permanent verwijderd en begin je opnieuw.\n\nWeet je het absoluut zeker?', resetConfirm2: 'Laatste kans — alle vermeldingen en gegevens worden verwijderd. Doorgaan?' },
       auth: { why: "Optioneel en gratis. Een account maakt een back-up van je dagboek, end-to-end versleuteld, zodat je het ook op je andere apparaten kunt gebruiken. Wat je al hebt bijgehouden, gaat mee.", welcome: 'Welkom bij Bipolar Bear 🐻', noAccount: 'Geen account?', hasAccount: 'Heb je al een account?', signUpLink: 'Registreer', continueGuest: 'Doorgaan als gast', createAccount: 'Account aanmaken', signInLink: 'Aanmelden', emailPlaceholder: 'E-mail', passwordPlaceholder: 'Wachtwoord', deleteGuestData: '🗑 Alle gastgegevens verwijderen' },
       uid: {
+        twoStepTitle: "Verificatie in twee stappen",
+        twoStepBody: "Je Universal ID heeft verificatie in twee stappen aan. Open je authenticator-app en typ de 6-cijferige code voor UNI·SIM.",
+        manage: "Je Universal ID beheren ↗",
         sendCode: "Mail me een inlogcode",
         note: "Bipolar Bear logt je in met Universal ID, het UNI·SIM-account. Nieuw hier? Dezelfde code maakt je account aan.",
         usePassword: "Gebruik een wachtwoord",
@@ -12346,6 +12373,7 @@
         resetSent: "We hebben {email} een link gestuurd om een nieuw wachtwoord te kiezen. Je dagboek houdt het oude wachtwoord: daar vragen we om als je het op een nieuw apparaat opent.",
         deleteSignInAgain: "Log uit, log opnieuw in en verwijder daarna je account.",
         err: {
+          badTwoStep: "Die code werkte niet. Codes veranderen elke 30 seconden, typ dus de nieuwste.",
           badEmail: "Vul je e-mailadres in.",
           badCode: "Die code klopt niet of is verlopen. Controleer hem of vraag een nieuwe aan.",
           badPassword: "E-mailadres en wachtwoord passen niet bij elkaar.",
@@ -14314,6 +14342,9 @@
       pin: { title: 'Wprowadź PIN, aby kontynuować', moreInfo: '🔐 Więcej info', whyTitle: '🔐 Dlaczego jest PIN?', forgot: 'Zapomniałeś PIN?', tapToWake: 'Dotknij, aby obudzić', incorrect: 'Nieprawidłowy PIN. Spróbuj ponownie.', gotIt: 'Rozumiem', verifyFailed: 'Weryfikacja nie powiodła się. Spróbuj ponownie.', locked: 'Zbyt wiele prób. Spróbuj ponownie za {time}.', e2ee1: 'Twoje wpisy w dzienniku są <strong>szyfrowane end-to-end</strong> — kodowane, zanim opuszczą Twoje urządzenie. Tylko Ty możesz je odczytać. Nawet my nie.', e2ee2: 'Pomyśl o tym jak o zamkniętym dzienniku, który otwiera się tylko Twoją kombinacją — Twoje <strong>hasło + PIN razem</strong> tworzą ten klucz.', e2ee3: 'W przypadku danych osobowych i dotyczących zdrowia psychicznego ten poziom prywatności naprawdę się liczy. Twoje wpisy zawsze pozostają prywatne.', disableConfirm: 'Spowoduje to wyłączenie kodu PIN aplikacji. Dane Twojego dziennika pozostają bezpieczne.\n\nKontynuować?', resetConfirm1: 'Twój PIN jest kluczem szyfrującym Twój dziennik. Bez niego Twoje wpisy nie mogą zostać odzyskane.\n\nSpowoduje to trwałe usunięcie wszystkich Twoich danych i rozpoczęcie od nowa.\n\nCzy jesteś absolutnie pewien?', resetConfirm2: 'Ostatnia szansa — wszystkie wpisy i dane zostaną usunięte. Kontynuować?' },
       auth: { why: "Opcjonalne i bezpłatne. Konto tworzy kopię zapasową Twojego dziennika, szyfrowaną end-to-end, aby można było korzystać z niego na innych urządzeniach. Twoje dotychczasowe wpisy zostaną przeniesione.", welcome: 'Witaj w Bipolar Bear 🐻', noAccount: 'Nie masz konta?', hasAccount: 'Masz już konto?', signUpLink: 'Zarejestruj się', continueGuest: 'Kontynuuj jako gość', createAccount: 'Utwórz konto', signInLink: 'Zaloguj się', emailPlaceholder: 'E-mail', passwordPlaceholder: 'Hasło', deleteGuestData: '🗑 Usuń wszystkie dane gościa' },
       uid: {
+        twoStepTitle: "Weryfikacja dwuetapowa",
+        twoStepBody: "Twój Universal ID ma włączoną weryfikację dwuetapową. Otwórz aplikację uwierzytelniającą i wpisz 6-cyfrowy kod dla UNI·SIM.",
+        manage: "Zarządzaj swoim Universal ID ↗",
         sendCode: "Wyślij mi kod logowania",
         note: "Bipolar Bear loguje Cię przez Universal ID, konto UNI·SIM. Jesteś tu nowy? Ten sam kod założy Ci konto.",
         usePassword: "Użyj hasła",
@@ -14329,6 +14360,7 @@
         resetSent: "Wysłaliśmy na adres {email} link do ustawienia nowego hasła. Dziennik zachowuje stare hasło: poprosimy o nie, gdy otworzysz go na nowym urządzeniu.",
         deleteSignInAgain: "Wyloguj się, zaloguj ponownie, a potem usuń konto.",
         err: {
+          badTwoStep: "Ten kod nie zadziałał. Kody zmieniają się co 30 sekund, więc wpisz najnowszy.",
           badEmail: "Wpisz swój adres e-mail.",
           badCode: "Kod jest błędny lub wygasł. Sprawdź go albo poproś o nowy.",
           badPassword: "Adres e-mail i hasło nie pasują do siebie.",
@@ -16305,6 +16337,9 @@
       pin: { title: 'Ange din PIN-kod för att fortsätta', moreInfo: '🔐 Mer info', whyTitle: '🔐 Varför finns det en PIN-kod?', forgot: 'Glömt PIN?', tapToWake: 'Tryck för att väcka', incorrect: 'Fel PIN-kod. Försök igen.', gotIt: 'Förstått', verifyFailed: 'Verifieringen misslyckades. Försök igen.', locked: 'För många försök. Försök igen om {time}.', e2ee1: 'Dina dagboksinlägg är <strong>totalsträckskrypterade</strong> — krypterade innan de lämnar din enhet. Bara du kan läsa dem. Inte ens vi.', e2ee2: 'Se det som en låst dagbok som bara öppnas med din kombination — ditt <strong>lösenord + PIN tillsammans</strong> utgör den nyckeln.', e2ee3: 'För personuppgifter och psykisk hälsa spelar den här nivån av integritet verkligen roll. Dina inlägg förblir alltid privata.', disableConfirm: 'Detta inaktiverar appens PIN-kod. Dina dagboksdata förblir säkra.\n\nFortsätta?', resetConfirm1: 'Din PIN-kod är krypteringsnyckeln för din dagbok. Utan den kan dina inlägg inte återställas.\n\nDetta raderar permanent alla dina data och du börjar om.\n\nÄr du helt säker?', resetConfirm2: 'Sista chansen — alla inlägg och data raderas. Fortsätta?' },
       auth: { why: "Valfritt och gratis. Ett konto säkerhetskopierar din dagbok, totalsträckskrypterad, så att du kan använda den på dina andra enheter. Det du redan har loggat följer med.", welcome: 'Välkommen till Bipolar Bear 🐻', noAccount: 'Inget konto?', hasAccount: 'Har du redan ett konto?', signUpLink: 'Registrera', continueGuest: 'Fortsätt som gäst', createAccount: 'Skapa konto', signInLink: 'Logga in', emailPlaceholder: 'E-post', passwordPlaceholder: 'Lösenord', deleteGuestData: '🗑 Radera all gästdata' },
       uid: {
+        twoStepTitle: "Tvåstegsverifiering",
+        twoStepBody: "Ditt Universal ID har tvåstegsverifiering på. Öppna din autentiseringsapp och skriv den 6-siffriga koden för UNI·SIM.",
+        manage: "Hantera ditt Universal ID ↗",
         sendCode: "Mejla mig en inloggningskod",
         note: "Bipolar Bear loggar in dig med Universal ID, UNI·SIM-kontot. Ny här? Samma kod skapar ditt konto.",
         usePassword: "Använd ett lösenord",
@@ -16320,6 +16355,7 @@
         resetSent: "Vi har mejlat {email} en länk för att välja ett nytt lösenord. Dagboken behåller sitt gamla lösenord: du blir tillfrågad om det när du öppnar den på en ny enhet.",
         deleteSignInAgain: "Logga ut, logga in igen och radera sedan ditt konto.",
         err: {
+          badTwoStep: "Koden fungerade inte. Koderna byts var 30:e sekund, så skriv den senaste.",
           badEmail: "Ange din e-postadress.",
           badCode: "Koden är fel eller har gått ut. Kontrollera den eller begär en ny.",
           badPassword: "E-post och lösenord stämmer inte.",
@@ -18288,6 +18324,9 @@
       pin: { title: '请输入PIN码继续', moreInfo: '🔐 更多信息', whyTitle: '🔐 为什么有PIN码？', forgot: '忘记PIN码？', tapToWake: '点击唤醒', incorrect: 'PIN码错误，请重试。', gotIt: '明白了', verifyFailed: '验证失败，请重试。', locked: '尝试次数过多，请在 {time} 后重试。', e2ee1: '你的日记条目采用<strong>端到端加密</strong>——在离开你的设备之前就已加密。只有你能读取它们。即使是我们也不能。', e2ee2: '把它想象成一本上锁的日记，只有用你的组合才能解锁——你的<strong>密码和PIN码一起</strong>构成了那把钥匙。', e2ee3: '对于个人和心理健康数据，这种级别的隐私真的很重要。你的条目始终保持私密。', disableConfirm: '这将停用应用的PIN码。你的日记数据仍然安全。\n\n继续吗？', resetConfirm1: '你的PIN码是你日记的加密密钥。没有它，你的条目无法恢复。\n\n这将永久删除你的所有数据并重新开始。\n\n你确定吗？', resetConfirm2: '最后机会——所有条目和数据都将被删除。继续吗？' },
       auth: { why: "可选，且免费。账户会以端到端加密方式备份你的日记，让你在其他设备上也能使用。你已记录的内容会一并保留。", welcome: '欢迎使用Bipolar Bear 🐻', noAccount: '没有账号？', hasAccount: '已有账号？', signUpLink: '注册', continueGuest: '以访客身份继续', createAccount: '创建账户', signInLink: '登录', emailPlaceholder: '电子邮箱', passwordPlaceholder: '密码', deleteGuestData: '🗑 删除所有访客数据' },
       uid: {
+        twoStepTitle: "两步验证",
+        twoStepBody: "你的 Universal ID 已开启两步验证。请打开身份验证器应用，输入 UNI·SIM 对应的 6 位数验证码。",
+        manage: "管理你的 Universal ID ↗",
         sendCode: "通过邮件发送登录码",
         note: "Bipolar Bear 使用 Universal ID（UNI·SIM 账户）为你登录。第一次使用？同一个登录码会为你创建账户。",
         usePassword: "改用密码",
@@ -18303,6 +18342,7 @@
         resetSent: "我们已向 {email} 发送了设置新密码的链接。你的日记仍使用原来的密码：在新设备上打开日记时会要求你输入它。",
         deleteSignInAgain: "请先退出登录，再重新登录，然后删除账户。",
         err: {
+          badTwoStep: "验证码无效。验证码每 30 秒更换一次，请输入最新的验证码。",
           badEmail: "请输入你的邮箱地址。",
           badCode: "登录码错误或已过期。请检查，或重新获取。",
           badPassword: "邮箱和密码不匹配。",

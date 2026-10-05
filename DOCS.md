@@ -1283,6 +1283,20 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   All three now refuse to write without the key. With `journalPw` set, a
   password sign-in whose unwrap fails no longer re-wraps over the journal
   password.
+- **Two-step verification** (an authenticator app, set up on the UNI·SIM Hub).
+  The emailed code or a password alone gives an `aal1` session. `uidSignIn` and
+  `uidLink` refuse that session for any account with a verified factor, with
+  `failed-precondition` and `details.reason: 'two-step'`. The server is the
+  lock. The sheet's `twostep` step is the door: after the code or password it
+  asks `BB.uid.twoStepFactor()`, then challenges and verifies over Supabase's
+  `/factors/{id}/challenge` and `/verify`, which upgrades the session to
+  `aal2`. A refreshed `aal2` session stays `aal2`, so deleting the account
+  doesn't ask again. Every wrong code gets a fresh challenge, because Supabase
+  burns one on the first try.
+- **Managing the Universal ID** (password, email, two-step) happens on the Hub
+  (`app.unisim.co.uk/profile`). Both account screens link to it ("Manage your
+  Universal ID ↗") for a Universal ID-only account, or when a Universal ID
+  session is present.
 - **Account screens.** A Universal ID-only account (no `password` provider) has
   no Change password / Change email (`BB.uid.isUidOnly`). Deleting it signs in
   afresh from the Universal ID session (`BB.uid.refreshFirebaseSignIn`) instead

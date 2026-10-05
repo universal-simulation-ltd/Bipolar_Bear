@@ -1340,7 +1340,12 @@
 //       check-in (anonMoodCheckin returns `bear`). Touches js/anonymous.js,
 //       functions/index.js.
 // v275: v273 and v274 together (the universal-id branch merged onto v274).
-const CACHE_NAME = 'bipolarbear-v275';
+// v276: Universal ID two-step verification — an account with an authenticator
+//   app is asked for its code on the sign-in sheet (uidSignIn refuses a session
+//   without it), and the account screens link to the UNI·SIM Hub to manage the
+//   Universal ID. Touches fab.js, index.html, js/index.js,
+//   js/shared/universal-id.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v276';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

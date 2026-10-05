@@ -1472,6 +1472,10 @@ exports.sweepAnonMoodSeen = onSchedule(
 // address may have been registered by someone who never owned it. The person
 // signs in with its old password once, and `uidLink` joins the two.
 //
+// Two-step verification (an authenticator set up on the UNI·SIM Hub) is
+// enforced HERE: a session that has not passed it (aal1) is refused for any
+// account with a verified factor, whatever the client did or skipped.
+//
 // Minting custom tokens needs the runtime service account to hold
 // roles/iam.serviceAccountTokenCreator on itself (DOCS.md §2.17).
 
@@ -1509,7 +1513,20 @@ async function universalIdUser(token) {
   if (!u.id || u.is_anonymous || !email || !(u.email_confirmed_at || u.confirmed_at)) {
     throw new HttpsError('failed-precondition', 'This Universal ID has no confirmed email address.');
   }
+  // Two-step verification: an account with a verified authenticator must have
+  // passed it (aal2). A code or a password alone is aal1. Supabase has just
+  // checked this token's signature, so its claims can be read as they stand.
+  const twoStep = (u.factors || []).some((f) => f && f.status === 'verified');
+  if (twoStep && tokenClaims(token).aal !== 'aal2') {
+    throw new HttpsError('failed-precondition', 'Two-step verification is needed.', { reason: 'two-step' });
+  }
   return { id: String(u.id), email };
+}
+
+/** The payload of a JWT whose signature has already been checked elsewhere. */
+function tokenClaims(token) {
+  try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8')) || {}; }
+  catch (e) { return {}; }
 }
 
 /** A Firebase user, or null when there is no such user. */

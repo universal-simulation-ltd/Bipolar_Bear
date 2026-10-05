@@ -87,14 +87,15 @@
    */
   function _auth(path, body, accessToken) {
     if (typeof fetch !== 'function') return Promise.reject({ code: 'network', message: '' });
+    var get = body === null; // null body = GET (e.g. 'user')
     return fetch(SUPABASE_URL + '/auth/v1/' + path, {
-      method: 'POST',
+      method: get ? 'GET' : 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': 'Bearer ' + (accessToken || SUPABASE_KEY),
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body || {}),
+      body: get ? undefined : JSON.stringify(body || {}),
     }).then(function (res) {
       return res.text().then(function (text) {
         var j = null;
@@ -121,7 +122,7 @@
     var reason = 'other';
     if (code === 'network') reason = 'network';
     else if (seconds || code === 'over_email_send_rate_limit' || code === 'over_request_rate_limit' || e.status === 429) reason = 'rate_limited';
-    else if (code === 'otp_expired' || /expired|invalid.*(otp|token|code)|token.*(expired|invalid)/i.test(msg)) reason = 'invalid_code';
+    else if (code === 'otp_expired' || code === 'mfa_verification_failed' || code === 'mfa_challenge_expired' || /expired|invalid.*(otp|token|code)|token.*(expired|invalid)/i.test(msg)) reason = 'invalid_code';
     else if (code === 'invalid_credentials' || /invalid login credentials/i.test(msg)) reason = 'bad_credentials';
     else if (code === 'email_address_invalid' || /invalid.*email|email.*invalid/i.test(msg)) reason = 'bad_email';
     return { ok: false, reason: reason, message: msg, retryAfter: seconds ? Number(seconds[1]) : null };
@@ -170,7 +171,7 @@
       return res.json().catch(function () { return {}; }).then(function (j) {
         if (res.ok && j && 'result' in j) return j.result;
         var e = (j && j.error) || {};
-        throw { code: String(e.status || res.status).toLowerCase(), message: e.message || ('HTTP ' + res.status) };
+        throw { code: String(e.status || res.status).toLowerCase().replace(/_/g, '-'), message: e.message || ('HTTP ' + res.status), details: e.details || null };
       });
     });
   }
@@ -247,6 +248,74 @@
     });
   }
 
+  // ── Two-step verification (an authenticator app, set up on the UNI·SIM Hub) ──
+  // A code or a password alone leaves an aal1 session. An account with a
+  // verified TOTP factor owes the authenticator code before it is aal2, and
+  // uidSignIn refuses anything less (the server is the lock; this is the door).
+
+  /** The assurance level claimed by an access token ('aal1' / 'aal2'), or null. */
+  function _aal(token) {
+    try {
+      var part = String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (part.length % 4) part += '=';
+      return JSON.parse(atob(part)).aal || null;
+    } catch (e) { return null; }
+  }
+
+  var _challenge = null; // { factorId, challengeId } between the two round trips
+
+  /**
+   * The verified authenticator this session still owes a code for, or null
+   * when none is owed. Rejects with `{ code }` if Supabase can't be asked.
+   * @returns {Promise<?string>} factor id
+   */
+  function twoStepFactor() {
+    return _accessToken().then(function (token) {
+      if (!token) throw { code: 'no-session', message: '' };
+      if (_aal(token) === 'aal2') return null;
+      return _auth('user', null, token).then(function (u) {
+        var f = ((u && u.factors) || []).filter(function (x) {
+          return x && x.status === 'verified' && x.factor_type === 'totp';
+        })[0];
+        return f ? f.id : null;
+      });
+    });
+  }
+
+  /** Start (or restart) a challenge against that authenticator. Rejects with `{ code }`. */
+  function startTwoStep(factorId) {
+    return _accessToken().then(function (token) {
+      if (!token) throw { code: 'no-session', message: '' };
+      return _auth('factors/' + encodeURIComponent(factorId) + '/challenge', {}, token);
+    }).then(function (ch) {
+      _challenge = { factorId: factorId, challengeId: ch.id };
+    });
+  }
+
+  /**
+   * Check the authenticator code. On success the session is aal2. On failure a
+   * fresh challenge is made, because Supabase burns one on the first attempt.
+   * Never rejects.
+   */
+  function verifyTwoStep(code) {
+    var c = String(code || '').replace(/\s+/g, '');
+    if (!_challenge || !/^\d{6}$/.test(c)) {
+      return Promise.resolve({ ok: false, reason: 'invalid_code', message: '', retryAfter: null });
+    }
+    var ch = _challenge;
+    return _accessToken().then(function (token) {
+      if (!token) throw { code: 'no-session', message: '' };
+      return _auth('factors/' + encodeURIComponent(ch.factorId) + '/verify',
+        { challenge_id: ch.challengeId, code: c }, token);
+    }).then(function (j) {
+      _save(_sessionFrom(j));
+      _challenge = null;
+      return { ok: true };
+    }, function (err) {
+      return startTwoStep(ch.factorId).catch(function () {}).then(function () { return _failure(err); });
+    });
+  }
+
   /**
    * Sign in to Firebase again from the Universal ID session — a fresh sign-in,
    * which is what deleting the account requires. Resolves false when there is
@@ -261,6 +330,7 @@
   function signOut() {
     var s = _load();
     _clear();
+    _challenge = null;
     if (s) _auth('logout?scope=local', {}, s.access_token).catch(function () {});
   }
 
@@ -296,6 +366,9 @@
     signInWithPassword: signInWithPassword,
     finishSignIn: finishSignIn,
     linkCurrentAccount: linkCurrentAccount,
+    twoStepFactor: twoStepFactor,
+    startTwoStep: startTwoStep,
+    verifyTwoStep: verifyTwoStep,
     refreshFirebaseSignIn: refreshFirebaseSignIn,
     signOut: signOut,
     isUidOnly: isUidOnly,
