@@ -605,6 +605,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               .get()
               .then(snap => {
                 const done = snap.docs.some(doc => {
+                  // Encrypted entries keep only userId + timestamp in plaintext;
+                  // `date` sits inside the ciphertext. Reading `date` alone made
+                  // every encrypted entry look missing, so this "correction"
+                  // un-ticked a day the user had logged. timestamp is the
+                  // entry's local noon (saveEntry), so its local day is the
+                  // entry's day. `date` stays as the fallback for old plaintext
+                  // entries.
+                  const ts = doc.data().timestamp;
+                  if (typeof ts === 'number') return toKey(new Date(ts)) === targetKey;
                   const d = doc.data().date;
                   if (!d) return false;
                   if (typeof d === 'string') return d.slice(0, 10) === targetKey;

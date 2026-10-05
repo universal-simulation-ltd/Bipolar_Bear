@@ -1302,7 +1302,13 @@
 //   read "(since Jan 2025)"; and the life chart shows an edge fade and a ‹ / ›
 //   while there is more chart that way. Touches js/journal.js,
 //   js/journal-insights.js, js/shared/i18n.js, css/journal.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v268';
+// v269: the mood wheel keeps the user's first swipe when Health data arrives
+//   and redraws the step (it snapped back to the best guess); a save made
+//   while a signed-in account is still being restored waits for it instead of
+//   asking for a guest PIN and keeping the entry on the phone only; and the
+//   home "logged" tick reads the plaintext timestamp, so encrypted entries
+//   stop un-ticking it. Touches js/journal.js, js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v269';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

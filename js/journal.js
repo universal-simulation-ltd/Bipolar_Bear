@@ -399,15 +399,26 @@ window.addEventListener('pageshow', () => {
       // Safety net: if onAuthStateChanged never fires (e.g. Firebase Auth IndexedDB hangs
       // after site data is cleared), fall back to guest mode after 4 seconds so the spinner
       // doesn't get stuck forever.
+      //
+      // A device that holds a signed-in account gets longer (20 s). On a slow
+      // or flaky connection at app open, restoring the account can take more
+      // than 4 s, and dropping to guest then made the next save ask for a guest
+      // PIN and write the entry to this phone only. A returning account never
+      // uploads those, so the home streak never counted it.
       let _authResolved = false;
+      const _authFallback = () => {
+        if (_authResolved) return;
+        console.warn('onAuthStateChanged did not fire — falling back to guest mode');
+        isGuestMode = true;
+        currentUser = null;
+        window.currentUser = null;
+        _markAuthReady();
+        loadEntries();
+      };
       setTimeout(() => {
-        if (!_authResolved) {
-          console.warn('onAuthStateChanged did not fire — falling back to guest mode');
-          isGuestMode = true;
-          currentUser = null;
-          window.currentUser = null;
-          loadEntries();
-        }
+        if (_authResolved) return;
+        if (_hasCachedFbUser()) setTimeout(_authFallback, 16000);
+        else _authFallback();
       }, 4000);
 
       // Authentication State — registered immediately (not waiting for persistence).
@@ -679,10 +690,13 @@ window.addEventListener('pageshow', () => {
               }
             }
 
+            // The account and its encryption key are in place: a save that was
+            // waiting on sign-in (see _gateGuestSave) can go ahead now.
+            _markAuthReady();
             // Migrate guest entries (decrypt with guest key, re-encrypt with user key), then load
             await migrateGuestEntriesIfNeeded(user);
             loadEntries();
-          }).catch(() => { loadEntries(); });
+          }).catch(() => { _markAuthReady(); loadEntries(); });
         } else {
           currentUser = null;
           window.currentUser = null;
@@ -690,6 +704,7 @@ window.addEventListener('pageshow', () => {
           document.getElementById('signinBtn').style.display = '';
           document.getElementById('userInfo').style.display = 'none';
           _updateJournalAuthFab(false);
+          _markAuthReady();
           // Defer past script initialization — onAuthStateChanged can fire synchronously
           // for a cached guest state, before all `let` declarations further down the script
           // have been initialized. Calling loadEntries() directly from here causes a TDZ
@@ -706,6 +721,7 @@ window.addEventListener('pageshow', () => {
       isGuestMode = true;
       currentUser = null;
       window.currentUser = null;
+      _markAuthReady();
       setTimeout(() => loadEntries(), 0);
     }
   }
@@ -835,6 +851,7 @@ window.addEventListener('pageshow', () => {
           isGuestMode = true;
           currentUser = null;
           window.currentUser = null;
+          _markAuthReady();
           loadEntries();
         }
       }, 500);
@@ -2432,6 +2449,59 @@ window.addEventListener('pageshow', () => {
     }
 
     const _STEP_NOTE_LABELS = { sleep:'Sleep', sleepQuality:'Sleep quality', energy:'Energy', medication:'Medication', goals:'Goals', anxiety:'Anxiety', stress:'Stress', irritability:'Irritability', exercise:'Exercise', outside:'Outside', alcohol:'Alcohol', budget:'Budget' };
+    // ── Sign-in readiness ──
+    // Set once auth has settled: signed in with the encryption key loaded, or
+    // definitely a guest. Until then `currentUser` is null for a signed-in user
+    // too, so "no currentUser" does not yet mean "guest".
+    // `var` with no initialiser, deliberately: the auth listener can fire
+    // during script initialisation, before this line runs. A `let` would throw
+    // (TDZ) there, and an initialiser would reset the flag afterwards.
+    var _authReadyDone;
+    var _authReadyWaiters;
+    function _markAuthReady() {
+      _authReadyDone = true;
+      const w = _authReadyWaiters || []; _authReadyWaiters = [];
+      w.forEach(f => { try { f(); } catch (_) {} });
+    }
+    function _waitForAuthReady(ms) {
+      return new Promise(res => {
+        if (_authReadyDone) return res();
+        const t = setTimeout(res, ms);
+        (_authReadyWaiters = _authReadyWaiters || []).push(() => { clearTimeout(t); res(); });
+      });
+    }
+    /**
+     * "Is/was a Firebase account signed in on this device" — Firebase keeps
+     * `firebase:authUser:<apiKey>:…` in localStorage until sign-out. The same
+     * probe as index.js, auth-splash.js and the PIN-gate one-liners.
+     */
+    function _hasCachedFbUser() {
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.indexOf('firebase:authUser:') === 0) {
+            const v = localStorage.getItem(k);
+            if (v && v !== 'null' && v.length > 5) return true;
+          }
+        }
+      } catch (_) {}
+      return false;
+    }
+    /**
+     * Before a save takes the guest path, make sure this really is a guest.
+     * If the device holds an account that is still being restored, wait for
+     * it (up to 15 s) instead of asking for a guest PIN and writing the entry
+     * to this phone only. Resolves true when the save may go ahead, false when
+     * the account still isn't back (the user is told, and nothing is saved).
+     */
+    async function _gateGuestSave() {
+      if (currentUser || !_hasCachedFbUser()) return true;
+      if (!_authReadyDone) await _waitForAuthReady(15000);
+      if (currentUser || !_hasCachedFbUser()) return true;
+      alert(BB.t('journal.toast.stillSigningIn'));
+      return false;
+    }
+
     let _savingEntry = false;
     async function saveAndOpenJournal() {
       if (_savingEntry) return;
@@ -2448,6 +2518,8 @@ window.addEventListener('pageshow', () => {
         const fmInt = document.getElementById('fmIntentionInput');
         if (fmInt) fmInt.value = selectedIntention;
       }
+      // A signed-in account still being restored is not a guest.
+      if (!currentUser && !(await _gateGuestSave())) { _savingEntry = false; return; }
       // Guest PIN: require PIN creation before first save.
       // Also triggers if bbPinEnabled='1' but no salt — stale data from the old optional
       // PIN feature that has no encryption. Treat it as "no PIN" and set up fresh.
@@ -4909,6 +4981,7 @@ window.addEventListener('pageshow', () => {
       if (editingEntry) return;
       _fmSteps = _buildFocusedSteps();
       _fmStepIndex = 0;
+      _fmWheelBrowsed = null;
       _fmActive = true;
       _fmEnergyClear = true;
       _fmSleepClear  = true;
@@ -5697,6 +5770,16 @@ window.addEventListener('pageshow', () => {
     }
 
     let _fmWheelRAF = null;
+    // The slot the user last swiped the wheel to on this step, before tapping
+    // to commit: { key, val }. A step can re-render while the wheel is in use,
+    // most often when Health steps/sleep arrive a second or so after the mood
+    // step opens. That builds a fresh wheel, and without this it re-centres on
+    // the suggestion (.init), so the user's first swipe snaps straight back.
+    let _fmWheelBrowsed = null;
+    function _fmWheelKey() {
+      const step = _fmSteps[_fmStepIndex];
+      return _fmStepIndex + '|' + (step ? step.id : '') + '|' + (document.getElementById('entryDate')?.value || '');
+    }
     function _fmInitWheel() {
       const wheel = document.getElementById('fmWheel');
       if (!wheel) return;
@@ -5757,6 +5840,8 @@ window.addEventListener('pageshow', () => {
           // Dial tick as the spinner clicks onto a new slot (not on the
           // programmatic initial centring).
           if (_settled) nativeHaptic('light');
+          // Only a user-driven move counts, not the initial centring.
+          if (_settled) _fmWheelBrowsed = { key: _fmWheelKey(), val: best.dataset.val };
         }
         _settled = true;
       };
@@ -5768,7 +5853,11 @@ window.addEventListener('pageshow', () => {
       // iOS Safari can leave a snap container "stuck" after a programmatic
       // scrollLeft write — disable snapping for the write, restore it just after
       // so native mandatory snap takes over for finger scrolling (all wheels).
-      const init = wheel.querySelector('.fm-wheel-btn.sel') || wheel.querySelector('.fm-wheel-btn.init') || btns[Math.floor(btns.length / 2)];
+      // A committed value always wins; next, wherever the user had swiped to on
+      // this same step before a re-render; then the suggestion / middle option.
+      if (_fmWheelBrowsed && _fmWheelBrowsed.key !== _fmWheelKey()) _fmWheelBrowsed = null;
+      const browsed = _fmWheelBrowsed ? btns.find(b => b.dataset.val === _fmWheelBrowsed.val) : null;
+      const init = wheel.querySelector('.fm-wheel-btn.sel') || browsed || wheel.querySelector('.fm-wheel-btn.init') || btns[Math.floor(btns.length / 2)];
       wheel.style.scrollSnapType = 'none';
       wheel.scrollLeft = init.offsetLeft - (wheel.clientWidth - init.offsetWidth) / 2;
       setTimeout(() => { wheel.style.scrollSnapType = ''; }, 50);
@@ -12569,6 +12658,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // encrypts localStorage entries. saveAndOpenJournal() gates on this too;
       // without it these entries would be written in the clear. The PIN overlay
       // sits above the modal, and its callback resumes the fill.
+      if (!currentUser && !(await _gateGuestSave())) return;
       if (!currentUser && (BB.storage.get('PinEnabled') !== '1' || !BB.storage.get('GuestPinSalt'))) {
         _showGuestPinSetup(() => { runAutoFill(); });
         return;

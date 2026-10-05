@@ -1315,6 +1315,7 @@
         toast: {
           selectMood: 'Please select your mood! 🌈',
           discardChanges: 'Discard changes and close?',
+          stillSigningIn: "We're still reconnecting to your account, so this entry hasn't been saved yet. Check your connection and tap save again in a moment.",
         },
         confirm: {
           removeFieldTitle: 'Remove {field}?',

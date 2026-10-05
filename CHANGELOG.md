@@ -4,6 +4,11 @@
 > `CACHE_NAME` notes in `service-worker.js` (v179 – v199) are the record for
 > that stretch.
 
+## Next — after v1.40 (build 45)
+- 🐻 **The mood wheel keeps your first swipe.** When health data arrived a second or so after the mood step opened, the step redrew and the wheel snapped back to the "best guess", so the first swipe was lost and the selector seemed to jump. It now stays wherever you'd swiped to. (`CACHE_NAME` v269)
+- 🔐 **No more surprise PIN when your account is slow to reconnect.** On a slow connection, opening the app could take more than 4 seconds to restore your account, and the journal then treated you as signed out: saving asked for a new guest PIN and kept the entry on this phone only, so it never reached your account and the home streak didn't count it. The journal now waits up to 20 seconds for the account, a save made while it's still reconnecting waits for it, and if it still isn't back you're asked to try again rather than being given a guest PIN. Unchanged for real guests. All languages fall back to the English message for now. (`CACHE_NAME` v269)
+- ✅ **The home "logged" tick stays ticked.** Its online check read each entry's date, which is inside the encrypted part of the entry, so every encrypted entry looked missing and the tick was cleared even though the journal showed the day as logged. It now reads the entry's plaintext timestamp. (`CACHE_NAME` v269)
+
 ## v1.40 — everything below until v1.39 (iOS submitted 2026-10-04)
 - 📅 **Choose where your stats start.** Your Journey's last range button is now a custom range: "📅 All", or "📅 Jan 25" once a start date is picked. Choosing it shows "Start from [date] · Show all" under the range buttons, so someone can leave out a manic episode (or anything before a diagnosis) without deleting a thing. The tiles read "(since Jan 2025)", and the life chart and PDF follow. It's the same synced setting as Journal settings → All-Time Stats Start Date. All 10 languages. (`CACHE_NAME` v268, native build 45)
 - ↔️ **The life chart shows it scrolls.** On a long range, an edge fade and a ‹ / › button appear on whichever side has more chart, and disappear at either end. The buttons step most of a screen at a time. (`CACHE_NAME` v268, native build 45)
