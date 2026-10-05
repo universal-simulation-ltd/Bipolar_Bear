@@ -1328,7 +1328,12 @@
 //   the community is, that it's moderated, what to do first, and links to
 //   🛟 Help. Touches index.html, anonymous.html, fab.js, css/dark.css,
 //   js/index.js, js/journal.js, js/anonymous.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v272';
+// v273: taken by the universal-id branch (Sign in with Universal ID), not yet on main.
+// v274: Bipolar Anonymous — the bear checks in first each day with a random
+//       mood, and is quietly left out of the totals at the third real
+//       check-in (anonMoodCheckin returns `bear`). Touches js/anonymous.js,
+//       functions/index.js.
+const CACHE_NAME = 'bipolarbear-v274';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

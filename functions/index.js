@@ -1245,6 +1245,11 @@ const MOOD_KINDS      = ['manic', 'elevated', 'stable', 'low', 'depressed'];
 const MOOD_LEGACY     = { low: 'low', flat: 'stable', okay: 'stable', high: 'elevated' };
 const MOOD_COL        = 'bbAnonMood';       // {day}: totals per mood
 const MOOD_SEEN_COL   = 'bbAnonMoodSeen';   // {day}_{uid}: checked-in marker
+// The bear checks in first each day with a random mood (stored as `bear` on the
+// day's totals, never in the mood counts), so whoever checks in early on a quiet
+// day isn't on their own. It's counted until the third real check-in, then
+// quietly left out — the total stays at 3 rather than dropping (James, 2026-10-05).
+const MOOD_BEAR_UNTIL = 3;
 const BANNED_COL      = 'bbAnonBanned';     // doc id = lowercased monika
 const POLL_MAX_OPTS   = 4;
 const POLL_OPT_CHARS  = 60;
@@ -1375,7 +1380,7 @@ exports.voteAnonPoll = onCall(
 );
 
 // ── Daily mood check-in ──────────────────────────────────────────────────────
-// { mood?, source? } → { day, counts, checkedIn, via }. With no mood it just
+// { mood?, source? } → { day, counts, checkedIn, via, bear }. With no mood it just
 // reads today's totals (the board shows them once you've checked in). One
 // check-in per account per UK day; a second is ignored rather than moved, which
 // is what lets the marker carry no mood at all. source: 'journal' is Bipolar
@@ -1403,14 +1408,29 @@ exports.anonMoodCheckin = onCall(
       });
       let checkedIn = seenSnap.exists;
       let seenVia   = seenSnap.exists ? (seenSnap.data().via || 'board') : null;
+      const write   = {};
       if (mood !== null && !checkedIn) {
         counts[mood] += 1;
-        tx.set(totalRef, { [mood]: admin.firestore.FieldValue.increment(1), day }, { merge: true });
+        Object.assign(write, { [mood]: admin.firestore.FieldValue.increment(1), day });
         tx.set(seenRef, { day, via });
         checkedIn = true;
         seenVia = via;
       }
-      return { counts, checkedIn, via: seenVia };
+      const real = MOOD_KINDS.reduce((n, k) => n + counts[k], 0);
+      let bear = MOOD_KINDS.includes(doc.bear) ? doc.bear : null;
+      if (real < MOOD_BEAR_UNTIL) {
+        if (!bear) {
+          bear = MOOD_KINDS[Math.floor(Math.random() * MOOD_KINDS.length)];
+          Object.assign(write, { bear, day });
+        }
+        counts[bear] += 1;
+      } else {
+        bear = null;
+      }
+      if (Object.keys(write).length) tx.set(totalRef, write, { merge: true });
+      // `bear` lets the client drop it from its optimistic count at the same
+      // moment the server does, so the third check-in doesn't flicker.
+      return { counts, checkedIn, via: seenVia, bear };
     });
     return { day, ...out };
   }

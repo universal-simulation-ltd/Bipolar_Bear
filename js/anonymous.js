@@ -1156,7 +1156,10 @@ const MOODS = [
   { k: 'depressed', key: 'mood.depressed', c: '#5c7cfa' },
 ];
 const _moodImg = (k, cls) => `<img class="${cls || 'mb-img'}" src="images/moods/sm/${k}.png" alt="" draggable="false">`;
-const _moodState = { ready: false, failed: false, counts: null, checkedIn: false, via: null, day: '', showAll: false, flashAt: 0 };
+const _moodState = { ready: false, failed: false, counts: null, bear: null, checkedIn: false, via: null, day: '', showAll: false, flashAt: 0 };
+// The bear's own check-in is in the counts until the third real one (see
+// MOOD_BEAR_UNTIL in functions/index.js); the server says which mood it is.
+const MOOD_BEAR_UNTIL = 3;
 // How long "✓ Checked in" stays beside the heading after a tap (it fades out).
 const MOOD_FLASH_MS = 3500;
 function _ukDay() {
@@ -1271,7 +1274,7 @@ async function loadMood() {
       res = await _callFn('anonMoodCheckin', { mood: jm, source: 'journal' });
       if (res.via === 'journal') { try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: jm })); } catch (e) {} }
     }
-    Object.assign(_moodState, { ready: true, failed: false, counts: res.counts || {}, checkedIn: !!res.checkedIn, via: res.via || null, day: res.day || '' });
+    Object.assign(_moodState, { ready: true, failed: false, counts: res.counts || {}, bear: res.bear || null, checkedIn: !!res.checkedIn, via: res.via || null, day: res.day || '' });
   } catch (e) {
     // Offline or the function isn't there: the card just stays a greeting
     // (the placeholder goes).
@@ -1287,12 +1290,15 @@ async function checkInMood(kind) {
   try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
   const counts = Object.assign({}, _moodState.counts);
   counts[kind] = num(counts[kind], 0) + 1;
-  Object.assign(_moodState, { counts, checkedIn: true, via: 'board', flashAt: Date.now() });
+  let bear = _moodState.bear;
+  const real = MOODS.reduce((n, m) => n + num(counts[m.k], 0), 0) - (bear ? 1 : 0);
+  if (bear && real >= MOOD_BEAR_UNTIL) { counts[bear] = Math.max(0, num(counts[bear], 0) - 1); bear = null; }
+  Object.assign(_moodState, { counts, bear, checkedIn: true, via: 'board', flashAt: Date.now() });
   _haptic('success');
   _repaintMood();
   try {
     const res = await _callFn('anonMoodCheckin', { mood: kind });
-    Object.assign(_moodState, { counts: res.counts || counts, checkedIn: true, via: res.via || 'board', day: res.day || '' });
+    Object.assign(_moodState, { counts: res.counts || counts, bear: res.counts ? (res.bear || null) : bear, checkedIn: true, via: res.via || 'board', day: res.day || '' });
   } catch (e) {
     console.warn('[Anonymous] mood check-in failed', e);
     BB.storage.remove('Anon_mood');
