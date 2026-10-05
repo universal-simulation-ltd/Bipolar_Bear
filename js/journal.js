@@ -6173,7 +6173,7 @@ window.addEventListener('pageshow', () => {
         : _fmDayFillMsg === 'nodata' ? BB.t('journal.autofill.dayNoData')
         : BB.t('journal.autofill.dayBtn');
       return `<button type="button" onclick="_fmAutoFillDay()" ${_fmDayFillBusy ? 'disabled' : ''}
-        style="width:100%;padding:11px 16px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;${_fmDayFillBusy ? 'opacity:0.6;' : ''}">${label}</button>`;
+        style="width:100%;padding:11px 16px;margin-top:16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;${_fmDayFillBusy ? 'opacity:0.6;' : ''}">${label}</button>`;
     }
 
     async function _fmAutoFillDay() {
@@ -6381,10 +6381,10 @@ window.addEventListener('pageshow', () => {
                   <span class="label${BB.t('mood.' + m).length > 10 ? ' fm-label-long' : ''}">${BB.t('mood.' + m)}</span>
                 </button>`).join('')}</div>`;
             }
-            return `${_quickNotesHtml}${_prevIntentionHtml}${_fmDayFillBtnHtml()}${_moodControl}
+            return `${_quickNotesHtml}${_prevIntentionHtml}${_moodControl}
             ${_linkedChip}
             ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
-            ${_chooseHint}${_tapHoldHint}`;
+            ${_chooseHint}${_tapHoldHint}${_fmDayFillBtnHtml()}`;
           }
           // Full mood spectrum — render an 11-point (0–10) wheel instead of the
           // five fixed moods. Each stop maps to a legacy category for its image/colour.
@@ -6403,14 +6403,14 @@ window.addEventListener('pageshow', () => {
               init: n === _initN,
               onclick: `_fmSpectrumTap(${n})`,
             })));
-            return `${_quickNotesHtml}${_prevIntentionHtml}${_fmDayFillBtnHtml()}${_fmHeroHtml()}<div class="fm-spectrum-wheel">${_spectrumWheel}</div>
+            return `${_quickNotesHtml}${_prevIntentionHtml}${_fmHeroHtml()}<div class="fm-spectrum-wheel">${_spectrumWheel}</div>
             ${_showChooseMoodHint ? `<div id="_fmChooseMoodHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:8px;">
               <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
                 <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
                 <polyline points="7,6 12,1 17,6" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </svg>
               <span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span>
-            </div>` : ''}`;
+            </div>` : ''}${_fmDayFillBtnHtml()}`;
           }
           const _initMood = selectedMood || _fmMoodSuggestion || 'stable';
           const _moodWheel = _fmWheelHtml(['manic','elevated','stable','low','depressed'].map(m => ({
@@ -6423,7 +6423,7 @@ window.addEventListener('pageshow', () => {
             onclick: `_fmMoodTap('${m}')`,
             extra: `ontouchstart="_fmLongPressStart('${m}',event)" ontouchend="_fmLongPressCancel()" ontouchmove="_fmLongPressCancel()" onmousedown="_fmLongPressStart('${m}',event)" onmouseup="_fmLongPressCancel()" onmouseleave="_fmLongPressCancel()"`,
           })));
-          return `${_quickNotesHtml}${_prevIntentionHtml}${_fmDayFillBtnHtml()}${_fmHeroHtml()}${_moodWheel}
+          return `${_quickNotesHtml}${_prevIntentionHtml}${_fmHeroHtml()}${_moodWheel}
           ${_linkedChip}
           ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
           ${_showChooseMoodHint ? `<div id="_fmChooseMoodHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:8px;">
@@ -6439,7 +6439,7 @@ window.addEventListener('pageshow', () => {
               <polyline points="7,6 12,1 17,6" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
             <span style="font-size:0.78em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.tapHold').replace(/&/g, '&amp;')}</span>
-          </div>` : ''}`;
+          </div>` : ''}${_fmDayFillBtnHtml()}`;
         }
 
         case 'energy': {

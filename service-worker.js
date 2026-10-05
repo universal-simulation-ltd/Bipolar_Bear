@@ -1345,7 +1345,9 @@
 //   without it), and the account screens link to the UNI·SIM Hub to manage the
 //   Universal ID. Touches fab.js, index.html, js/index.js,
 //   js/shared/universal-id.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v276';
+// v277: the journal's "✨ Auto-fill from health" button moves from the top of
+//   the mood step to the bottom, under the wheel (James). Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v277';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
