@@ -5,7 +5,7 @@
  * anonymous.html (that page uses its own yellow-themed FAB layout).
  *
  * Self-contained IIFE that on load:
- *   1. Applies first-run defaults (Crisis Support hidden on brand-new installs).
+ *   1. Marks the first run (every default FAB shows, Crisis Support in slot 1).
  *   2. Injects all FAB markup, CSS and modals into the document.
  *   3. Wires global handlers exposed on `window.*` for inline `onclick=` use.
  *
@@ -107,33 +107,22 @@
   // ── First-run defaults ────────────────────────────────────────────────────
 
   /**
-   * One-shot migration that hides the Crisis Support FAB on brand-new
-   * installs, freeing slot 1. Because the chat FAB is "hidden" it shows up in
-   * the picker as a re-addable option — subtly teaching the user that the
-   * dock is customisable. (Slot 1 itself is then taken by the review FAB,
-   * which is the default with no slot of its own; hiding review hands the
-   * slot back to the dotted `+` placeholder.)
+   * One-shot first-run marker. New installs keep every default FAB, so the
+   * Crisis Support (🆘) FAB sits in slot 1 from the start; with four slots
+   * for five defaults, the review FAB is then left out of the dock and
+   * offered in the picker instead (on iOS, where the coffee FAB is
+   * suppressed, it takes slot 3).
    *
-   * Returning users are detected by any of: existing FAB state, journal
-   * entries, or onboarding progress. They are left untouched.
+   * Installs from before 2026-10-05 ran an older version of this block that
+   * hid Crisis Support on a brand-new install (bbWaFabHidden = '1'), which
+   * handed slot 1 to "Leave a Review". That flag is indistinguishable from a
+   * user's own choice, so it is left alone — existing docks don't change.
    *
    * Idempotent via the bbFabFirstRunDone flag (set on first run, never reset
    * except by full account/data deletion).
    */
   (function _applyFirstRunFabDefaults() {
     if (BB.storage.get('FabFirstRunDone') === '1') return;
-    const _existingFabKeys = [
-      'bbFabSlot_1', 'bbFabSlot_2', 'bbFabSlot_3', 'bbFabSlot_4',
-      'bbWaFabHidden', 'bbQuickNoteFabHidden', 'bbCoffeeFabHidden',
-      'bbFeedbackFabHidden', 'bbReviewFabHidden', 'bbFooterHidden',
-    ];
-    const _isReturningUser =
-      BB.storage.get('HasEntries') === '1' ||
-      parseInt(BB.storage.get('OnboardingStep') || '0', 10) > 0 ||
-      _existingFabKeys.some(k => localStorage.getItem(k) !== null);
-    if (!_isReturningUser) {
-      BB.storage.set('WaFabHidden', '1');
-    }
     BB.storage.set('FabFirstRunDone', '1');
   })();
 
@@ -170,10 +159,10 @@
     { id: 'coffee',   icon: '☕', label: 'Buy Us a Coffee', desc: 'Support Bipolar Bear',         hiddenKey: 'bbCoffeeFabHidden',     slotNum: 3 },
     { id: 'feedback', icon: '📣', label: 'Send Feedback',   desc: 'Help us make it better',      hiddenKey: 'bbFeedbackFabHidden',   slotNum: 4 },
     // The dock only has four slots, so `review` is the one default without a
-    // slot of its own — it claims the first free slot (slot 1 on a brand-new
-    // install, where the first-run migration hides Crisis Support; slot 3 on
-    // iOS, where the coffee FAB is suppressed). When every slot is taken it
-    // stays out of the dock and is offered in the picker instead.
+    // slot of its own — it claims the first free slot (slot 3 on iOS, where
+    // the coffee FAB is suppressed; slot 1 on installs from before
+    // 2026-10-05, whose first run hid Crisis Support). When every slot is
+    // taken it stays out of the dock and is offered in the picker instead.
     { id: 'review',   icon: '⭐', label: 'Leave a Review',  desc: 'Rate Bipolar Bear on the app store', hiddenKey: 'bbReviewFabHidden', slotNum: 1 },
   ];
   /**
@@ -805,7 +794,7 @@
     // There are five defaults and only four slots, so a FAB can end up with no
     // slot at all — it is then left out of the dock and offered in the picker
     // (see `_placedDefaults`). Hidden defaults never reserve a slot, which is
-    // what frees slot 1 on a brand-new install and slot 3 on iOS.
+    // what frees slot 1 when Crisis Support is hidden and slot 3 on iOS.
     const _defaultSlotMap = {};
     const _slotOccupied = {};
     const _visibleDefaults = _FAB_DEFAULTS.filter(_def => _defVis[_def.id]);
