@@ -1,4 +1,39 @@
 node_modules/
 .git/
 .github/
+.wrangler/
 *.log
+
+# Only the site is served. Docs, tooling, server code, configs and design
+# sources stay in the repo but are not published at bipolarbear.app.
+*.md
+*.pdf
+*.xcf
+*.sh
+.gitignore
+.assetsignore
+.htaccess
+.firebaserc
+.DS_Store
+firebase.json
+firestore.rules
+wrangler.json
+worker.js
+capacitor.config.json
+capacitor-anonymous.config.json
+functions/
+scripts/
+assets/
+www-anonymous/
+
+# Store screenshots and their build tooling (~280 MB). The landing pages use
+# only the two iPhone carousels and the Nunito fonts (css/welcome.css), so
+# those are the only parts let through.
+store-assets/*
+!store-assets/fonts/
+!store-assets/out/
+store-assets/out/*
+!store-assets/out/iphone/
+!store-assets/out/anonymous/
+store-assets/out/anonymous/*
+!store-assets/out/anonymous/iphone/
