@@ -1308,7 +1308,11 @@
 //   asking for a guest PIN and keeping the entry on the phone only; and the
 //   home "logged" tick reads the plaintext timestamp, so encrypted entries
 //   stop un-ticking it. Touches js/journal.js, js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v269';
+// v270: Bipolar Anonymous board — posts, comments and moniker reservations
+//   record the author's uid (only that session can delete or rename them),
+//   and the board signs in before sending the email code and before restoring
+//   a profile. Touches js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v270';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
