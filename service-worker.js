@@ -1347,7 +1347,11 @@
 //   js/shared/universal-id.js, js/shared/i18n.js.
 // v277: the journal's "✨ Auto-fill from health" button moves from the top of
 //   the mood step to the bottom, under the wheel (James). Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v277';
+// v278: home quick check-in card carries its own stats — 🧘 stable streak joins
+//   🔥 / 💬 on the "Last 7 days" row, those figures follow Show stats, and the
+//   button's separate streak line no longer moves under the card. Touches
+//   js/index.js, css/index.css, index.html.
+const CACHE_NAME = 'bipolarbear-v278';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

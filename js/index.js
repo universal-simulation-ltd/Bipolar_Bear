@@ -2170,15 +2170,20 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         catch (_) { return new Intl.DateTimeFormat('en', { weekday: style }); }
       }
 
-      // "🔥 797  💬 63" on the right of the "Last 7 days" line, as the
-      // home-screen widget shows it: the journal streak, then the Bipolar
-      // Anonymous visit streak (💬, as on the Anonymous badge), each only
-      // when it is live. Refreshed by _updateStreakBadge too.
+      // "🔥 797  🧘 14d  💬 63" on the right of the "Last 7 days" line: the
+      // journal streak, the stable streak (🧘, as on the Mood Journal
+      // button's badge), then the Bipolar Anonymous visit streak (💬, as on
+      // the Anonymous badge), each only when it is live. These ARE the card's
+      // stats: Profile → Customise → Show stats hides them (css/index.css,
+      // .bb-hide-stats .qc-week-streaks), and the card no longer carries the
+      // button's separate streak line. Refreshed by _updateStreakBadge too.
       function qcWeekStreaks() {
         const journal = parseInt(BB.storage.get('CurrentStreak') || '0', 10);
+        const stable  = parseInt(BB.storage.get('StableStreak')  || '0', 10);
         // Only while the Bipolar Anonymous button is on the home page.
         const anon = BB.anonButtonShown() ? BB.anonLiveStreak() : 0;
         return (journal > 0 ? '<span>🔥 ' + journal + '</span>' : '') +
+               (journal > 0 && stable > 0 ? '<span>🧘 ' + stable + 'd</span>' : '') +
                (anon > 0 ? '<span>💬 ' + anon + '</span>' : '');
       }
       window.BB._qcWeekStreaks = qcWeekStreaks;
@@ -2246,21 +2251,17 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // button), shown to everyone past it — i.e. whenever the Mood Journal
       // button is the normal home button. Called from _applyOnboardingGating.
       // Opt-in (Profile → Customise → Quick check-in). When shown, the card
-      // takes the Mood Journal button's place: the button's container is hidden
-      // and its streak line moves to sit under the card, so "Show stats" still
-      // puts the figures under whatever the journal's home entry point is.
+      // takes the Mood Journal button's place: the button's container is hidden,
+      // and with it the button's 🔥/🧘 streak line — the card shows the same
+      // figures on its own "Last 7 days" row (qcWeekStreaks), which is what
+      // "Show stats" turns on and off while the card is up.
       const journalBox = document.getElementById('journalContainer');
-      const streakBadge = document.getElementById('journalStreakBadge');
       window._renderQuickCheckin = function () {
         let step = 12;
         try { step = window.BB.onboarding.getStep(); } catch (_) {}
         const on = step >= 4 && BB.storage.get('HomeQuickCheckin') === '1';
         card.style.display = on ? '' : 'none';
         if (journalBox) journalBox.style.display = on ? 'none' : '';
-        if (streakBadge) {
-          if (on && streakBadge.previousElementSibling !== card) card.after(streakBadge);
-          else if (!on && journalBox && streakBadge.parentElement !== journalBox) journalBox.appendChild(streakBadge);
-        }
         if (on) render();
       };
 

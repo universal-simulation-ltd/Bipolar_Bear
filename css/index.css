@@ -464,7 +464,7 @@
       text-transform: uppercase;
       color: #8a4500;
     }
-    /* The journal and Bipolar Anonymous streaks, as on the home-screen widget. */
+    /* The card's stats: journal 🔥, stable 🧘 and Bipolar Anonymous 💬 streaks. */
     .qc-week-streaks {
       display: flex;
       gap: 10px;
@@ -541,9 +541,10 @@
     .buttons.bb-hide-stats .btn-subnote { display: none !important; }
     /* The quick check-in's last-7-days dots are part of the widget, not a stat:
        they show whatever Show stats says (James, 2026-09-30 — "stats just means
-       the text underneath"). */
-    /* Streak line moved under the quick check-in card (_renderQuickCheckin). */
-    .quick-checkin + #journalStreakBadge { margin-top: 8px; }
+       the text underneath"). The streak figures on the right of that row ARE
+       the card's stats (it has no separate streak line any more), so they
+       follow the toggle. */
+    .buttons.bb-hide-stats .qc-week-streaks { display: none; }
     .btn-subnote-muted {
       display: block;
       text-align: center;
