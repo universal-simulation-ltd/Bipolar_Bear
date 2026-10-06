@@ -642,7 +642,9 @@ window.addEventListener('pageshow', () => {
                     }
                     // Web + no session + password changed via email reset: data inaccessible (known limitation)
                   }
-                } else {
+                } else if (!d.stdWrappedKey) {
+                  // (A Standard account's key comes from its server wrap below —
+                  // never mint a fresh one here, or the journal splits in two.)
                   // ── Old architecture or first login: migrate to key-wrapping ──
                   // The data key is either in Keychain, derived from encSalt, or fresh for this user
                   let _dataKey = _userCryptoKey;
@@ -707,12 +709,15 @@ window.addEventListener('pageshow', () => {
             }
 
             // Still no key: a Universal ID sign-in (no password), or a password
-            // sign-in made on another page. Ask for the journal password rather
-            // than show an empty journal and save new entries unencrypted.
+            // sign-in made on another page. Standard accounts open from their
+            // server wrap; Private ones ask for the journal password; an account
+            // with no key at all gets a Standard one. Never an empty journal
+            // that saves new entries unencrypted.
             if (!_userCryptoKey) {
               _userCryptoKey = await _userImportKeyFromSession();
-              if (!_userCryptoKey) await _promptJournalKey(user, doc.exists ? doc.data() : null);
+              if (!_userCryptoKey) await _resolveUserKey(user, doc.exists ? doc.data() : null);
             }
+            if (_userKeyMode === null) _userKeyMode = _keyModeOf(doc.exists ? doc.data() : null);
 
             // The account and its encryption key are in place: a save that was
             // waiting on sign-in (see _gateGuestSave) can go ahead now.
@@ -956,6 +961,7 @@ window.addEventListener('pageshow', () => {
       sessionStorage.removeItem('bb_user_key');
       _userCryptoKey = null;
       _pendingAuthPassword = null;
+      _userKeyMode = null;
       BB.storage.remove('NativePinEnabled');
       BB.storage.remove('_recentMoods'); // home strip's per-device mood cache
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
@@ -3706,7 +3712,7 @@ window.addEventListener('pageshow', () => {
         const doc = await db.collection('userSettings').doc(currentUser.uid).get();
         d = doc.exists ? doc.data() : null;
       } catch (e) { return false; }
-      return _promptJournalKey(currentUser, d);
+      return _resolveUserKey(currentUser, d);
     }
 
     /** Make `key` the journal key for this session (and this device's Keychain). */
@@ -3740,31 +3746,119 @@ window.addEventListener('pageshow', () => {
       return key;
     }
 
-    /** Give an account with no journal key one, wrapped with a newly chosen journal password. */
-    async function _createJournalKey(uid, password) {
+    // ── Standard and Private (2026-10-06; James: Standard by default) ──
+    // STANDARD: the data key is ALSO wrapped with a per-account key from the
+    // journalWrapKey Cloud Function (stdWrappedKey / stdWrappedKeyIv), so the
+    // journal opens on any signed-in device with nothing to type, and a
+    // forgotten password loses nothing. PRIVATE: no server wrap — only the
+    // journal password (wrapSalt / wrappedKey) opens it, end to end. Every new
+    // account is Standard; Private is the opt-in in Settings (unticked).
+    // A Standard account that used to be Private keeps its password wrap too,
+    // so an older app build that only knows passwords still opens it.
+    let _userKeyMode = null; // 'standard' | 'private' | null (no key yet / guest)
+
+    function _keyModeOf(d) {
+      if (!d) return null;
+      if (d.stdWrappedKey) return 'standard';
+      if (d.wrappedKey || d.encSalt) return 'private';
+      return null;
+    }
+
+    /** The per-account Standard wrapping key, from the server. Throws when it can't be reached. */
+    async function _serverWrapKey() {
+      const fn = firebase.app().functions('europe-west1').httpsCallable('journalWrapKey');
+      const { data } = await fn({});
+      const raw = Uint8Array.from(atob(data.key), c => c.charCodeAt(0));
+      return crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    }
+
+    /** Add the Standard wrap of `key` to the account. */
+    async function _saveStandardWrap(uid, key) {
+      const w = await _wrapDataKey(key, await _serverWrapKey());
+      await db.collection('userSettings').doc(uid).set(
+        { stdWrappedKey: w.wrappedKey, stdWrappedKeyIv: w.wrappedKeyIv }, { merge: true });
+    }
+
+    /**
+     * Give an account with no journal key a Standard one. In a transaction, so
+     * two devices signing in at once can't each mint a key and split the
+     * journal: the loser resolves false and the caller re-reads.
+     */
+    async function _createStandardKey(uid) {
       const key = await crypto.subtle.importKey('raw', crypto.getRandomValues(new Uint8Array(32)),
         { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']);
-      const wrapSalt = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
-      const wrapped = await _wrapDataKey(key, await _userDeriveKey(password, wrapSalt));
-      await db.collection('userSettings').doc(uid).set(
-        { wrapSalt, ...wrapped, encMigrated: true, journalPw: true }, { merge: true });
-      return key;
+      const w = await _wrapDataKey(key, await _serverWrapKey());
+      const ref = db.collection('userSettings').doc(uid);
+      const made = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const cur = snap.exists ? snap.data() : {};
+        if (cur.stdWrappedKey || cur.wrappedKey || cur.encSalt) return false;
+        tx.set(ref, { stdWrappedKey: w.wrappedKey, stdWrappedKeyIv: w.wrappedKeyIv, encMigrated: true }, { merge: true });
+        return true;
+      });
+      return made ? key : null;
+    }
+
+    /**
+     * Get the journal key with no password in hand: from the Standard wrap;
+     * else by asking for the journal password (Private); else — an account with
+     * no key at all — by creating a Standard one. Resolves whether it worked.
+     */
+    async function _resolveUserKey(user, d, _again) {
+      const settings = d || {};
+      if (settings.stdWrappedKey) {
+        try {
+          await _adoptUserKey(await _unwrapDataKey(settings.stdWrappedKey, settings.stdWrappedKeyIv, await _serverWrapKey()));
+          _userKeyMode = 'standard';
+          return true;
+        } catch (e) {
+          console.warn('Standard journal key unavailable', e);
+          // Offline, say. One that kept its password wrap can still ask for it.
+          if (!(settings.wrappedKey || settings.encSalt)) return false;
+        }
+      }
+      if (settings.wrappedKey || settings.encSalt) {
+        return _promptJournalKey(user, settings, 'unlock');
+      }
+      try {
+        const key = await _createStandardKey(user.uid);
+        if (!key) {
+          // Another device made one first: use that.
+          if (_again) return false;
+          const snap = await db.collection('userSettings').doc(user.uid).get();
+          return _resolveUserKey(user, snap.exists ? snap.data() : null, true);
+        }
+        await _adoptUserKey(key);
+        _userKeyMode = 'standard';
+        // Anything this account saved before it had a key goes encrypted now.
+        await _encryptExistingEntries(user.uid);
+        return true;
+      } catch (e) {
+        console.warn('Could not create a Standard journal key', e);
+        return false;
+      }
     }
 
     let _journalKeyPrompt = null; // one prompt at a time
     let _journalKeyDeclined = false; // "Not now" was tapped (on its way home)
 
     /**
-     * Ask for the journal password — to unlock the account's key, or to choose
-     * one when it has none. Resolves true once the key is in place; "Not now"
-     * leaves for the home screen.
+     * The journal-password dialog.
+     *   'unlock'  — a Private account (or a Standard one whose server key can't
+     *               be reached): type the journal password. Resolves true once
+     *               the key is in place; "Not now" leaves for the home screen.
+     *               An unticked box offers Standard ("don't ask again").
+     *   'private' — Settings → Private journal: choose a journal password; the
+     *               key (already open) is wrapped with it and the Standard wrap
+     *               removed. Resolves whether it was done; Cancel just closes.
      * @param {firebase.User} user
-     * @param {?Object} d  userSettings data (null when there is none yet)
+     * @param {?Object} d  userSettings data
+     * @param {'unlock'|'private'} mode
      */
-    function _promptJournalKey(user, d) {
+    function _promptJournalKey(user, d, mode) {
       if (_journalKeyPrompt) return _journalKeyPrompt;
       const settings = d || {};
-      const mode = (settings.wrappedKey || settings.encSalt) ? 'unlock' : 'create';
+      const unlock = mode === 'unlock';
       const t = (k) => BB.t('journalKey.' + k);
       _journalKeyPrompt = new Promise((resolve) => {
         const ov = document.createElement('div');
@@ -3777,48 +3871,66 @@ window.addEventListener('pageshow', () => {
         box.style.cssText = 'background:white;border-radius:20px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.25);';
         const el = (tag, css, text) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (text != null) n.textContent = text; return n; };
         const inputCss = 'width:100%;padding:12px;border:2px solid #e9ecef;border-radius:10px;font-size:1em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;';
-        const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', t(mode === 'unlock' ? 'unlockTitle' : 'createTitle'));
-        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', t(mode === 'unlock' ? 'unlockBody' : 'createBody'));
-        const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:#6c757d;', t(mode === 'unlock' ? 'unlockHint' : 'createWarning'));
-        const pw = el('input', inputCss); pw.type = 'password'; pw.autocomplete = mode === 'unlock' ? 'current-password' : 'new-password';
-        pw.placeholder = t(mode === 'unlock' ? 'passwordPlaceholder' : 'newPasswordPlaceholder');
+        const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', t(unlock ? 'unlockTitle' : 'privateTitle'));
+        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', t(unlock ? 'unlockBody' : 'privateBody'));
+        const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:#6c757d;', t(unlock ? 'unlockHint' : 'createWarning'));
+        const pw = el('input', inputCss); pw.type = 'password'; pw.autocomplete = unlock ? 'current-password' : 'new-password';
+        pw.placeholder = t(unlock ? 'passwordPlaceholder' : 'newPasswordPlaceholder');
         const pw2 = el('input', inputCss); pw2.type = 'password'; pw2.autocomplete = 'new-password';
         pw2.placeholder = t('confirmPlaceholder');
-        if (mode === 'unlock') pw2.style.display = 'none';
+        if (unlock) pw2.style.display = 'none';
+        // Unlock only: an unticked way out of the journal password for good.
+        const spare = el('label', 'display:flex;gap:8px;align-items:flex-start;margin:2px 0 10px;font-size:0.8em;line-height:1.4;color:#495057;cursor:pointer;');
+        const spareBox = el('input', 'margin-top:2px;flex-shrink:0;'); spareBox.type = 'checkbox';
+        spare.appendChild(spareBox); spare.appendChild(el('span', '', t('keepSpare')));
+        if (!unlock) spare.style.display = 'none';
         const err = el('div', 'display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;');
-        const go = el('button', 'width:100%;padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin:4px 0 8px;', t(mode === 'unlock' ? 'unlock' : 'save'));
-        const later = el('button', 'width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;', t('notNow'));
+        const go = el('button', 'width:100%;padding:13px;background:var(--brand-btn);color:var(--brand-btn-text, white);box-shadow:var(--brand-btn-ring, none);border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin:4px 0 8px;', t(unlock ? 'unlock' : 'save'));
+        const later = el('button', 'width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;', unlock ? t('notNow') : BB.t('common.cancel'));
         const forgot = el('button', 'display:block;margin:10px auto 0;background:none;border:none;color:var(--brand-primary);font-size:0.82em;cursor:pointer;padding:4px;', t('forgot'));
         const forgotText = el('p', 'display:none;margin:8px 0 0;font-size:0.8em;line-height:1.45;color:#6c757d;', t('forgotBody'));
-        if (mode !== 'unlock') { forgot.style.display = 'none'; }
-        [title, body, hint, err, pw, pw2, go, later, forgot, forgotText].forEach(n => box.appendChild(n));
+        if (!unlock) forgot.style.display = 'none';
+        [title, body, hint, err, pw, pw2, spare, go, later, forgot, forgotText].forEach(n => box.appendChild(n));
         ov.appendChild(box);
         document.body.appendChild(ov);
         setTimeout(() => pw.focus(), 50);
 
         const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
-        const finish = () => { ov.remove(); _journalKeyPrompt = null; resolve(true); };
+        const close = (result) => { ov.remove(); _journalKeyPrompt = null; resolve(result); };
         forgot.onclick = () => { forgotText.style.display = 'block'; forgot.style.display = 'none'; };
-        later.onclick = () => { _journalKeyDeclined = true; ov.remove(); _journalKeyPrompt = null; resolve(false); location.href = 'index.html'; };
+        later.onclick = () => {
+          if (!unlock) { close(false); return; }
+          _journalKeyDeclined = true; close(false); location.href = 'index.html';
+        };
         const submit = async () => {
           err.style.display = 'none';
           const p = pw.value;
-          if (mode === 'create') {
+          if (!unlock) {
             if (p.length < 8) { showErr(t('tooShort')); return; }
             if (p !== pw2.value) { showErr(t('mismatch')); return; }
           } else if (!p) { return; }
           go.disabled = true;
           try {
-            if (mode === 'unlock') {
+            if (unlock) {
               const key = await _unlockWithJournalPassword(user.uid, settings, p);
               if (!key) { showErr(t('wrong')); go.disabled = false; pw.select(); return; }
               await _adoptUserKey(key);
+              _userKeyMode = settings.stdWrappedKey ? 'standard' : 'private';
+              if (spareBox.checked) {
+                try { await _saveStandardWrap(user.uid, key); _userKeyMode = 'standard'; }
+                catch (e) { console.warn('Could not switch to Standard', e); }
+              }
             } else {
-              await _adoptUserKey(await _createJournalKey(user.uid, p));
-              // Anything this account saved before it had a key goes encrypted now.
-              await _encryptExistingEntries(user.uid);
+              if (!_userCryptoKey) throw new Error('no key open');
+              const wrapSalt = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+              const w = await _wrapDataKey(_userCryptoKey, await _userDeriveKey(p, wrapSalt));
+              const del = firebase.firestore.FieldValue.delete();
+              await db.collection('userSettings').doc(user.uid).set({
+                wrapSalt, ...w, journalPw: true, stdWrappedKey: del, stdWrappedKeyIv: del,
+              }, { merge: true });
+              _userKeyMode = 'private';
             }
-            finish();
+            close(true);
           } catch (e) {
             console.error('Journal key failed', e);
             showErr(t('failed'));
@@ -3830,6 +3942,34 @@ window.addEventListener('pageshow', () => {
       });
       return _journalKeyPrompt;
     }
+
+    /**
+     * Settings → "🔐 Private journal". On: choose a journal password (the
+     * Standard wrap goes). Off: back to Standard (a server wrap is added; the
+     * password wrap stays, so the password still opens it too).
+     */
+    async function _togglePrivateJournal() {
+      const toggle = document.getElementById('privateJournalToggle');
+      if (!toggle || !currentUser) return;
+      const wantPrivate = toggle.checked;
+      toggle.checked = !wantPrivate; // until it is done
+      if (!(await _requireUserKey())) return;
+      if (wantPrivate) {
+        const done = await _promptJournalKey(currentUser, null, 'private');
+        toggle.checked = done ? true : _userKeyMode === 'private';
+        return;
+      }
+      if (!confirm(BB.t('journalKey.toStandardConfirm'))) return;
+      try {
+        await _saveStandardWrap(currentUser.uid, _userCryptoKey);
+        _userKeyMode = 'standard';
+        toggle.checked = false;
+      } catch (e) {
+        console.error('Switch to Standard failed', e);
+        alert(BB.t('journalKey.offline'));
+      }
+    }
+    window._togglePrivateJournal = _togglePrivateJournal;
 
     // Decode a single Firestore QueryDocumentSnapshot, decrypting if needed.
     async function _decodeFirestoreEntry(doc) {
@@ -13297,6 +13437,20 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
       // Incognito mode
       document.getElementById('incognitoModeToggle').checked = localStorage.getItem('incognitoMode') === 'true';
+      // Private journal: signed in only, and read from the account each time
+      // (it is what the key is actually wrapped with, not a device setting).
+      const _pjRow = document.getElementById('privateJournalRow');
+      const _pjToggle = document.getElementById('privateJournalToggle');
+      if (_pjRow && _pjToggle) {
+        _pjRow.style.display = currentUser ? 'flex' : 'none';
+        _pjToggle.checked = _userKeyMode === 'private';
+        if (currentUser && db) {
+          db.collection('userSettings').doc(currentUser.uid).get().then(doc => {
+            _userKeyMode = _keyModeOf(doc.exists ? doc.data() : null) || _userKeyMode;
+            _pjToggle.checked = _userKeyMode === 'private';
+          }).catch(() => {});
+        }
+      }
       document.getElementById('moodLinkingToggle').checked = localStorage.getItem('moodLinkingEnabled') === '1';
       const _msToggle = document.getElementById('moodSpectrumToggle');
       if (_msToggle) _msToggle.checked = _spectrumEnabled();

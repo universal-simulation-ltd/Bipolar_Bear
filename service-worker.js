@@ -1347,7 +1347,11 @@
 //   js/shared/universal-id.js, js/shared/i18n.js.
 // v277: the journal's "✨ Auto-fill from health" button moves from the top of
 //   the mood step to the bottom, under the wheel (James). Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v277';
+// v278: Standard and Private journals (DOCS §2.18) — Standard by default, no
+//   journal password; Private (end to end) is the opt-in in Settings. Copy says
+//   'encrypted on your device'. Touches journal.html, js/journal.js,
+//   js/shared/i18n.js, fab.js, index.html, privacy.html, welcome*.html.
+const CACHE_NAME = 'bipolarbear-v278';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

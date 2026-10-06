@@ -1640,3 +1640,31 @@ exports.uidLink = onCall(
     return { status: 'ok' };
   }
 );
+
+// ── Journal: the Standard key (2026-10-06) ──────────────────────────────────
+// A journal is encrypted on the device with a random data key. In PRIVATE mode
+// (opt-in) that key is wrapped only with the person's journal password: end to
+// end, nobody else can open it. In STANDARD mode (the default, James chose it)
+// it is ALSO wrapped with this per-account key, so it opens on a new device
+// with nothing extra to type, and a forgotten password loses nothing. The
+// journal is still encrypted before it leaves the device and unreadable to
+// anyone who gets at Firestore alone; what it does not stop is someone holding
+// this secret AND the database. See DOCS.md §2.18.
+//
+// ⚠️ NEVER rotate or delete JOURNAL_KEY_SECRET: every Standard journal's key is
+// wrapped with keys derived from it, and those journals become unreadable.
+// A rotation would need every Standard account re-wrapped first.
+const JOURNAL_KEY_SECRET = defineSecret('JOURNAL_KEY_SECRET');
+
+exports.journalWrapKey = onCall(
+  { region: REGION, invoker: 'public', secrets: [JOURNAL_KEY_SECRET] },
+  async (request) => {
+    if (!request.auth) throw new HttpsError('unauthenticated', 'Sign in first.');
+    const provider = request.auth.token && request.auth.token.firebase && request.auth.token.firebase.sign_in_provider;
+    if (provider === 'anonymous') throw new HttpsError('permission-denied', 'Not for guest sessions.');
+    const key = crypto.createHmac('sha256', JOURNAL_KEY_SECRET.value())
+      .update(`bb-journal-wrap:v1:${request.auth.uid}`)
+      .digest('base64');
+    return { key, v: 1 };
+  }
+);

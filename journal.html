@@ -1680,6 +1680,15 @@
           <label class="bb-switch"><input type="checkbox" id="incognitoModeToggle" onchange="_toggleIncognitoMode()"><span class="bb-slider"></span></label>
         </div>
 
+        <!-- Private journal (end-to-end), signed-in only, unticked by default — _togglePrivateJournal in js/journal.js -->
+        <div id="privateJournalRow" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
+          <div>
+            <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.private">🔐 Private journal</div>
+            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.privateDesc">Only your journal password opens it, end to end. Off: still encrypted, and it opens on your new devices without one.</div>
+          </div>
+          <label class="bb-switch"><input type="checkbox" id="privateJournalToggle" onchange="_togglePrivateJournal()"><span class="bb-slider"></span></label>
+        </div>
+
         <!-- Early-warning nudges toggle (opt-in, unticked by default) — rendered by js/journal-insights.js -->
         <div id="earlyWarnSettingRow"></div>
         <!-- "Don't suggest support when I've had low days" (unticked = on) — js/shared/safety-plan.js -->
