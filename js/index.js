@@ -309,6 +309,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           BB.storage.set('Anon_allRead', '0');
           if (window._refreshAnonTick) window._refreshAnonTick();
           _badge.textContent = _tr('home.anonTapJoin', '💬 Tap to join the community');
+          _badge.removeAttribute('aria-label'); _badge.removeAttribute('title');
           _revealBadge(_badge, 'block');
           return;
         }
@@ -332,9 +333,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             // `count` drives Intl.PluralRules inside BB.t; `n` fills the
             // placeholder. Without count it always rendered the plural form,
             // so a single post read "1 new messages".
-            _badge.textContent = _newCount > 0
+            // Shown as "✉️ N" on the same row as "👋 monika · 💬 streak"
+            // (James, 2026-10-07); the full sentence stays as the accessible
+            // name and tooltip.
+            const _full = _newCount > 0
               ? _tr('home.anonNewMessages', '💬 ' + _newCount + ' new message' + (_newCount === 1 ? '' : 's'), { n: _newCount, count: _newCount })
               : _tr('home.anonNoMessages', '✓ No new messages');
+            _badge.textContent = '✉️ ' + _newCount;
+            _badge.setAttribute('aria-label', _full.replace(/^[^\p{L}\p{N}]+/u, ''));
+            _badge.title = _full;
             // Caught up on the board counts as "done" for the day, same as the
             // journal tick — cache the verdict so the tick paints from
             // localStorage on the next load instead of waiting for this query.

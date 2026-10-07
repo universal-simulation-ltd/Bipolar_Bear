@@ -1358,7 +1358,10 @@
 // v280: the 💬 board streak leaves the quick check-in card (it is in the
 //   Anonymous card already) and reads "💬 4" there instead of "💬 4 days
 //   streak". Touches js/index.js, index.html.
-const CACHE_NAME = 'bipolarbear-v280';
+// v281: the Anonymous card's stats on one row — "👋 monika · 💬 4 · ✉️ 0",
+//   new posts as ✉️ N (full sentence kept as aria-label / title). Touches
+//   index.html, js/index.js, css/index.css.
+const CACHE_NAME = 'bipolarbear-v281';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

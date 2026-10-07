@@ -571,6 +571,21 @@
       }
       .anon-card-stats > .btn-subnote:first-child { margin-top: 0; }
     }
+    /* One row: "👋 monika · 💬 4 · ✉️ 0". Flex makes the badges' inline
+       display:block irrelevant (they are flex items); display:none still hides
+       one. The · goes before ✉️ only while the streak line is showing too. */
+    .anon-card-stats {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: baseline;
+      column-gap: 0;
+    }
+    .anon-card-stats > .btn-subnote { margin-top: 0; }
+    .anon-card-stats { margin-top: 4px; }
+    #anonStreakBadge:is(.bb-skeleton, [style*="display: block"]) + #anonMessagesBadge::before {
+      content: '\00a0\00a0·\00a0\00a0';
+    }
     .btn-subnote-muted {
       display: block;
       text-align: center;
