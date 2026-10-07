@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🐛 **Smoother journal.** Saving today's check-in now goes straight to "View yesterday's entry" instead of flashing the first mood step. The journal password box's "Don't ask again" option no longer squashes its text into a narrow column, and tapping "Not now" no longer leaves the journal stuck loading next time. (`CACHE_NAME` v283)
 - 🔐 **No journal password unless you want one.** New journals are now Standard: entries are still encrypted on your device, and your journal opens on any phone or computer you sign in to, with nothing extra to type. A forgotten password loses nothing. If you'd rather nobody but you could ever read it, turn on **Private journal** in the journal's Settings (off by default): then only your journal password opens it, end to end. Journals that already have a journal password stay Private; the unlock screen offers "Don't ask on my new devices again" to switch. (`CACHE_NAME` v282)
 - ✉️ **Bipolar Anonymous stats on one line.** Inside the Bipolar Anonymous button it now reads "👋 James M · 💬 4 · ✉️ 0": your name, your visit streak, then new posts since your last visit (✉️ 0 when you're caught up). Screen readers still hear "No new messages" / "3 new messages". (`CACHE_NAME` v281)
 - 💬 **Your board streak shows once.** The Mood Journal card's "Last 7 days" row now shows only 🔥 and 🧘. The Bipolar Anonymous visit streak stays inside the Bipolar Anonymous button, written shorter: "👋 James M · 💬 4" instead of "… 💬 4 days streak". The home-screen widget still shows it. (`CACHE_NAME` v280)

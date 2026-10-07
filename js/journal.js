@@ -716,6 +716,10 @@ window.addEventListener('pageshow', () => {
             if (!_userCryptoKey) {
               _userCryptoKey = await _userImportKeyFromSession();
               if (!_userCryptoKey) await _resolveUserKey(user, doc.exists ? doc.data() : null);
+              // "Not now" is already on its way home: load nothing. Database
+              // reads cut off by that navigation could leave the next visit's
+              // load hanging behind the spinner (iPhone, 2026-10-07).
+              if (!_userCryptoKey && _journalKeyDeclined) return;
             }
             if (_userKeyMode === null) _userKeyMode = _keyModeOf(doc.exists ? doc.data() : null);
 
@@ -725,7 +729,16 @@ window.addEventListener('pageshow', () => {
             // Migrate guest entries (decrypt with guest key, re-encrypt with user key), then load
             await migrateGuestEntriesIfNeeded(user);
             loadEntries();
-          }).catch(() => { _markAuthReady(); loadEntries(); });
+          }).catch(() => {
+            _markAuthReady(); loadEntries();
+            // The settings read timed out before the journal key was resolved:
+            // still ask (or open a Standard journal) once the account answers,
+            // rather than leave a signed-in journal locked with no way to unlock.
+            if (currentUser && !_userCryptoKey && !_journalKeyDeclined) {
+              const _reload = () => (_loadInProgress ? setTimeout(_reload, 300) : loadEntries());
+              _requireUserKey().then(ok => { if (ok) _reload(); }).catch(() => {});
+            }
+          });
         } else {
           currentUser = null;
           window.currentUser = null;
@@ -2434,7 +2447,19 @@ window.addEventListener('pageshow', () => {
           const _toKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
           const _currentKey = _todayMode ? _toKey(_now) : _toKey(_yest);
           const _savedKey = _toKey(selectedDate);
-          if (_savedKey === _currentKey) _openFocusedMode();
+          // The current day is now logged: go straight to its "View … entry"
+          // banner. Reopening focused mode here (as it used to) flashed a fresh
+          // mood step until loadEntries() noticed the day was done and closed it.
+          if (_savedKey === _currentKey) {
+            _fmActive = false;
+            document.getElementById('focusedModeCard').style.display = 'none';
+            const _fmEl = document.getElementById('fmExitLink');
+            if (_fmEl) _fmEl.style.display = 'none';
+            document.getElementById('entryFormCard').style.display = 'none';
+            document.getElementById('entryDateSection').style.display = 'none';
+            _todayCurrentKey = _currentKey;
+            document.getElementById('todayCompleteSection').style.display = '';
+          }
         }
         if (_fmSuppressReopen && typeof _fmActive !== 'undefined' && _fmActive) {
           _fmActive = false;
@@ -3881,8 +3906,10 @@ window.addEventListener('pageshow', () => {
         if (unlock) pw2.style.display = 'none';
         // Unlock only: an unticked way out of the journal password for good.
         const spare = el('label', 'display:flex;gap:8px;align-items:flex-start;margin:2px 0 10px;font-size:0.8em;line-height:1.4;color:#495057;cursor:pointer;');
-        const spareBox = el('input', 'margin-top:2px;flex-shrink:0;'); spareBox.type = 'checkbox';
-        spare.appendChild(spareBox); spare.appendChild(el('span', '', t('keepSpare')));
+        // A fixed size: the page's input rules stretched it to the box's width
+        // and squeezed the label into a one-word column (iPhone, 2026-10-07).
+        const spareBox = el('input', 'width:18px;height:18px;min-width:18px;flex:0 0 18px;margin:2px 0 0;padding:0;'); spareBox.type = 'checkbox';
+        spare.appendChild(spareBox); spare.appendChild(el('span', 'flex:1 1 auto;min-width:0;', t('keepSpare')));
         if (!unlock) spare.style.display = 'none';
         const err = el('div', 'display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;');
         const go = el('button', 'width:100%;padding:13px;background:var(--brand-btn);color:var(--brand-btn-text, white);box-shadow:var(--brand-btn-ring, none);border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin:4px 0 8px;', t(unlock ? 'unlock' : 'save'));

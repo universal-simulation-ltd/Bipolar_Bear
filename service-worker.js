@@ -1366,7 +1366,13 @@
 //   'encrypted on your device'. Touches journal.html, js/journal.js,
 //   js/shared/i18n.js, fab.js, index.html, privacy.html, welcome*.html.
 //   (Built on a branch as v278; renumbered at the merge.)
-const CACHE_NAME = 'bipolarbear-v282';
+// v283: journal fixes from James's iPhone — saving the day's entry goes
+//   straight to "View … entry" (focused mode no longer reopens at the mood step
+//   first); the unlock prompt's "don't ask again" box is a fixed size (it was
+//   stretched across the dialog); "Not now" stops the journal loading behind it,
+//   and a timed-out settings read still asks for the journal password.
+//   Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v283';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
