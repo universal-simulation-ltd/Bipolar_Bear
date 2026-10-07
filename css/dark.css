@@ -152,6 +152,14 @@ html.theme-dark .btn-anonymous.locked {
   border-color: rgba(255,170,90,0.22);
   box-shadow: none;
 }
+@supports selector(:has(*)) {
+  html.theme-dark .buttons:not(.bb-hide-stats) .anon-card:has(> .btn-anonymous:not(.locked)):has(.anon-card-stats > .btn-subnote:is(.bb-skeleton, [style*="display: block"])) {
+    background: rgba(255,255,255,0.035);
+    border-color: rgba(255,255,255,0.08);
+  }
+  html.theme-dark .buttons:not(.bb-hide-stats) .anon-card:has(> .btn-anonymous:not(.locked)):has(.anon-card-stats > .btn-subnote:is(.bb-skeleton, [style*="display: block"])) > .btn-anonymous { background: transparent; border-color: transparent; }
+  html.theme-dark .buttons:not(.bb-hide-stats) .anon-card:has(> .btn-anonymous:not(.locked)):has(.anon-card-stats > .btn-subnote:is(.bb-skeleton, [style*="display: block"])) > .anon-card-stats { border-top-color: var(--dk-line); }
+}
 html.theme-dark .btn-anonymous.locked .entry-tick { border-color: rgba(255,170,90,0.35); color: rgba(255,170,90,0.5); }
 html.theme-dark .btn-subnote,
 html.theme-dark .btn-subnote-muted,

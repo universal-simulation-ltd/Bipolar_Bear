@@ -1351,7 +1351,11 @@
 //   🔥 / 💬 on the "Last 7 days" row, those figures follow Show stats, and the
 //   button's separate streak line no longer moves under the card. Touches
 //   js/index.js, css/index.css, index.html.
-const CACHE_NAME = 'bipolarbear-v278';
+// v279: the Bipolar Anonymous button and its stats ("✓ No new messages",
+//   "👋 monika · 💬 N days streak") form one card while a stat shows and Show
+//   stats is on (.anon-card, :has()). Touches index.html, css/index.css,
+//   css/dark.css.
+const CACHE_NAME = 'bipolarbear-v279';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

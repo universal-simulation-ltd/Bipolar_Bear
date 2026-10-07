@@ -545,6 +545,32 @@
        the card's stats (it has no separate streak line any more), so they
        follow the toggle. */
     .buttons.bb-hide-stats .qc-week-streaks { display: none; }
+    /* Bipolar Anonymous card: the button and its stats ("✓ No new messages",
+       "👋 monika · 💬 N days streak") in one box, the way the quick check-in
+       card carries its streaks. Only while a stat line is actually showing
+       (skeleton, or revealed by _revealBadge's inline display:block) and Show
+       stats is on — otherwise the wrapper adds nothing and the plain button
+       is unchanged. Without :has() the lines simply stay under the button. */
+    @supports selector(:has(*)) {
+      .buttons:not(.bb-hide-stats) .anon-card:has(> .btn-anonymous:not(.locked)):has(.anon-card-stats > .btn-subnote:is(.bb-skeleton, [style*="display: block"])) {
+        background: rgba(255, 248, 239, 0.35);
+        border: 3px solid rgba(255, 248, 239, 0.6);
+        border-radius: 15px;
+        overflow: hidden;
+      }
+      .buttons:not(.bb-hide-stats) .anon-card:has(> .btn-anonymous:not(.locked)):has(.anon-card-stats > .btn-subnote:is(.bb-skeleton, [style*="display: block"])) > .btn-anonymous {
+        background: transparent;
+        border-color: transparent;
+        border-radius: 12px 12px 0 0;
+        padding-bottom: 14px;
+      }
+      .buttons:not(.bb-hide-stats) .anon-card:has(> .btn-anonymous:not(.locked)):has(.anon-card-stats > .btn-subnote:is(.bb-skeleton, [style*="display: block"])) > .anon-card-stats {
+        margin: 0 14px;
+        padding: 8px 0 10px;
+        border-top: 1px solid rgba(90, 42, 0, 0.18);
+      }
+      .anon-card-stats > .btn-subnote:first-child { margin-top: 0; }
+    }
     .btn-subnote-muted {
       display: block;
       text-align: center;
