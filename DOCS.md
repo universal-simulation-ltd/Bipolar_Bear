@@ -1314,6 +1314,46 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   Universal ID on the Bipolar Anonymous page and app, and a "Change journal
   password" setting.
 
+### 2.18 Standard and Private journals
+
+**Added 2026-10-06** (James: "Can E2E be a choice? Not everyone wants a password and a passphrase"; Standard by default).
+
+| | **Standard** (default) | **Private** (opt-in: Settings → 🔐 Private journal, unticked) |
+|---|---|---|
+| Wrap fields in `userSettings/{uid}` | `stdWrappedKey` + `stdWrappedKeyIv` (and the password wrap too, if it used to be Private) | `wrapSalt` + `wrappedKey` + `wrappedKeyIv` only (`journalPw: true`) |
+| A new device | Opens with nothing to type: `journalWrapKey` returns the per-account key | Asks for the journal password |
+| Forgotten password | Nothing lost | Journal lost: nobody can reset it |
+| Who can read it | You, plus someone holding `JOURNAL_KEY_SECRET` **and** the database | Only you |
+
+- The data key never changes. The two modes are only about what it's wrapped
+  with. Entries are encrypted on the device in both.
+- **`journalWrapKey`** (Cloud Function) returns HMAC-SHA256(`JOURNAL_KEY_SECRET`,
+  `bb-journal-wrap:v1:<uid>`) to a signed-in, non-anonymous caller.
+  ⚠️ **Never rotate or delete `JOURNAL_KEY_SECRET`**: every Standard journal
+  would become unreadable. A copy is kept outside Secret Manager (see the
+  handover).
+- **Which mode:** `_keyModeOf(d)`: `stdWrappedKey` means Standard; a password
+  wrap or `encSalt` alone means Private; neither means no key yet.
+- **Getting the key without a password** (`_resolveUserKey`): Standard unwrap;
+  else the Private unlock prompt; else create a Standard key. Creation runs in a
+  Firestore transaction, so two devices can't mint two keys.
+- **The password sign-in branch never mints a key for a Standard account.**
+  It would split the journal.
+- **The unlock prompt** has an unticked "Don't ask on my new devices again",
+  which adds the Standard wrap.
+- **Switching:**
+  - Private → Standard: confirm, then add the Standard wrap. The password wrap
+    stays, so the password and older app builds still open it.
+  - Standard → Private: choose a journal password, wrap with it, then delete
+    the Standard wrap.
+- **Wording:** "end-to-end encrypted" became "encrypted on your device", with
+  Private named as the way to make it unreadable even to UNI·SIM. This covers
+  the sign-in sheet, the PIN screen's explainer, the security panel, the safety
+  plan, the welcome pages, and privacy policy §10, in all 10 languages.
+  ⚠️ **The store listings and screenshots** (`store-assets/`) still say
+  end-to-end. That stays true for the store builds until a native release ships
+  this; update them with that release.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

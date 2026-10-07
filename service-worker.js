@@ -1361,7 +1361,12 @@
 // v281: the Anonymous card's stats on one row — "👋 monika · 💬 4 · ✉️ 0",
 //   new posts as ✉️ N (full sentence kept as aria-label / title). Touches
 //   index.html, js/index.js, css/index.css.
-const CACHE_NAME = 'bipolarbear-v281';
+// v282: Standard and Private journals (DOCS §2.18) — Standard by default, no
+//   journal password; Private (end to end) is the opt-in in Settings. Copy says
+//   'encrypted on your device'. Touches journal.html, js/journal.js,
+//   js/shared/i18n.js, fab.js, index.html, privacy.html, welcome*.html.
+//   (Built on a branch as v278; renumbered at the merge.)
+const CACHE_NAME = 'bipolarbear-v282';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
