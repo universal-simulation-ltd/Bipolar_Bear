@@ -906,10 +906,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // phase, so it is intentionally not touched here.)
       const _anonContainer = document.getElementById('anonymousContainer');
       if (_anonContainer) _anonContainer.style.display = (_fabsUnlocked && _showAnon) ? '' : 'none';
-      // The 💬 streak on the quick check-in card and the widget follows the
-      // button: refresh both whenever its visibility is (re)applied.
-      const _qcStreaks = document.querySelector('#qcWeek .qc-week-streaks');
-      if (_qcStreaks && BB._qcWeekStreaks) _qcStreaks.innerHTML = BB._qcWeekStreaks();
+      // The 💬 streak on the widget follows the button: refresh it whenever
+      // its visibility is (re)applied.
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
 
       // Survival kit: opt-in — shown only once enabled (and after step 6 onboarding gate)
@@ -1118,7 +1116,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           // can't inject markup. The rest of the template is static.
           const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
           const _monikaStr = _monika ? `👋 ${_monika} &nbsp;·&nbsp; ` : '';
-          anonBadge.innerHTML = `${_monikaStr}💬 ${anon} day${anon === 1 ? '' : 's'} streak`;
+          anonBadge.innerHTML = `${_monikaStr}💬 ${anon}`;
           _revealBadge(anonBadge, 'block');
         } else if (hasAnon) {
           const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
@@ -2170,21 +2168,19 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         catch (_) { return new Intl.DateTimeFormat('en', { weekday: style }); }
       }
 
-      // "🔥 797  🧘 14d  💬 63" on the right of the "Last 7 days" line: the
-      // journal streak, the stable streak (🧘, as on the Mood Journal
-      // button's badge), then the Bipolar Anonymous visit streak (💬, as on
-      // the Anonymous badge), each only when it is live. These ARE the card's
+      // "🔥 797  🧘 14d" on the right of the "Last 7 days" line: the journal
+      // streak and the stable streak (🧘, as on the Mood Journal button's
+      // badge), each only when it is live. The Bipolar Anonymous 💬 streak
+      // lives in the Anonymous button's card only (James, 2026-10-07: one
+      // place, not two); the widget still shows it. These ARE the card's
       // stats: Profile → Customise → Show stats hides them (css/index.css,
       // .bb-hide-stats .qc-week-streaks), and the card no longer carries the
       // button's separate streak line. Refreshed by _updateStreakBadge too.
       function qcWeekStreaks() {
         const journal = parseInt(BB.storage.get('CurrentStreak') || '0', 10);
         const stable  = parseInt(BB.storage.get('StableStreak')  || '0', 10);
-        // Only while the Bipolar Anonymous button is on the home page.
-        const anon = BB.anonButtonShown() ? BB.anonLiveStreak() : 0;
         return (journal > 0 ? '<span>🔥 ' + journal + '</span>' : '') +
-               (journal > 0 && stable > 0 ? '<span>🧘 ' + stable + 'd</span>' : '') +
-               (anon > 0 ? '<span>💬 ' + anon + '</span>' : '');
+               (journal > 0 && stable > 0 ? '<span>🧘 ' + stable + 'd</span>' : '');
       }
       window.BB._qcWeekStreaks = qcWeekStreaks;
 

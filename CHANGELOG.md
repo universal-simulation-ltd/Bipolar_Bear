@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 💬 **Your board streak shows once.** The Mood Journal card's "Last 7 days" row now shows only 🔥 and 🧘. The Bipolar Anonymous visit streak stays inside the Bipolar Anonymous button, written shorter: "👋 James M · 💬 4" instead of "… 💬 4 days streak". The home-screen widget still shows it. (`CACHE_NAME` v280)
 - 💬 **Bipolar Anonymous stats live inside its button too.** "✓ No new messages" and "👋 your name · 💬 4 days streak" now sit inside the Bipolar Anonymous button, under a thin divider, instead of floating below it. Show stats turns them off and the button goes back to its plain look. (`CACHE_NAME` v279)
 - 📊 **Your stats live inside the Mood Journal card.** With the quick check-in card on, the 🧘 stable streak now sits beside 🔥 and 💬 on the card's "Last 7 days" row, instead of a separate "🔥 799 days 🧘 14d" line under the card that repeated the streak. Profile → Customise → Show stats turns those figures on and off; the mood dots always show. (`CACHE_NAME` v278)
 - 🐻 **The bear checks in first on Bipolar Anonymous.** Each day starts with one check-in already there: the bear, with a random mood. So the first person to check in on a quiet day sees they aren't the only one. When the third real person checks in, the bear quietly leaves the totals; the count stays at 3 and doesn't drop. The bear's mood is kept apart from the real counts, so they stay true. (`CACHE_NAME` v274)

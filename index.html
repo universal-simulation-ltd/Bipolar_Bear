@@ -231,7 +231,7 @@
         </a>
         <div class="anon-card-stats">
           <div id="anonMessagesBadge" class="btn-subnote bb-skeleton">💬 0 new messages</div>
-          <div id="anonStreakBadge" class="btn-subnote bb-skeleton">👋 moniker  ·  💬 0 days streak</div>
+          <div id="anonStreakBadge" class="btn-subnote bb-skeleton">👋 moniker  ·  💬 0</div>
         </div>
         </div>
         <div id="anonymousSignInNote" class="btn-subnote-muted" data-i18n="home.signInNote">Sign in to join the community</div>
@@ -353,7 +353,7 @@
             var aBadge = document.getElementById('anonStreakBadge');
             if (aBadge && monika) {
               var m = esc(monika);
-              if (anon > 0) show(aBadge, '👋 ' + m + ' &nbsp;·&nbsp; 💬 ' + anon + ' day' + (anon === 1 ? '' : 's') + ' streak');
+              if (anon > 0) show(aBadge, '👋 ' + m + ' &nbsp;·&nbsp; 💬 ' + anon);
               else show(aBadge, '👋 ' + m);
             }
 

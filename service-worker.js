@@ -1355,7 +1355,10 @@
 //   "👋 monika · 💬 N days streak") form one card while a stat shows and Show
 //   stats is on (.anon-card, :has()). Touches index.html, css/index.css,
 //   css/dark.css.
-const CACHE_NAME = 'bipolarbear-v279';
+// v280: the 💬 board streak leaves the quick check-in card (it is in the
+//   Anonymous card already) and reads "💬 4" there instead of "💬 4 days
+//   streak". Touches js/index.js, index.html.
+const CACHE_NAME = 'bipolarbear-v280';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
