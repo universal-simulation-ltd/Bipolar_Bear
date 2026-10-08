@@ -15416,12 +15416,16 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const _targetDate = _dateVal ? new Date(_dateVal + 'T12:00:00') : new Date();
         _targetDate.setHours(0, 0, 0, 0);
 
-        // Query window: noon the day before target → noon the day AFTER target.
-        // The extra day on the upper end means the plugin's "latest sample" behaviour
-        // works correctly for both "log today" and "log yesterday": in both cases the
-        // most recent sleep (last night) starts after entry-date noon but before
-        // (entry-date + 1) noon, so the guard below accepts it.
-        const _sleepStart = new Date(_targetDate.getTime()); _sleepStart.setHours(-12, 0, 0, 0);
+        // Query window: noon ON the entry date → noon the day after. The sleep
+        // for an entry dated D is the night of D (see _sleepNotYet), which
+        // starts after D's noon and ends before D+1's noon.
+        // It used to start at noon the day BEFORE D (from when today could
+        // be logged too). Logging yesterday in the small hours — 1am, before
+        // D's night has happened — the plugin's "latest sample" was then the
+        // night before (D-1 → D), which sat inside that window and was filed
+        // as D's sleep. Starting at D's noon leaves it outside, so that case
+        // now reports no data (James, 2026-10-08).
+        const _sleepStart = new Date(_targetDate.getTime()); _sleepStart.setHours(12, 0, 0, 0);
         const _sleepEnd   = new Date(_targetDate.getTime()); _sleepEnd.setHours(36, 0, 0, 0); // noon next day
 
         const result = await Health.queryLatestSample({
@@ -15431,9 +15435,9 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         });
         if (!result || result.value == null) { showNoData(); return; }
 
-        // Guard: reject samples that fall entirely outside the query window.
-        // Only fires for entries more than ~2 days old where the plugin still returns
-        // the most recent sleep rather than one matching the requested window.
+        // Guard: reject samples that fall entirely outside the query window —
+        // the plugin can return the most recent sleep rather than one matching
+        // the requested window (older entries, and the small-hours case above).
         if (result.endTimestamp <= _sleepStart.getTime() || result.timestamp >= _sleepEnd.getTime()) {
           showNoData(); return;
         }

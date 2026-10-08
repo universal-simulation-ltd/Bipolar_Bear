@@ -1372,7 +1372,10 @@
 //   stretched across the dialog); "Not now" stops the journal loading behind it,
 //   and a timed-out settings read still asks for the journal password.
 //   Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v283';
+// v284: health sleep import for an entry dated D queries from noon on D, not
+//   noon the day before — logging yesterday at 1am no longer files the night
+//   before as yesterday's sleep. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v284';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
