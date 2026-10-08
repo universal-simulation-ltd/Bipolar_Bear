@@ -333,7 +333,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             // `count` drives Intl.PluralRules inside BB.t; `n` fills the
             // placeholder. Without count it always rendered the plural form,
             // so a single post read "1 new messages".
-            // Shown as "✉️ N" on the same row as "👋 monika · 💬 streak"
+            // Shown as "✉️ N" on the same row as "👋 monika · 🔥 streak"
             // (James, 2026-10-07); the full sentence stays as the accessible
             // name and tooltip.
             const _full = _newCount > 0
@@ -1114,7 +1114,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const qcStreaks = document.querySelector('#qcWeek .qc-week-streaks');
       if (qcStreaks && BB._qcWeekStreaks) qcStreaks.innerHTML = BB._qcWeekStreaks();
 
-      // Anonymous badge: 👋 monika + 💬 streak
+      // Anonymous badge: 👋 monika + 🔥 streak
       const anonBadge = document.getElementById('anonStreakBadge');
       if (anonBadge) {
         if (hasAnon && anon > 0) {
@@ -1123,7 +1123,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           // can't inject markup. The rest of the template is static.
           const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
           const _monikaStr = _monika ? `👋 ${_monika} &nbsp;·&nbsp; ` : '';
-          anonBadge.innerHTML = `${_monikaStr}💬 ${anon}`;
+          anonBadge.innerHTML = `${_monikaStr}🔥 ${anon}`;
           _revealBadge(anonBadge, 'block');
         } else if (hasAnon) {
           const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
@@ -2177,7 +2177,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
       // "🔥 797  🧘 14d" on the right of the "Last 7 days" line: the journal
       // streak and the stable streak (🧘, as on the Mood Journal button's
-      // badge), each only when it is live. The Bipolar Anonymous 💬 streak
+      // badge), each only when it is live. The Bipolar Anonymous visit streak
       // lives in the Anonymous button's card only (James, 2026-10-07: one
       // place, not two); the widget still shows it. These ARE the card's
       // stats: Profile → Customise → Show stats hides them (css/index.css,

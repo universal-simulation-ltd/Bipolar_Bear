@@ -159,7 +159,7 @@
            2026 (Profile → Customise → Quick check-in, HomeQuickCheckin): when
            on it REPLACES the Mood Journal button, carrying its own header link
            to the journal, and its last-7-days dots always show; its stats (🔥 / 🧘 /
-           💬 streaks) sit on the right of that row and follow Show stats — the
+           visit streaks) sit on the right of that row and follow Show stats — the
            button's own streak line hides with the button. Hidden until onboarding step 4 and
            shown quieter once the day is logged — all in _renderQuickCheckin()
            in js/index.js, which also fills the prompt and the strip (#qcWeek)
@@ -230,7 +230,7 @@
           </span>
         </a>
         <div class="anon-card-stats">
-          <div id="anonStreakBadge" class="btn-subnote bb-skeleton">👋 moniker  ·  💬 0</div>
+          <div id="anonStreakBadge" class="btn-subnote bb-skeleton">👋 moniker  ·  🔥 0</div>
           <div id="anonMessagesBadge" class="btn-subnote bb-skeleton">✉️ 0</div>
         </div>
         </div>
@@ -344,7 +344,7 @@
               jBadge.style.cursor = 'pointer';
             }
 
-            // Anonymous monika (👋) + visit streak (💬). Use the lapse-aware
+            // Anonymous monika (👋) + visit streak (🔥). Use the lapse-aware
             // live streak — the raw cached Anon_streak doesn't self-expire, so
             // a streak that broke days ago would otherwise paint here until the
             // board recomputes it. Mirrors _updateStreakBadge() in js/index.js.
@@ -353,7 +353,7 @@
             var aBadge = document.getElementById('anonStreakBadge');
             if (aBadge && monika) {
               var m = esc(monika);
-              if (anon > 0) show(aBadge, '👋 ' + m + ' &nbsp;·&nbsp; 💬 ' + anon);
+              if (anon > 0) show(aBadge, '👋 ' + m + ' &nbsp;·&nbsp; 🔥 ' + anon);
               else show(aBadge, '👋 ' + m);
             }
 

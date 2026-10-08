@@ -1375,7 +1375,10 @@
 // v284: health sleep import for an entry dated D queries from noon on D, not
 //   noon the day before — logging yesterday at 1am no longer files the night
 //   before as yesterday's sleep. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v284';
+// v285: the Anonymous card's visit streak is 🔥, not 💬 — "👋 monika · 🔥 6 ·
+//   ✉️ 0"; 💬 read as a comment count beside the card's own 💬 icon.
+//   Touches index.html, js/index.js.
+const CACHE_NAME = 'bipolarbear-v285';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
