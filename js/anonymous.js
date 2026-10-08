@@ -5043,9 +5043,36 @@ function _chipsHtml(o) {
   if (o.streak) chip('🔥 ' + o.streak + 'd', _wt('anon.ux.chipStreak', { n: o.streak }));
   if (o.stable) chip('🧘 ' + o.stable + 'd', _wt('anon.ux.chipStable', { n: o.stable }));
   if (o.bday)   chip('🎂 ' + o.bday, _wt('anon.ui.bbBirthday'));
-  if (o.med)    chip('💊 ' + o.med, _wt('anon.ux.chipMed'));
+  if (o.med)    chips.push(_medChipHtml(o.med));
   return chips.length ? `<div class="post-chips">${chips.join('')}</div>` : '';
 }
+
+// Medication chip. A long list stretched the post card past the screen edge
+// (a member with five medications, 2026-10-08), so past two names it reads
+// "💊 Quetiapine, Lithium +3" and a tap opens the full list in place (wrapped);
+// another tap closes it. Two names or fewer keep the old tap-for-hint chip.
+// Expanding is handled by one delegated listener (below), so it works in the
+// feed and in comment threads alike.
+const MED_CHIP_SHOWN = 2;
+function _medChipHtml(med) {
+  const names = String(med).split(',').map(x => x.trim()).filter(Boolean);
+  const hint = _wt('anon.ux.chipMed');
+  if (names.length <= MED_CHIP_SHOWN) {
+    return `<button class="chip chip-med" data-hint="${esc(hint)}" title="${esc(hint)}">${esc('💊 ' + names.join(', '))}</button>`;
+  }
+  const short = '💊 ' + names.slice(0, MED_CHIP_SHOWN).join(', ') + ' +' + (names.length - MED_CHIP_SHOWN);
+  const full  = '💊 ' + names.join(', ');
+  return `<button class="chip chip-med" data-med-short="${esc(short)}" data-med-full="${esc(full)}"` +
+    ` aria-expanded="false" aria-label="${esc(hint + ': ' + names.join(', '))}">${esc(short)}</button>`;
+}
+document.addEventListener('click', ev => {
+  const chip = ev.target.closest && ev.target.closest('.chip-med[data-med-full]');
+  if (!chip) return;
+  ev.stopPropagation();
+  const open = chip.getAttribute('aria-expanded') !== 'true';
+  chip.setAttribute('aria-expanded', open ? 'true' : 'false');
+  chip.textContent = open ? chip.dataset.medFull : chip.dataset.medShort;
+});
 
 function renderPost(p) {
   if (p.deleted) {

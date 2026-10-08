@@ -1378,7 +1378,10 @@
 // v285: the Anonymous card's visit streak is 🔥, not 💬 — "👋 monika · 🔥 6 ·
 //   ✉️ 0"; 💬 read as a comment count beside the card's own 💬 icon.
 //   Touches index.html, js/index.js.
-const CACHE_NAME = 'bipolarbear-v285';
+// v286: board medication chip — past two names it reads "💊 A, B +3" and a
+//   tap opens the full list (wrapped); the post header no longer stretches past
+//   the screen on a long list. Touches js/anonymous.js, css/anonymous.css.
+const CACHE_NAME = 'bipolarbear-v286';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
