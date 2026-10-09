@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 😊 **A new entry starts on Stable.** The mood wheel used to open on a "✨ Best guess" worked out from your steps and sleep, so it could greet you with Low or Elevated before you'd said a thing. It now always starts on Stable and the choice is yours. If you've turned on mood suggestions, the gentler suggestion at the end of the entry still appears, and "fill in yesterday from my health data" still works. (`CACHE_NAME` v288)
 - 🕶️ **Admins can post as a member on Bipolar Anonymous.** Your Moniker → **Post as a member** (only the admin sees it). Switched on, your posts, comments and polls go up under your moniker like anyone else's, with no admin label; you keep every moderation tool, and a small 🕶️ on your ADMIN badge reminds you it's on. Announcements always say Bipolar Bear Admin. Admin posts also no longer carry the admin's own initials, colour, streak or birthday, so the two can't be matched. The setting is per device. (`CACHE_NAME` v287)
 - 💊 **Long medication lists fit on Bipolar Anonymous.** A member with five medications pushed their whole post off the side of the screen. Past two, the chip now reads "💊 Quetiapine, Valproato semisodico +3"; tap it to see the full list, tap again to close it. One or two medications look as before. (`CACHE_NAME` v286)
 - 🔥 **The Bipolar Anonymous streak looks like a streak.** Inside the Bipolar Anonymous button the visit streak now reads "👋 James M · 🔥 6 · ✉️ 0" instead of "💬 6", which looked like a count of comments. (`CACHE_NAME` v285)

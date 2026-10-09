@@ -1386,7 +1386,10 @@
 //   read with neutral author fields (name, initials, colours, streak, birthday)
 //   so the admin label can't be matched to the admin's moniker.
 //   Touches anonymous.html, js/anonymous.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v287';
+// v288: a new mood entry's wheel always opens on Stable — no more "✨ Best
+//   guess" centred from steps + sleep. The one-tap yesterday fill-in and the
+//   end-of-entry suggestion are unchanged. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v288';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

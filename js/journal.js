@@ -4562,7 +4562,6 @@ window.addEventListener('pageshow', () => {
     let _fmExtraSelected    = new Set();
     let _sleepSuggestedVal  = null;
     let _sleepHealthSynced  = false; // true only when sleep came from a health data sync
-    let _fmMoodSuggestion   = null; // best-guess mood derived from synced steps + sleep
     let _fmStepsRaw         = null; // raw synced step count (number) for the hero readout
     let _fmUserExited       = false; // ✕ Exit on an unlogged day — blocks auto-reopen until resume
     let _fmDayFillBusy      = false; // true while the first-step auto-fill is reading Health
@@ -5397,7 +5396,6 @@ window.addEventListener('pageshow', () => {
       _fmSleepSuggestion   = null;
       _fmSleepError        = null;
       _fmSleepAutoSyncDone = false;
-      _fmMoodSuggestion    = null;
       _fmStepsRaw          = null;
       _fmUserExited        = false;
       _fmDayFillBusy       = false;
@@ -6153,8 +6151,6 @@ window.addEventListener('pageshow', () => {
       } else if (step.id === 'sleep' && isCommitted && _sleepHealthSynced) {
         valueHtml = _fmFmtSleepHM(selectedSleep);
         badge = { cls: '', text: '✓ ' + _syncSourceLabel() };
-      } else if (step.id === 'mood' && (selectedMood == null || selectedMood === '') && _fmMoodSuggestion && val === _fmMoodSuggestion) {
-        badge = { cls: 'guess', text: '✨ ' + BB.t('journal.sync.bestGuess') };
       }
       emojiEl.innerHTML = btn.dataset.img ? `<img src="${btn.dataset.img}" alt="">` : (btn.dataset.emoji || '');
       emojiEl.classList.toggle('ghost', !isCommitted);
@@ -6268,10 +6264,13 @@ window.addEventListener('pageshow', () => {
     }
 
     /**
-     * Best-guess default mood from synced health data. Very few steps + lots
-     * of sleep → low; lots of steps + little sleep → elevated; middling both
-     * → stable. Preview only — it becomes the mood wheel's initial centre with
-     * a "best guess" badge; the user still taps to commit.
+     * Best-guess mood from synced health data. Very few steps + lots of sleep
+     * → low; lots of steps + little sleep → elevated; middling both → stable.
+     * Used only where the user asked for a fill-in (the one-tap yesterday
+     * button, the missing-days auto-complete). It no longer centres the mood
+     * wheel on a new entry: that always opens on Stable (James, 2026-10-09) —
+     * a mood picked for you before you've said anything read as a judgement,
+     * and the end-of-entry suggestion (showMoodSuggestion) is the gentler way.
      *
      * Sleep in the healthy 7–9h band short-circuits to stable on its own.
      * Sleep is the strongest single indicator of a bipolar episode, so when
@@ -6291,12 +6290,6 @@ window.addEventListener('pageshow', () => {
     /** Steps → an energy value on the form's 0–10 scale. */
     function _energyFromSteps(s) {
       return s < 1000 ? 0 : s < 3000 ? 3 : s < 10000 ? 5 : s < 20000 ? 7 : 10;
-    }
-
-    function _fmMaybeSuggestMood() {
-      if (selectedMood || editingEntry) return;
-      const suggestion = _suggestMoodFromHealth(_fmStepsRaw, _fmSleepImported);
-      if (suggestion) _fmMoodSuggestion = suggestion;
     }
 
     // ── One-tap auto-fill for yesterday (focused mode, first step) ──────────
@@ -6579,7 +6572,7 @@ window.addEventListener('pageshow', () => {
               <span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span>
             </div>` : ''}${_fmDayFillBtnHtml()}`;
           }
-          const _initMood = selectedMood || _fmMoodSuggestion || 'stable';
+          const _initMood = selectedMood || 'stable';
           const _moodWheel = _fmWheelHtml(['manic','elevated','stable','low','depressed'].map(m => ({
             val: m,
             img: `images/moods/${m}.png`,
@@ -15323,7 +15316,6 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           // Pre-select the suggested energy without auto-advancing
           selectedEnergy = _fmEnergySuggestion;
           _fmEnergyClear = false;
-          _fmMaybeSuggestMood();
           _renderFocusedStep();
         } else {
           // Non-focused: highlight the suggested energy button
@@ -15475,7 +15467,6 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
             _fmSleepClear = false;
             _fmSleepError = null;
             _fmSleepAutoSyncDone = true;
-            _fmMaybeSuggestMood();
             _renderFocusedStep();
           } else {
             // Regular form: highlight closest bucket button but store actual hours
