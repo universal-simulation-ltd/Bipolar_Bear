@@ -52,12 +52,11 @@
     posts:         'Anon_notifPosts',
     weekly:        'Anon_notifWeekly',
   };
-  // What a member gets if they accept the opt-in sheet without touching the
-  // rows. Replies and announcements are things that happened *to them* or to
-  // the board. New posts and the weekly digest are the ones most likely to
-  // wear out their welcome — on a busy day every post is a buzz — so both
-  // start off and are there for whoever wants them.
-  var DEFAULT_PREFS = { replies: true, announcements: true, posts: false, weekly: false };
+  // What the opt-in sheet shows a member who has never chosen: every switch
+  // off. Suite rule — nothing is ticked on someone's behalf; they turn on what
+  // they want. getPrefs() reads only an explicit stored 'true', so a member who
+  // already saved choices keeps exactly those (a missing key is never a yes).
+  var DEFAULT_PREFS = { replies: false, announcements: false, posts: false, weekly: false };
 
   function allOff() {
     var out = {};

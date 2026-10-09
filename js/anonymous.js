@@ -5537,8 +5537,9 @@ function renderNotifRows(containerId, prefs, onChange, rows = NOTIF_ROWS) {
 }
 
 // One-time opt-in, offered after a member's first post or reply — "Would you like to
-// be notified when someone posts?" — leading with New posts, switched on, and
-// the other switches beneath it. Members subscribed before the posts switch
+// be notified when someone posts?" — leading with New posts, and with nothing
+// ticked for a member who has never chosen (one with saved choices sees exactly
+// those), the other switches beneath it. Members subscribed before the posts switch
 // existed (or who posted before notifications did) get it once on their next
 // post. A past "Not now" is never re-asked; settings is always there.
 function maybeAskNotifications() {
@@ -5551,7 +5552,6 @@ function maybeAskNotifications() {
   if (push.hasBeenAskedAboutPosts())        { skip('already asked about new posts'); return; }
   if (push.hasBeenAsked() && !push.anyOn()) { skip('declined before'); return; }
   const prefs = push.anyOn() ? push.getPrefs() : push.defaultPrefs();
-  prefs.posts = true;
   const rows = [
     ...NOTIF_ROWS.filter(r => r.key === 'posts'),
     ...NOTIF_ROWS.filter(r => r.key !== 'posts'),

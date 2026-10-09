@@ -1395,7 +1395,11 @@
 //   resolved. js/index.js now keeps bbSignedInHint; with it the Anonymous card
 //   is unlocked, the sign-in note hidden and the stat rows painted (or held as
 //   blurred placeholders) from the first frame. Touches index.html, js/index.js.
-const CACHE_NAME = 'bipolarbear-v289';
+// v290: the Bipolar Anonymous "notify me" sheet starts with every switch off
+//   for a member who has never chosen (was replies, announcements and new
+//   posts on). Saved choices show exactly as stored. Touches js/anonymous.js,
+//   js/shared/anon-push.js.
+const CACHE_NAME = 'bipolarbear-v290';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
