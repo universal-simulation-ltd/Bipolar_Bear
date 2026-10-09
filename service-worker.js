@@ -1404,7 +1404,14 @@
 //   started"; same sheet, minus "Hide this button" while locked. The FAB gets
 //   an aria-label (new data-i18n-aria-label in i18n.js). Touches fab.js,
 //   index.html, js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v291';
+// v292: "Forgot PIN?" on the native app PIN and the account PIN no longer
+//   just switches it off: it needs the phone's Face ID / Touch ID / passcode
+//   (native, @aparajita/capacitor-biometric-auth in the next store build) or
+//   signing in again (Bipolar Bear password, or a fresh Universal ID code
+//   checked by BB.uid.proveAccount). The guest PIN's wipe is unchanged. New
+//   js/shared/pin-reauth.js (precached); touches index.html, journal.html,
+//   js/index.js, js/journal.js, js/shared/universal-id.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v292';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1448,6 +1455,7 @@ const STATIC_ASSETS = [
   './js/shared/anon-push.js',
   './js/shared/meds-reminder.js',
   './js/shared/pin-guard.js',
+  './js/shared/pin-reauth.js',
 
   // NOTE: firebase-messaging-sw.js is deliberately NOT precached either — it
   // is a service worker in its own right, registered by js/shared/anon-push.js,

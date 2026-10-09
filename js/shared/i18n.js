@@ -28,6 +28,7 @@
   var _locales = {
 
     en: {
+      pinReauth: {"title": "Confirm it's you", "body": "To turn off your PIN, confirm it's you. Your journal and everything in the app stay as they are.", "device": "🔓 Use Face ID, fingerprint or your phone's passcode", "deviceReason": "Confirm it’s you to turn off your Bipolar Bear PIN", "deviceFailed": "Couldn't confirm it's you on this phone. Try again, or sign in below.", "orSignIn": "or sign in again", "passwordLabel": "Your Bipolar Bear password", "confirm": "Confirm", "codeLabel": "We'll email a sign-in code to {email}.", "sendCode": "Email me a code", "codeSent": "Code sent. Check your email.", "codePlaceholder": "6-digit code", "twoStepLabel": "Now enter the code from your authenticator app.", "wrongPassword": "That password isn't right.", "wrongCode": "That code isn't right, or it has expired.", "rateLimited": "Too many tries. Wait a little and try again.", "network": "You're offline. Try again when you're connected.", "failed": "That didn't work. Try again.", "unavailable": "There's no way to confirm it's you here: sign in to your account on this device first. Until then, keep using your PIN.", "cancel": "Cancel", "close": "Close"},
       common: {
         live: '({n} live)',
         suiteCount: { one: '🌍 {n} person uses UNI·SIM apps', other: '🌍 {n} people use UNI·SIM apps' },
@@ -2082,6 +2083,7 @@
     },
 
     es: {
+      pinReauth: {"title": "Confirma que eres tú", "body": "Para desactivar tu PIN, confirma que eres tú. Tu diario y todo lo que hay en la app se quedan como están.", "device": "🔓 Usar Face ID, huella o el código de tu teléfono", "deviceReason": "Confirma que eres tú para desactivar tu PIN de Bipolar Bear", "deviceFailed": "No se pudo confirmar que eres tú en este teléfono. Inténtalo de nuevo o inicia sesión abajo.", "orSignIn": "o vuelve a iniciar sesión", "passwordLabel": "Tu contraseña de Bipolar Bear", "confirm": "Confirmar", "codeLabel": "Te enviaremos un código de inicio de sesión a {email}.", "sendCode": "Envíame un código", "codeSent": "Código enviado. Revisa tu correo.", "codePlaceholder": "Código de 6 dígitos", "twoStepLabel": "Ahora introduce el código de tu app de autenticación.", "wrongPassword": "Esa contraseña no es correcta.", "wrongCode": "Ese código no es correcto o ha caducado.", "rateLimited": "Demasiados intentos. Espera un poco e inténtalo de nuevo.", "network": "No tienes conexión. Inténtalo de nuevo cuando estés conectado.", "failed": "No ha funcionado. Inténtalo de nuevo.", "unavailable": "Aquí no hay forma de confirmar que eres tú: primero inicia sesión en tu cuenta en este dispositivo. Mientras tanto, sigue usando tu PIN.", "cancel": "Cancelar", "close": "Cerrar"},
       common: {
         live: '({n} en línea)',
         suiteCount: { one: '🌍 {n} persona usa las apps de UNI·SIM', other: '🌍 {n} personas usan las apps de UNI·SIM' },
@@ -4150,6 +4152,7 @@
     },
 
     fr: {
+      pinReauth: {"title": "Confirme que c'est toi", "body": "Pour désactiver ton PIN, confirme que c'est bien toi. Ton journal et tout le reste de l'app restent tels quels.", "device": "🔓 Utiliser Face ID, l'empreinte ou le code de ton téléphone", "deviceReason": "Confirme que c’est toi pour désactiver ton PIN Bipolar Bear", "deviceFailed": "Impossible de confirmer que c'est toi sur ce téléphone. Réessaie, ou reconnecte-toi ci-dessous.", "orSignIn": "ou reconnecte-toi", "passwordLabel": "Ton mot de passe Bipolar Bear", "confirm": "Confirmer", "codeLabel": "Nous enverrons un code de connexion à {email}.", "sendCode": "M'envoyer un code", "codeSent": "Code envoyé. Regarde tes e-mails.", "codePlaceholder": "Code à 6 chiffres", "twoStepLabel": "Saisis maintenant le code de ton application d'authentification.", "wrongPassword": "Ce mot de passe n'est pas le bon.", "wrongCode": "Ce code n'est pas le bon, ou il a expiré.", "rateLimited": "Trop d'essais. Attends un peu et réessaie.", "network": "Tu es hors ligne. Réessaie une fois connecté.", "failed": "Ça n'a pas marché. Réessaie.", "unavailable": "Impossible de confirmer que c'est toi ici : connecte-toi d'abord à ton compte sur cet appareil. En attendant, continue d'utiliser ton PIN.", "cancel": "Annuler", "close": "Fermer"},
       common: {
         live: '({n} en ligne)',
         suiteCount: { one: '🌍 {n} personne utilise les applis UNI·SIM', other: '🌍 {n} personnes utilisent les applis UNI·SIM' },
@@ -6159,6 +6162,7 @@
     },
 
     de: {
+      pinReauth: {"title": "Bestätige, dass du es bist", "body": "Um deine PIN auszuschalten, bestätige, dass du es bist. Dein Tagebuch und alles andere in der App bleiben, wie sie sind.", "device": "🔓 Face ID, Fingerabdruck oder Gerätecode verwenden", "deviceReason": "Bestätige, dass du es bist, um deine Bipolar-Bear-PIN auszuschalten", "deviceFailed": "Auf diesem Telefon konnte nicht bestätigt werden, dass du es bist. Versuche es erneut oder melde dich unten an.", "orSignIn": "oder melde dich erneut an", "passwordLabel": "Dein Bipolar-Bear-Passwort", "confirm": "Bestätigen", "codeLabel": "Wir schicken einen Anmeldecode an {email}.", "sendCode": "Code per E-Mail senden", "codeSent": "Code gesendet. Schau in deine E-Mails.", "codePlaceholder": "6-stelliger Code", "twoStepLabel": "Gib jetzt den Code aus deiner Authenticator-App ein.", "wrongPassword": "Das Passwort stimmt nicht.", "wrongCode": "Der Code stimmt nicht oder ist abgelaufen.", "rateLimited": "Zu viele Versuche. Warte kurz und versuche es erneut.", "network": "Du bist offline. Versuche es erneut, wenn du verbunden bist.", "failed": "Das hat nicht geklappt. Versuche es erneut.", "unavailable": "Hier lässt sich nicht bestätigen, dass du es bist: Melde dich zuerst auf diesem Gerät bei deinem Konto an. Bis dahin nutze weiter deine PIN.", "cancel": "Abbrechen", "close": "Schließen"},
       common: {
         live: '({n} online)',
         suiteCount: { one: '🌍 {n} Person nutzt UNI·SIM-Apps', other: '🌍 {n} Personen nutzen UNI·SIM-Apps' },
@@ -8152,6 +8156,7 @@
     },
 
     it: {
+      pinReauth: {"title": "Conferma che sei tu", "body": "Per disattivare il PIN, conferma che sei tu. Il tuo diario e tutto il resto dell'app restano come sono.", "device": "🔓 Usa Face ID, impronta o il codice del telefono", "deviceReason": "Conferma che sei tu per disattivare il PIN di Bipolar Bear", "deviceFailed": "Non è stato possibile confermare che sei tu su questo telefono. Riprova, oppure accedi qui sotto.", "orSignIn": "oppure accedi di nuovo", "passwordLabel": "La tua password di Bipolar Bear", "confirm": "Conferma", "codeLabel": "Invieremo un codice di accesso a {email}.", "sendCode": "Inviami un codice", "codeSent": "Codice inviato. Controlla la tua email.", "codePlaceholder": "Codice a 6 cifre", "twoStepLabel": "Ora inserisci il codice della tua app di autenticazione.", "wrongPassword": "La password non è corretta.", "wrongCode": "Il codice non è corretto o è scaduto.", "rateLimited": "Troppi tentativi. Aspetta un po' e riprova.", "network": "Sei offline. Riprova quando sei connesso.", "failed": "Non ha funzionato. Riprova.", "unavailable": "Qui non c'è modo di confermare che sei tu: prima accedi al tuo account su questo dispositivo. Nel frattempo continua a usare il PIN.", "cancel": "Annulla", "close": "Chiudi"},
       common: {
         live: '({n} online)',
         suiteCount: { one: '🌍 {n} persona usa le app UNI·SIM', other: '🌍 {n} persone usano le app UNI·SIM' },
@@ -10145,6 +10150,7 @@
     },
 
     pt: {
+      pinReauth: {"title": "Confirma que és tu", "body": "Para desativar o teu PIN, confirma que és tu. O teu diário e tudo o resto na app ficam como estão.", "device": "🔓 Usar Face ID, impressão digital ou o código do telemóvel", "deviceReason": "Confirma que és tu para desativar o teu PIN do Bipolar Bear", "deviceFailed": "Não foi possível confirmar que és tu neste telemóvel. Tenta novamente ou inicia sessão abaixo.", "orSignIn": "ou inicia sessão novamente", "passwordLabel": "A tua palavra-passe do Bipolar Bear", "confirm": "Confirmar", "codeLabel": "Vamos enviar um código de início de sessão para {email}.", "sendCode": "Enviar-me um código", "codeSent": "Código enviado. Vê o teu email.", "codePlaceholder": "Código de 6 dígitos", "twoStepLabel": "Agora introduz o código da tua app de autenticação.", "wrongPassword": "Essa palavra-passe não está correta.", "wrongCode": "Esse código não está correto ou expirou.", "rateLimited": "Demasiadas tentativas. Espera um pouco e tenta novamente.", "network": "Estás offline. Tenta novamente quando tiveres ligação.", "failed": "Não funcionou. Tenta novamente.", "unavailable": "Aqui não há forma de confirmar que és tu: primeiro inicia sessão na tua conta neste dispositivo. Até lá, continua a usar o teu PIN.", "cancel": "Cancelar", "close": "Fechar"},
       common: {
         live: '({n} online)',
         suiteCount: { one: '🌍 {n} pessoa usa as apps UNI·SIM', other: '🌍 {n} pessoas usam as apps UNI·SIM' },
@@ -12138,6 +12144,7 @@
     },
 
     nl: {
+      pinReauth: {"title": "Bevestig dat jij het bent", "body": "Bevestig dat jij het bent om je PIN uit te zetten. Je dagboek en alles in de app blijven zoals ze zijn.", "device": "🔓 Face ID, vingerafdruk of de toegangscode van je telefoon gebruiken", "deviceReason": "Bevestig dat jij het bent om je Bipolar Bear-PIN uit te zetten", "deviceFailed": "Op deze telefoon kon niet worden bevestigd dat jij het bent. Probeer het opnieuw of log hieronder in.", "orSignIn": "of log opnieuw in", "passwordLabel": "Je Bipolar Bear-wachtwoord", "confirm": "Bevestigen", "codeLabel": "We mailen een inlogcode naar {email}.", "sendCode": "Mail me een code", "codeSent": "Code verstuurd. Kijk in je e-mail.", "codePlaceholder": "Code van 6 cijfers", "twoStepLabel": "Voer nu de code uit je authenticator-app in.", "wrongPassword": "Dat wachtwoord klopt niet.", "wrongCode": "Die code klopt niet of is verlopen.", "rateLimited": "Te veel pogingen. Wacht even en probeer het opnieuw.", "network": "Je bent offline. Probeer het opnieuw als je verbinding hebt.", "failed": "Dat lukte niet. Probeer het opnieuw.", "unavailable": "Hier kun je niet bevestigen dat jij het bent: log eerst op dit apparaat in op je account. Blijf tot die tijd je PIN gebruiken.", "cancel": "Annuleren", "close": "Sluiten"},
       common: {
         live: '({n} online)',
         suiteCount: { one: '🌍 {n} persoon gebruikt UNI·SIM-apps', other: '🌍 {n} mensen gebruiken UNI·SIM-apps' },
@@ -14131,6 +14138,7 @@
     },
 
     pl: {
+      pinReauth: {"title": "Potwierdź, że to Ty", "body": "Aby wyłączyć PIN, potwierdź, że to Ty. Twój dziennik i wszystko inne w aplikacji pozostaną bez zmian.", "device": "🔓 Użyj Face ID, odcisku palca lub kodu telefonu", "deviceReason": "Potwierdź, że to Ty, aby wyłączyć PIN Bipolar Bear", "deviceFailed": "Nie udało się potwierdzić na tym telefonie, że to Ty. Spróbuj ponownie lub zaloguj się poniżej.", "orSignIn": "lub zaloguj się ponownie", "passwordLabel": "Twoje hasło do Bipolar Bear", "confirm": "Potwierdź", "codeLabel": "Wyślemy kod logowania na adres {email}.", "sendCode": "Wyślij mi kod", "codeSent": "Kod wysłany. Sprawdź pocztę.", "codePlaceholder": "6-cyfrowy kod", "twoStepLabel": "Teraz wpisz kod z aplikacji uwierzytelniającej.", "wrongPassword": "To hasło jest nieprawidłowe.", "wrongCode": "Ten kod jest nieprawidłowy lub wygasł.", "rateLimited": "Zbyt wiele prób. Odczekaj chwilę i spróbuj ponownie.", "network": "Jesteś offline. Spróbuj ponownie, gdy będziesz mieć połączenie.", "failed": "Nie udało się. Spróbuj ponownie.", "unavailable": "Tutaj nie da się potwierdzić, że to Ty: najpierw zaloguj się na swoje konto na tym urządzeniu. Do tego czasu używaj swojego PIN-u.", "cancel": "Anuluj", "close": "Zamknij"},
       common: {
         live: '({n} online)',
         suiteCount: { one: '🌍 {n} osoba korzysta z aplikacji UNI·SIM', few: '🌍 {n} osoby korzystają z aplikacji UNI·SIM', many: '🌍 {n} osób korzysta z aplikacji UNI·SIM', other: '🌍 {n} osób korzysta z aplikacji UNI·SIM' },
@@ -16132,6 +16140,7 @@
     },
 
     sv: {
+      pinReauth: {"title": "Bekräfta att det är du", "body": "Bekräfta att det är du för att stänga av din PIN-kod. Din dagbok och allt annat i appen blir kvar som det är.", "device": "🔓 Använd Face ID, fingeravtryck eller telefonens lösenkod", "deviceReason": "Bekräfta att det är du för att stänga av din PIN-kod i Bipolar Bear", "deviceFailed": "Det gick inte att bekräfta att det är du på den här telefonen. Försök igen eller logga in nedan.", "orSignIn": "eller logga in igen", "passwordLabel": "Ditt lösenord för Bipolar Bear", "confirm": "Bekräfta", "codeLabel": "Vi mejlar en inloggningskod till {email}.", "sendCode": "Mejla mig en kod", "codeSent": "Koden är skickad. Kolla din e-post.", "codePlaceholder": "6-siffrig kod", "twoStepLabel": "Ange nu koden från din autentiseringsapp.", "wrongPassword": "Lösenordet stämmer inte.", "wrongCode": "Koden stämmer inte eller har gått ut.", "rateLimited": "För många försök. Vänta en stund och försök igen.", "network": "Du är offline. Försök igen när du har anslutning.", "failed": "Det fungerade inte. Försök igen.", "unavailable": "Här går det inte att bekräfta att det är du: logga först in på ditt konto på den här enheten. Fortsätt använda din PIN-kod tills dess.", "cancel": "Avbryt", "close": "Stäng"},
       common: {
         live: '({n} online)',
         suiteCount: { one: '🌍 {n} person använder UNI·SIM-appar', other: '🌍 {n} personer använder UNI·SIM-appar' },
@@ -18125,6 +18134,7 @@
     },
 
     zh: {
+      pinReauth: {"title": "确认是你本人", "body": "要关闭 PIN 码，请先确认是你本人。你的日记和应用中的其他内容都会保持原样。", "device": "🔓 使用面容 ID、指纹或手机密码", "deviceReason": "确认是你本人，以关闭 Bipolar Bear 的 PIN 码", "deviceFailed": "无法在这部手机上确认是你本人。请重试，或在下方重新登录。", "orSignIn": "或重新登录", "passwordLabel": "你的 Bipolar Bear 密码", "confirm": "确认", "codeLabel": "我们会把登录码发送到 {email}。", "sendCode": "通过邮件发送验证码", "codeSent": "验证码已发送，请查看你的邮箱。", "codePlaceholder": "6 位验证码", "twoStepLabel": "现在请输入身份验证器应用中的验证码。", "wrongPassword": "密码不正确。", "wrongCode": "验证码不正确或已过期。", "rateLimited": "尝试次数过多，请稍等片刻再试。", "network": "你当前处于离线状态，请联网后重试。", "failed": "操作未成功，请重试。", "unavailable": "此处无法确认是你本人：请先在这台设备上登录你的账户。在此之前，请继续使用你的 PIN 码。", "cancel": "取消", "close": "关闭"},
       common: {
         live: '（{n} 人在线）',
         suiteCount: '🌍 {n} 人在使用 UNI·SIM 应用',

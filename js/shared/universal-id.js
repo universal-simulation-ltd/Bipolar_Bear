@@ -326,6 +326,30 @@
     return finishSignIn().then(function (r) { return r.status === 'signed-in'; }, function () { return false; });
   }
 
+  /**
+   * Prove that the Universal ID session belongs to the Firebase account
+   * `expectedUid`, WITHOUT signing in to anything: `uidSignIn` checks the
+   * session (and its two-step level) and mints a custom token for the account
+   * it maps to; the token's `uid` claim is compared and the token thrown away.
+   * Used by "Forgot PIN?" (js/shared/pin-reauth.js) after a FRESH emailed code,
+   * so a different account can never end up signed in. Resolves false on any
+   * failure, including `{ status: 'link' }`.
+   */
+  function proveAccount(expectedUid) {
+    if (!expectedUid) return Promise.resolve(false);
+    return _accessToken().then(function (token) {
+      if (!token) return false;
+      return _callFunction('uidSignIn', { token: token }).then(function (r) {
+        if (!r || !r.customToken) return false;
+        try {
+          var part = String(r.customToken).split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+          while (part.length % 4) part += '=';
+          return JSON.parse(atob(part)).uid === expectedUid;
+        } catch (e) { return false; }
+      });
+    }).catch(function () { return false; });
+  }
+
   /** Forget the Universal ID session here (and tell Supabase, best effort). */
   function signOut() {
     var s = _load();
@@ -370,6 +394,7 @@
     startTwoStep: startTwoStep,
     verifyTwoStep: verifyTwoStep,
     refreshFirebaseSignIn: refreshFirebaseSignIn,
+    proveAccount: proveAccount,
     signOut: signOut,
     isUidOnly: isUidOnly,
   };

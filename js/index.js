@@ -2972,7 +2972,14 @@ function _handleIndexJournalNav() {
     async function idxPinForgot() {
       const _isNat = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
       if (_isNat && BB.storage.get('NativePinEnabled') === '1') {
-        if (!confirm(_tr('pin.disableConfirm', 'This will disable the app PIN. Your journal data stays safe.\n\nContinue?'))) return;
+        // Turning the app PIN off needs the phone's own lock (Face ID / Touch
+        // ID / passcode) or signing in to the account again — never just a
+        // confirm, or anyone holding the phone gets past it (James,
+        // 2026-10-09). js/shared/pin-reauth.js. A wrong-PIN lockout stays put
+        // unless this succeeds.
+        if (!window.BB || !BB.pinReauth) return;
+        if (await BB.pinReauth.confirm({ device: true }) !== 'ok') return;
+        if (BB.storage.get('NativePinEnabled') !== '1') return;
         BB.storage.remove('NativePinEnabled');
         await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
         if (window.BB && BB.pin) BB.pin.clearFailures();

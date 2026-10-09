@@ -4277,21 +4277,40 @@ window.addEventListener('pageshow', () => {
       _renderPinDots('pinDots', _pinBuffer.length, false);
     }
 
-    function pinForgot() {
-      if (!currentUser) {
+    // "Forgot PIN?" on the full-screen PIN overlay.
+    //  • Guest PIN (bbGuestPinSalt, signed out): the PIN IS the encryption key,
+    //    so the only way out is wiping the guest data — unchanged.
+    //  • The account PIN: switching it off needs the phone's own lock (native)
+    //    or signing in to the account again (James, 2026-10-09) — see
+    //    js/shared/pin-reauth.js. Nothing else is touched. A wrong-PIN lockout
+    //    stays put unless that succeeds.
+    async function pinForgot() {
+      // Wait for Firebase to say who is signed in first: before it does,
+      // currentUser is null for everyone and a signed-in account PIN would
+      // fall into the guest wipe (which removes the PIN keys).
+      if (BB.pinReauth) await BB.pinReauth.authReady();
+      const _signedIn = !!currentUser || !!(BB.pinReauth && BB.pinReauth.signedIn());
+      if (!_signedIn && BB.storage.get('GuestPinSalt')) {
         _guestPinForgotReset();
         return;
       }
-      if (confirm(BB.t('journal.dlg.resetPin'))) {
-        BB.storage.remove('PinCode');
-        BB.storage.remove('PinEnabled');
-        BB.pin.clearFailures();
-        _syncPinToFirestore();
-        sessionStorage.setItem('bbPinUnlocked', '1');
-        const el = document.getElementById('pinOverlay');
-        if (el) el.style.display = 'none';
-        _updatePinSettingsBtn();
+      if (!BB.pinReauth) return;
+      const out = await BB.pinReauth.confirm({ device: isNative() });
+      if (out === 'unavailable' && !_signedIn) {
+        // Signed out with a leftover account PIN and nothing to prove it with:
+        // the old way out, which deletes this device's data (two confirms).
+        _guestPinForgotReset();
+        return;
       }
+      if (out !== 'ok') return;
+      BB.storage.remove('PinCode');
+      BB.storage.remove('PinEnabled');
+      BB.pin.clearFailures();
+      _syncPinToFirestore();
+      sessionStorage.setItem('bbPinUnlocked', '1');
+      const el = document.getElementById('pinOverlay');
+      if (el) el.style.display = 'none';
+      _updatePinSettingsBtn();
     }
 
     function openPinSettings() {

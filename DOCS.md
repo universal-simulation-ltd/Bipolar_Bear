@@ -603,7 +603,24 @@ listener resolves.
   before 2026-10-05 read only `pinCode`, so on those the synced PIN reads as off
 - Wrong PINs: 5 in a row lock the keypad (30 s, then 1 / 5 / 15 / 60 min for each
   further miss), kept in `bbPinFails` / `bbPinLockUntil` so a reload doesn't reset
-  it; "Forgot PIN?" still works while locked
+  it; "Forgot PIN?" still works while locked, and still needs the re-auth below
+- **"Forgot PIN?" needs re-authentication** (James, 2026-10-09; v292) for the
+  native app PIN (`idxPinForgot`, index) and the account PIN (`pinForgot`,
+  journal) — `BB.pinReauth.confirm()` in `js/shared/pin-reauth.js`. Any one of:
+  the phone's own lock (native: `@aparajita/capacitor-biometric-auth`, JS name
+  `BiometricAuthNative`, `allowDeviceCredential: true`, so Face ID / Touch ID /
+  fingerprint OR the device passcode; added to `bipolarbear-native` 2026-10-10,
+  so only store builds after that have it); the Bipolar Bear password
+  (`reauthenticateWithCredential`); or, for a Universal ID account (or one with
+  a Universal ID session on the device), a fresh code emailed to the account's
+  own address (+ two-step if set) then `BB.uid.proveAccount(uid)`, which asks
+  `uidSignIn` for a token and only compares its `uid` claim (nothing is signed
+  in). Only the PIN keys are cleared. Cancel / failure leaves the PIN and the
+  lockout as they were. `pinForgot` waits for Firebase Auth first so a
+  signed-in account PIN can't fall into the guest wipe. The guest PIN's
+  Forgot (two confirms, wipes guest data) is unchanged. Check:
+  `scripts/test-pin-reauth.mjs` (Playwright, fakes Firebase/Supabase; the
+  native plugin is simulated — real biometrics need a phone)
 - Re-lock: after 5 min idle, and when the page / app comes back after more than a
   minute in the background (`visibilitychange`, Capacitor `pause`/`resume`, and
   `@capacitor/app` `appStateChange` where installed) — `BB.pin.watchBackground`
