@@ -31,3 +31,7 @@ test_write.txt
 # Capacitor build output for the standalone Bipolar Anonymous app.
 # Produced by scripts/build-anonymous.js — regenerated on every build.
 www-anonymous/
+
+# AI-assistant notes stay local (the repo is public). Untracked 2026-10-10;
+# earlier versions remain in git history.
+CLAUDE.md
