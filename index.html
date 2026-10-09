@@ -251,6 +251,21 @@
                 if (v && v !== 'null' && v.length > 5) { hasUser = true; break; }
               }
             }
+            // Firebase v10 keeps the session in IndexedDB, so the probe above
+            // can miss a signed-in user; js/index.js keeps bbSignedInHint.
+            if (localStorage.getItem('bbSignedInHint') === '1') hasUser = true;
+            if (hasUser) {
+              // Paint the Bipolar Anonymous card signed in from the first
+              // frame, stats row and all, instead of the locked button and
+              // "Sign in to join the community" until auth resolves (~1s) —
+              // the swap changed the card's height and the centred page
+              // jumped under the user's finger. The auth listener in
+              // js/index.js still locks it again if the session is gone.
+              var ab = document.getElementById('anonymousBtn');
+              if (ab) ab.classList.remove('locked');
+              var an = document.getElementById('anonymousSignInNote');
+              if (an) an.style.display = 'none';
+            }
             if (hasUser || localStorage.getItem('bbGuestPinSalt')) return;
             var ids = ['journalStreakBadge', 'survivalProgress',
                        'anonMessagesBadge', 'anonStreakBadge'];
@@ -289,6 +304,7 @@
                 if (v && v !== 'null' && v.length > 5) { hasUser = true; break; }
               }
             }
+            if (S.get('SignedInHint') === '1') hasUser = true; // see the script above
             if (!hasUser && !S.get('GuestPinSalt')) return;
 
             // Journal entry tick (✓ on the Mood Journal button). Paint it

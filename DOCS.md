@@ -563,6 +563,13 @@ tracing its outline (`#bbAuthSplash` markup, styles in `css/theme.css`):
   early-paint script in `index.html` uses. A genuine guest has none and goes
   straight to the signed-out home rather than waiting behind a splash for a
   sign-in that isn't coming.
+  ⚠ That key is Firebase **v8**'s. The pages load v10 compat, whose default
+  LOCAL persistence is IndexedDB, so the key can be absent for a signed-in
+  user (the splash then never arms). The early-paint scripts in `index.html`
+  and `_hasCachedFbUser()` also accept `bbSignedInHint`, which the home auth
+  listener sets/clears (2026-10-09, v289); the splash still uses the old probe
+  only, deliberately — arming it from the hint would put a splash in front of
+  every return to home on native.
 - **Raised before first paint.** The module is loaded synchronously in
   `<head>`, ahead of the stylesheet links, and only adds a class to `<html>`
   (`.bb-auth-restoring`) — safe before `<body>` exists. The `#bbAuthSplash`

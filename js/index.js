@@ -355,6 +355,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       auth.onAuthStateChanged(user => {
         currentUser = user && !user.isAnonymous ? user : null;
         window.currentUser = currentUser;
+        // Our own "signed in last time" hint for the early-paint scripts in
+        // index.html. Their firebase:authUser:* probe dates from Firebase v8;
+        // v10 keeps the session in IndexedDB, so that key can be missing for a
+        // signed-in user and home painted the signed-out Anonymous card until
+        // this listener ran — the page jumped as it corrected itself.
+        if (currentUser) BB.storage.set('SignedInHint', '1');
+        else BB.storage.remove('SignedInHint');
 
         // Auth has resolved, so the loading splash has done its job. Drop it on
         // the next frame rather than here: rAF runs after this callback returns,
@@ -1155,6 +1162,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             if (v && v !== 'null' && v.length > 5) return true;
           }
         }
+        if (BB.storage.get('SignedInHint') === '1') return true;
       } catch (_) {}
       return false;
     }
@@ -1255,6 +1263,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     })();
 
     function logout() {
+      BB.storage.remove('SignedInHint');
       // Clear all user-specific cached data before signing out.
       // bbOnboardingStep is intentionally NOT cleared here — Firestore preserves it
       // so the user resumes at the same onboarding step on re-login on any device.

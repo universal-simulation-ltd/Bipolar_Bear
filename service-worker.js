@@ -1389,7 +1389,13 @@
 // v288: a new mood entry's wheel always opens on Stable — no more "✨ Best
 //   guess" centred from steps + sleep. The one-tap yesterday fill-in and the
 //   end-of-entry suggestion are unchanged. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v288';
+// v289: home no longer jumps on return. The early-paint scripts in index.html
+//   probed firebase:authUser:* (Firebase v8); v10 keeps the session in
+//   IndexedDB, so a signed-in user could paint as signed out until auth
+//   resolved. js/index.js now keeps bbSignedInHint; with it the Anonymous card
+//   is unlocked, the sign-in note hidden and the stat rows painted (or held as
+//   blurred placeholders) from the first frame. Touches index.html, js/index.js.
+const CACHE_NAME = 'bipolarbear-v289';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
