@@ -2638,6 +2638,18 @@ html [style*="var(--brand-btn)"] {
 html.theme-dark .seg-switch .cv-from { color: var(--dk-text); }
 html.theme-dark .seg-switch .cv-from input[type=date], html.theme-dark .seg-switch .cv-from-all { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text); }
 html.theme-dark .seg-switch .cv-from-hint { color: var(--dk-muted); }
+/* Calendar / Life chart: the default is drawn orange, as in every UNI·SIM app
+   (@unisim/sdk useDefaultView) — filled while it is showing, outlined while it
+   is not — and pops when a double tap sets it (js/journal-insights.js). The
+   1M…All range above keeps its ★ for now. */
+#calViewSwitch .cv-opt { touch-action: manipulation; }
+#calViewSwitch .cv-opt[data-default-view="true"] { color: #c2410c; box-shadow: inset 0 0 0 2px rgba(255, 140, 1, 0.75); }
+#calViewSwitch .cv-opt.on[data-default-view="true"] { background: linear-gradient(135deg, #FE8C01 0%, #E05504 100%); color: #fff; box-shadow: none; }
+#calViewSwitch .cv-opt.cv-pop { animation: bb-cv-pop 480ms ease-out; }
+@keyframes bb-cv-pop { 0% { transform: scale(1); } 40% { transform: scale(1.14); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { #calViewSwitch .cv-opt.cv-pop { animation: none; } }
+html.theme-dark #calViewSwitch .cv-opt[data-default-view="true"] { color: #ffa94d; box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.7); }
+html.theme-dark #calViewSwitch .cv-opt.on[data-default-view="true"] { background: linear-gradient(135deg, #FE8C01 0%, #E05504 100%); color: #fff; box-shadow: none; }
 #statsAndCalendarBlock.cv-life #chart,
 #statsAndCalendarBlock.cv-life #monthCalendar { display: none !important; }
 #statsAndCalendarBlock:not(.cv-life) #lifeChart { display: none !important; }

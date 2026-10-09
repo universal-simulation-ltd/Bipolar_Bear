@@ -77,7 +77,8 @@
       viewLabel: 'View',
       viewCalendar: '📅 Calendar',
       viewLife: '📈 Life chart',
-      viewTapAgain: 'Tap again to make this your default',
+      viewTapAgain: 'Double-tap to make this your default',
+      viewClickAgain: 'Double-click to make this your default',
       viewNowDefault: 'Now your default view',
       viewDefault: 'Default view'
     },
@@ -542,20 +543,46 @@
   }
 
   // ── Calendar / life chart switch ────────────────────────────────────────
-  // One view at a time under the stats (#calViewSwitch in journal.html). Tap
-  // the other choice to switch; tap the choice already showing to make it the
-  // default for next time (James, 2026-09-30). The default is per device
-  // (localStorage), like the life chart's range. With fewer than two logged
-  // moods there is no life chart, so the switch hides and the calendar shows.
-  // Hiding is by class on #statsAndCalendarBlock (css/journal.css), so it never
-  // fights the inline display journal.js sets on #chart.
+  // One view at a time under the stats (#calViewSwitch in journal.html). One
+  // tap switches; a DOUBLE tap (double-click) on a choice makes it the default
+  // for next time — the suite's gesture, the same as every UNI·SIM app's
+  // useDefaultView in @unisim/sdk (Bipolar Bear has no SDK, so it is redone
+  // here): a second tap on the same button within 350 ms, a pop, and the
+  // default drawn orange (filled while it is showing, outlined while it is
+  // not). James, 2026-10-09; it replaced "tap the choice already showing"
+  // (2026-09-30). The default is per device (localStorage bbJournalView,
+  // unchanged, so defaults saved before carry over). With fewer than two
+  // logged moods there is no life chart, so the switch hides and the calendar
+  // shows. Hiding is by class on #statsAndCalendarBlock (css/journal.css), so
+  // it never fights the inline display journal.js sets on #chart.
   var VIEW_KEY = 'bbJournalView';
+  var DOUBLE_TAP_MS = 350;
   var _view = null;      // the view showing; read from the default on first use
   var _lifeOk = false;   // enough entries for a life chart
   var _viewNote = '';    // one-off confirmation after a default is set
+  var _lastTap = null;   // { view, at } — the previous tap, for the double tap
+  var _popView = null;   // the button to pop on the next render
 
-  function storedView() {
-    try { return localStorage.getItem(VIEW_KEY) === 'life' ? 'life' : 'calendar'; } catch (_) { return 'calendar'; }
+  /** The view saved as the default, or null when none has been chosen. */
+  function savedView() {
+    var v = null;
+    try { v = localStorage.getItem(VIEW_KEY); } catch (_) {}
+    return v === 'life' || v === 'calendar' ? v : null;
+  }
+  function storedView() { return savedView() || 'calendar'; }
+
+  /** True when this tap is the second of a double tap on the same view. */
+  function isDoubleTap(v) {
+    var now = Date.now();
+    var prev = _lastTap;
+    _lastTap = { view: v, at: now };
+    if (!prev || prev.view !== v || now - prev.at >= DOUBLE_TAP_MS) return false;
+    _lastTap = null;
+    return true;
+  }
+
+  function coarsePointer() {
+    try { return !!(root.matchMedia && root.matchMedia('(pointer: coarse)').matches); } catch (_) { return false; }
   }
 
   function applyView() {
@@ -567,20 +594,23 @@
     block.classList.toggle('cv-life', view === 'life');
     if (!_lifeOk) { sw.style.display = 'none'; sw.innerHTML = ''; return; }
     sw.style.display = '';
-    var def = storedView();
+    var saved = savedView();
+    var hint = tr(coarsePointer() ? 'lifeChart.viewTapAgain' : 'lifeChart.viewClickAgain');
     var opt = function (v, key) {
       var on = v === view;
-      return '<button type="button" class="cv-opt' + (on ? ' on' : '') + '" data-view="' + v + '" aria-pressed="' + on + '">' +
-        esc(tr('lifeChart.' + key)) +
-        (v === def ? ' <span class="cv-star" title="' + esc(tr('lifeChart.viewDefault')) + '" aria-label="' + esc(tr('lifeChart.viewDefault')) + '">★</span>' : '') +
-        '</button>';
+      var isDef = v === saved;
+      return '<button type="button" class="cv-opt' + (on ? ' on' : '') + (v === _popView ? ' cv-pop' : '') + '" data-view="' + v + '" aria-pressed="' + on + '"' +
+        (isDef ? ' data-default-view="true"' : '') +
+        ' title="' + esc(isDef ? tr('lifeChart.viewDefault') : hint) + '">' +
+        esc(tr('lifeChart.' + key)) + '</button>';
     };
-    var note = _viewNote || (view !== def ? tr('lifeChart.viewTapAgain') : '');
+    var note = _viewNote || (view !== storedView() ? hint : '');
     sw.innerHTML =
       '<div class="cv-seg" role="group" aria-label="' + esc(tr('lifeChart.viewLabel')) + '">' +
         opt('calendar', 'viewCalendar') + opt('life', 'viewLife') +
       '</div>' +
       '<div class="cv-note" aria-live="polite">' + esc(note) + '</div>';
+    _popView = null;
     sw.querySelectorAll('.cv-opt').forEach(function (b) {
       b.addEventListener('click', function () { pickView(b.getAttribute('data-view')); });
     });
@@ -588,14 +618,12 @@
 
   function pickView(v) {
     _viewNote = '';
-    if (v === _view) {
-      if (storedView() !== v) {
-        try { localStorage.setItem(VIEW_KEY, v); } catch (_) {}
-        _viewNote = tr('lifeChart.viewNowDefault');
-      }
-      applyView();
-      return;
+    if (isDoubleTap(v)) {
+      try { localStorage.setItem(VIEW_KEY, v); } catch (_) {}
+      _viewNote = tr('lifeChart.viewNowDefault');
+      _popView = v;
     }
+    if (v === _view) { applyView(); return; }
     _view = v;
     if (v === 'life') renderLifeChart(false); // it was hidden, so re-measure (calls applyView)
     else applyView();

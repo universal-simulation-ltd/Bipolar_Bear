@@ -1411,7 +1411,13 @@
 //   checked by BB.uid.proveAccount). The guest PIN's wipe is unchanged. New
 //   js/shared/pin-reauth.js (precached); touches index.html, journal.html,
 //   js/index.js, js/journal.js, js/shared/universal-id.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v292';
+// v293: the journal's Calendar / Life chart switch sets its default with a
+//   double tap (two taps on one button within 350 ms), like every UNI·SIM
+//   app's useDefaultView, and draws the default orange (filled while showing,
+//   outlined while not) instead of a ★; tapping the view already showing no
+//   longer sets it. Same bbJournalView key, so saved defaults carry over.
+//   Touches js/journal-insights.js, css/journal.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v293';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

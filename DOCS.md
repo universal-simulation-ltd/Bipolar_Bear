@@ -404,6 +404,9 @@ bb_entryStatus          {key, done}   — today's/yesterday's entry status cache
 bb_draft                object        — autosaved form state
 bbHasEntries            "1"           — user has at least one saved entry
 bbCurrentStreak         string        — current day streak count (set by journal.html)
+bbJournalView           "calendar"|"life" — the Your Journey card's default view; set by a
+                                        double tap on the Calendar / Life chart switch (the
+                                        suite's useDefaultView gesture, orange mark; v293)
 
 ── Settings ─────────────────────────────────────────────────────────────────
 journalDefaultToday     "true"|null   — log today vs yesterday
