@@ -1399,7 +1399,12 @@
 //   for a member who has never chosen (was replies, announcements and new
 //   posts on). Saved choices show exactly as stored. Touches js/anonymous.js,
 //   js/shared/anon-push.js.
-const CACHE_NAME = 'bipolarbear-v290';
+// v291: before the dock unlocks, the dock shows its 🆘 Crisis Support FAB
+//   (slot 1) instead of home's "🆘 Need help now?" text pill under "Get
+//   started"; same sheet, minus "Hide this button" while locked. The FAB gets
+//   an aria-label (new data-i18n-aria-label in i18n.js). Touches fab.js,
+//   index.html, js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v291';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

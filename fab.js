@@ -396,7 +396,7 @@
       <div class="fab-footer" aria-hidden="true"></div>
 
       <!-- Core default FABs -->
-      <button class="whatsapp-fab" id="chatFab" onclick="openChatModal()" title="Crisis support" data-i18n-title="fab.crisis.tooltip">🆘</button>
+      <button class="whatsapp-fab" id="chatFab" onclick="openChatModal()" title="Crisis support" aria-label="Crisis support" data-i18n-title="fab.crisis.tooltip" data-i18n-aria-label="fab.crisis.tooltip">🆘</button>
       <div id="chatModal" class="bb-fab-modal" onclick="if(event.target===this)closeChatModal()">
         <div style="background:white;border-radius:20px;padding:24px 24px 20px;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);">
           <div style="font-size:2em;margin-bottom:8px;">🆘</div>
@@ -721,7 +721,8 @@
    * resize, and after any state change (picker action, hide-permanently).
    *
    * Behaviour summary:
-   *   - Pre-tutorial (`bbFabsUnlocked !== '1'`): everything hidden, returns early.
+   *   - Pre-tutorial (`bbFabsUnlocked !== '1'`): only the 🆘 Crisis Support FAB
+ *     (slot 1) and the centre auth FAB show, then it returns early.
    *   - Default FABs render in their assigned slot (or `slotNum` fallback).
    *   - Hidden defaults free their slot for an extra FAB or placeholder.
    *   - Truly empty slots show the dotted `+` placeholder which opens the picker.
@@ -753,18 +754,6 @@
     const _authFab = document.getElementById('bbAuthFab');
     if (_authFab) _authFab.style.display = 'flex';
 
-    if (!_fabsUnlocked) {
-      if (_footer) _footer.style.display = 'none';
-      [document.getElementById('chatFab'), document.getElementById('quickNoteFab'),
-       document.getElementById('coffeeFab'), document.querySelector('.feedback-fab'),
-       document.getElementById('reviewFab')].forEach(el => { if (el) el.style.display = 'none'; });
-      Object.values(_extraMap).forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-      for (let s = 1; s <= 4; s++) { const ph = document.getElementById('fabPh' + s); if (ph) ph.style.display = 'none'; }
-      return;
-    }
-
-    if (_footer) _footer.style.display = '';
-
     // Slot positions relative to the fixed-positioning containing block.
     // At ≥920px on the web, #app-shell has transform:translateZ(0) so
     // position:fixed is relative to it → use offsetWidth.
@@ -783,6 +772,28 @@
       3: Math.round(_shellW * 0.70 - 22) + 'px',
       4: Math.round(_shellW * 0.90 - 22) + 'px',
     };
+
+    // Locked dock (before the first journal entry): only the 🆘 Crisis Support
+    // FAB shows, in its slot 1, beside the centre auth FAB — so someone arriving
+    // unwell can reach a crisis line from the very first screen. It is shown
+    // even if bbWaFabHidden is set, and its sheet drops "Hide this button"
+    // while locked (openChatModal), so it can't be hidden before it's earned.
+    // (James, 2026-10-09: replaced the "🆘 Need help now?" text pill that
+    // index.html showed under "Get started" until the dock unlocked.)
+    if (!_fabsUnlocked) {
+      if (_footer) _footer.style.display = 'none';
+      [document.getElementById('quickNoteFab'),
+       document.getElementById('coffeeFab'), document.querySelector('.feedback-fab'),
+       document.getElementById('reviewFab')].forEach(el => { if (el) el.style.display = 'none'; });
+      Object.values(_extraMap).forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+      for (let s = 1; s <= 4; s++) { const ph = document.getElementById('fabPh' + s); if (ph) ph.style.display = 'none'; }
+      const _chat = document.getElementById('chatFab');
+      if (_chat) { _chat.style.display = 'flex'; _chat.style.left = _slotPos[1]; }
+      _placedDefaults = new Set(['chat']);
+      return;
+    }
+
+    if (_footer) _footer.style.display = '';
 
     const _defVis = {
       chat:     BB.storage.get('WaFabHidden')        !== '1',
@@ -977,7 +988,9 @@
    * emergency number (js/shared/crisis.js), or findahelpline.com where the
    * country isn't listed. `fromLock` is the PIN lock screen's "Need help now?"
    * link: the sheet then sits above the lock overlay and drops the
-   * "Hide this button" option, which means nothing there.
+   * "Hide this button" option, which means nothing there. It is dropped while
+   * the dock is still locked too: the 🆘 FAB is then the only crisis link on
+   * the page, so it mustn't be hideable.
    */
   window.openChatModal = function (fromLock) {
     const modal = document.getElementById('chatModal');
@@ -1012,7 +1025,8 @@
       }
     }
     const hide = document.getElementById('chatModalHide');
-    if (hide) hide.style.display = fromLock ? 'none' : '';
+    const _locked = !(window.BB && BB.storage && BB.storage.get('FabsUnlocked') === '1');
+    if (hide) hide.style.display = (fromLock || _locked) ? 'none' : '';
     modal.style.zIndex = fromLock ? '10003' : '';
     modal.classList.add('open');
   };

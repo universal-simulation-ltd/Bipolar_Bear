@@ -136,6 +136,7 @@ To enable verbose Chrome DevTools logging from a connected Android device:
 - **Account modal** — sign in, sign up, change password, change email, personal information, delete account
 - **Stats modal** — mood distribution, correlations, AI feedback
 - Dock layout persisted in `localStorage` (`bbFabSlot_1` … `bbFabSlot_4`); hidden buttons tracked per-key (e.g. `bbWaFabHidden`)
+- **Locked dock** (`bbFabsUnlocked !== '1'`, before the first journal entry): only the centre auth FAB and the 🆘 Crisis Support FAB (slot 1) show, no footer bar. The 🆘 shows even if `bbWaFabHidden` is set, and `openChatModal()` hides "Hide this button" while locked, so the only crisis link on the page can't be hidden. (Replaced home's `#firstRunHelp` "Need help now?" pill, v291.) The PIN lock screen keeps its own "Need help now?" pill (`openChatModal(true)`).
 
 ### 2.3 Data Architecture
 

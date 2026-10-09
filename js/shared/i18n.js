@@ -20208,6 +20208,9 @@
     document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
       el.title = t(el.getAttribute('data-i18n-title'));
     });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria-label')));
+    });
     document.documentElement.lang = _lang === 'zh' ? 'zh-Hans' : _lang;
   }
 
