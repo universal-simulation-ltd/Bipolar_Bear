@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🕶️ **Admins can post as a member on Bipolar Anonymous.** Your Moniker → **Post as a member** (only the admin sees it). Switched on, your posts, comments and polls go up under your moniker like anyone else's, with no admin label; you keep every moderation tool, and a small 🕶️ on your ADMIN badge reminds you it's on. Announcements always say Bipolar Bear Admin. Admin posts also no longer carry the admin's own initials, colour, streak or birthday, so the two can't be matched. The setting is per device. (`CACHE_NAME` v287)
 - 💊 **Long medication lists fit on Bipolar Anonymous.** A member with five medications pushed their whole post off the side of the screen. Past two, the chip now reads "💊 Quetiapine, Valproato semisodico +3"; tap it to see the full list, tap again to close it. One or two medications look as before. (`CACHE_NAME` v286)
 - 🔥 **The Bipolar Anonymous streak looks like a streak.** Inside the Bipolar Anonymous button the visit streak now reads "👋 James M · 🔥 6 · ✉️ 0" instead of "💬 6", which looked like a count of comments. (`CACHE_NAME` v285)
 - 😴 **Synced sleep no longer borrows the night before.** Logging yesterday in the small hours (say 1am, before you've slept), the health sync took the previous night's sleep and filed it as yesterday's. It now only looks from noon on the entry's day, so at 1am it says "No sleep data found" and you can pick a range yourself; logging the next morning imports as before. (`CACHE_NAME` v284)

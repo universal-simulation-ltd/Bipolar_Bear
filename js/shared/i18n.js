@@ -753,6 +753,14 @@
           cancel: 'Cancel',
           delete: 'Delete 🗑️',
         },
+        // Admin-only switch in Your Moniker — English only; other locales fall back.
+        admin: {
+          asMemberTitle: 'Post as a member',
+          asMemberOn: 'On — posts and comments show your moniker. Announcements still say Bipolar Bear Admin.',
+          asMemberOff: 'Off — you post as Bipolar Bear Admin',
+          asMemberOnToast: 'Posting as your moniker 🕶️',
+          asMemberOffToast: 'Posting as Bipolar Bear Admin',
+        },
         about: {
           subtitle: 'A safe space for people living with bipolar',
           body: 'This is an anonymous peer community for people living with bipolar disorder. You join with a chosen name — your real identity is never stored or shared.',

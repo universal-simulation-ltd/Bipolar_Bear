@@ -118,6 +118,9 @@ const profile = {
   },
   get hasPosted()   { return BB.storage.get('Anon_hasPosted') === 'true'; },
   get isAdmin()     { return BB.storage.get('Anon_isAdmin')   === 'true'; },
+  // Admin only, this device only: post and comment under your moniker like any
+  // member instead of as "Bipolar Bear Admin". See _postingAsAdmin().
+  get postAsMember(){ return this.isAdmin && BB.storage.get('Anon_postAsMember') === 'true'; },
   get colorKey()    { return BB.storage.get('Anon_colorKey')  || 'orange'; },
   get grad1()       { const p = COLOR_PRESETS.find(c => c.key === this.colorKey); return p ? p.g1 : YELLOW_LT; },
   get grad2()       { const p = COLOR_PRESETS.find(c => c.key === this.colorKey); return p ? p.g2 : YELLOW_DARK; },
@@ -2268,7 +2271,7 @@ function renderUserPill() {
       <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,${g1},${g2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0;">${esc(av)}</div>
       <div class="pill-namecol" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;">
         <span class="pill-name" style="font-size:12px;color:rgba(0,0,0,0.75);font-weight:600;">[${esc(m)}]</span>
-        ${profile.isAdmin ? '<span style="background:rgba(0,0,0,0.55);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;line-height:1.2;">ADMIN</span>' : ''}
+        ${profile.isAdmin ? `<span style="background:rgba(0,0,0,0.55);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;line-height:1.2;">${profile.postAsMember ? '🕶️ ' : ''}ADMIN</span>` : ''}
       </div>
     </div>`;
   // The 🔥 / 🧘 / 🎂 figures used to follow the name here; they moved into
@@ -4119,7 +4122,7 @@ function listenPosts(opts) {
       .where('tab', '==', tab)
       .limit(60)
       .onSnapshot(snap => {
-        postsByTab[tab] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        postsByTab[tab] = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }));
         if (tab === 'general') maybePostDailyTopic(); // rotate the daily topic if due
         if (tab === currentTab) {
           localPosts = postsByTab[tab];
@@ -4435,12 +4438,12 @@ async function openThread(postId) {
       // mute-filtered list, so a muted user's reply still counts as "someone
       // else commented" and lifts your own gate.
       const lastDoc = snap.docs[snap.docs.length - 1];
-      lastCommentAuthor = lastDoc ? (lastDoc.data().name || '') : '';
+      lastCommentAuthor = lastDoc ? (_maskAdmin(lastDoc.data()).name || '') : '';
       // Everything in this thread is now read. Take the higher of the real
       // comment count and the parent's counter so a drifted commentCount (a
       // decrement that never landed) can't leave the post pulsing forever.
       markThreadSeen(postId, Math.max(snap.docs.length, num(post.commentCount, 0)));
-      const comments = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      const comments = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }))
         .filter(c => !c.name || (!mutedUsers.has(c.name) && !isBanned(c.name)));
       const el = document.getElementById('thread-comments-list');
       // Measure before the innerHTML swap — afterwards the old scroll position
@@ -4520,6 +4523,28 @@ function setDeleteOverlayMode(which, isComment) {
 // the visible label is masked, so the ADMIN badge is folded into the name and
 // no longer rendered separately for these posts.
 const ADMIN_DISPLAY_NAME = 'Bipolar Bear Admin';
+
+// The label alone wasn't enough: an admin post still carried the admin's own
+// name, initials, avatar colours, streak and birthday — in data attributes, in
+// the @reply a swipe inserts, and in the raw document. Harmless while the admin
+// only ever posted as the admin; once "Post as a member" exists they would tie
+// "Bipolar Bear Admin" to the moniker at a glance. So an admin post is written
+// with these neutral fields, and masked the same way as it is read (which also
+// covers posts written before this).
+function _adminAuthorFields() {
+  return { name: ADMIN_DISPLAY_NAME, initials: 'BB', grad1: YELLOW_LT, grad2: YELLOW_DARK,
+           streak: 0, med: '', stable: 0, joinedAt: null };
+}
+function _maskAdmin(item) {
+  return item && item.isAdmin ? { ...item, ..._adminAuthorFields() } : item;
+}
+// Whether a post on `tab` (or a comment, tab omitted) goes up as "Bipolar Bear
+// Admin". Announcements always do: one under a moniker would out that moniker
+// as the admin, since only the admin can publish there.
+function _postingAsAdmin(tab) {
+  return profile.isAdmin && (tab === 'announcements' || !profile.postAsMember);
+}
+
 function authorLabel(item) {
   if (item && item.isAdmin) return `[${ADMIN_DISPLAY_NAME}]`;
   return `[${esc(item ? item.name : '')}]`;
@@ -4580,7 +4605,7 @@ function renderComment(c) {
     ? `<button class="icon-btn" data-cselfdelete title="${esc(_wt('anon.modbtn.selfDeleteComment'))}" style="opacity:0.4;">🗑️</button>` : '';
   const adminDeleteBtn = profile.isAdmin
     ? `<button class="icon-btn" data-cdelete title="${esc(_wt('anon.modbtn.deleteComment'))}">🗑️</button>` : '';
-  const banBtn = profile.isAdmin && !isMine
+  const banBtn = profile.isAdmin && !isMine && !c.isAdmin
     ? `<button class="icon-btn" data-cban title="${esc(_wt('anon.modbtn.banUser'))}">🚫</button>` : '';
   const sosBtn = !isMine
     ? `<button class="icon-btn" data-csos title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>` : '';
@@ -4679,7 +4704,8 @@ function setupThread() {
     }
     // Per-thread gate (mirrors the compose gate): you can leave a comment, but
     // not a second one in a row — wait until someone else replies first.
-    if (!profile.isAdmin && lastCommentAuthor && lastCommentAuthor === profile.monika) {
+    const asAdmin = _postingAsAdmin();
+    if (!asAdmin && lastCommentAuthor && lastCommentAuthor === profile.monika) {
       showHint(_wt('anon.toast.commentWait'));
       return;
     }
@@ -4693,9 +4719,13 @@ function setupThread() {
       initials:  profile.avatarInitials(),
       grad1:     profile.grad1,
       grad2:     profile.grad2,
-      isAdmin:   profile.isAdmin,
+      isAdmin:   asAdmin,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     };
+    if (asAdmin) {
+      const { name, initials, grad1, grad2, streak } = _adminAuthorFields();
+      Object.assign(comment, { name, initials, grad1, grad2, streak });
+    }
 
     let sent = false;
     if (db) {
@@ -5090,7 +5120,7 @@ function renderPost(p) {
   const av           = p.initials || initials(p.name);
   const deleteBtn    = profile.isAdmin && !p.isSeed
     ? `<button class="icon-btn" data-delete="${esc(p.id)}" title="${esc(_wt('anon.modbtn.deletePost'))}">🗑️</button>` : '';
-  const banBtn       = profile.isAdmin && !p.isSeed && p.name !== profile.monika
+  const banBtn       = profile.isAdmin && !p.isSeed && !p.isAdmin && p.name !== profile.monika
     ? `<button class="icon-btn" data-ban="${esc(p.name)}" title="${esc(_wt('anon.modbtn.banUser'))}">🚫</button>` : '';
   const pinBtn       = profile.isAdmin && !p.isSeed
     ? `<button class="icon-btn${p.pinned ? ' pin-active' : ''}" data-pin="${esc(p.id)}" data-tab="${esc(p.tab || currentTab)}" title="${esc(p.pinned ? _wt('anon.modbtn.unpinPost') : _wt('anon.modbtn.pinPost'))}">📌</button>` : '';
@@ -5193,7 +5223,7 @@ function setupFAB() {
     // The "wait for a reaction before posting again" gate is about the feed,
     // not the review queue — a suggestion isn't on the board yet.
     const latest = getLatestRealPost(currentTab);
-    if (composeMode() === 'post' && !profile.isAdmin
+    if (composeMode() === 'post' && !_postingAsAdmin(currentTab)
         && latest && latest.name === profile.monika && (latest.likes || 0) === 0) {
       showHint(_wt('anon.toast.reactWait'));
       return;
@@ -5318,13 +5348,14 @@ function setupCompose() {
 
     const now = new Date();
     const optimisticId = 'local-' + now.getTime();
+    const asAdmin = _postingAsAdmin(currentTab);
     const entry = {
       name:     profile.monika,
       streak:   profile.streak,
       initials: profile.avatarInitials(),
       grad1:    profile.grad1,
       grad2:    profile.grad2,
-      isAdmin:  profile.isAdmin,
+      isAdmin:  asAdmin,
       text,
       med:      profile.showMeds   ? profile.med          : '',
       stable:   profile.showStable ? profile.stableStreak : 0,
@@ -5334,6 +5365,7 @@ function setupCompose() {
       isSystem: false,
       timestamp: now,
     };
+    if (asAdmin) Object.assign(entry, _adminAuthorFields());
     if (pollOpts) entry.poll = { options: pollOpts, votes: pollOpts.map(() => 0) };
 
     // Show post immediately (optimistic update). Route through assembleGeneralPosts
@@ -5352,7 +5384,7 @@ function setupCompose() {
           // Polls go through the createAnonPoll callable (validated options,
           // tallies at zero) rather than a direct write.
           const { timestamp, poll, ...fields } = entry;
-          const res = await _callFn('createAnonPoll', { ...fields, options: pollOpts });
+          const res = await _callFn('createAnonPoll', { ...fields, options: pollOpts, asMember: !asAdmin });
           docId = res.id || null;
         } else {
           await _ensureAuthSession(); // the post records its author's uid
@@ -5895,6 +5927,7 @@ function openMonikaSettings() {
   // Your figures (moved here from the header) and the daily check-in switches
   _paintMsStats();
   _paintCheckinStatus();
+  _paintAsMemberStatus();
 
   // Medication status row
   const msStatus = document.getElementById('ms-med-status');
@@ -5992,6 +6025,25 @@ function openMonikaSettings() {
 document.getElementById('ms-cancel').addEventListener('click', () => closeOv('ov-monika'));
 document.getElementById('ms-saved-btn').addEventListener('click', openSaved);
 document.getElementById('ms-theme-btn').addEventListener('click', cycleTheme);
+
+// ── Admin: post as a member (Your Moniker sheet) ──
+// This device only, on purpose — it changes what the next post is signed as,
+// so it should never switch on somewhere the admin isn't looking.
+function _paintAsMemberStatus() {
+  const btn = document.getElementById('ms-asmember-btn');
+  if (btn) btn.style.display = profile.isAdmin ? 'flex' : 'none';
+  const el = document.getElementById('ms-asmember-status');
+  if (el) el.textContent = _wt(profile.postAsMember ? 'anon.admin.asMemberOn' : 'anon.admin.asMemberOff');
+}
+document.getElementById('ms-asmember-btn').addEventListener('click', () => {
+  if (!profile.isAdmin) return;
+  const on = !profile.postAsMember;
+  BB.storage.set('Anon_postAsMember', on ? 'true' : 'false');
+  _paintAsMemberStatus();
+  renderUserPill();
+  showHint(_wt(on ? 'anon.admin.asMemberOnToast' : 'anon.admin.asMemberOffToast'));
+  _haptic();
+});
 
 // ── Your figures + the daily check-in switches (Your Moniker sheet) ──
 function _paintMsStats() {

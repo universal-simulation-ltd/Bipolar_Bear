@@ -1381,7 +1381,12 @@
 // v286: board medication chip — past two names it reads "💊 A, B +3" and a
 //   tap opens the full list (wrapped); the post header no longer stretches past
 //   the screen on a long list. Touches js/anonymous.js, css/anonymous.css.
-const CACHE_NAME = 'bipolarbear-v286';
+// v287: Bipolar Anonymous admin "Post as a member" switch (Your Moniker sheet,
+//   admin only, this device only). Admin posts and comments are written and
+//   read with neutral author fields (name, initials, colours, streak, birthday)
+//   so the admin label can't be matched to the admin's moniker.
+//   Touches anonymous.html, js/anonymous.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v287';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

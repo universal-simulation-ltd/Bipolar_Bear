@@ -546,6 +546,17 @@
       <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
     </button>
 
+    <!-- Admin only: post under your moniker instead of as "Bipolar Bear Admin".
+         Shown by _paintAsMemberStatus(). -->
+    <button id="ms-asmember-btn" style="display:none;width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;align-items:center;gap:10px;font-family:inherit;">
+      <span style="font-size:20px;">🕶️</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.admin.asMemberTitle">Post as a member</div>
+        <div id="ms-asmember-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+      </div>
+      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+    </button>
+
     <!-- Stability counter quick-access -->
     <button id="ms-stable-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-family:inherit;">
       <span style="font-size:20px;">🧘</span>

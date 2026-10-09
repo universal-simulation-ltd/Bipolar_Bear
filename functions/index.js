@@ -1331,7 +1331,8 @@ exports.createAnonPoll = onCall(
       grad2:     colour(d.grad2),
       // The admin posts under the shared "Bipolar Bear Admin" label (see
       // authorLabel in js/anonymous.js); trusted from the token, not the client.
-      isAdmin:   !!(request.auth.token && request.auth.token.email === ADMIN_ACCOUNT_EMAIL),
+      // `asMember` (the admin's "Post as a member" switch) can only turn it off.
+      isAdmin:   !!(request.auth.token && request.auth.token.email === ADMIN_ACCOUNT_EMAIL) && d.asMember !== true,
       med:       str(d.med, 60),
       stable:    num(d.stable, 0),
       joinedAt:  d.joinedAt ? str(d.joinedAt, 40) : null,
