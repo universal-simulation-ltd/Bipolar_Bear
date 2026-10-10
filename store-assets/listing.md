@@ -164,7 +164,7 @@ https://www.bipolarbear.app/privacy.html
 # App Privacy "nutrition label"  (Apple) / Data Safety  (Google)
 
 Answer these honestly in App Store Connect → App Privacy and Play Console →
-Data safety. Based on the architecture notes in CLAUDE.md / DOCS.md.
+Data safety. Based on the architecture notes in DOCS.md.
 
 ## Bipolar Bear
 
@@ -243,7 +243,7 @@ source, so nothing needs softening:
 
 | Claim | Verified in |
 |-------|-------------|
-| End-to-end encrypted journal | entries E2E (CLAUDE.md, DOCS.md) |
+| End-to-end encrypted journal | entries E2E (DOCS.md) |
 | Mood / energy / sleep logging | journal.html, js/journal.js |
 | Patterns & stats | js/journal.js |
 | Survival kit (coping/goals/medications/memories) | js/survival-kit.js |
@@ -252,7 +252,7 @@ source, so nothing needs softening:
 | Apple Health / HealthKit sync | js/journal.js (healthSync) |
 | Anonymous community | anonymous.html, js/anonymous.js |
 | Streaks & reminders | currentStreak / reminderEnabled |
-| In-app feedback | feedback collection (CLAUDE.md) |
+| In-app feedback | feedback collection (DOCS.md) |
 
 Note: the description avoids any medical/clinical claim and includes a "not a
 medical device / not medical advice" line — important for App Store review of
@@ -260,7 +260,7 @@ health-adjacent apps.
 
 ---
 
-# Pre-submission checklist (cross-reference CLAUDE.md)
+# Pre-submission checklist
 
 - [ ] Apple Developer Program membership active ($99/yr)
 - [ ] Bundle IDs registered: com.bipolarbear.app, com.bipolaranonymous.app
@@ -269,6 +269,6 @@ health-adjacent apps.
 - [ ] Marketing icon 1024×1024 — see icon alpha note below
 - [ ] Age rating questionnaire completed
 - [ ] Export compliance answer decided
-- [ ] CFBundleVersion bumped — AND widget CFBundleVersion matched (CLAUDE.md)
+- [ ] CFBundleVersion bumped — AND widget CFBundleVersion matched
 - [ ] service-worker.js CACHE_NAME bumped if precached assets changed
 ```

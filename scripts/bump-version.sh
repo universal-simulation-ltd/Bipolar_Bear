@@ -10,12 +10,12 @@
 #   e.g.   scripts/bump-version.sh 13      # -> version 1.13, build 13
 #
 # Native repo path defaults to ~/Github/UNISIM/Bipolar_Bear_Mobile/bipolarbear-native
-# (per CLAUDE.md). Override:
+# (see local notes). Override:
 #          NATIVE_REPO=/path/to/native scripts/bump-version.sh 13
 #
 # It edits files only — it does NOT commit, push, rsync, or cap-sync. Review the
 # printed diffs, then commit in both repos and run the usual release steps
-# (rsync www -> npx cap sync -> Xcode / Android Studio build) from CLAUDE.md.
+# (rsync www -> npx cap sync -> Xcode / Android Studio build) from your local notes.
 #
 set -euo pipefail
 
@@ -82,4 +82,4 @@ echo "=== bipolarbear-native — $NATIVE ==="
 git -C "$NATIVE" --no-pager diff --stat
 echo
 echo "Next: add a CACHE_NAME changelog note in service-worker.js, commit BOTH repos,"
-echo "then rsync www -> npx cap sync -> build (see Bipolar_Bear/CLAUDE.md)."
+echo "then rsync www -> npx cap sync -> build (see your local release notes)."

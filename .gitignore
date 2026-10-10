@@ -35,3 +35,10 @@ www-anonymous/
 # AI-assistant notes stay local (the repo is public). Untracked 2026-10-10;
 # earlier versions remain in git history.
 CLAUDE.md
+
+# Internal working docs stay local too (untracked 2026-10-10; earlier
+# versions remain in git history).
+BACKLOG.md
+ANDROID_TODO.md
+NOTIFICATIONS.md
+INTERNAL-NOTES.md

@@ -23,7 +23,7 @@
  * Everything is feature-detected. With no plugin installed and no VAPID key
  * set, `isSupported()` is false, the settings rows explain why, and nothing
  * throws — so this ships safely ahead of the native/console setup it needs
- * (see `NOTIFICATIONS.md`).
+ * (setup steps are kept in local notes).
  *
  * Loaded by anonymous.html only. `configure()` must be called with the
  * page's Firestore handle before anything else does something useful.

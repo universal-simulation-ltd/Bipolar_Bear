@@ -22,12 +22,12 @@
 #   e.g.   scripts/bump-anonymous-version.sh 2          # build 2, keep version
 #          scripts/bump-anonymous-version.sh 2 1.0      # build 2, version 1.0
 #
-# Native repo path defaults to ~/bipolaranonymous-native (per CLAUDE.md).
+# Native repo path defaults to ~/bipolaranonymous-native (see local notes).
 # Override:  NATIVE_REPO=/path/to/native scripts/bump-anonymous-version.sh 2
 #
 # Runs on macOS (BSD sed). It edits files only — it does NOT commit, push,
 # rsync, or cap-sync. Review the printed diffs, then archive in Xcode per the
-# release steps in CLAUDE.md.
+# release steps in your local notes.
 #
 set -euo pipefail
 

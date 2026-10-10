@@ -298,7 +298,7 @@ deleted account — reported as `orphaned`, not counted.
 
 It writes each account's `counted` flag **before** setting the counters to the
 computed totals, so a backfilled account can never count itself again on its
-next visit. Run it signed in as `inbox@jamesmarkey.co.uk` (any other caller is
+next visit. Run it signed in as the admin account (any other caller is
 refused), dry-run first:
 
 ```js
@@ -1001,8 +1001,8 @@ Dead tokens are collected on send: FCM's
 the document.
 
 Setup that isn't in the repo — APNs key, `GoogleService-Info.plist` per bundle
-id, plugin install + `cap sync`, and the Web Push VAPID key — is in
-`NOTIFICATIONS.md`, along with the Firestore rules for `bbAnonPush`.
+id, plugin install + `cap sync`, and the Web Push VAPID key — is kept in
+local notes, along with the Firestore rules for `bbAnonPush`.
 
 ### 2.15 Bipolar Anonymous Auto-translation
 
@@ -1336,7 +1336,7 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   privacy.html promises the install id "is never linked to your account". The
   Supabase ↔ Firebase join exists only in `uidLinks`.
 - **Server setup.** `uidSignIn` mints custom tokens, which needs the functions'
-  runtime service account (`566288727451-compute@developer.gserviceaccount.com`)
+  runtime service account
   to hold **Service Account Token Creator** (`roles/iam.serviceAccountTokenCreator`)
   on itself. Without it, `uidSignIn` answers `INTERNAL` at that step.
 - **Not yet:** Google / Apple sign-in (needs the origins and native deep links),
@@ -1359,8 +1359,7 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
 - **`journalWrapKey`** (Cloud Function) returns HMAC-SHA256(`JOURNAL_KEY_SECRET`,
   `bb-journal-wrap:v1:<uid>`) to a signed-in, non-anonymous caller.
   ⚠️ **Never rotate or delete `JOURNAL_KEY_SECRET`**: every Standard journal
-  would become unreadable. A copy is kept outside Secret Manager (see the
-  handover).
+  would become unreadable. The secret is stored in Secret Manager.
 - **Which mode:** `_keyModeOf(d)`: `stdWrappedKey` means Standard; a password
   wrap or `encSalt` alone means Private; neither means no key yet.
 - **Getting the key without a password** (`_resolveUserKey`): Standard unwrap;
