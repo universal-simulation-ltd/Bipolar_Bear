@@ -1417,7 +1417,15 @@
 //   outlined while not) instead of a ★; tapping the view already showing no
 //   longer sets it. Same bbJournalView key, so saved defaults carry over.
 //   Touches js/journal-insights.js, css/journal.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v293';
+// v294: the journal's 1M / 3M / 6M / 1Y / All range tabs set their default
+//   with a double tap (same gesture + orange mark as the Calendar / Life chart
+//   switch, v293) instead of tapping the range showing + ★; the life chart's
+//   zoom never sets one. Same bbJournalRange key. Bipolar Anonymous wiki: every
+//   machine-translated article says so at the top, with a "Show original
+//   (English)" toggle; Community Wisdom highlights translate like posts.
+//   Touches js/journal.js, css/journal.css, js/anonymous.js,
+//   css/anonymous.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v294';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -404,6 +404,10 @@ bb_entryStatus          {key, done}   — today's/yesterday's entry status cache
 bb_draft                object        — autosaved form state
 bbHasEntries            "1"           — user has at least one saved entry
 bbCurrentStreak         string        — current day streak count (set by journal.html)
+bbJournalRange          "30"|"90"|"180"|"365"|"all" — the Your Journey range tabs' default;
+                                        set by a double tap on a tab (tapJournalRange in
+                                        js/journal.js, orange mark; v294 — it was "tap the
+                                        range showing" + ★). Pinch / wheel zoom never sets it
 bbJournalView           "calendar"|"life" — the Your Journey card's default view; set by a
                                         double tap on the Calendar / Life chart switch (the
                                         suite's useDefaultView gesture, orange mark; v293)
@@ -1013,9 +1017,33 @@ the reader has the app set to, with **the original always one tap away** —
 nothing is ever quietly swapped for a machine's version of it.
 
 What is translated: posts, daily topics, announcements, member-suggested
-announcements and comments. What is not: the app's own copy, which is
-hand-translated in `js/shared/i18n.js`, and the Wiki tab, which is curated UK
-resources (NHS, Bipolar UK, Mind) whose wording is deliberately theirs.
+announcements, comments and the wiki's Community Wisdom highlights (members'
+own posts). What is not: the app's own copy, which is hand-translated in
+`js/shared/i18n.js`, and the Wiki tab's articles, which were translated once
+instead (below).
+
+#### The Wiki tab's articles: translated at build time, labelled
+
+The wiki's curated UK material (NHS, Bipolar UK, Mind; 96 articles + the 12
+Steps practice notes) is NOT translated on read. It was machine-translated once
+and committed as `anon.wiki.a.<slug of the English title>_<field>` in
+`js/shared/i18n.js` (July 2026), so it costs nothing to serve, works offline and
+in the native shells, and every sentence can be reviewed in a diff. Links are
+never part of the text, and phone numbers (999, 111, 116 123, 85258) and
+organisation names (NHS, Bipolar UK, Samaritans, Mind, CMHT…) were kept as
+written; a re-check on 2026-10-10 found none dropped in any locale. To change an
+article, edit the English in `js/anonymous.js` AND its nine translations (the
+slug is the key, so retitling an article orphans its translations).
+
+Because the source wording is the authority, every translated article carries a
+notice at the top of its body: "Machine-translated from the original English —
+the original wording is the authority" (`anon.wiki.mtNotice`) and a **Show
+original (English)** button (`_wikiMtBar` / `_wikiMtToggle`) that swaps that
+article's title and body (and, on the 12 Steps, the Survival Kit's step
+statement, read via `BB.i18n.tEn`) to English, marked `lang="en"`. The choice
+is kept per article for the session (`_wikiShowOrig`). English readers, and
+articles whose text reads the same in both languages, get no notice.
+`scripts/test-wiki-translation.mjs` checks fr + de, light + dark.
 
 #### How it hangs together
 

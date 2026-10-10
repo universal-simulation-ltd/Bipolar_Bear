@@ -1033,9 +1033,13 @@ window.addEventListener('pageshow', () => {
     // chart and the feedback popup's opening range — picked with the
     // 1M / 3M / 6M / 1Y / All tabs under the heading (James, 2026-09-30; it
     // replaced the 30 / 60 / 90 / custom dropdown). Days are counted back from
-    // today, like the life chart. Tapping the range already showing makes it
-    // the default (bbJournalRange, per device), like the Calendar / Life chart
-    // switch.
+    // today, like the life chart. One tap switches; a DOUBLE tap (double-click)
+    // on a range makes it the default (bbJournalRange, per device) — the same
+    // gesture as the Calendar / Life chart switch and every UNI·SIM app's
+    // useDefaultView: a second tap on the same button within 350 ms, a pop, and
+    // the default drawn orange (filled while showing, outlined while not).
+    // James, 2026-10-10; it replaced "tap the range already showing + ★".
+    // Same key, so defaults saved the old way carry over.
     const _JOURNEY_RANGES = [[30, 'journal.lifeChart.r1m'], [90, 'journal.lifeChart.r3m'], [180, 'journal.lifeChart.r6m'], [365, 'journal.lifeChart.r1y'], ['all', 'journal.feedback.all']];
     const _RANGE_KEY = 'bbJournalRange';
     function _storedJourneyRange() {
@@ -1047,6 +1051,9 @@ window.addEventListener('pageshow', () => {
     }
     let statsTimeframe = _storedJourneyRange(); // 30 | 90 | 180 | 365 | 'all'
     let _journeyRangeNote = '';
+    const _RANGE_DOUBLE_TAP_MS = 350;
+    let _journeyLastTap = null;  // { r, at } — the previous tap, for the double tap
+    let _journeyPopRange = null; // the button to pop on the next render
     let currentStatsEntries = []; // cached for stat popups
     let _monthCalOffset = 0; // 0 = current month, -1 = previous month, etc.
     let _monthCalEntries = []; // cached entries for month calendar navigation
@@ -11821,22 +11828,41 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     }
     window.getJournalRangeDays = getJournalRangeDays;
 
+    // The range saved as the default, or null when none has been chosen (the
+    // 1M fallback in _storedJourneyRange is not a choice, so it is not marked).
+    function _savedJourneyRange() {
+      let v = null;
+      try { v = localStorage.getItem(_RANGE_KEY); } catch (_) {}
+      if (v === 'all') return 'all';
+      const n = Number(v);
+      return v != null && _JOURNEY_RANGES.some(r => r[0] === n) ? n : null;
+    }
     function _renderJourneyRanges() {
       const host = document.getElementById('journeyRanges');
       if (!host) return;
-      const def = _storedJourneyRange();
+      const saved = _savedJourneyRange();
       const _tr = (k, fb) => { const t = BB.t(k); return t && t !== k ? t : fb; };
       const defLabel = _tr('journal.lifeChart.viewDefault', 'Default view');
-      const note = _journeyRangeNote || (statsTimeframe !== def ? _tr('journal.lifeChart.viewTapAgain', 'Tap again to make this your default') : '');
+      let coarse = false;
+      try { coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches); } catch (_) {}
+      const hint = coarse
+        ? _tr('journal.lifeChart.viewTapAgain', 'Double-tap to make this your default')
+        : _tr('journal.lifeChart.viewClickAgain', 'Double-click to make this your default');
+      const note = _journeyRangeNote || (statsTimeframe !== _storedJourneyRange() ? hint : '');
+      const pop = _journeyPopRange;
+      _journeyPopRange = null;
       host.innerHTML =
         `<div class="cv-seg" role="group" aria-label="${_esc(_tr('journal.lifeChart.rangeLabel', 'Time range'))}">` +
         _JOURNEY_RANGES.map(r => {
           const on = r[0] === statsTimeframe;
+          const isDef = r[0] === saved;
           // The last button is the custom range: 📅 and its start (or All).
           const label = r[0] === 'all'
             ? '📅 ' + (statsStartDate ? _journeyFromFmt({ month: 'short', year: '2-digit' }) : _tr(r[1], 'All'))
             : _journeyRangeLabel(r[0]);
-          return `<button type="button" class="cv-opt${on ? ' on' : ''}" aria-pressed="${on}" onclick="setJournalRange(${r[0] === 'all' ? "'all'" : r[0]})">${_esc(label)}${r[0] === def ? ` <span class="cv-star" title="${_esc(defLabel)}" aria-label="${_esc(defLabel)}">★</span>` : ''}</button>`;
+          return `<button type="button" class="cv-opt${on ? ' on' : ''}${r[0] === pop ? ' cv-pop' : ''}" data-range="${r[0]}" aria-pressed="${on}"` +
+            `${isDef ? ' data-default-view="true"' : ''} title="${_esc(isDef ? defLabel : hint)}"` +
+            ` onclick="tapJournalRange(${r[0] === 'all' ? "'all'" : r[0]})">${_esc(label)}</button>`;
         }).join('') +
         `</div><div class="cv-note" aria-live="polite">${_esc(note)}</div>` +
         (statsTimeframe === 'all'
@@ -11870,13 +11896,28 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     }
     window.setJourneyFrom = setJourneyFrom;
 
-    function setJournalRange(r) {
-      _journeyRangeNote = '';
+    // A tap on a range button: switch to it, and on the second tap within
+    // 350 ms on the same button make it the default. Only real taps come here —
+    // the life chart's pinch / wheel zoom calls setJournalRange directly, so
+    // zooming never sets a default.
+    function tapJournalRange(r) {
+      const now = Date.now();
+      const prev = _journeyLastTap;
+      _journeyLastTap = { r, at: now };
+      if (prev && prev.r === r && now - prev.at < _RANGE_DOUBLE_TAP_MS) {
+        _journeyLastTap = null;
+        try { localStorage.setItem(_RANGE_KEY, String(r)); } catch (_) {}
+        _journeyPopRange = r;
+        setJournalRange(r, BB.t('journal.lifeChart.viewNowDefault'));
+        return;
+      }
+      setJournalRange(r);
+    }
+    window.tapJournalRange = tapJournalRange;
+
+    function setJournalRange(r, note) {
+      _journeyRangeNote = note || '';
       if (r === statsTimeframe) {
-        if (_storedJourneyRange() !== r) {
-          try { localStorage.setItem(_RANGE_KEY, String(r)); } catch (_) {}
-          _journeyRangeNote = BB.t('journal.lifeChart.viewNowDefault');
-        }
         _renderJourneyRanges();
         return;
       }

@@ -607,6 +607,9 @@
           memberCount: { one: '👥 {n} member', other: '👥 {n} members' },
         },
         wiki: {
+          mtNotice: "Machine-translated from the original English — the original wording is the authority.",
+          mtShowOriginal: "Show original (English)",
+          mtShowTranslation: "Show translation",
           searchPlaceholder: 'Search the wiki…',
           pillMeds: '💊 Medications',
           pillGroups: '👥 Support Groups',
@@ -2585,6 +2588,9 @@
           statMember: "con nosotros",
         },
         wiki: {
+          mtNotice: "Traducción automática del original en inglés: el texto original es el que prevalece.",
+          mtShowOriginal: "Ver el original (inglés)",
+          mtShowTranslation: "Ver la traducción",
           ukGuidance: "📍 Basado en directrices emitidas en el Reino Unido (NHS, NICE, Bipolar UK). Los servicios y la terminología pueden variar según dónde vivas.",
           a: {
             step_1_admitting_powerlessness_title: "Paso 1 · Admitir la impotencia",
@@ -4613,6 +4619,9 @@
         medDefine: { title: 'Tes Médicaments', sub: 'Ajoute tes médicaments actuels. Seul le nom sera visible.', namePlaceholder: 'Nom du médicament', dosePlaceholder: 'Dosage (facultatif)', addBtn: '+ Ajouter', continueBtn: 'Continuer →', skipBtn: 'Ignorer pour l\'instant' },
         board: { announcements: '📢 Annonces', general: '💬 Général', wiki: '📖 Wiki', loading: 'Chargement des publications…', empty: 'Aucun post pour l\'instant — sois le premier !', memberCount: { one: '👥 {n} membre', other: '👥 {n} membres' } },
         wiki: {
+          mtNotice: "Traduit automatiquement de l'original en anglais — c'est le texte original qui fait foi.",
+          mtShowOriginal: "Voir l'original (anglais)",
+          mtShowTranslation: "Voir la traduction",
           ukGuidance: "📍 Basé sur des recommandations émises au Royaume-Uni (NHS, NICE, Bipolar UK). Les services et la terminologie peuvent différer là où tu vis.",
           a: {
             step_1_admitting_powerlessness_title: "Étape 1 · Reconnaître son impuissance",
@@ -6589,6 +6598,9 @@
           statMember: "dabei",
         },
         wiki: {
+          mtNotice: "Maschinell aus dem englischen Original übersetzt – maßgeblich ist der Originalwortlaut.",
+          mtShowOriginal: "Original anzeigen (Englisch)",
+          mtShowTranslation: "Übersetzung anzeigen",
           ukGuidance: "📍 Basierend auf im Vereinigten Königreich herausgegebenen Leitlinien (NHS, NICE, Bipolar UK). Angebote und Begriffe können an deinem Wohnort abweichen.",
           a: {
             step_1_admitting_powerlessness_title: "Schritt 1 · Machtlosigkeit zugeben",
@@ -8583,6 +8595,9 @@
           statMember: "con noi",
         },
         wiki: {
+          mtNotice: "Tradotto automaticamente dall'originale inglese: fa fede il testo originale.",
+          mtShowOriginal: "Mostra l'originale (inglese)",
+          mtShowTranslation: "Mostra la traduzione",
           ukGuidance: "📍 Basato su linee guida emesse nel Regno Unito (NHS, NICE, Bipolar UK). I servizi e la terminologia possono variare in base a dove vivi.",
           a: {
             step_1_admitting_powerlessness_title: "Passo 1 · Ammettere l'impotenza",
@@ -10577,6 +10592,9 @@
           statMember: "connosco",
         },
         wiki: {
+          mtNotice: "Tradução automática do original em inglês — prevalece o texto original.",
+          mtShowOriginal: "Ver o original (inglês)",
+          mtShowTranslation: "Ver a tradução",
           ukGuidance: "📍 Baseado em orientações emitidas no Reino Unido (NHS, NICE, Bipolar UK). Os serviços e a terminologia podem diferir consoante o local onde vives.",
           a: {
             step_1_admitting_powerlessness_title: "Passo 1 · Admitir a impotência",
@@ -12571,6 +12589,9 @@
           statMember: "erbij",
         },
         wiki: {
+          mtNotice: "Machinaal vertaald uit het Engelse origineel — de oorspronkelijke tekst is leidend.",
+          mtShowOriginal: "Origineel tonen (Engels)",
+          mtShowTranslation: "Vertaling tonen",
           ukGuidance: "📍 Gebaseerd op in het VK uitgegeven richtlijnen (NHS, NICE, Bipolar UK). Diensten en terminologie kunnen per land verschillen.",
           a: {
             step_1_admitting_powerlessness_title: "Stap 1 · Machteloosheid toegeven",
@@ -14565,6 +14586,9 @@
           statMember: "z nami",
         },
         wiki: {
+          mtNotice: "Przetłumaczono maszynowo z angielskiego oryginału — wiążące jest brzmienie oryginału.",
+          mtShowOriginal: "Pokaż oryginał (angielski)",
+          mtShowTranslation: "Pokaż tłumaczenie",
           ukGuidance: "📍 Na podstawie wytycznych wydanych w Wielkiej Brytanii (NHS, NICE, Bipolar UK). Usługi i terminologia mogą się różnić w zależności od miejsca zamieszkania.",
           a: {
             step_1_admitting_powerlessness_title: "Krok 1 · Przyznanie się do bezsilności",
@@ -16567,6 +16591,9 @@
           statMember: "med oss",
         },
         wiki: {
+          mtNotice: "Maskinöversatt från det engelska originalet – det är originaltexten som gäller.",
+          mtShowOriginal: "Visa originalet (engelska)",
+          mtShowTranslation: "Visa översättningen",
           ukGuidance: "📍 Baserat på riktlinjer utfärdade i Storbritannien (NHS, NICE, Bipolar UK). Tjänster och terminologi kan skilja sig åt där du bor.",
           a: {
             step_1_admitting_powerlessness_title: "Steg 1 · Att erkänna maktlöshet",
@@ -18561,6 +18588,9 @@
           statMember: "加入天数",
         },
         wiki: {
+          mtNotice: "由英文原文机器翻译——以原文措辞为准。",
+          mtShowOriginal: "显示原文（英文）",
+          mtShowTranslation: "显示译文",
           ukGuidance: "📍 基于英国发布的指南（NHS 英国国民保健署、NICE、Bipolar UK）。不同地区的服务和术语可能有所不同。",
           a: {
             step_1_admitting_powerlessness_title: "第 1 步 · 承认无能为力",
@@ -20361,6 +20391,9 @@
     getLanguages: getLanguages,
     languageName: languageName,
     showPicker: showPicker,
+    // The English string for a key, whatever the reader's language — for
+    // "Show original (English)" toggles (js/anonymous.js wiki).
+    tEn: function (key) { var v = _resolve(_locales['en'], key); return typeof v === 'string' ? v : key; },
   };
   window.BB.t = t;
 

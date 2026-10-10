@@ -2656,6 +2656,10 @@ function renderWiki() {
     });
     document.getElementById('wiki-search-input').addEventListener('input', applyWikiFilter);
     document.getElementById('wiki-search-close').addEventListener('click', closeWikiSearch);
+    document.getElementById('wiki-body').addEventListener('click', e => {
+      const t = e.target.closest && e.target.closest('.wiki-mt-toggle');
+      if (t) { e.preventDefault(); _wikiMtToggle(t); }
+    });
     setWikiSection(_wikiSection);
     _updateWikiFades();
     _peekWikiRows();
@@ -3422,6 +3426,69 @@ function _wikiTxt(obj, field) {
   return v === k ? obj[field] : v;
 }
 
+// ── Machine-translation notice + "Show original (English)" ─────────────────
+// The articles' translations (anon.wiki.a.*) were machine-translated from the
+// English once, at build time, and committed — reviewable, and free to serve
+// (no runtime translation call, no Cloud Translation cost). Links, phone
+// numbers and organisation names were kept as written. Because the source is
+// curated UK guidance, every translated article says so at the top and keeps
+// the English one tap away (James, 2026-10-10). Nothing shows in English, or
+// for an article whose fields all read the same in both (e.g. a film title).
+// _wikiShowOrig holds the slugs the reader switched to English, so a re-render
+// (section change, language change) keeps their choice for this session.
+const _wikiShowOrig = new Set();
+
+/** One translatable field: both versions, for the toggle. */
+function _wikiField(obj, field) {
+  return { en: (obj && obj[field]) || '', tr: _wikiTxt(obj, field) };
+}
+/** The notice + toggle at the top of a translated article ('' when nothing differs). */
+function _wikiMtBar(fields, slug) {
+  if (!fields.some(f => f.en !== f.tr)) return '';
+  const orig = _wikiShowOrig.has(slug);
+  return `<div class="wiki-mt" data-wiki-mt-slug="${esc(slug)}">`
+    + `<span class="wiki-mt-note">${esc(_wt('anon.wiki.mtNotice'))}</span>`
+    + `<button type="button" class="wiki-mt-toggle" aria-pressed="${orig}">`
+    + `${esc(_wt(orig ? 'anon.wiki.mtShowTranslation' : 'anon.wiki.mtShowOriginal'))}</button></div>`;
+}
+/** Flip one article between its translation and the English original. */
+function _wikiMtToggle(btn) {
+  const bar = btn.closest('.wiki-mt');
+  const card = btn.closest('.wiki-card');
+  if (!bar || !card) return;
+  const slug = bar.dataset.wikiMtSlug;
+  const orig = !_wikiShowOrig.has(slug);
+  if (orig) _wikiShowOrig.add(slug); else _wikiShowOrig.delete(slug);
+  card.querySelectorAll('[data-wiki-en]').forEach(el => {
+    el.textContent = orig ? el.dataset.wikiEn : el.dataset.wikiTr;
+    // Lets a screen reader pronounce the English as English.
+    if (orig) el.setAttribute('lang', 'en'); else el.removeAttribute('lang');
+  });
+  btn.setAttribute('aria-pressed', String(orig));
+  btn.textContent = _wt(orig ? 'anon.wiki.mtShowTranslation' : 'anon.wiki.mtShowOriginal');
+}
+/** A title / paragraph element carrying both versions so the toggle can swap them. */
+function _wikiTextEl(tag, cls, f, slug) {
+  const c = cls ? ` class="${cls}"` : '';
+  if (f.en === f.tr) return `<${tag}${c}>${esc(f.tr)}</${tag}>`;
+  const orig = _wikiShowOrig.has(slug);
+  return `<${tag}${c} data-wiki-en="${esc(f.en)}" data-wiki-tr="${esc(f.tr)}"${orig ? ' lang="en"' : ''}>`
+    + `${esc(orig ? f.en : f.tr)}</${tag}>`;
+}
+/** The common card: title in the summary; notice, body and extras inside. */
+function _wikiCardHtml(obj, search, inner) {
+  const slug = _wikiSlug(obj.title);
+  const t = _wikiField(obj, 'title'), b = _wikiField(obj, 'body');
+  return `
+        <details class="wiki-card" data-wiki-search="${esc(search)}">
+          <summary>${_wikiTextEl('span', '', t, slug)}<span class="wiki-chev">▼</span></summary>
+          <div class="wiki-card-body">
+            ${_wikiMtBar([t, b], slug)}
+            ${inner(b, slug)}
+          </div>
+        </details>`;
+}
+
 function _renderWikiSimpleCards(items, disclaimerKey, defaultLinkLabelKey) {
   const body = document.getElementById('wiki-body');
   if (!body) return;
@@ -3440,21 +3507,17 @@ function _renderWikiSimpleCards(items, disclaimerKey, defaultLinkLabelKey) {
       : '';
     // Cover thumbnail (e.g. book cover / film poster). Hides itself on
     // load error so a missing file just looks like a no-cover card.
-    const bodyHtml = c.cover
-      ? `<div class="wiki-media-row">
+    return _wikiCardHtml(c, search, (b, slug) => {
+      const bodyHtml = c.cover
+        ? `<div class="wiki-media-row">
           <img class="wiki-media-cover" src="${esc(c.cover)}" alt="" loading="lazy" onerror="this.closest('.wiki-media-row').classList.add('wiki-media-row--no-cover')">
-          <p class="wiki-media-text">${esc(_b)}</p>
+          ${_wikiTextEl('p', 'wiki-media-text', b, slug)}
         </div>`
-      : `<p>${esc(_b)}</p>`;
-    return `
-      <details class="wiki-card" data-wiki-search="${esc(search)}">
-        <summary>${esc(_t)}<span class="wiki-chev">▼</span></summary>
-        <div class="wiki-card-body">
-          ${bodyHtml}
-          ${sourceMeta}
-          ${linkHtml}
-        </div>
-      </details>`;
+        : _wikiTextEl('p', '', b, slug);
+      return `${bodyHtml}
+            ${sourceMeta}
+            ${linkHtml}`;
+    });
   }).join('');
   applyWikiFilter();
 }
@@ -3479,15 +3542,9 @@ function renderWikiConditions() {
       const search = (_t + ' ' + c.title + ' ' + _b + ' ' + (c.keys || []).join(' ')).toLowerCase();
       const sourceMeta = _wikiSourceMetaHtml(c.nhs, c.source);
       const linkLabel = _wikiLinkLabel(c.nhs, _wt('anon.wiki.nhsInfo'));
-      return `
-        <details class="wiki-card" data-wiki-search="${esc(search)}">
-          <summary>${esc(_t)}<span class="wiki-chev">▼</span></summary>
-          <div class="wiki-card-body">
-            <p>${esc(_b)}</p>
+      return _wikiCardHtml(c, search, (b, slug) => `${_wikiTextEl('p', '', b, slug)}
             ${sourceMeta}
-            <a href="${esc(c.nhs)}" target="_blank" rel="noopener" class="wiki-link-btn">${esc(linkLabel)}</a>
-          </div>
-        </details>`;
+            <a href="${esc(c.nhs)}" target="_blank" rel="noopener" class="wiki-link-btn">${esc(linkLabel)}</a>`);
     }).join('')}
   `;
   applyWikiFilter();
@@ -3504,15 +3561,9 @@ function renderWikiMeds() {
       const search = (_t + ' ' + m.title + ' ' + _b + ' ' + (m.keys || []).join(' ')).toLowerCase();
       const sourceMeta = _wikiSourceMetaHtml(m.nhs, m.source);
       const linkLabel = _wikiLinkLabel(m.nhs, _wt('anon.wiki.nhsInfo'));
-      return `
-        <details class="wiki-card" data-wiki-search="${esc(search)}">
-          <summary>${esc(_t)}<span class="wiki-chev">▼</span></summary>
-          <div class="wiki-card-body">
-            <p>${esc(_b)}</p>
+      return _wikiCardHtml(m, search, (b, slug) => `${_wikiTextEl('p', '', b, slug)}
             ${sourceMeta}
-            <a href="${esc(m.nhs)}" target="_blank" rel="noopener" class="wiki-link-btn">${esc(linkLabel)}</a>
-          </div>
-        </details>`;
+            <a href="${esc(m.nhs)}" target="_blank" rel="noopener" class="wiki-link-btn">${esc(linkLabel)}</a>`);
     }).join('')}
   `;
   applyWikiFilter();
@@ -3589,11 +3640,14 @@ async function renderWikiWisdom() {
       return `
         <div class="wiki-wisdom-card" data-wiki-search="${esc(search)}">
           ${e.topic ? `<div class="wiki-wisdom-topic">${esc(e.topic)}</div>` : ''}
-          <p class="wiki-wisdom-text">${esc(e.text)}</p>
+          <p class="wiki-wisdom-text" data-tt>${esc(e.text)}</p>
           ${e.monika ? `<div class="wiki-wisdom-attr">— ${esc(e.monika)}</div>` : ''}
         </div>`;
     }).join('');
     applyWikiFilter();
+    // Highlights are members' own posts, so they are translated on read like
+    // the board itself (translateAnonTexts, shared Firestore cache, budget).
+    if (window.BB && BB.translate) BB.translate.scan(body);
   } catch (err) {
     console.error('[Wiki] posts fetch failed', err);
     body.innerHTML = `<div class="wiki-empty">${esc(_wt('anon.wiki.errorWisdom'))}</div>`;
@@ -3706,12 +3760,19 @@ function renderWikiTwelveSteps() {
     const cards = _TWELVE_STEPS.filter(st => st.group === g).map(st => {
       const _t = _wikiTxt(st, 'title'), _b = _stepStatement(st.n), _p = _wikiTxt(st, 'practice');
       const search = (_t + ' ' + st.title + ' ' + _b + ' ' + _p + ' ' + st.keys.join(' ')).toLowerCase();
+      // The step statement is the Survival Kit's own string, so the toggle's
+      // English comes from the English locale.
+      const slug = _wikiSlug(st.title);
+      const tF = _wikiField(st, 'title'), pF = _wikiField(st, 'practice');
+      const enStep = (window.BB && BB.i18n && BB.i18n.tEn) ? BB.i18n.tEn('sk.steps.text.s' + st.n).replace(/<[^>]*>/g, '') : _b;
+      const sF = { en: enStep, tr: _b };
       return `
         <details class="wiki-card" data-wiki-search="${esc(search)}" data-wiki-region-card="${esc(region)}">
-          <summary>${esc(_t)}<span class="wiki-chev">▼</span></summary>
+          <summary>${_wikiTextEl('span', '', tF, slug)}<span class="wiki-chev">▼</span></summary>
           <div class="wiki-card-body">
-            <p class="wiki-step-text">${esc(_b)}</p>
-            <p class="wiki-notes">${esc(_p)}</p>
+            ${_wikiMtBar([tF, sF, pF], slug)}
+            ${_wikiTextEl('p', 'wiki-step-text', sF, slug)}
+            ${_wikiTextEl('p', 'wiki-notes', pF, slug)}
           </div>
         </details>`;
     }).join('');
