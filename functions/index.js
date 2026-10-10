@@ -18,7 +18,7 @@ const FROM_ADDRESS    = 'Bipolar Anonymous <bipolar@mail.unisim.co.uk>';
 // Where admin notifications go (feedback, beta signups, announcement
 // suggestions). Not the admin *account* — that stays inbox@jamesmarkey.co.uk
 // (Firestore rules, ADMIN_EMAIL in js/anonymous.js).
-const FEEDBACK_TO     = 'jamesmarkey@gmail.com';
+const FEEDBACK_TO     = 'inbox@unisim.co.uk';
 const CODE_TTL_MS     = 10 * 60 * 1000; // 10 minutes
 const RATE_LIMIT      = 3;              // max codes per email per window
 const MAX_ATTEMPTS    = 5;             // wrong-code attempts before lockout
