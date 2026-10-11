@@ -7,6 +7,7 @@ const admin                    = require('firebase-admin');
 const crypto                   = require('crypto');
 const { Resend }               = require('resend');
 const { GoogleAuth }           = require('google-auth-library');
+const { BOT_NAME, looksLikeCrisis, crisisReplyText } = require('./crisis-bot');
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -693,6 +694,8 @@ exports.onAnonCommentCreated = onDocumentCreated(
     const author = (post.name || '').toLowerCase();
     if (!author) return;                                   // system card, no author
     if (author === (comment.name || '').toLowerCase()) return;  // replying to themselves
+    // The bear answering someone else in this thread isn't news to the author.
+    if (comment.isBot && author !== (comment.forName || '').toLowerCase()) return;
 
     const recipients = await subscribers('replies', author);
     if (!recipients.length) return;
@@ -756,6 +759,78 @@ exports.onAnonPostCreated = onDocumentCreated(
       data:     { kind: 'post', postId: event.params.postId, url: '/anonymous.html' },
     });
     console.log(`[anonPush] new post: ${sent}/${recipients.length}`);
+  }
+);
+
+// ── Friendly neighbourhood Bipolar Bear ──────────────────────────────────────
+// A post or comment that reads like someone in crisis gets an automatic reply
+// in its thread with the crisis lines, and the team is emailed so a person
+// follows up. See functions/crisis-bot.js for the why and the matching.
+//
+// One reply per person per thread: the bear's comment has a fixed id derived
+// from the thread and the person, and `create()` refuses a second one, so a
+// member who writes three worried comments in a row is answered once, and a
+// retried trigger can't double-post.
+async function crisisBotReply(postId, who, text, origin) {
+  if (!looksLikeCrisis(text)) return;
+  const nameLower = (who || '').toLowerCase();
+  const id = 'crisisbot_' + crypto.createHash('sha256')
+    .update(postId + '|' + nameLower).digest('hex').slice(0, 20);
+  const postRef = db.collection(POSTS).doc(postId);
+  try {
+    await postRef.collection('comments').doc(id).create({
+      name:      BOT_NAME,
+      initials:  '🐻',
+      grad1:     YELLOW,
+      grad2:     YELLOW_DARK,
+      streak:    0,
+      isAdmin:   false,
+      isBot:     true,
+      botKind:   'crisis',
+      forName:   who || '',
+      text:      crisisReplyText(who),
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    if (e && (e.code === 6 || /already exists/i.test(e.message || ''))) return; // answered already
+    throw e;
+  }
+  // Same bump a member's comment makes (js/anonymous.js setupThread).
+  await postRef.update({
+    lastActivity: admin.firestore.FieldValue.serverTimestamp(),
+    commentCount: admin.firestore.FieldValue.increment(1),
+  }).catch((e) => console.warn('[crisisBot] post bump failed', e));
+  console.log(`[crisisBot] replied in ${postId} (${origin})`);
+
+  const resend = new Resend(RESEND_API_KEY.value());
+  const { error } = await resend.emails.send({
+    from:    FROM_ADDRESS,
+    to:      FEEDBACK_TO,
+    subject: `[Bipolar Anonymous] 🆘 Possible crisis: [${who || 'unknown'}]`,
+    text:    `The Friendly neighbourhood Bipolar Bear replied automatically to a ${origin} by [${who || 'unknown'}] `
+           + `that may be from someone in crisis. Please check in on them.\n\n`
+           + `What they wrote:\n${text}\n\n`
+           + `Open the board: https://bipolaranonymous.app/anonymous.html (post ${postId})`,
+  });
+  if (error) console.error('[crisisBot] Resend error:', JSON.stringify(error));
+}
+
+exports.crisisBotOnPost = onDocumentCreated(
+  { document: 'bbAnonPosts/{postId}', region: REGION, secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const post = event.data && event.data.data();
+    if (!post || post.deleted || post.isSystem || post.isTopic || post.isAdmin) return;
+    if (post.tab === 'announcements') return;
+    await crisisBotReply(event.params.postId, post.name, post.text, 'post');
+  }
+);
+
+exports.crisisBotOnComment = onDocumentCreated(
+  { document: 'bbAnonPosts/{postId}/comments/{commentId}', region: REGION, secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const c = event.data && event.data.data();
+    if (!c || c.isBot || c.isAdmin) return;
+    await crisisBotReply(event.params.postId, c.name, c.text, 'comment');
   }
 );
 

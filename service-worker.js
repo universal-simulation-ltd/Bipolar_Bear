@@ -1425,7 +1425,12 @@
 //   (English)" toggle; Community Wisdom highlights translate like posts.
 //   Touches js/journal.js, css/journal.css, js/anonymous.js,
 //   css/anonymous.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v294';
+// v295: Bipolar Anonymous: the Friendly neighbourhood Bipolar Bear. A post or
+//   comment that reads like someone in crisis gets an automatic comment
+//   (functions/crisis-bot.js) with a BOT badge, drawn here in the reader's
+//   language with the crisis lines for the reader's country.
+//   Touches js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v295';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

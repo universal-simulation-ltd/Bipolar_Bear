@@ -471,6 +471,13 @@
         fb: { pickType: 'Please pick a type.', writeFirst: 'Please write something first.', thanks: 'Thanks for your feedback! 🐻', sendFail: 'Could not send — please try again.', imgTooLarge: 'Screenshot is too large — please crop or resize it first.', imgUnreadable: 'Could not read image — please try a different file.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Hi {name}, it sounds like things are really hard right now, and we're glad you reached out. You don't have to wait for a reply here. If you need to talk to someone now, these lines are confidential and open day and night:",
+          crisisIntro: "It sounds like things are really hard right now, and we're glad you reached out. You don't have to wait for a reply here. If you need to talk to someone now, these lines are confidential and open day and night:",
+          crisisNote: "I'm an automatic message. A moderator has been told about this post too. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -2502,6 +2509,13 @@
         fb: { pickType: 'Elige un tipo.', writeFirst: 'Escribe algo primero.', thanks: '¡Gracias por tus comentarios! 🐻', sendFail: 'No se pudo enviar — inténtalo de nuevo.', imgTooLarge: 'La captura es demasiado grande — recórtala o redúcela primero.', imgUnreadable: 'No se pudo leer la imagen — prueba con otro archivo.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Hola {name}, parece que ahora mismo lo estás pasando muy mal, y nos alegra que hayas escrito. No tienes que esperar una respuesta aquí. Si necesitas hablar con alguien ahora, estas líneas son confidenciales y atienden día y noche:",
+          crisisIntro: "Parece que ahora mismo lo estás pasando muy mal, y nos alegra que hayas escrito. No tienes que esperar una respuesta aquí. Si necesitas hablar con alguien ahora, estas líneas son confidenciales y atienden día y noche:",
+          crisisNote: "Soy un mensaje automático. También hemos avisado a un moderador de esta publicación. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -4527,6 +4541,13 @@
         fb: { pickType: 'Choisis un type.', writeFirst: "Écris d'abord quelque chose.", thanks: 'Merci pour ton retour ! 🐻', sendFail: "Impossible d'envoyer — réessaie.", imgTooLarge: "La capture est trop grande — recadre-la ou redimensionne-la d'abord.", imgUnreadable: "Impossible de lire l'image — essaie un autre fichier." },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Salut {name}, on dirait que les choses sont vraiment difficiles en ce moment, et on est contents que tu en parles. Tu n'as pas besoin d'attendre une réponse ici. Si tu as besoin de parler à quelqu'un maintenant, ces lignes sont confidentielles et ouvertes jour et nuit :",
+          crisisIntro: "On dirait que les choses sont vraiment difficiles en ce moment, et on est contents que tu en parles. Tu n'as pas besoin d'attendre une réponse ici. Si tu as besoin de parler à quelqu'un maintenant, ces lignes sont confidentielles et ouvertes jour et nuit :",
+          crisisNote: "Je suis un message automatique. Un modérateur a aussi été prévenu de cette publication. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -6512,6 +6533,13 @@
         fb: { pickType: 'Bitte wähle einen Typ.', writeFirst: 'Bitte schreib zuerst etwas.', thanks: 'Danke für dein Feedback! 🐻', sendFail: 'Senden fehlgeschlagen — bitte versuche es erneut.', imgTooLarge: 'Der Screenshot ist zu groß — bitte zuschneiden oder verkleinern.', imgUnreadable: 'Bild konnte nicht gelesen werden — bitte versuche eine andere Datei.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Hallo {name}, es klingt, als wäre gerade alles sehr schwer, und wir sind froh, dass du dich meldest. Du musst hier nicht auf eine Antwort warten. Wenn du jetzt mit jemandem sprechen möchtest, sind diese Angebote vertraulich und rund um die Uhr erreichbar:",
+          crisisIntro: "Es klingt, als wäre gerade alles sehr schwer, und wir sind froh, dass du dich meldest. Du musst hier nicht auf eine Antwort warten. Wenn du jetzt mit jemandem sprechen möchtest, sind diese Angebote vertraulich und rund um die Uhr erreichbar:",
+          crisisNote: "Ich bin eine automatische Nachricht. Ein Moderator wurde ebenfalls über diesen Beitrag informiert. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -8509,6 +8537,13 @@
         fb: { pickType: 'Scegli un tipo.', writeFirst: 'Scrivi prima qualcosa.', thanks: 'Grazie per il tuo feedback! 🐻', sendFail: 'Invio non riuscito — riprova.', imgTooLarge: 'Lo screenshot è troppo grande — ritaglialo o ridimensionalo prima.', imgUnreadable: 'Impossibile leggere l\'immagine — prova con un altro file.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Ciao {name}, sembra che in questo momento le cose siano davvero difficili, e siamo contenti che tu ne abbia parlato. Non devi aspettare una risposta qui. Se hai bisogno di parlare con qualcuno adesso, queste linee sono riservate e attive giorno e notte:",
+          crisisIntro: "Sembra che in questo momento le cose siano davvero difficili, e siamo contenti che tu ne abbia parlato. Non devi aspettare una risposta qui. Se hai bisogno di parlare con qualcuno adesso, queste linee sono riservate e attive giorno e notte:",
+          crisisNote: "Sono un messaggio automatico. Anche un moderatore è stato avvisato di questo post. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -10506,6 +10541,13 @@
         fb: { pickType: 'Escolhe um tipo.', writeFirst: 'Escreve algo primeiro.', thanks: 'Obrigado pelos teus comentários! 🐻', sendFail: 'Não foi possível enviar — tenta novamente.', imgTooLarge: 'A captura é demasiado grande — recorta-a ou redimensiona-a primeiro.', imgUnreadable: 'Não foi possível ler a imagem — tenta outro ficheiro.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Olá {name}, parece que as coisas estão mesmo difíceis neste momento, e ainda bem que escreveste. Não precisas de esperar por uma resposta aqui. Se precisas de falar com alguém agora, estas linhas são confidenciais e funcionam dia e noite:",
+          crisisIntro: "Parece que as coisas estão mesmo difíceis neste momento, e ainda bem que escreveste. Não precisas de esperar por uma resposta aqui. Se precisas de falar com alguém agora, estas linhas são confidenciais e funcionam dia e noite:",
+          crisisNote: "Sou uma mensagem automática. Um moderador também foi avisado desta publicação. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -12503,6 +12545,13 @@
         fb: { pickType: 'Kies een type.', writeFirst: 'Schrijf eerst iets.', thanks: 'Bedankt voor je feedback! 🐻', sendFail: 'Verzenden mislukt — probeer het opnieuw.', imgTooLarge: 'De schermafbeelding is te groot — snijd deze eerst bij of verklein deze.', imgUnreadable: 'Kan afbeelding niet lezen — probeer een ander bestand.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Hoi {name}, het klinkt alsof het nu echt zwaar is, en we zijn blij dat je het deelt. Je hoeft hier niet op een antwoord te wachten. Als je nu met iemand wilt praten, zijn deze lijnen vertrouwelijk en dag en nacht bereikbaar:",
+          crisisIntro: "Het klinkt alsof het nu echt zwaar is, en we zijn blij dat je het deelt. Je hoeft hier niet op een antwoord te wachten. Als je nu met iemand wilt praten, zijn deze lijnen vertrouwelijk en dag en nacht bereikbaar:",
+          crisisNote: "Ik ben een automatisch bericht. Een moderator is ook op de hoogte gebracht van dit bericht. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -14500,6 +14549,13 @@
         fb: { pickType: 'Wybierz typ.', writeFirst: 'Najpierw coś napisz.', thanks: 'Dziękujemy za opinię! 🐻', sendFail: 'Nie udało się wysłać — spróbuj ponownie.', imgTooLarge: 'Zrzut ekranu jest za duży — najpierw przytnij go lub zmniejsz.', imgUnreadable: 'Nie udało się odczytać obrazu — spróbuj innego pliku.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Cześć {name}, wygląda na to, że teraz jest naprawdę ciężko, i dobrze, że się odezwałeś/aś. Nie musisz tu czekać na odpowiedź. Jeśli chcesz teraz z kimś porozmawiać, te linie są poufne i czynne całą dobę:",
+          crisisIntro: "Wygląda na to, że teraz jest naprawdę ciężko, i dobrze, że się odezwałeś/aś. Nie musisz tu czekać na odpowiedź. Jeśli chcesz teraz z kimś porozmawiać, te linie są poufne i czynne całą dobę:",
+          crisisNote: "Jestem wiadomością automatyczną. Moderator również został powiadomiony o tym wpisie. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -16505,6 +16561,13 @@
         fb: { pickType: 'Välj en typ.', writeFirst: 'Skriv något först.', thanks: 'Tack för din feedback! 🐻', sendFail: 'Det gick inte att skicka — försök igen.', imgTooLarge: 'Skärmbilden är för stor — beskär eller förminska den först.', imgUnreadable: 'Det gick inte att läsa bilden — prova en annan fil.' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "BOT",
+          crisisIntroNamed: "Hej {name}, det låter som att allt är riktigt tungt just nu, och vi är glada att du hörde av dig. Du behöver inte vänta på svar här. Om du behöver prata med någon nu är de här linjerna konfidentiella och öppna dygnet runt:",
+          crisisIntro: "Det låter som att allt är riktigt tungt just nu, och vi är glada att du hörde av dig. Du behöver inte vänta på svar här. Om du behöver prata med någon nu är de här linjerna konfidentiella och öppna dygnet runt:",
+          crisisNote: "Jag är ett automatiskt meddelande. En moderator har också fått veta om det här inlägget. 💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {
@@ -18502,6 +18565,13 @@
         fb: { pickType: '请选择一个类型。', writeFirst: '请先写点什么。', thanks: '感谢你的反馈！🐻', sendFail: '无法发送——请重试。', imgTooLarge: '截图太大——请先裁剪或缩小。', imgUnreadable: '无法读取图片——请尝试其他文件。' },
       },
       anon: {
+        // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
+        bot: {
+          badge: "机器人",
+          crisisIntroNamed: "{name}，你好。听起来你现在真的很难受，我们很高兴你说了出来。你不必在这里等待回复。如果你现在需要找人倾诉，以下热线保密且全天候开放：",
+          crisisIntro: "听起来你现在真的很难受，我们很高兴你说了出来。你不必在这里等待回复。如果你现在需要找人倾诉，以下热线保密且全天候开放：",
+          crisisNote: "我是一条自动消息。我们也已通知版主关注这条帖子。💛",
+        },
         // Board UX pass (2026-09-28): ⋯ menu, saved posts, pull to refresh,
         // author chips, appearance, Need help now.
         ux: {

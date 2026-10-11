@@ -1410,6 +1410,44 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   end-to-end. That stays true for the store builds until a native release ships
   this; update them with that release.
 
+### 2.19 The Friendly neighbourhood Bipolar Bear (crisis auto-reply)
+
+**Why:** on 2026-10-10 a member posted "I need to talk to someone asap" and the
+only reply, twelve hours later, was "hang in there". The 🛟 Help sheet existed,
+but someone in that state may not open it, and a moderator may be asleep.
+
+**What happens:** two Cloud Functions, `crisisBotOnPost` and
+`crisisBotOnComment` (`functions/index.js`), run `looksLikeCrisis()` from
+`functions/crisis-bot.js` on every new member post and comment. Admin posts,
+announcements, topics and system cards are skipped. On a match the function:
+
+1. Writes a comment into that thread as **Friendly neighbourhood Bipolar Bear**:
+   `isBot: true`, `botKind: 'crisis'`, `forName` (the member it answers) and a
+   UK `text`. The comment id is a hash of the post id and the member's name,
+   and is written with `create()`. So each member gets one reply per thread,
+   and a retried trigger cannot post twice.
+2. Bumps the post's `commentCount` and `lastActivity`, the same as a member's
+   comment.
+3. Emails `FEEDBACK_TO` through Resend with what was written and the post id,
+   so a person follows up.
+
+The reply push (`onAnonCommentCreated`) goes to the post's author only when the
+bear is answering them.
+
+**Rendering:** `renderComment()` → `_crisisBotBody()` ignores the stored text.
+It draws the intro from `anon.bot.*` in i18n and the rows from `BB.crisis.get()`
+(§ crisis.js). Every reader sees lines for their own country, in their own
+language, and UK readers also get NHS 111, as the Help sheet does.
+`authorLabel()` adds the BOT badge. The bear's comment has no ban, SOS, report
+or mute buttons, but admins can still delete it. Older builds and the native
+apps (until `cap sync`) show the stored UK `text` under the bear's name.
+
+**Matching** is deliberately generous: a false positive costs one kind message.
+It never hides, flags or reports anything. English uses word-boundary regexes;
+the other nine languages use plain substrings, because `\b` is ASCII-only. Test
+with `node scripts/test-crisis-bot.js`, and add a case there when you change a
+pattern.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

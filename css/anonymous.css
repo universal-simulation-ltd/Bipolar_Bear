@@ -996,6 +996,14 @@
     .help-row.help-urgent { background: rgba(229,57,53,0.10); }
     .help-link { display: block; text-align: center; font-size: 13px; font-weight: 700; color: var(--yellow-dark); margin: 6px 0 14px; }
 
+    /* ── The Friendly neighbourhood Bipolar Bear (crisis auto-reply) ── */
+    .bot-badge { display: inline-block; background: var(--yellow-bg); color: var(--yellow-dark); font-size: 9px; font-weight: 800; border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: 1px; }
+    .bot-crisis p { margin: 0 0 8px; }
+    .bot-crisis .help-row { padding: 10px 12px; }
+    .bot-crisis .help-link { text-align: left; margin: 2px 0 8px; }
+    .bot-crisis .bot-danger { font-size: 12px; font-weight: 700; }
+    .bot-crisis .bot-note { font-size: 11px; color: var(--muted); }
+
     /* ── Saved posts ── */
     .saved-card { background: var(--yellow-bg); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; text-align: left; }
     .saved-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }

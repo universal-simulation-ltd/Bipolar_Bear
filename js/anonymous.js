@@ -4608,6 +4608,7 @@ function _postingAsAdmin(tab) {
 
 function authorLabel(item) {
   if (item && item.isAdmin) return `[${ADMIN_DISPLAY_NAME}]`;
+  if (item && item.isBot) return `[${esc(item.name || '')}] <span class="bot-badge">${esc(_wt('anon.bot.badge'))}</span>`;
   return `[${esc(item ? item.name : '')}]`;
 }
 
@@ -4655,24 +4656,53 @@ function renderThreadHeader(p) {
   </div>`;
 }
 
+// The Friendly neighbourhood Bipolar Bear's reply to a post that reads like
+// someone in crisis (written by functions/crisis-bot.js). The stored text is
+// the UK version, for older builds; here it's drawn in the reader's language
+// with the crisis lines for the reader's country, the same as the 🛟 Help sheet.
+function _crisisBotBody(c) {
+  const C = window.BB && BB.crisis;
+  if (!C) return `<div class="comment-text">${esc(c.text)}</div>`;
+  const g = C.get();
+  const rows = g.lines.map(l => ({ ...l }));
+  if (g.uk) rows.push({ name: _wt('anon.ux.nhs111'), href: 'tel:111', icon: '🩺', sub: _wt('anon.ux.nhs111Sub') });
+  if (g.emergency) rows.push({ name: _wt('crisis.emergency'), href: 'tel:' + g.emergency, icon: '🚑',
+    sub: _wt('crisis.callN', { n: g.emergency }), urgent: true });
+  const rowHtml = rows.map(l => `<a class="help-row${l.urgent ? ' help-urgent' : ''}" href="${esc(l.href)}"${l.external ? ' target="_blank" rel="noopener"' : ''}>
+      <span class="help-ico" aria-hidden="true">${l.icon}</span>
+      <span><span class="help-name">${esc(l.name)}</span><span class="help-sub">${esc(l.sub)}</span></span>
+    </a>`).join('');
+  const intro = c.forName
+    ? _wt('anon.bot.crisisIntroNamed', { name: '[' + c.forName + ']' })
+    : _wt('anon.bot.crisisIntro');
+  return `<div class="comment-text bot-crisis">
+    <p>${esc(intro)}</p>
+    ${rowHtml}
+    <p class="bot-danger">${esc(C.dangerSub())}</p>
+    ${g.cc ? `<a class="help-link" href="${esc(g.findUrl)}" target="_blank" rel="noopener">${esc(_wt('crisis.elsewhere'))}</a>` : ''}
+    <p class="bot-note">${esc(_wt('anon.bot.crisisNote'))}</p>
+  </div>`;
+}
+
 function renderComment(c) {
   const g1 = safeColor(c.grad1, YELLOW_LT);
   const g2 = safeColor(c.grad2, YELLOW_DARK);
   const av = c.initials || initials(c.name);
   const isMine = c.name && c.name === profile.monika;
+  const isBot = !!c.isBot;
   // Moderation controls (mirror the feed post controls). Actions read the
   // comment id / author from the .comment-card dataset, so buttons stay light.
   const selfDeleteBtn = isMine && !profile.isAdmin
     ? `<button class="icon-btn" data-cselfdelete title="${esc(_wt('anon.modbtn.selfDeleteComment'))}" style="opacity:0.4;">🗑️</button>` : '';
   const adminDeleteBtn = profile.isAdmin
     ? `<button class="icon-btn" data-cdelete title="${esc(_wt('anon.modbtn.deleteComment'))}">🗑️</button>` : '';
-  const banBtn = profile.isAdmin && !isMine && !c.isAdmin
+  const banBtn = profile.isAdmin && !isMine && !c.isAdmin && !isBot
     ? `<button class="icon-btn" data-cban title="${esc(_wt('anon.modbtn.banUser'))}">🚫</button>` : '';
-  const sosBtn = !isMine
+  const sosBtn = !isMine && !isBot
     ? `<button class="icon-btn" data-csos title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>` : '';
-  const reportBtn = !isMine
+  const reportBtn = !isMine && !isBot
     ? `<button class="icon-btn" data-creport title="${esc(_wt('anon.modbtn.reportComment'))}">🚨</button>` : '';
-  const muteBtn = !isMine
+  const muteBtn = !isMine && !isBot
     ? `<button class="icon-btn" data-cmute title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : '';
   return `<div class="comment-card" data-cid="${esc(c.id)}" data-author="${esc(c.name)}">
     ${isMine ? '' : '<span class="swipe-cue">↩️</span>'}
@@ -4683,7 +4713,7 @@ function renderComment(c) {
         <span style="font-size:11px;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
       </div>
     </div>
-    <div class="comment-text" data-tt>${esc(c.text)}</div>
+    ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt>${esc(c.text)}</div>`}
     <div class="comment-actions">
       <div style="flex:1"></div>
       ${(selfDeleteBtn || adminDeleteBtn || banBtn || sosBtn) ? moreMenuHtml(`${selfDeleteBtn}${adminDeleteBtn}${banBtn}${sosBtn}${reportBtn}${muteBtn}`) : ''}
