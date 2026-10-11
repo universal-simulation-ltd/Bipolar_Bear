@@ -375,6 +375,12 @@
     .board-logo { display: flex; align-items: center; gap: 10px; min-width: 0; }
     .board-logo img { width: 36px; height: 36px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); flex-shrink: 0; }
     .board-logo > div { min-width: 0; }
+    /* Standalone wordmark reads "Bipolar Anonymous": the small uppercase
+       "Bipolar" sub line sits ABOVE "Anonymous". Back-to-BipolarBear mode
+       keeps the sub ("← Go back") underneath. Must stay above the
+       .logo-iconly rule (same specificity; that one has to win). */
+    .board-logo:not(.logo-back) > div { display: flex; flex-direction: column; }
+    .board-logo:not(.logo-back) .board-logo-sub { order: -1; }
     /* When the header is too narrow to show the wordmark in full without
        truncating, _fitBoardLogo() drops it entirely — leaving just the logo
        icon so the identity pill (name, streaks, birthday) gets the room. */

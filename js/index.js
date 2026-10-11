@@ -998,7 +998,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         _hideIndexHintPointer();
       }
 
-      // Journal tutorial progress: X/3 entries needed (hidden once advanced tutorial complete)
+      // Journal tutorial progress: a gentle "more tips with your next N entries" (hidden once advanced tutorial complete)
       const _prog = document.getElementById('journalTutorialProgress');
       if (_prog) {
         // Count completed tutorial milestones directly from flags — not from step number,
@@ -1015,7 +1015,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           const _progKey = _remaining === 1 ? 'home.tutorialProgressOne' : 'home.tutorialProgressMany';
           const _progTxt = window.BB && window.BB.t ? window.BB.t(_progKey, { n: _remaining }) : '';
           _prog.textContent = (_progTxt && _progTxt !== _progKey) ? _progTxt
-            : _remaining + ' more ' + (_remaining === 1 ? 'entry' : 'entries') + ' needed to complete tutorial';
+            : (_remaining === 1 ? 'One more tip comes with your next entry'
+              : 'A few more tips come with your next ' + _remaining + ' entries');
           _prog.style.display = '';
         }
       }
@@ -2752,6 +2753,20 @@ function _handleIndexJournalNav() {
       const hasGuestPin = !_hasCachedFbUser() && !!BB.storage.get('GuestPinSalt');
       const hasNativePin = _isNat && BB.storage.get('NativePinEnabled') === '1';
       if (!hasGuestPin && !hasNativePin) { _pinPendingMood = null; return; }
+
+      // "More info" sheet: the account wording (Private journal, journal
+      // password, "your account keeps the diary's key") means nothing to a
+      // guest, who has neither. Swap both paragraphs to the guest keys; the
+      // attribute swap keeps them right through a language change (applyAll).
+      if (!_hasCachedFbUser()) {
+        ['1', '2'].forEach(function (n) {
+          const el = document.getElementById('pinE2ee' + n + 'Txt');
+          if (!el) return;
+          el.setAttribute('data-i18n-html', 'pin.guestE2ee' + n);
+          const txt = _tr('pin.guestE2ee' + n, '');
+          if (txt && txt !== 'pin.guestE2ee' + n) el.innerHTML = txt;
+        });
+      }
 
       const unlocked = sessionStorage.getItem('bbPinUnlocked') === '1';
       if (unlocked) _pinPendingMood = null;

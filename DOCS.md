@@ -605,6 +605,11 @@ listener resolves.
   build before 2026-10-05 is hashed on page load (and on the next right unlock).
   A 4-digit PIN has 10,000 values, so the hash keeps it from being read, not from
   being guessed offline; the lockout below is what slows guessing on the keypad
+- The index PIN screen's "🔐 More info" sheet (`#pinE2eeModal`) has two
+  wordings: the account one (`pin.e2ee1/2`, Private journal + journal
+  password) and, when no Firebase user is cached, the guest one
+  (`pin.guestE2ee1/2`: the PIN is the only key, entries stay on the device).
+  `_initPinLock` swaps the `data-i18n-html` keys so a language change keeps it
 - The optional account PIN syncs as `userSettings/{uid}.pinHash`; the old plain
   `pinCode` field is deleted when an account signs in or the PIN changes. Builds
   before 2026-10-05 read only `pinCode`, so on those the synced PIN reads as off

@@ -1434,7 +1434,17 @@
 //   if you need them ▾") and opens on a tap, so it doesn't take over a thread,
 //   least of all when it was set off by mistake.
 //   Touches js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v296';
+// v297: first-run copy. Bipolar Anonymous's sign-up screens read "Bipolar
+//   Anonymous" (was "BipolarBear / ANONYMOUS") and the board's wordmark is a
+//   small "BIPOLAR" over "Anonymous"; the PIN screen's More info sheet has
+//   guest wording (pin.guestE2ee1/2: the PIN is the only key, entries stay on
+//   the device) instead of the account / journal-password text; the home
+//   tutorial line is gentler ("A few more tips come with your next N
+//   entries"); sk.anon.meta says "Encrypted in transit & at rest", not
+//   end-to-end (board posts are plaintext). All 10 languages.
+//   Touches anonymous.html, css/anonymous.css, js/anonymous.js, index.html,
+//   js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v297';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

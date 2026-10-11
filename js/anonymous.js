@@ -467,8 +467,9 @@ function _goHome() {
 // Bipolar Anonymous bundle — there is no BipolarBear app to return to.
 function _canGoBackToBB() { return !!_bbUser && !_isAnonymousApp; }
 
-// The board's top-left logo. Standalone users get the plain "Anonymous /
-// BipolarBear" wordmark. Users who arrived from BipolarBear get the
+// The board's top-left logo. Standalone users get the "Bipolar Anonymous"
+// wordmark: a small "BIPOLAR" stacked over "Anonymous" (css/anonymous.css
+// moves the sub line on top outside .logo-back). Users who arrived from BipolarBear get the
 // BipolarBear icon and wordmark with a small "← Go back" under it, so the
 // route home is visible rather than hidden behind an unlabelled logo tap.
 function _updateBoardLogo() {
@@ -490,7 +491,7 @@ function _updateBoardLogo() {
     btn.classList.remove('logo-back');
     if (img)    { img.src = 'icons/AppIcon_anonymous.png'; img.alt = ''; }
     if (nameEl) nameEl.textContent = 'Anonymous';
-    if (subEl)  subEl.textContent  = 'BipolarBear';
+    if (subEl)  subEl.textContent  = 'Bipolar';
   }
   _fitBoardLogo();
 }
@@ -2280,7 +2281,7 @@ function renderUserPill() {
 }
 
 // On the narrow board header the identity pill (moniker, streaks, birthday)
-// takes priority over the "Anonymous / BipolarBear" wordmark. If the wordmark
+// takes priority over the "Bipolar Anonymous" wordmark. If the wordmark
 // can't show in full without truncating, drop it and keep just the logo icon,
 // freeing the row for the user's name and streak badges. Measures real element
 // widths (not the viewport), so it behaves the same inside the desktop iPhone
