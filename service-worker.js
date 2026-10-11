@@ -1444,7 +1444,10 @@
 //   end-to-end (board posts are plaintext). All 10 languages.
 //   Touches anonymous.html, css/anonymous.css, js/anonymous.js, index.html,
 //   js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v297';
+// v298: Bipolar Anonymous: opening a thread also marks every older thread
+//   (earlier post timestamp) as read, so its red dot doesn't linger.
+//   Touches js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v298';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

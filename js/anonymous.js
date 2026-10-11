@@ -2479,6 +2479,20 @@ function markThreadSeen(postId, count) {
   _saveThreadSeen();
 }
 
+// Reading a thread also reads every older one. With unread replies on posts
+// from 1, 6 and 10 October, opening the 6 October thread clears 1 October too:
+// a dot left on a post below the one you just read is history, not news.
+// Older = earlier post timestamp, the feed's own order. Current tab only.
+function markOlderThreadsSeen(post) {
+  const ts = post?.timestamp?.toMillis?.() ?? 0;
+  if (!ts) return;
+  localPosts.forEach(p => {
+    if (p.id === post.id || !threadHasUnread(p)) return;
+    const pts = p.timestamp?.toMillis?.() ?? 0;
+    if (pts && pts < ts) markThreadSeen(p.id, p.commentCount);
+  });
+}
+
 // First sight of a thread sets its baseline instead of flagging it. Runs after
 // the feed markup is built so this render still reads the previous state.
 function baselineThreadSeen(posts) {
@@ -4466,6 +4480,7 @@ async function openThread(postId) {
   commentTargetId = postId;
   lastCommentAuthor = ''; // reset until the listener reports the thread's newest comment
   _threadStickToBottom = true; // open on the newest comment, not the top of the thread
+  markOlderThreadsSeen(post); // their dots go when this thread closes (syncUnreadFlags)
 
   document.getElementById('thread-original-post').innerHTML = renderThreadHeader(post);
   if (window.BB && BB.translate) BB.translate.scan(document.getElementById('thread-original-post'));
