@@ -1438,7 +1438,11 @@ bear is answering them.
 It draws the intro from `anon.bot.*` in i18n and the rows from `BB.crisis.get()`
 (§ crisis.js). Every reader sees lines for their own country, in their own
 language, and UK readers also get NHS 111, as the Help sheet does.
-`authorLabel()` adds the BOT badge. The bear's comment has no ban, SOS, report
+It renders as a `<details>` folded to one line ("🛟 Support lines, if you need
+them ▾", `anon.bot.crisisSummary`), so a mistaken match costs one quiet line.
+Which ones are open is kept in `_botOpen`, because the comments list re-renders
+on every snapshot. A capture-phase `toggle` listener in `setupThread()` keeps
+it in step. `authorLabel()` adds the BOT badge. The bear's comment has no ban, SOS, report
 or mute buttons, but admins can still delete it. Older builds and the native
 apps (until `cap sync`) show the stored UK `text` under the bear's name.
 

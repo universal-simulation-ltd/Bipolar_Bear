@@ -998,6 +998,11 @@
 
     /* ── The Friendly neighbourhood Bipolar Bear (crisis auto-reply) ── */
     .bot-badge { display: inline-block; background: var(--yellow-bg); color: var(--yellow-dark); font-size: 9px; font-weight: 800; border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: 1px; }
+    .bot-crisis summary { cursor: pointer; list-style: none; color: var(--muted); font-size: 12px; font-weight: 700; padding: 2px 0; }
+    .bot-crisis summary::-webkit-details-marker { display: none; }
+    .bot-crisis summary::after { content: ' ▾'; }
+    .bot-crisis[open] summary { margin-bottom: 8px; }
+    .bot-crisis[open] summary::after { content: ' ▴'; }
     .bot-crisis p { margin: 0 0 8px; }
     .bot-crisis .help-row { padding: 10px 12px; }
     .bot-crisis .help-link { text-align: left; margin: 2px 0 8px; }

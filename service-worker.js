@@ -1430,7 +1430,11 @@
 //   (functions/crisis-bot.js) with a BOT badge, drawn here in the reader's
 //   language with the crisis lines for the reader's country.
 //   Touches js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v295';
+// v296: the bear's crisis reply starts folded to one line ("🛟 Support lines,
+//   if you need them ▾") and opens on a tap, so it doesn't take over a thread,
+//   least of all when it was set off by mistake.
+//   Touches js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v296';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

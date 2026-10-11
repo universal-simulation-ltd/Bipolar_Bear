@@ -4660,6 +4660,12 @@ function renderThreadHeader(p) {
 // someone in crisis (written by functions/crisis-bot.js). The stored text is
 // the UK version, for older builds; here it's drawn in the reader's language
 // with the crisis lines for the reader's country, the same as the 🛟 Help sheet.
+//
+// It starts folded to one line, so it doesn't take over a thread, least of all
+// when it was set off by mistake. Tapping opens it. Which ones are open is kept
+// in _botOpen, because the comments list re-renders on every snapshot and would
+// otherwise fold them again.
+const _botOpen = new Set();
 function _crisisBotBody(c) {
   const C = window.BB && BB.crisis;
   if (!C) return `<div class="comment-text">${esc(c.text)}</div>`;
@@ -4675,13 +4681,14 @@ function _crisisBotBody(c) {
   const intro = c.forName
     ? _wt('anon.bot.crisisIntroNamed', { name: '[' + c.forName + ']' })
     : _wt('anon.bot.crisisIntro');
-  return `<div class="comment-text bot-crisis">
+  return `<details class="comment-text bot-crisis" data-botid="${esc(c.id)}"${_botOpen.has(c.id) ? ' open' : ''}>
+    <summary>${esc(_wt('anon.bot.crisisSummary'))}</summary>
     <p>${esc(intro)}</p>
     ${rowHtml}
     <p class="bot-danger">${esc(C.dangerSub())}</p>
     ${g.cc ? `<a class="help-link" href="${esc(g.findUrl)}" target="_blank" rel="noopener">${esc(_wt('crisis.elsewhere'))}</a>` : ''}
     <p class="bot-note">${esc(_wt('anon.bot.crisisNote'))}</p>
-  </div>`;
+  </details>`;
 }
 
 function renderComment(c) {
@@ -4732,6 +4739,12 @@ function setupThread() {
   // every snapshot, so per-button binding would be re-wired constantly).
   const commentsList = document.getElementById('thread-comments-list');
   bindSwipeReply(commentsList);
+  // 'toggle' doesn't bubble, so listen in the capture phase.
+  commentsList.addEventListener('toggle', e => {
+    const d = e.target;
+    if (!d.matches || !d.matches('details.bot-crisis')) return;
+    if (d.open) _botOpen.add(d.dataset.botid); else _botOpen.delete(d.dataset.botid);
+  }, true);
   bindLongPress(commentsList, '.comment-card');
   commentsList.addEventListener('click', e => {
     const more = e.target.closest('[data-more]');

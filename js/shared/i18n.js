@@ -473,6 +473,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Support lines, if you need them",
           badge: "BOT",
           crisisIntroNamed: "Hi {name}, it sounds like things are really hard right now, and we're glad you reached out. You don't have to wait for a reply here. If you need to talk to someone now, these lines are confidential and open day and night:",
           crisisIntro: "It sounds like things are really hard right now, and we're glad you reached out. You don't have to wait for a reply here. If you need to talk to someone now, these lines are confidential and open day and night:",
@@ -2511,6 +2512,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Líneas de apoyo, si las necesitas",
           badge: "BOT",
           crisisIntroNamed: "Hola {name}, parece que ahora mismo lo estás pasando muy mal, y nos alegra que hayas escrito. No tienes que esperar una respuesta aquí. Si necesitas hablar con alguien ahora, estas líneas son confidenciales y atienden día y noche:",
           crisisIntro: "Parece que ahora mismo lo estás pasando muy mal, y nos alegra que hayas escrito. No tienes que esperar una respuesta aquí. Si necesitas hablar con alguien ahora, estas líneas son confidenciales y atienden día y noche:",
@@ -4543,6 +4545,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Lignes d'écoute, si tu en as besoin",
           badge: "BOT",
           crisisIntroNamed: "Salut {name}, on dirait que les choses sont vraiment difficiles en ce moment, et on est contents que tu en parles. Tu n'as pas besoin d'attendre une réponse ici. Si tu as besoin de parler à quelqu'un maintenant, ces lignes sont confidentielles et ouvertes jour et nuit :",
           crisisIntro: "On dirait que les choses sont vraiment difficiles en ce moment, et on est contents que tu en parles. Tu n'as pas besoin d'attendre une réponse ici. Si tu as besoin de parler à quelqu'un maintenant, ces lignes sont confidentielles et ouvertes jour et nuit :",
@@ -6535,6 +6538,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Hilfe-Telefone, falls du sie brauchst",
           badge: "BOT",
           crisisIntroNamed: "Hallo {name}, es klingt, als wäre gerade alles sehr schwer, und wir sind froh, dass du dich meldest. Du musst hier nicht auf eine Antwort warten. Wenn du jetzt mit jemandem sprechen möchtest, sind diese Angebote vertraulich und rund um die Uhr erreichbar:",
           crisisIntro: "Es klingt, als wäre gerade alles sehr schwer, und wir sind froh, dass du dich meldest. Du musst hier nicht auf eine Antwort warten. Wenn du jetzt mit jemandem sprechen möchtest, sind diese Angebote vertraulich und rund um die Uhr erreichbar:",
@@ -8539,6 +8543,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Linee di supporto, se ne hai bisogno",
           badge: "BOT",
           crisisIntroNamed: "Ciao {name}, sembra che in questo momento le cose siano davvero difficili, e siamo contenti che tu ne abbia parlato. Non devi aspettare una risposta qui. Se hai bisogno di parlare con qualcuno adesso, queste linee sono riservate e attive giorno e notte:",
           crisisIntro: "Sembra che in questo momento le cose siano davvero difficili, e siamo contenti che tu ne abbia parlato. Non devi aspettare una risposta qui. Se hai bisogno di parlare con qualcuno adesso, queste linee sono riservate e attive giorno e notte:",
@@ -10543,6 +10548,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Linhas de apoio, se precisares",
           badge: "BOT",
           crisisIntroNamed: "Olá {name}, parece que as coisas estão mesmo difíceis neste momento, e ainda bem que escreveste. Não precisas de esperar por uma resposta aqui. Se precisas de falar com alguém agora, estas linhas são confidenciais e funcionam dia e noite:",
           crisisIntro: "Parece que as coisas estão mesmo difíceis neste momento, e ainda bem que escreveste. Não precisas de esperar por uma resposta aqui. Se precisas de falar com alguém agora, estas linhas são confidenciais e funcionam dia e noite:",
@@ -12547,6 +12553,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Hulplijnen, als je ze nodig hebt",
           badge: "BOT",
           crisisIntroNamed: "Hoi {name}, het klinkt alsof het nu echt zwaar is, en we zijn blij dat je het deelt. Je hoeft hier niet op een antwoord te wachten. Als je nu met iemand wilt praten, zijn deze lijnen vertrouwelijk en dag en nacht bereikbaar:",
           crisisIntro: "Het klinkt alsof het nu echt zwaar is, en we zijn blij dat je het deelt. Je hoeft hier niet op een antwoord te wachten. Als je nu met iemand wilt praten, zijn deze lijnen vertrouwelijk en dag en nacht bereikbaar:",
@@ -14551,6 +14558,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Telefony wsparcia, jeśli ich potrzebujesz",
           badge: "BOT",
           crisisIntroNamed: "Cześć {name}, wygląda na to, że teraz jest naprawdę ciężko, i dobrze, że się odezwałeś/aś. Nie musisz tu czekać na odpowiedź. Jeśli chcesz teraz z kimś porozmawiać, te linie są poufne i czynne całą dobę:",
           crisisIntro: "Wygląda na to, że teraz jest naprawdę ciężko, i dobrze, że się odezwałeś/aś. Nie musisz tu czekać na odpowiedź. Jeśli chcesz teraz z kimś porozmawiać, te linie są poufne i czynne całą dobę:",
@@ -16563,6 +16571,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 Stödlinjer, om du behöver dem",
           badge: "BOT",
           crisisIntroNamed: "Hej {name}, det låter som att allt är riktigt tungt just nu, och vi är glada att du hörde av dig. Du behöver inte vänta på svar här. Om du behöver prata med någon nu är de här linjerna konfidentiella och öppna dygnet runt:",
           crisisIntro: "Det låter som att allt är riktigt tungt just nu, och vi är glada att du hörde av dig. Du behöver inte vänta på svar här. Om du behöver prata med någon nu är de här linjerna konfidentiella och öppna dygnet runt:",
@@ -18567,6 +18576,7 @@
       anon: {
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
+          crisisSummary: "🛟 支持热线（如有需要）",
           badge: "机器人",
           crisisIntroNamed: "{name}，你好。听起来你现在真的很难受，我们很高兴你说了出来。你不必在这里等待回复。如果你现在需要找人倾诉，以下热线保密且全天候开放：",
           crisisIntro: "听起来你现在真的很难受，我们很高兴你说了出来。你不必在这里等待回复。如果你现在需要找人倾诉，以下热线保密且全天候开放：",
