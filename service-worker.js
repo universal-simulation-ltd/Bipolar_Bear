@@ -1461,7 +1461,12 @@
 //   the bear in the green while mood swings and life events push it about;
 //   its path draws a mood chart) and Self-care Catch (catch 💊 😴 💧 🥗, dodge
 //   ⏰ 📱 ☕ ⚡). Touches js/shared/bear-arcade.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v305';
+// v306: Bear Arcade gains Sleep Guard (tap away what would wake the bear;
+//   8 hours finishes a night) and three memory games: Bear Says (Simon with
+//   four mood bears), Mood Pairs (card flip; a bear is lost only when the
+//   match had been seen) and Mood Week (fill a week of moods back in).
+//   Touches js/shared/bear-arcade.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v306';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -18,6 +18,13 @@
  *   catch  — Self-care Catch: catch what keeps you steady (💊 😴 💧 🥗 🚶 📔 🎧),
  *            dodge the triggers (⏰ all-nighter, 📱 3 am scrolling, ☕, ⚡ stress).
  *            Missing a good thing costs nothing; catching a trigger costs a life.
+ *   sleep  — Sleep Guard: tap the things that would wake the sleeping bear
+ *            (⏰ 📱 ☕ 🔔 💡 📺) before they reach it; 8 hours finishes a night.
+ *   says   — Bear Says: Simon with four mood bears; one more each round.
+ *   pairs  — Mood Pairs: card-flip memory. A bear is lost only for a mismatch
+ *            when the first card's partner had already been seen.
+ *   week   — Mood Week: a week of moods shows for a moment; fill it back in,
+ *            in order. Weeks grow from 3 days to 7, then show for less time.
  *
  * To add a game, write a factory like `_snake(W, H)` that returns
  * `{ score, over, update(dt), draw(ctx, state) }` plus any of `idle(dt)`,
@@ -574,12 +581,359 @@
     return g;
   }
 
+  // ── Sleep Guard ───────────────────────────────────────────────────────────
+
+  function _sleep(W, H) {
+    const s = Math.min(W / 360, H / 600);
+    const WAKERS = ['⏰', '📱', '☕', '🔔', '💡', '📺'];
+    const cx = W / 2, cy = H * 0.56, BR = 36 * s, HOUR = 3.2, HIT = 34 * s;
+    const stars = Array.from({ length: 40 }, () => [Math.random() * W, Math.random() * H * 0.8, Math.random() * 6]);
+    let night = 1, hours = 0, lives = 3, speed = 55 * s, spawn = 1.2, t = 0, wake = 0, banner = 0;
+    const items = [], pops = [];
+
+    function addItem() {
+      if (Math.random() < 0.12) {
+        items.push({ sheep: true, ch: '🐑', x: -30 * s, y: _rand(0.12, 0.36) * H, vx: 70 * s, vy: 0 });
+        return;
+      }
+      const a = Math.random() * Math.PI * 2, d = Math.hypot(W, H) * 0.55;
+      const v = speed * _rand(0.8, 1.25);
+      items.push({ ch: WAKERS[Math.floor(Math.random() * WAKERS.length)], x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d,
+        vx: -Math.cos(a) * v, vy: -Math.sin(a) * v });
+    }
+
+    const g = {
+      score: 0, over: false,
+      idle(dt) { t += dt; },
+      update(dt) {
+        t += dt;
+        wake = Math.max(0, wake - dt);
+        pops.forEach(p => { p.t -= dt; p.y -= 40 * s * dt; });
+        while (pops.length && pops[0].t <= 0) pops.shift();
+        if (banner > 0) { banner -= dt; return; }
+        hours += dt / HOUR;
+        if (hours >= 8) {
+          banner = 1.8; items.length = 0; night++; hours = 0; speed *= 1.15;
+          g.score = (night - 1) * 8;
+          return;
+        }
+        g.score = Math.floor((night - 1) * 8 + hours);
+        spawn -= dt;
+        if (spawn <= 0) { addItem(); spawn = Math.max(0.4, 1.3 - night * 0.12 - hours * 0.03) * _rand(0.7, 1.3); }
+        for (let i = items.length - 1; i >= 0; i--) {
+          const it = items[i];
+          it.x += it.vx * dt; it.y += it.vy * dt;
+          if (it.sheep) { if (it.x > W + 30 * s) items.splice(i, 1); continue; }
+          if (Math.hypot(it.x - cx, it.y - cy) < BR + 8 * s) {
+            items.splice(i, 1);
+            lives--; wake = 1;
+            pops.push({ x: cx, y: cy - BR * 1.6, txt: '!', c: COLORS.manic, t: 0.8 });
+            if (lives <= 0) g.over = true;
+          }
+        }
+      },
+      down(x, y) {
+        let best = -1, bd = HIT;
+        items.forEach((it, i) => { const d = Math.hypot(it.x - x, it.y - y); if (d < bd) { bd = d; best = i; } });
+        if (best < 0) return;
+        const it = items.splice(best, 1)[0];
+        if (it.sheep) { hours = Math.min(7.99, hours + 0.5); pops.push({ x: it.x, y: it.y, txt: '+½', c: '#ffd43b', t: 0.8 }); }
+        else pops.push({ x: it.x, y: it.y, txt: '✓', c: COLORS.stable, t: 0.6 });
+      },
+      draw(ctx) {
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#0d1030'); sky.addColorStop(1, BG);
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+        stars.forEach(st => {
+          ctx.fillStyle = 'rgba(255,255,255,' + (0.35 + 0.35 * Math.sin(t * 1.5 + st[2])) + ')';
+          ctx.fillRect(st[0], st[1], 2, 2);
+        });
+        // The moon fills its ring as the night's 8 hours go by.
+        const mx = W - 44 * s, my = 46 * s;
+        ctx.fillStyle = '#ffe9a8';
+        ctx.beginPath(); ctx.arc(mx, my, 18 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#0d1030';
+        ctx.beginPath(); ctx.arc(mx + 8 * s, my - 5 * s, 15 * s, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 4 * s;
+        ctx.beginPath(); ctx.arc(mx, my, 26 * s, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#ffd43b';
+        ctx.beginPath(); ctx.arc(mx, my, 26 * s, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, hours / 8)); ctx.stroke();
+        for (let i = 0; i < lives; i++) _bear(ctx, 'stable', 18 * s + i * 24 * s, 20 * s, 20 * s);
+        _text(ctx, _t('night', 'Night {n}', { n: night }), 12 * s, 46 * s, 13 * s, '#bdb6d6', 'left');
+        ctx.fillStyle = 'rgba(132,94,247,0.18)';
+        ctx.beginPath(); ctx.arc(cx, cy, BR * 1.9, 0, Math.PI * 2); ctx.fill();
+        _bear(ctx, wake > 0 ? 'elevated' : 'stable', cx + (wake > 0 ? Math.sin(t * 50) * 3 * s : 0), cy, BR * 2.2);
+        if (wake <= 0) _emoji(ctx, '💤', cx + BR * 1.1, cy - BR * 1.1 - Math.sin(t * 2) * 5 * s, 24 * s);
+        items.forEach(it => {
+          if (!it.sheep) {
+            ctx.fillStyle = 'rgba(255,68,68,0.2)';
+            ctx.beginPath(); ctx.arc(it.x, it.y, 20 * s, 0, Math.PI * 2); ctx.fill();
+          }
+          _emoji(ctx, it.ch, it.x, it.y, 30 * s);
+        });
+        pops.forEach(p => { ctx.globalAlpha = Math.max(0, p.t / 0.8); _text(ctx, p.txt, p.x, p.y, 20 * s, p.c); ctx.globalAlpha = 1; });
+        if (banner > 0) _text(ctx, _t('nightDone', 'Night {n} slept 🌙', { n: night - 1 }), W / 2, H * 0.28, 20 * s, '#ffd43b');
+      },
+    };
+    return g;
+  }
+
+  // ── Bear Says ─────────────────────────────────────────────────────────────
+
+  function _says(W, H) {
+    const s = Math.min(W / 360, H / 600);
+    const PADS = ['manic', 'elevated', 'low', 'depressed'];
+    const size = Math.min(W * 0.9, H * 0.7) * 0.46, gap = 14 * s, cx = W / 2, cy = H * 0.46;
+    const rects = PADS.map((m, i) => ({ mood: m, x: cx - gap / 2 - size + (i % 2) * (size + gap), y: cy - gap / 2 - size + Math.floor(i / 2) * (size + gap) }));
+    const seq = [];
+    let mode = 'idle', idx = 0, timer = 0, lit = -1, litT = 0, wrong = -1, t = 0;
+
+    function next() { seq.push(Math.floor(Math.random() * 4)); mode = 'watch'; idx = 0; timer = 0.7; }
+    function press(i) {
+      if (mode !== 'input') return;
+      lit = i; litT = 0.22;
+      if (i === seq[idx]) {
+        idx++;
+        if (idx === seq.length) { g.score = seq.length; mode = 'pause'; timer = 0.8; }
+      } else {
+        wrong = seq[idx]; mode = 'wrong'; timer = 0.9;
+      }
+    }
+
+    const g = {
+      score: 0, over: false,
+      idle(dt) { t += dt; },
+      start() { next(); },
+      update(dt) {
+        t += dt;
+        litT -= dt;
+        if (litT <= 0 && mode !== 'watch') lit = -1;
+        timer -= dt;
+        if (mode === 'watch') {
+          const on = Math.max(0.28, 0.6 - seq.length * 0.025), off = 0.2;
+          if (litT <= 0) lit = -1;
+          if (timer <= 0) {
+            if (idx < seq.length) { lit = seq[idx]; litT = on; timer = on + off; idx++; }
+            else { mode = 'input'; idx = 0; lit = -1; }
+          }
+        } else if (mode === 'pause' && timer <= 0) next();
+        else if (mode === 'wrong' && timer <= 0) g.over = true;
+      },
+      down(x, y) {
+        const i = rects.findIndex(r => x >= r.x && x <= r.x + size && y >= r.y && y <= r.y + size);
+        if (i >= 0) press(i);
+      },
+      key(k) { const i = '1234'.indexOf(k); if (i >= 0) { press(i); return true; } return false; },
+      draw(ctx) {
+        ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+        rects.forEach((r, i) => {
+          const on = lit === i, bad = mode === 'wrong' && wrong === i && Math.sin(t * 20) > 0;
+          ctx.globalAlpha = on || bad ? 1 : 0.32;
+          if (on) { ctx.shadowColor = COLORS[r.mood]; ctx.shadowBlur = 30 * s; }
+          ctx.fillStyle = COLORS[r.mood];
+          _rrect(ctx, r.x, r.y, size, size, 22 * s); ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = on || bad ? 1 : 0.6;
+          _bear(ctx, r.mood, r.x + size / 2, r.y + size / 2, size * (on ? 0.62 : 0.54));
+          ctx.globalAlpha = 1;
+        });
+        ctx.fillStyle = BG;
+        ctx.beginPath(); ctx.arc(cx, cy, 30 * s, 0, Math.PI * 2); ctx.fill();
+        _text(ctx, String(seq.length), cx, cy, 22 * s, '#fff');
+        const msg = mode === 'watch' ? _t('watch', 'Watch…') : mode === 'input' ? _t('yourTurn', 'Your turn') : '';
+        if (msg) _text(ctx, msg, cx, cy + size + gap + 34 * s, 18 * s, mode === 'input' ? COLORS.stable : '#bdb6d6');
+      },
+    };
+    return g;
+  }
+
+  // ── Mood Pairs ────────────────────────────────────────────────────────────
+
+  function _pairs(W, H) {
+    const s = Math.min(W / 360, H / 600);
+    const FACES = MOODS.concat(['💊', '😴', '🎧']);
+    const LEVELS = [[2, 3], [2, 4], [3, 4], [4, 4]];
+    let level = 0, lives = 3, wait = 0, rebuild = 0, banner = 0, t = 0;
+    let cards = [], open = [];
+    const seen = new Set();
+
+    function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+    function build() {
+      const [c, r] = LEVELS[Math.min(level, LEVELS.length - 1)];
+      const faces = shuffle(FACES.slice()).slice(0, (c * r) / 2);
+      const deck = shuffle(faces.concat(faces));
+      const gap = 10 * s, top = 52 * s, availH = H - top - 16 * s;
+      const cw = Math.min((W - 24 * s - gap * (c - 1)) / c, (availH - gap * (r - 1)) / r / 1.25);
+      const ch = cw * 1.25, ox = (W - (cw * c + gap * (c - 1))) / 2, oy = top + (availH - (ch * r + gap * (r - 1))) / 2;
+      cards = deck.map((f, i) => ({ face: f, x: ox + (i % c) * (cw + gap), y: oy + Math.floor(i / c) * (ch + gap), w: cw, h: ch, state: 'down', anim: 0 }));
+      open = []; seen.clear();
+    }
+    build();
+
+    function flip(card) {
+      if (wait > 0 || rebuild > 0 || card.state !== 'down') return;
+      card.state = 'up';
+      open.push(card);
+      if (open.length < 2) return;
+      const [a, b] = open;
+      if (a.face === b.face) {
+        a.state = b.state = 'done'; open = []; g.score++;
+        if (cards.every(c => c.state === 'done')) { level++; banner = 1.4; rebuild = 1.4; }
+      } else {
+        // Only a real slip costs a bear: the first card's match had been seen.
+        const partner = cards.find(c => c !== a && c.face === a.face);
+        if (seen.has(partner)) lives--;
+        wait = 0.9;
+      }
+      seen.add(a); seen.add(b);
+    }
+
+    const g = {
+      score: 0, over: false,
+      idle(dt) { t += dt; },
+      update(dt) {
+        t += dt;
+        cards.forEach(c => { const target = c.state === 'down' ? 0 : 1; c.anim += _clamp(target - c.anim, -dt * 6, dt * 6); });
+        if (banner > 0) banner -= dt;
+        if (rebuild > 0) { rebuild -= dt; if (rebuild <= 0) build(); return; }
+        if (wait > 0) {
+          wait -= dt;
+          if (wait <= 0) {
+            open.forEach(c => { c.state = 'down'; });
+            open = [];
+            if (lives <= 0) g.over = true;
+          }
+        }
+      },
+      down(x, y) { const c = cards.find(k => x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h); if (c) flip(c); },
+      draw(ctx) {
+        ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+        for (let i = 0; i < lives; i++) _bear(ctx, 'stable', 18 * s + i * 24 * s, 22 * s, 20 * s);
+        _text(ctx, _t('level', 'Level {n}', { n: level + 1 }), W - 12 * s, 22 * s, 13 * s, '#bdb6d6', 'right');
+        cards.forEach(c => {
+          const sx = Math.abs(Math.cos(c.anim * Math.PI));
+          const w = Math.max(2, c.w * sx), x = c.x + (c.w - w) / 2, front = c.anim > 0.5;
+          ctx.globalAlpha = c.state === 'done' ? 0.55 : 1;
+          ctx.fillStyle = front ? '#f1edff' : '#2a2540';
+          _rrect(ctx, x, c.y, w, c.h, 10 * s); ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = c.state === 'done' ? COLORS.stable : front ? '#d0c8ee' : COLORS.elevated;
+          ctx.stroke();
+          if (sx > 0.2) {
+            ctx.save();
+            ctx.translate(c.x + c.w / 2, c.y + c.h / 2); ctx.scale(sx, 1);
+            if (!front) _text(ctx, '?', 0, 0, c.w * 0.4, COLORS.elevated);
+            else if (COLORS[c.face]) _bear(ctx, c.face, 0, 0, c.w * 0.7);
+            else _emoji(ctx, c.face, 0, 0, c.w * 0.5);
+            ctx.restore();
+          }
+          ctx.globalAlpha = 1;
+        });
+        if (banner > 0) _text(ctx, _t('level', 'Level {n}', { n: level + 1 }), W / 2, H / 2, 26 * s, COLORS.elevated);
+      },
+    };
+    return g;
+  }
+
+  // ── Mood Week ─────────────────────────────────────────────────────────────
+
+  function _week(W, H) {
+    const s = Math.min(W / 360, H / 600);
+    const lang = (window.BB && BB.i18n && BB.i18n.getLang) ? BB.i18n.getLang() : 'en';
+    const DAYS = Array.from({ length: 7 }, (_, i) => {
+      try { return new Date(2024, 0, 1 + i).toLocaleDateString(lang === 'zh' ? 'zh-Hans' : lang, { weekday: 'narrow' }); }
+      catch (_) { return 'MTWTFSS'[i]; }
+    });
+    const slotW = Math.min(46 * s, (W - 24 * s) / 7 - 6 * s), slotGap = 6 * s, slotY = H * 0.36;
+    const palY = H * 0.74, palSize = Math.min(58 * s, (W - 24 * s) / 5 - 8 * s);
+    const palX = i => W / 2 + (i - 2) * (palSize + 10 * s);
+    let round = 0, lives = 3, mode = 'idle', timer = 0, showFor = 1, idx = 0, t = 0;
+    let seq = [], got = [];
+
+    function slotX(i) { return W / 2 - (seq.length * slotW + (seq.length - 1) * slotGap) / 2 + i * (slotW + slotGap); }
+    function next() {
+      const n = Math.min(7, 3 + round);
+      seq = Array.from({ length: n }, () => Math.floor(Math.random() * 5));
+      got = [];
+      idx = 0;
+      showFor = Math.max(1.2 + n * 0.25, (1.2 + n * 0.45) * Math.pow(0.9, Math.max(0, round - 4)));
+      timer = showFor;
+      mode = 'show';
+      round++;
+    }
+    function pick(m) {
+      if (mode !== 'fill') return;
+      const ok = m === seq[idx];
+      got.push({ m: m, ok: ok });
+      if (ok) g.score++; else lives--;
+      idx++;
+      if (lives <= 0) { mode = 'end'; timer = 1.2; }
+      else if (idx === seq.length) { mode = 'pause'; timer = 1.1; }
+    }
+
+    const g = {
+      score: 0, over: false,
+      idle(dt) { t += dt; },
+      start() { next(); },
+      update(dt) {
+        t += dt;
+        timer -= dt;
+        if (mode === 'show' && timer <= 0) mode = 'fill';
+        else if (mode === 'pause' && timer <= 0) next();
+        else if (mode === 'end' && timer <= 0) g.over = true;
+      },
+      down(x, y) {
+        if (Math.abs(y - palY) > palSize * 0.7) return;
+        for (let i = 0; i < 5; i++) if (Math.abs(x - palX(i)) < palSize / 2 + 5 * s) { pick(i); return; }
+      },
+      key(k) { const i = '12345'.indexOf(k); if (i >= 0) { pick(i); return true; } return false; },
+      draw(ctx) {
+        ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+        for (let i = 0; i < lives; i++) _bear(ctx, 'stable', 18 * s + i * 24 * s, 22 * s, 20 * s);
+        const title = mode === 'show' ? _t('remember', 'Remember the week…') : mode === 'fill' ? _t('fillIn', 'Now fill it in') : '';
+        if (title) _text(ctx, title, W / 2, H * 0.2, 18 * s, mode === 'fill' ? COLORS.stable : '#f1edff');
+        if (mode === 'show') {
+          ctx.fillStyle = 'rgba(255,255,255,0.15)';
+          _rrect(ctx, W * 0.25, H * 0.25, W * 0.5, 6 * s, 3 * s); ctx.fill();
+          ctx.fillStyle = COLORS.elevated;
+          _rrect(ctx, W * 0.25, H * 0.25, W * 0.5 * Math.max(0, timer / showFor), 6 * s, 3 * s); ctx.fill();
+        }
+        seq.forEach((m, i) => {
+          const x = slotX(i);
+          _text(ctx, DAYS[i], x + slotW / 2, slotY - 16 * s, 13 * s, '#9d95bb');
+          const r = got[i];
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = r ? (r.ok ? COLORS.stable : COLORS.manic) : 'rgba(255,255,255,0.25)';
+          ctx.fillStyle = '#1c1930';
+          _rrect(ctx, x, slotY, slotW, slotW, 10 * s); ctx.fill();
+          if (!r && mode === 'fill') ctx.setLineDash([4 * s, 4 * s]);
+          ctx.stroke(); ctx.setLineDash([]);
+          const show = mode === 'show' ? m : r ? (r.ok ? r.m : seq[i]) : (mode === 'end' || mode === 'pause') ? seq[i] : -1;
+          if (show >= 0) _bear(ctx, MOODS[show], x + slotW / 2, slotY + slotW / 2, slotW * 0.85);
+          if (r && !r.ok) _bear(ctx, MOODS[r.m], x + slotW * 0.85, slotY + slotW * 0.85, slotW * 0.42);
+        });
+        MOODS.forEach((m, i) => {
+          ctx.globalAlpha = mode === 'fill' ? 1 : 0.35;
+          ctx.fillStyle = COLORS[m];
+          ctx.beginPath(); ctx.arc(palX(i), palY, palSize / 2, 0, Math.PI * 2); ctx.fill();
+          _bear(ctx, m, palX(i), palY, palSize * 0.86);
+          ctx.globalAlpha = 1;
+        });
+      },
+    };
+    return g;
+  }
+
   const GAMES = [
     { id: 'snake',  mood: 'stable',   make: _snake,  name: () => _t('snake', 'Bear Snake'),   how: () => _t('snakeHow', 'Swipe or use the arrow keys to steer. Eat the bears, miss the walls and your tail.') },
     { id: 'flappy', mood: 'elevated', make: _flappy, name: () => _t('flappy', 'Flappy Bear'), how: () => _t('flappyHow', 'Tap to flap. Stay in the gap between the highs and the lows.') },
     { id: 'bricks', mood: 'manic',    make: _bricks, name: () => _t('bricks', 'Bear Bricks'), how: () => _t('bricksHow', 'Drag to move the paddle, tap to launch. Clear every mood.') },
     { id: 'balance', mood: 'stable',  make: _balance, name: () => _t('balance', 'Stay Stable'), how: () => _t('balanceHow', 'Hold to lift, let go to sink. Life pushes you up and down: keep the bear in the green as long as you can. 💊 and 😴 calm things down.') },
     { id: 'catch',  mood: 'low',      make: _catch,  name: () => _t('catch', 'Self-care Catch'), how: () => _t('catchHow', "Drag to move. Catch what keeps you steady (💊 😴 💧 🥗 🚶), dodge what doesn't (⏰ 📱 ☕ ⚡).") },
+    { id: 'sleep',  mood: 'stable',   make: _sleep,  name: () => _t('sleep', 'Sleep Guard'), how: () => _t('sleepHow', 'Tap the things that keep the bear awake before they reach it. Sleep 8 hours to finish the night. Tap 🐑 for a bonus.') },
+    { id: 'says',   mood: 'elevated', make: _says,   name: () => _t('says', 'Bear Says'), how: () => _t('saysHow', 'Watch the bears light up, then tap them in the same order. One more each round.') },
+    { id: 'pairs',  mood: 'stable',   make: _pairs,  name: () => _t('pairs', 'Mood Pairs'), how: () => _t('pairsHow', "Turn the cards two at a time to find the pairs. You only lose a bear if you'd already seen the match.") },
+    { id: 'week',   mood: 'low',      make: _week,   name: () => _t('week', 'Mood Week'), how: () => _t('weekHow', "Watch the week's moods, then fill them back in, in order. The weeks get longer.") },
   ];
 
   // ── Overlay + runner ──────────────────────────────────────────────────────
