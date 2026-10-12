@@ -572,7 +572,7 @@
       }
       .anon-card-stats > .btn-subnote:first-child { margin-top: 0; }
     }
-    /* One row: "👋 monika · 💬 4 · ✉️ 0". Flex makes the badges' inline
+    /* One row: "👋 monika · 🔥 4 · 💬 12 · ✉️ 0". Flex makes the badges' inline
        display:block irrelevant (they are flex items); display:none still hides
        one. The · goes before ✉️ only while the streak line is showing too. */
     .anon-card-stats {

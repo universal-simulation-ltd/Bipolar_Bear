@@ -254,6 +254,10 @@ for (const mode of ['legacy', 'strict']) {
         await assertSucceeds(who.admin().doc('bbAnonPosts/p1/comments/old').delete());
       });
 
+      it("a member's replies can be counted across every thread (💬 post count)", async () => {
+        await assertSucceeds(who.guest().collectionGroup('comments').where('name', '==', 'Bear').get());
+      });
+
       it('comments are never edited by members', async () => {
         await assertFails(who.anon('author').doc('bbAnonPosts/p1/comments/mine').update({ text: 'x' }));
         await assertFails(who.anon('x').doc('bbAnonPosts/p1/comments/old').update({ text: 'x' }));

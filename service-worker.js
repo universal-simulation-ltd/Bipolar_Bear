@@ -1470,7 +1470,13 @@
 //   timestamp; the home page only takes it when it's newer than this
 //   device's last dock change, so hidden buttons no longer come back.
 //   Touches fab.js, js/index.js, js/journal.js.
-const CACHE_NAME = 'bipolarbear-v310';
+// v311: Bipolar Anonymous figures on the home card read 👋 monika · 🔥 streak
+//   · 💬 all-time posts + replies · ✉️ unread, and the Your Moniker sheet
+//   shows the same three. New BB.anonPostCount (brand-config.js) keeps the
+//   count on the profile, seeded once from Firestore. Touches index.html,
+//   css/index.css, js/index.js, js/anonymous.js, js/journal.js,
+//   js/shared/brand-config.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v311';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

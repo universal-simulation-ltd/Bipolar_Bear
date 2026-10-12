@@ -1828,6 +1828,7 @@ async function _anonRestoreProfile(email) {
     if (typeof d.visitStreak === 'number') BB.storage.set('Anon_streak',  String(d.visitStreak));
     if (d.visitDate)                       BB.storage.set('AnonVisitDate', d.visitDate);
     if (d.joinedAt)                        BB.storage.set('Anon_joinedAt', d.joinedAt);
+    BB.anonPostCount.restore(d);
     return !!d.monika;
   } catch(e) {
     console.warn('[Anonymous] profile restore failed', e);
@@ -1896,6 +1897,7 @@ async function _bbRestoreProfile(uid) {
     }
     if (typeof ap.visitStreak === 'number') BB.storage.set('Anon_streak',     String(ap.visitStreak));
     if (ap.visitDate)                       BB.storage.set('AnonVisitDate',    ap.visitDate);
+    BB.anonPostCount.restore(ap);
     // Use the earliest of anonProfile.joinedAt and the BB account creation date
     // so the birthday always reflects when the user first joined BipolarBear.
     let resolvedJoinedAt = ap.joinedAt || null;
@@ -2222,6 +2224,7 @@ function initBoard() {
   BB.storage.set('Anon_allRead', '1');
   _updateAnonStreak();
   _resolveJoinedAt();
+  _seedPostCount();
   renderUserPill();
   // One-time DOM handler wiring. initBoard() is reachable from multiple paths
   // (boot, verify success, meds yes/no) — re-running setup* would attach
@@ -2316,6 +2319,24 @@ function _anonMarkPostedToday() {
   try { BB.storage.set('Anon_lastPostDate', key); } catch (e) {}
 }
 
+// Where this member's all-time post + reply count (💬) is kept: the Bipolar
+// Bear account's userSettings and/or anonProfiles/{emailHash}. See
+// BB.anonPostCount in js/shared/brand-config.js.
+async function _postCountTargets() {
+  const email = (_bbUser && _bbUser.email) || BB.storage.get('Anon_email') || '';
+  let hash = null;
+  if (email) { try { hash = await _anonEmailHash(email); } catch (_) {} }
+  return { uid: _bbUser ? _bbUser.uid : null, hash };
+}
+function _countMyPost() {
+  _postCountTargets().then(t => BB.anonPostCount.bump(db, t)).catch(() => {});
+}
+// First board load on a profile with no count yet: count what's still there.
+function _seedPostCount() {
+  if (!db || !profile.monika || BB.anonPostCount.get() !== null) return;
+  _postCountTargets().then(t => BB.anonPostCount.seed(db, profile.monika, t)).catch(() => {});
+}
+
 function setupTabs() {
   document.querySelectorAll('.board-tab').forEach(btn => {
     btn.addEventListener('click', () => setTab(btn.dataset.tab));
@@ -2375,29 +2396,38 @@ function saveLastSeen(tab) {
 }
 
 function tabHasUnseen(tab) {
+  return postsByTab[tab].some(p => _postIsUnseen(p, tab));
+}
+
+// Posts on either tab with something unread (✉️ in the Your Moniker sheet,
+// matching the home card's count).
+function unseenPostCount() {
+  return ['announcements', 'general'].reduce((n, tab) =>
+    n + postsByTab[tab].filter(p => _postIsUnseen(p, tab)).length, 0);
+}
+
+function _postIsUnseen(p, tab) {
   const seen = lastSeenMs[tab];
   const mine = profile.monika;
-  return postsByTab[tab].some(p => {
-    if (p.isSystem || p.isSeed || p.isAnnouncement || p.deleted || p.isTopic) return false;
-    // Unread replies count on any post, your own included — that's how you
-    // hear that somebody answered you.
-    if (threadSeen[p.id]) {
-      if (threadHasUnread(p)) return true;
-    } else {
-      // No read state for this thread (it has never rendered on this device),
-      // so fall back to its activity stamp. Commenting is only possible from
-      // the thread overlay, which records read state, so a bump reaching this
-      // branch is never the user's own reply.
-      const la = p.lastActivity?.toMillis?.() ?? 0;
-      if (la > seen) return true;
-    }
-    // A post you wrote is not news to you — you saw it when you posted it.
-    // (_refreshAnonMessagesBadge in js/index.js applies the same rule to the
-    // home-screen count.)
-    if (mine && p.name === mine) return false;
-    const ts = p.timestamp?.toMillis?.() ?? 0;
-    return ts > seen;
-  });
+  if (p.isSystem || p.isSeed || p.isAnnouncement || p.deleted || p.isTopic) return false;
+  // Unread replies count on any post, your own included — that's how you
+  // hear that somebody answered you.
+  if (threadSeen[p.id]) {
+    if (threadHasUnread(p)) return true;
+  } else {
+    // No read state for this thread (it has never rendered on this device),
+    // so fall back to its activity stamp. Commenting is only possible from
+    // the thread overlay, which records read state, so a bump reaching this
+    // branch is never the user's own reply.
+    const la = p.lastActivity?.toMillis?.() ?? 0;
+    if (la > seen) return true;
+  }
+  // A post you wrote is not news to you — you saw it when you posted it.
+  // (_refreshAnonMessagesBadge in js/index.js applies the same rule to the
+  // home-screen count.)
+  if (mine && p.name === mine) return false;
+  const ts = p.timestamp?.toMillis?.() ?? 0;
+  return ts > seen;
 }
 
 function renderTabBadges() {
@@ -4861,6 +4891,7 @@ function setupThread() {
         // own comment pulsing back at you from the feed.
         markThreadSeen(commentTargetId, num(threadSeen[commentTargetId]?.c, 0) + 1);
         _anonMarkPostedToday();
+        _countMyPost();
         // Bump the parent post to the top of the board and update count.
         // Separate try — a failed bump shouldn't read as a failed comment.
         try {
@@ -5519,6 +5550,7 @@ function setupCompose() {
         // post renders before anyone answers it.
         markThreadSeen(docId, 0);
         _anonMarkPostedToday();
+        _countMyPost();
         _haptic('success');
         // Replace optimistic entry with the real one from the snapshot (happens automatically)
       } catch (e) {
@@ -6172,6 +6204,10 @@ function _paintMsStats() {
   const chips = [];
   const streak = num(profile.streak, 0);
   chips.push(`<span class="ms-stat"><span class="ms-stat-e">🔥</span><b>${streak}</b><span>${esc(_wt('anon.ux.statStreak'))}</span></span>`);
+  // 💬 posts + replies and ✉️ unread, the same icons as the home card.
+  const posts = BB.anonPostCount.get();
+  if (posts !== null) chips.push(`<span class="ms-stat"><span class="ms-stat-e">💬</span><b>${posts}</b><span>${esc(_wt('anon.ux.statPosts'))}</span></span>`);
+  chips.push(`<span class="ms-stat"><span class="ms-stat-e">✉️</span><b>${unseenPostCount()}</b><span>${esc(_wt('anon.ux.statUnread'))}</span></span>`);
   if (_bbUser && profile.stableStreak > 0) {
     chips.push(`<span class="ms-stat"><span class="ms-stat-e">🧘</span><b>${num(profile.stableStreak, 0)}</b><span>${esc(_wt('anon.ux.statStable'))}</span></span>`);
   }

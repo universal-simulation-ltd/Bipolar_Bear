@@ -176,6 +176,15 @@ service cloud.firestore {
       }
     }
 
+    // Collection-group reads of replies: BB.anonPostCount.seed (js/shared/
+    // brand-config.js) counts a member's replies across every thread for the
+    // 💬 all-time figure. Replies are already public through the bbAnonPosts
+    // match above, and bbAnonPosts is the only parent with a `comments`
+    // subcollection. Reads only; writes still go through that match.
+    match /{path=**}/comments/{commentId} {
+      allow read: if true;
+    }
+
     // Monika reservations: doc id = lower-cased monika.
     match /bbAnonMonikas/{id} {
       allow get: if true;

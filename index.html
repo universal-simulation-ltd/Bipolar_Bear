@@ -222,7 +222,7 @@
           </span>
         </a>
         <div class="anon-card-stats">
-          <div id="anonStreakBadge" class="btn-subnote bb-skeleton">👋 moniker  ·  🔥 0</div>
+          <div id="anonStreakBadge" class="btn-subnote bb-skeleton">👋 moniker  ·  🔥 0  ·  💬 0</div>
           <div id="anonMessagesBadge" class="btn-subnote bb-skeleton">✉️ 0</div>
         </div>
         </div>
@@ -352,17 +352,18 @@
               jBadge.style.cursor = 'pointer';
             }
 
-            // Anonymous monika (👋) + visit streak (🔥). Use the lapse-aware
-            // live streak — the raw cached Anon_streak doesn't self-expire, so
-            // a streak that broke days ago would otherwise paint here until the
-            // board recomputes it. Mirrors _updateStreakBadge() in js/index.js.
+            // Anonymous monika (👋) · visit streak (🔥) · posts + replies (💬).
+            // Use the lapse-aware live streak — the raw cached Anon_streak
+            // doesn't self-expire, so a streak that broke days ago would
+            // otherwise paint here until the board recomputes it. Mirrors
+            // _updateStreakBadge() in js/index.js.
             var anon = (window.BB.anonLiveStreak ? window.BB.anonLiveStreak() : parseInt(S.get('Anon_streak') || '0', 10));
             var monika = S.get('Anon_monika') || '';
             var aBadge = document.getElementById('anonStreakBadge');
             if (aBadge && monika) {
-              var m = esc(monika);
-              if (anon > 0) show(aBadge, '👋 ' + m + ' &nbsp;·&nbsp; 🔥 ' + anon);
-              else show(aBadge, '👋 ' + m);
+              var posts = window.BB.anonPostCount ? window.BB.anonPostCount.get() : null;
+              var sep = ' &nbsp;·&nbsp; ';
+              show(aBadge, '👋 ' + esc(monika) + sep + '🔥 ' + anon + (posts !== null ? sep + '💬 ' + posts : ''));
             }
 
             // Survival-kit progress counter (mirror js/index.js BLOCK 4)

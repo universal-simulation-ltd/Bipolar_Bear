@@ -176,6 +176,78 @@ window.BB.anonLiveStreak = function () {
 };
 
 /**
+ * Posts + replies this member has written on Bipolar Anonymous, all time:
+ * the 💬 figure on the home card and in the Your Moniker sheet (James,
+ * 2026-10-12). The board sweeps old posts, so it can't simply be counted:
+ * js/anonymous.js calls bump() after each post or reply, and the figure
+ * lives on the profile as `postCount` (userSettings/{uid}.anonProfile and
+ * anonProfiles/{emailHash}). The first time a profile has none, seed()
+ * counts what Firestore still holds (the member's posts, plus their replies
+ * across every thread via a collection-group query; replies outlive their
+ * post) so it starts close to the real figure.
+ *
+ * `targets` is { uid, hash }: the Bipolar Bear account uid and/or the
+ * anonProfiles doc id. Either may be null.
+ */
+window.BB.anonPostCount = {
+  /** The count, or null until it has been seeded on this device. */
+  get: function () {
+    var S = window.BB.storage;
+    if (S.get('Anon_postCountSeeded') !== '1') return null;
+    return Math.max(0, parseInt(S.get('Anon_postCount') || '0', 10) || 0);
+  },
+  /** Take a count from a restored profile (keeps the higher of the two). */
+  restore: function (ap) {
+    if (!ap || typeof ap.postCount !== 'number' || !ap.postCountSeeded) return;
+    var S = window.BB.storage;
+    var mine = S.get('Anon_postCountSeeded') === '1' ? (parseInt(S.get('Anon_postCount') || '0', 10) || 0) : 0;
+    S.set('Anon_postCount', String(Math.max(mine, ap.postCount)));
+    S.set('Anon_postCountSeeded', '1');
+  },
+  /** One more post or reply. */
+  bump: function (db, targets) {
+    var S = window.BB.storage;
+    S.set('Anon_postCount', String((parseInt(S.get('Anon_postCount') || '0', 10) || 0) + 1));
+    if (!db || !targets || typeof firebase === 'undefined') return;
+    var inc = firebase.firestore.FieldValue.increment(1);
+    if (targets.uid) db.collection('userSettings').doc(targets.uid).set({ anonProfile: { postCount: inc } }, { merge: true }).catch(function () {});
+    if (targets.hash) db.collection('anonProfiles').doc(targets.hash).set({ postCount: inc }, { merge: true }).catch(function () {});
+  },
+  /**
+   * Count the member's posts and replies still in Firestore and store that as
+   * the count. Resolves to the count, or null if a query failed (it is tried
+   * again next time). One run per page load.
+   */
+  seed: function (db, monika, targets) {
+    var self = window.BB.anonPostCount;
+    if (self._seeding) return self._seeding;
+    if (!db || !monika || self.get() !== null) return Promise.resolve(self.get());
+    var posts = window.BB_BRAND && BB_BRAND.collections && BB_BRAND.collections.posts;
+    if (!posts) return Promise.resolve(null);
+    self._seeding = Promise.all([
+      db.collection(posts).where('name', '==', monika).get(),
+      db.collectionGroup('comments').where('name', '==', monika).get(),
+    ]).then(function (res) {
+      var n = res[0].docs.filter(function (d) {
+        var p = d.data();
+        return !p.isSystem && !p.isTopic && !p.isBot;
+      }).length + res[1].size;
+      var S = window.BB.storage;
+      S.set('Anon_postCount', String(n));
+      S.set('Anon_postCountSeeded', '1');
+      if (targets && targets.uid) db.collection('userSettings').doc(targets.uid).set({ anonProfile: { postCount: n, postCountSeeded: true } }, { merge: true }).catch(function () {});
+      if (targets && targets.hash) db.collection('anonProfiles').doc(targets.hash).set({ postCount: n, postCountSeeded: true }, { merge: true }).catch(function () {});
+      return n;
+    }).catch(function (e) {
+      console.warn('[Anonymous] post count seed failed', e);
+      self._seeding = null;
+      return null;
+    });
+    return self._seeding;
+  },
+};
+
+/**
  * True when the current page is acting as the standalone "Bipolar
  * Anonymous" app — either served from the anonymous web domain or
  * running inside the dedicated Capacitor bundle (where the build script

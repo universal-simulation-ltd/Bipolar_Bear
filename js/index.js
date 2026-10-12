@@ -562,6 +562,14 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             if (_ap.visitDate) BB.storage.set('AnonVisitDate', _ap.visitDate);
             if (_ap.monika) BB.storage.set('Anon_monika', _ap.monika);
             if (_ap.verified) BB.storage.set('Anon_verified', 'true');
+            // 💬 all-time posts + replies (BB.anonPostCount). A profile that
+            // has never had it counted is seeded here, so the figure shows
+            // without a trip to the board first.
+            BB.anonPostCount.restore(_ap);
+            if (currentUser && navigator.onLine && BB.anonPostCount.get() === null && BB.storage.get('Anon_monika')) {
+              BB.anonPostCount.seed(db, BB.storage.get('Anon_monika'), { uid: user.uid, hash: null })
+                .then(n => { if (n !== null) _updateStreakBadge(); });
+            }
             _updateStreakBadge(); // refresh badge from the values we just wrote
             // Then recompute from entries to fix the stale-currentStreak case
             // (Firestore field only updates when journal.html opens). Best-effort.
@@ -1138,25 +1146,26 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const qcStreaks = document.querySelector('#qcWeek .qc-week-streaks');
       if (qcStreaks && BB._qcWeekStreaks) qcStreaks.innerHTML = BB._qcWeekStreaks();
 
-      // Anonymous badge: 👋 monika + 🔥 streak
+      // Anonymous badge: 👋 monika · 🔥 visit streak · 💬 all-time posts +
+      // replies; anonMessagesBadge adds ✉️ unread after it (James,
+      // 2026-10-12). Bipolar Anonymous's Your Moniker sheet uses the same
+      // three icons. 💬 waits until the count is known (BB.anonPostCount).
       const anonBadge = document.getElementById('anonStreakBadge');
       if (anonBadge) {
-        if (hasAnon && anon > 0) {
-          // _monika is user-supplied (Bipolar Anonymous nickname) — escape it
-          // before splicing into innerHTML so a tampered localStorage value
-          // can't inject markup. The rest of the template is static.
-          const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
-          const _monikaStr = _monika ? `👋 ${_monika} &nbsp;·&nbsp; ` : '';
-          anonBadge.innerHTML = `${_monikaStr}🔥 ${anon}`;
+        // _monika is user-supplied (Bipolar Anonymous nickname) — escape it
+        // before splicing into innerHTML so a tampered localStorage value
+        // can't inject markup. The rest of the template is static.
+        const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
+        if (hasAnon && _monika) {
+          const _posts = BB.anonPostCount.get();
+          const _sep = ' &nbsp;·&nbsp; ';
+          anonBadge.innerHTML = `👋 ${_monika}${_sep}🔥 ${anon}` + (_posts !== null ? `${_sep}💬 ${_posts}` : '');
+          const _label = [
+            `${anon} ${_tr('anon.ux.statStreak', 'day streak')}`,
+            _posts !== null ? `${_posts} ${_tr('anon.ux.statPosts', 'posts & replies')}` : '',
+          ].filter(Boolean).join(', ');
+          anonBadge.title = _label;
           _revealBadge(anonBadge, 'block');
-        } else if (hasAnon) {
-          const _monika = _escHtml(BB.storage.get('Anon_monika') || '');
-          if (_monika) {
-            anonBadge.innerHTML = `👋 ${_monika}`;
-            _revealBadge(anonBadge, 'block');
-          } else {
-            _revealBadge(anonBadge, 'none');
-          }
         } else {
           _revealBadge(anonBadge, 'none');
         }
@@ -1295,7 +1304,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         'CurrentStreak', 'StableStreak',
         // Anonymous board state
         'Anon_streak', 'Anon_monika', 'Anon_verified', 'AnonLastVisit', 'Anon_lastPostDate',
-        'Anon_allRead',
+        'Anon_allRead', 'Anon_postCount', 'Anon_postCountSeeded',
         // Mood step tutorial hints
         '_moodTipShown', '_fmMoodTipShown',
         '_fmChooseMoodHintDone', '_fmMoodInfoCloseHintDone',
@@ -1909,7 +1918,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'Anon_streak','Anon_med','Anon_medList','Anon_showMeds',
          'Anon_showStable','Anon_stableSince','Anon_stableStreak',
          'Anon_colorKey','Anon_initials','Anon_liked','Anon_hasPosted',
-         'Anon_lastPostDate','Anon_allRead',
+         'Anon_lastPostDate','Anon_allRead','Anon_postCount','Anon_postCountSeeded',
          'AnonLastVisit','AnonVisitDate'].forEach(k => BB.storage.remove(k));
         if (typeof applyLogoVariant === 'function') applyLogoVariant(0);
 

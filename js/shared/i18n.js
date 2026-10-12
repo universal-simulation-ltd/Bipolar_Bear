@@ -568,6 +568,8 @@
           statStreak: "day streak",
           statStable: "days stable",
           statMember: "with us",
+          statPosts: "posts & replies",
+          statUnread: "unread",
         },
         agree: {
           title: 'Before you join 👋',
@@ -2632,6 +2634,8 @@
           statStreak: "días de racha",
           statStable: "días estable",
           statMember: "con nosotros",
+          statPosts: "publicaciones y respuestas",
+          statUnread: "sin leer",
         },
         wiki: {
           mtNotice: "Traducción automática del original en inglés: el texto original es el que prevalece.",
@@ -4692,6 +4696,8 @@
           statStreak: "jours de série",
           statStable: "jours stable",
           statMember: "parmi nous",
+          statPosts: "messages et réponses",
+          statUnread: "non lus",
         },
         agree: { title: 'Avant de nous rejoindre 👋', sub: "Ceci est une communauté d'entraide entre pairs. Pour la garder sûre pour tous, confirme que tu acceptes les règles.", continue: 'Continuer →', line1: "J'ai 18 ans ou plus et j'accepte les", termsLink: "Règles de la communauté et Conditions", line2: ". Aucune tolérance envers les contenus répréhensibles ou les comportements abusifs." },
         verify: { back: '← Accueil', welcome: 'Bienvenue 👋', sub: "Une communauté d'entraide modérée pour les personnes qui vivent avec un trouble bipolaire. Tu publies sous un nom que tu inventes : pas besoin de ton vrai nom.", how: "Pour nous rejoindre, saisis ton e-mail et nous t'enverrons un code à 6 chiffres. Ton e-mail n'est jamais affiché ni partagé.", sendCode: 'Envoyer le code de vérification', verify: 'Vérifier →', changeEmail: "← Changer l'e-mail", resend: 'Renvoyer le code' },
@@ -6710,6 +6716,8 @@
           statStreak: "Tage in Folge",
           statStable: "Tage stabil",
           statMember: "dabei",
+          statPosts: "Beiträge & Antworten",
+          statUnread: "ungelesen",
         },
         wiki: {
           mtNotice: "Maschinell aus dem englischen Original übersetzt – maßgeblich ist der Originalwortlaut.",
@@ -8741,6 +8749,8 @@
           statStreak: "giorni di fila",
           statStable: "giorni stabile",
           statMember: "con noi",
+          statPosts: "post e risposte",
+          statUnread: "da leggere",
         },
         wiki: {
           mtNotice: "Tradotto automaticamente dall'originale inglese: fa fede il testo originale.",
@@ -10772,6 +10782,8 @@
           statStreak: "dias seguidos",
           statStable: "dias estável",
           statMember: "connosco",
+          statPosts: "publicações e respostas",
+          statUnread: "por ler",
         },
         wiki: {
           mtNotice: "Tradução automática do original em inglês — prevalece o texto original.",
@@ -12803,6 +12815,8 @@
           statStreak: "dagen op rij",
           statStable: "dagen stabiel",
           statMember: "erbij",
+          statPosts: "berichten & reacties",
+          statUnread: "ongelezen",
         },
         wiki: {
           mtNotice: "Machinaal vertaald uit het Engelse origineel — de oorspronkelijke tekst is leidend.",
@@ -14834,6 +14848,8 @@
           statStreak: "dni z rzędu",
           statStable: "dni stabilnie",
           statMember: "z nami",
+          statPosts: "posty i odpowiedzi",
+          statUnread: "nieprzeczytane",
         },
         wiki: {
           mtNotice: "Przetłumaczono maszynowo z angielskiego oryginału — wiążące jest brzmienie oryginału.",
@@ -16873,6 +16889,8 @@
           statStreak: "dagar i rad",
           statStable: "dagar stabil",
           statMember: "med oss",
+          statPosts: "inlägg & svar",
+          statUnread: "olästa",
         },
         wiki: {
           mtNotice: "Maskinöversatt från det engelska originalet – det är originaltexten som gäller.",
@@ -18904,6 +18922,8 @@
           statStreak: "天连续",
           statStable: "天稳定",
           statMember: "加入天数",
+          statPosts: "帖子和回复",
+          statUnread: "未读",
         },
         wiki: {
           mtNotice: "由英文原文机器翻译——以原文措辞为准。",
