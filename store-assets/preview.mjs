@@ -313,6 +313,10 @@ const BEAR_STORAGE = {
   bbWelcomeShown: '1', bbFabFirstRunDone: '1', bbWaFabHidden: '1', bbSurvivalKitVisited: '1',
   bbMoodDefHintDone: '1', bbMedHintDone: '1', bbPersonalHintDone: '1', bbTutorialToastShown: '1', bbHasEntries: '1',
   bbOnboardingStep: '12', bbSettingsFabHintShown: '1', achievementToastsEnabled: 'false',
+  // A new user's journal (v313): focus mode's wheel on, every step but Notes.
+  // Without bbDefaults20261012 the app takes onboardingStep 12 for someone who
+  // was already using it and keeps the old defaults (wheel off).
+  bbDefaults20261012: '1', wheelModeEnabled: '1', disabledSteps: ['notes'],
   currentMedList: [{ name: 'Lithium', dosage: '800mg' }, { name: 'Quetiapine', dosage: '200mg' }],
   dailyGoals: ['Walk for 20 minutes', 'Message one friend today', 'Lights out by 11pm'],
   survivalGratitude: ['My morning coffee', 'A check-in text from mum', 'Getting through a hard week'],
@@ -459,22 +463,64 @@ export async function open(app, { browser } = {}) {
 // ── The stories ────────────────────────────────────────────────────────────
 const shown = (page, sel, opts) => page.locator(sel, opts).locator('visible=true')
 
-// Bipolar Bear: yesterday logged in five taps on the journal's step-by-step
-// card → five weeks at a glance → the survival kit's coping strategies →
-// back to the journal, held on the life chart.
+/**
+ * Swipe focus mode's wheel until the pill with data-val `val` sits under the
+ * dial, the way a finger drags it: a touch dot travels with the drag. Snapping
+ * is held off while the wheel moves (as the app does for its own writes), so
+ * the frames run smoothly, and comes back once the pill is centred.
+ */
+async function swipeWheel(page, val, { ms = 650, after = 600 } = {}) {
+  await page.evaluate(async ({ val, ms }) => {
+    const wheel = document.getElementById('fmWheel')
+    const pill = wheel.querySelector(`.fm-wheel-btn[data-val="${val}"]`)
+    const from = wheel.scrollLeft
+    const to = pill.offsetLeft - (wheel.clientWidth - pill.offsetWidth) / 2
+    const r = wheel.getBoundingClientRect()
+    // The finger moves against the scroll: dragging left brings later pills in.
+    const x0 = r.left + r.width / 2 + Math.sign(to - from) * 90, y = r.top + r.height / 2
+    const dot = document.createElement('div')
+    dot.setAttribute('aria-hidden', 'true')
+    dot.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:rgba(120,120,128,.42);box-shadow:0 0 0 2px rgba(255,255,255,.55);transition:opacity .35s ease-out,transform .35s ease-out'
+    document.documentElement.appendChild(dot)
+    wheel.style.scrollSnapType = 'none'
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+    const t0 = performance.now()
+    await new Promise((done) => {
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / ms), e = ease(t)
+        wheel.scrollLeft = from + (to - from) * e
+        dot.style.left = (x0 - (to - from) * e) + 'px'; dot.style.top = y + 'px'
+        t < 1 ? requestAnimationFrame(step) : done()
+      }
+      requestAnimationFrame(step)
+    })
+    wheel.style.scrollSnapType = ''
+    dot.style.opacity = '0'; dot.style.transform = 'scale(1.35)'
+    setTimeout(() => dot.remove(), 500)
+  }, { val, ms })
+  await page.waitForTimeout(after)
+}
+
+// Bipolar Bear: yesterday logged on focus mode's wheel, a new user's default
+// since v313 (swipe the mood to Low and back, tap Stable; tap through sleep,
+// energy and meds) → five weeks at a glance → the survival kit's coping
+// strategies → back to the journal, held on the life chart.
 async function bear(page, out) {
   await page.goto(`${ORIGIN}/journal.html`)
-  await shown(page, '.mood-btn.mood-stable').first().waitFor()
+  await shown(page, '#fmWheel .fm-wheel-btn.center').first().waitFor()
   await hold(page, 900)
   await record(page, async () => {
-    // Log yesterday: mood, sleep, energy, meds, a line of notes, save.
-    await hold(page, 300)
-    await tap(page, shown(page, '.mood-btn.mood-stable').first(), { after: 1000 })
-    await tap(page, shown(page, '.fm-card-btn', { hasText: '7–9h' }).first(), { after: 900 })
-    await tap(page, shown(page, '.fm-card-btn', { hasText: 'Normal' }).first(), { after: 900 })
-    await tap(page, shown(page, '.fm-opt', { hasText: '✅' }).last(), { after: 600 })
-    await type(page, page.locator('#fmNotesInput'), 'Calm day. Walk with Sam.', { delay: 38, after: 300 })
-    await tap(page, shown(page, '.fm-notes-next').first(), { after: 1200 })
+    // Log yesterday: mood, sleep, energy, meds, additional tracking, save.
+    await hold(page, 500)
+    await swipeWheel(page, 'low', { after: 700 })
+    await swipeWheel(page, 'stable', { after: 400 })
+    const centre = () => shown(page, '#fmWheel .fm-wheel-btn.center').first()
+    await tap(page, centre(), { after: 1100 })
+    await tap(page, centre(), { after: 900 })
+    await tap(page, centre(), { after: 900 })
+    await tap(page, centre(), { after: 1000 })
+    // One question on the step, so answering it moves straight on to Save.
+    await tap(page, shown(page, 'button', { hasText: 'On track' }).first(), { after: 1300 })
     await tap(page, shown(page, '.fm-done-save').first(), { after: 1000 })
     // Five weeks at a glance.
     await tap(page, page.locator('#journalToggleBtn'), { after: 1500 })
