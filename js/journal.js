@@ -11054,6 +11054,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         document.getElementById('importFileDaylio').click();
       } else if (format === 'sheet') {
         document.getElementById('importFileSheet').click();
+      } else if (format === 'bipolaruk') {
+        document.getElementById('importFileBipolarUk').click();
       }
     }
 
@@ -11139,6 +11141,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       _importReadFile(event, async text => {
         let parsed;
         try { parsed = JSON.parse(text); } catch (_) { alert(BB.t('journal.dlg.invalidBackup')); return; }
+        if (parsed && Array.isArray(parsed.moodEntries)) { await _importBipolarUk(_bukRecordsFromJson(parsed)); return; }
         // Old format: a plain array. New: { version, entries, settings }.
         const raw = Array.isArray(parsed) ? parsed : (parsed && parsed.entries);
         const settings = (!Array.isArray(parsed) && parsed && parsed.settings) ? parsed.settings : null;
@@ -11356,6 +11359,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
     async function importSpreadsheetData(event) {
       _importReadFile(event, async text => {
+        if (/^=== MOOD ENTRIES ===/m.test(text)) { await _importBipolarUk(_bukRecordsFromCsv(text)); return; }
         const { days, bad } = _parseSpreadsheet(text);
         const logged = _importLoggedDays();
         const today = new Date(); today.setHours(23, 59, 59, 999);
@@ -11381,6 +11385,128 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         if (!entries.length) { alert([BB.t('journal.dlg.sheetNothing'), ...lines].join('\n\n')); return; }
         if (!confirm([BB.t('journal.dlg.sheetConfirm', { n: entries.length }), ...lines].join('\n\n'))) return;
         await _importFinish(entries, BB.t('journal.dlg.sheetDone', { n: entries.length }));
+      });
+    }
+
+    // ── 🧠 Bipolar UK Mood Tracker (its JSON or CSV export) ──
+    // Its mood is Bipolar UK's own 0–10 Mood Scale (5 = balanced, 0–3 low,
+    // 7–10 high), the same scale as our spectrum, so the number is kept as is.
+    // One Bipolar Bear entry per day: the latest of that day's records wins.
+    // Feelings and naps go into the notes; a dose ticked that day counts as
+    // meds taken, none ticked stays blank (it may just not have been logged).
+    function _bukRecordsFromJson(data) {
+      const names = {};
+      [...(data.emotionRefs || []), ...(data.customEmotions || [])].forEach(e => { if (e && e.id) names[e.id] = e.name; });
+      const records = (data.moodEntries || []).map(e => ({
+        date: e.date, mood: e.moodLevel, sleep: e.sleepHours, comment: e.comment || '',
+        feelings: (e.emotions || []).map(id => names[id] || String(id).replace(/^predef_/, '')),
+        naps: (e.naps || []).reduce((a, b) => a + (Number(b) || 0), 0),
+        meds: e.medicationDoses && Object.values(e.medicationDoses).some(v => Array.isArray(v) ? v.length : v) ? 'taken' : null,
+        steps: e.steps, mixed: e.isMixedState === true,
+      }));
+      const meds = (data.medications || []).filter(m => m && m.name && m.isActive !== false)
+        .map(m => ({ name: m.name, dosage: m.strengthMg ? `${m.strengthMg}mg` : (m.schedule || '') }));
+      return { records, meds };
+    }
+
+    // The CSV export is several "=== SECTION ===" tables in one file.
+    function _bukRecordsFromCsv(text) {
+      const lines = text.replace(/^﻿/, '').split(/\r\n|\n|\r/);
+      const section = title => {
+        const i = lines.findIndex(l => l.trim() === `=== ${title} ===`);
+        if (i < 0) return [];
+        const head = _splitCsvLine(lines[i + 1] || '', ',').map(h => h.toLowerCase());
+        const out = [];
+        for (let j = i + 2; j < lines.length && lines[j].trim() && !lines[j].startsWith('==='); j++) {
+          const c = _splitCsvLine(lines[j], ',');
+          out.push(Object.fromEntries(head.map((h, k) => [h, c[k]])));
+        }
+        return out;
+      };
+      const records = section('MOOD ENTRIES').map(r => ({
+        date: r['date'], mood: r['mood level'] === '' ? null : Number(r['mood level']),
+        sleep: r['sleep hours'] === '' || r['sleep hours'] == null ? null : Number(r['sleep hours']),
+        comment: r['comment'] || '', feelings: [], naps: 0, meds: null, steps: null, mixed: false,
+      }));
+      const meds = section('MEDICATIONS').filter(m => m['name'])
+        .map(m => ({ name: m['name'], dosage: m['strength'] || m['schedule'] || '' }));
+      return { records, meds };
+    }
+
+    async function _importBipolarUk({ records, meds }) {
+      const logged = _importLoggedDays();
+      const today = new Date(); today.setHours(23, 59, 59, 999);
+      const byDay = new Map();
+      let bad = 0;
+      for (const r of records) {
+        // "2026-10-12T10:53:41.484679" is the phone's local time. Read the day
+        // from the text: six-digit fractions don't parse everywhere.
+        const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(String(r.date || ''));
+        const mood = Number(r.mood);
+        if (!m || r.mood == null || r.mood === '' || !(mood >= 0 && mood <= 10)) { bad++; continue; }
+        const day = new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0, 0);
+        const at = m[4] ? +m[4] * 60 + +m[5] : 0;
+        const key = _importDayKey(day);
+        const prev = byDay.get(key);
+        if (!prev || at >= prev.at) byDay.set(key, { at, day, r, mood });
+      }
+      const entries = [];
+      let skipped = 0, future = 0;
+      for (const [key, { day, r, mood }] of [...byDay].sort()) {
+        if (day > today) { future++; continue; }
+        if (logged.has(key)) { skipped++; continue; }
+        const notes = [r.comment];
+        if (r.feelings && r.feelings.length) notes.push(BB.t('journal.dlg.bukFeelings', { list: r.feelings.join(', ') }));
+        if (r.naps) notes.push(BB.t('journal.dlg.bukNaps', { h: Math.round(r.naps * 10) / 10 }));
+        entries.push({
+          timestamp: day.getTime(),
+          date: day.toISOString(),
+          mood,
+          linkedMood: null, linkedMoods: [],
+          energy: null,
+          sleep: r.sleep == null || isNaN(Number(r.sleep)) ? null : Number(r.sleep),
+          medication: r.meds,
+          ...(r.steps != null && !isNaN(Number(r.steps)) ? { steps: Number(r.steps) } : {}),
+          notes: notes.filter(Boolean).join('\n'),
+          imported: 'bipolaruk',
+        });
+      }
+      const lines = [];
+      if (skipped) lines.push(BB.t('journal.dlg.sheetSkipped', { n: skipped }));
+      if (future) lines.push(BB.t('journal.dlg.sheetFuture', { n: future }));
+      if (!entries.length) { alert([BB.t('journal.dlg.sheetNothing'), ...lines].join('\n\n')); return; }
+      if (!confirm([BB.t('journal.dlg.sheetConfirm', { n: entries.length }), ...lines].join('\n\n'))) return;
+
+      // Their medication list joins My Meds (by name, nothing duplicated).
+      let msg = BB.t('journal.dlg.bukDone', { n: entries.length });
+      try {
+        const list = JSON.parse(localStorage.getItem('currentMedList') || '[]');
+        const have = new Set(list.map(x => String(x.name || '').toLowerCase()));
+        const added = (meds || []).filter(x => !have.has(String(x.name).toLowerCase()));
+        if (added.length) {
+          const next = [...list, ...added];
+          localStorage.setItem('currentMedList', JSON.stringify(next));
+          syncMedListToFirestore(next);
+          if (typeof _updateMedBtn === 'function') _updateMedBtn();
+          msg += '\n\n' + BB.t('journal.dlg.bukMedsAdded', { names: added.map(x => x.name).join(', ') });
+        }
+      } catch (_) {}
+      await _importFinish(entries, msg);
+    }
+
+    /** The Bipolar UK button: either of its export files. */
+    async function importBipolarUkData(event) {
+      _importReadFile(event, async text => {
+        if (/^\s*[{[]/.test(text)) {
+          let data = null;
+          try { data = JSON.parse(text); } catch (_) {}
+          if (!data || !Array.isArray(data.moodEntries)) { alert(BB.t('journal.dlg.invalidBackup')); return; }
+          await _importBipolarUk(_bukRecordsFromJson(data));
+        } else if (/^=== MOOD ENTRIES ===/m.test(text)) {
+          await _importBipolarUk(_bukRecordsFromCsv(text));
+        } else {
+          alert(BB.t('journal.dlg.sheetNothing'));
+        }
       });
     }
 
@@ -14786,6 +14912,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     window.importBipolarBearData = importBipolarBearData;
     window.importDaylioData = importDaylioData;
     window.importSpreadsheetData = importSpreadsheetData;
+    window.importBipolarUkData = importBipolarUkData;
     window.downloadImportExample = downloadImportExample;
     window.confirmDeleteAll = confirmDeleteAll;
     window.deleteAllEntries = deleteAllEntries;

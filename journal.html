@@ -1224,6 +1224,10 @@
           📊 Daylio Export (.csv)
         </button>
         <div style="width:100%;">
+          <button class="confirm-btn" onclick="selectImportFormat('bipolaruk')" style="background: white; color: #3b3fa8; border: 2px solid #3b3fa8; width: 100%;" data-i18n="journal.mods.importBipolarUk">🧠 Bipolar UK Mood Tracker (.json, .csv)</button>
+          <p style="font-size:0.8em;color:#6c757d;line-height:1.45;margin:8px 4px 0;" data-i18n="journal.mods.importBipolarUkHelp">In the Mood Tracker app: Export Data, then JSON (under Advanced formats) or CSV. JSON brings across more.</p>
+        </div>
+        <div style="width:100%;">
           <button class="confirm-btn" onclick="selectImportFormat('sheet')" style="background: white; color: #2f9e44; border: 2px solid #2f9e44; width: 100%;" data-i18n="journal.mods.importSheet">📄 Spreadsheet or text file (.csv, .txt)</button>
           <p style="font-size:0.8em;color:#6c757d;line-height:1.45;margin:8px 4px 4px;" data-i18n="journal.mods.importSheetHelp">One row per day, or per stretch of days: date, end date (optional), mood (a bear's name or 0–10), notes (optional).</p>
           <button type="button" onclick="downloadImportExample()" style="background:none;border:none;color:#2f9e44;font-size:0.82em;font-weight:600;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.importExample">⬇️ Download an example file</button>
@@ -1236,6 +1240,7 @@
 
   <input type="file" id="importFileBipolarBear" accept=".json" style="display: none;" onchange="importBipolarBearData(event)">
   <input type="file" id="importFileDaylio" accept=".csv" style="display: none;" onchange="importDaylioData(event)">
+  <input type="file" id="importFileBipolarUk" accept=".json,.csv,application/json,text/csv,text/plain" style="display: none;" onchange="importBipolarUkData(event)">
   <input type="file" id="importFileSheet" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values" style="display: none;" onchange="importSpreadsheetData(event)">
 
   <!-- Edit Entry Modal -->
