@@ -37,6 +37,7 @@
  *   bbFooterHidden            — entire footer hidden
  *   bbFabsUnlocked            — '1' once the onboarding tutorial has unlocked the dock
  *   bbFabFirstRunDone         — '1' after first-run defaults applied (one-shot)
+ *   bbFabStateAt              — ms timestamp of this device's last dock change
  *   bbQuickNotes              — JSON array of saved quick notes
  */
 (function () {
@@ -82,17 +83,26 @@
   /**
    * Mirror the current FAB customisation (slot assignments + hidden flags)
    * to Firestore so the layout follows the user across devices. Restored on
-   * sign-in by index.html's auth listener.
+   * sign-in by index.html's auth listener, which takes the cloud copy only
+   * when its `at` is newer than this device's bbFabStateAt.
    *
-   * No-op when not signed in — `window.currentUser` is undefined for guests
-   * (and was previously undefined for everyone before the bug fix that
-   * exposes it on window — see the v0.99 settings-persistence fix).
+   * Every dock change calls this, so it also stamps bbFabStateAt — for guests
+   * too, so a layout made before signing in isn't overwritten by an older
+   * cloud one. The Firestore write is a no-op when not signed in.
+   *
+   * `mergeFields` replaces the whole `fabState` map. A plain `merge: true`
+   * deep-merges it, so a slot that was emptied or a button that was re-added
+   * kept its old value in the cloud, and the home page put it back on every
+   * load (James, 2026-10-12: hid every dock button, went to the journal,
+   * pressed Home and the buttons were back).
    *
    * @returns {void}
    */
   function _syncFabsToFirestore() {
+    const at = Date.now();
+    BB.storage.set('FabStateAt', String(at));
     if (!window.db || !window.currentUser) return;
-    const fabState = {};
+    const fabState = { at: at };
     for (let s = 1; s <= 4; s++) {
       const v = BB.storage.get('FabSlot_' + s);
       if (v) fabState['slot' + s] = v;
@@ -101,7 +111,7 @@
       if (localStorage.getItem(k) === '1') fabState[k] = '1';
     });
     window.db.collection('userSettings').doc(window.currentUser.uid)
-      .set({ fabState: fabState }, { merge: true }).catch(() => {});
+      .set({ fabState: fabState }, { mergeFields: ['fabState'] }).catch(() => {});
   }
   window._syncFabsToFirestore = _syncFabsToFirestore;
 

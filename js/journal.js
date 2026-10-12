@@ -959,7 +959,7 @@ window.addEventListener('pageshow', () => {
         // Advanced settings badge + tap-hold hint pending
         'bbAdvancedBadgePending', 'bbAdvancedBadgeVisible',
         'bb_fmTapHoldHintPending', 'bb_fmTapHoldHintReady',
-        'bbHasEntries', 'bbFeedbackFabHidden', 'bbWaFabHidden', 'bbReviewFabHidden', 'bbGameFabHidden', 'bbFooterHidden',
+        'bbHasEntries', 'bbFeedbackFabHidden', 'bbWaFabHidden', 'bbReviewFabHidden', 'bbGameFabHidden', 'bbFooterHidden', 'bbFabStateAt',
         'bbPinEnabled', 'bbPinCode',
         'bbWelcomeShown',
         'focusedModeEnabled', 'moreDataOpenByDefault', 'showMoodSuggestion',
@@ -11842,7 +11842,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
          // FAB customisation: clear slot assignments and the first-run flag
          // so the new install gets the first-run dock layout again.
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',
-         'bbFabsUnlocked','bbFabFirstRunDone',
+         'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',

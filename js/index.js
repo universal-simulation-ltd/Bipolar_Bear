@@ -515,16 +515,34 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             if (Array.isArray(d.unlockedAchievements)) {
               localStorage.setItem('unlockedAchievements', JSON.stringify(d.unlockedAchievements));
             }
-            // Restore FAB customisation (slot assignments + hidden flags)
+            // Restore FAB customisation (slot assignments + hidden flags).
+            // This runs on every home load, so the cloud copy wins only when
+            // it is newer than this device's last dock change (bbFabStateAt),
+            // and then it replaces the local layout outright. Cloud copies
+            // written before 2026-10-12 have no `at` and could hold stale
+            // slots (fab.js deep-merged them), so they're only used on a
+            // device with no dock layout of its own yet.
             if (d.fabState && typeof d.fabState === 'object') {
               const _fs = d.fabState;
-              for (let s = 1; s <= 4; s++) {
-                if (_fs['slot' + s]) BB.storage.set('FabSlot_' + s, _fs['slot' + s]);
+              const _hidKeys = ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden'];
+              const _cloudAt = Number(_fs.at) || 0;
+              const _localAt = Number(BB.storage.get('FabStateAt')) || 0;
+              let _localHasLayout = _hidKeys.some(k => localStorage.getItem(k) === '1');
+              for (let s = 1; s <= 4; s++) if (BB.storage.get('FabSlot_' + s)) _localHasLayout = true;
+              if (_cloudAt > _localAt || (!_cloudAt && !_localAt && !_localHasLayout)) {
+                for (let s = 1; s <= 4; s++) {
+                  if (_fs['slot' + s]) BB.storage.set('FabSlot_' + s, _fs['slot' + s]);
+                  else BB.storage.remove('FabSlot_' + s);
+                }
+                _hidKeys.forEach(k => {
+                  if (_fs[k] === '1') localStorage.setItem(k, '1');
+                  else localStorage.removeItem(k);
+                });
+                if (_cloudAt) BB.storage.set('FabStateAt', String(_cloudAt));
+                if (typeof window._applyFabDock === 'function') window._applyFabDock();
+              } else if (_localAt > _cloudAt && typeof window._syncFabsToFirestore === 'function') {
+                window._syncFabsToFirestore();
               }
-              ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden'].forEach(k => {
-                if (_fs[k] === '1') localStorage.setItem(k, '1');
-              });
-              if (typeof window._applyFabDock === 'function') window._applyFabDock();
             }
             // Restore Profile → Customise preferences (home-button + stats visibility).
             // Survival / Anonymous are opt-in: hidden until the user enables them, so the
@@ -1291,7 +1309,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         // Misc hints
         'PersonalHintDone',
         'FavouriteHintSeen', 'PrivateHintSeen', 'FavAnniShown',
-        'FeedbackFabHidden', 'WaFabHidden', 'CoffeeFabHidden', 'QuickNoteFabHidden', 'ReviewFabHidden', 'GameFabHidden', 'FooterHidden', 'FabsUnlocked',
+        'FeedbackFabHidden', 'WaFabHidden', 'CoffeeFabHidden', 'QuickNoteFabHidden', 'ReviewFabHidden', 'GameFabHidden', 'FooterHidden', 'FabsUnlocked', 'FabStateAt',
         'FabSlot_1', 'FabSlot_2', 'FabSlot_3', 'FabSlot_4',
         'LogoEasterEggFound',
         'PinEnabled', 'PinCode',
@@ -1799,7 +1817,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'bbCurrentStreak','bbStableStreak',
          'bbFeedbackFabHidden','bbWaFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden','bbArcade',
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',
-         'bbFabsUnlocked','bbFabFirstRunDone',
+         'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
          'bbSurvivalBtnEnabled','bbAnonBtnEnabled','bbHomeStatsEnabled','bbHomeQuickCheckin',
          'bbCustomiseNewPending','bbCustomiseNewSeen',
@@ -2019,6 +2037,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             document.getElementById('_dockConfirmBtn').addEventListener('click', () => {
               _confirmOverlay.remove();
               ['WaFabHidden','QuickNoteFabHidden','CoffeeFabHidden','FeedbackFabHidden','ReviewFabHidden','GameFabHidden','FabSlot_1','FabSlot_2','FabSlot_3','FabSlot_4'].forEach(k => BB.storage.remove(k));
+              // Sync the reset, or the next home load restores the old dock.
+              if (typeof window._syncFabsToFirestore === 'function') window._syncFabsToFirestore();
               _applyOnboardingGating();
               const _t = document.createElement('div');
               Object.assign(_t.style, { position:'fixed', top:'calc(env(safe-area-inset-top,0px) + 12px)', left:'50%', transform:'translateX(-50%)', background:'var(--brand-primary)', color:'white', padding:'10px 20px', borderRadius:'20px', fontWeight:'700', fontSize:'0.9em', zIndex:'9999', whiteSpace:'nowrap', boxShadow:'0 4px 16px rgba(0,0,0,0.2)', pointerEvents:'none' });

@@ -1466,7 +1466,11 @@
 //   four mood bears), Mood Pairs (card flip; a bear is lost only when the
 //   match had been seen) and Mood Week (fill a week of moods back in).
 //   Touches js/shared/bear-arcade.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v309';
+// v310: the dock's cloud copy is replaced, not deep-merged, and carries a
+//   timestamp; the home page only takes it when it's newer than this
+//   device's last dock change, so hidden buttons no longer come back.
+//   Touches fab.js, js/index.js, js/journal.js.
+const CACHE_NAME = 'bipolarbear-v310';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
