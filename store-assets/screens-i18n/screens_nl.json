@@ -1,5 +1,5 @@
 {
- "03-steps": {
+ "08-steps": {
   "Every step,": "Elke stap,",
   "counted by": "geteld door",
   "your phone": "je telefoon",
@@ -24,7 +24,7 @@
   "Auto-filled · long-press to rate quality": "Ingevuld · houd ingedrukt voor kwaliteit",
   "Works with": "Werkt met"
  },
- "05-anonymous": {
+ "07-anonymous": {
   "Share your thoughts,": "Deel je gedachten,",
   "not your identity": "niet je identiteit",
   "📢 Announcements": "📢 Aankondigingen",
@@ -41,7 +41,7 @@
   "+ You": "+ Jij",
   "End-to-end encrypted · no real name required": "End-to-end versleuteld · geen echte naam nodig"
  },
- "06-patterns": {
+ "03-patterns": {
   "Spot your patterns": "Ontdek je patronen",
   "Personalised Feedback": "Persoonlijke feedback",
   "From your last 90 days": "Uit je laatste 90 dagen",
@@ -67,7 +67,7 @@
   "Energy &amp; Mood": "Energie &amp; stemming",
   "&nbsp; · &nbsp;Sober days:": "&nbsp; · &nbsp;Nuchtere dagen:"
  },
- "07-survivalkit": {
+ "05-survivalkit": {
   "Build your own": "Bouw je eigen",
   "survival kit": "overlevingskit",
   "Bipolar survival kit": "Bipolaire overlevingskit",
@@ -95,7 +95,7 @@
   "Build it your way — 100% customisable": "Bouw het op jouw manier — 100% aanpasbaar",
   "❤️‍🩹 People helped: 2,418": "❤️‍🩹 Mensen geholpen: 2.418"
  },
- "08-pin": {
+ "06-pin": {
   "Full privacy.": "Volledige privacy.",
   "Enter your PIN to continue": "Voer je PIN in om door te gaan",
   "🔐 More info": "🔐 Meer info",

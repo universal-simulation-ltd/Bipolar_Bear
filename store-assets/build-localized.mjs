@@ -42,12 +42,12 @@ const LANGS = LANG_ARGS.length ? LANG_ARGS : ALL;
 
 // screen output name -> source template (feature screens only; heroes handled elsewhere)
 const SCREENS = {
-  '03-steps':       'screens/screen-steps.html',
+  '03-patterns':    'screens/screen3-patterns.html',
   '04-sleep':       'screens/screen2-sleep.html',
-  '05-anonymous':   'screens/screen4-anonymous.html',
-  '06-patterns':    'screens/screen3-patterns.html',
-  '07-survivalkit': 'screens/screen5-survivalkit.html',
-  '08-pin':         'screens/screen6-pin.html',
+  '05-survivalkit': 'screens/screen5-survivalkit.html',
+  '06-pin':         'screens/screen6-pin.html',
+  '07-anonymous':   'screens/screen4-anonymous.html',
+  '08-steps':       'screens/screen-steps.html',
 };
 
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

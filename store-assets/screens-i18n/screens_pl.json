@@ -1,5 +1,5 @@
 {
- "03-steps": {
+ "08-steps": {
   "Every step,": "Każdy krok,",
   "counted by": "liczony przez",
   "your phone": "twój telefon",
@@ -24,7 +24,7 @@
   "Auto-filled · long-press to rate quality": "Uzupełnione · przytrzymaj, aby ocenić jakość",
   "Works with": "Działa z"
  },
- "05-anonymous": {
+ "07-anonymous": {
   "Share your thoughts,": "Dziel się myślami,",
   "not your identity": "nie tożsamością",
   "📢 Announcements": "📢 Ogłoszenia",
@@ -41,7 +41,7 @@
   "+ You": "+ Ty",
   "End-to-end encrypted · no real name required": "Szyfrowane end-to-end · bez podawania imienia"
  },
- "06-patterns": {
+ "03-patterns": {
   "Spot your patterns": "Odkryj swoje wzorce",
   "Personalised Feedback": "Spersonalizowane wnioski",
   "From your last 90 days": "Z ostatnich 90 dni",
@@ -67,7 +67,7 @@
   "Energy &amp; Mood": "Energia &amp; nastrój",
   "&nbsp; · &nbsp;Sober days:": "&nbsp; · &nbsp;Dni na trzeźwo:"
  },
- "07-survivalkit": {
+ "05-survivalkit": {
   "Build your own": "Stwórz własny",
   "survival kit": "zestaw ratunkowy",
   "Bipolar survival kit": "Zestaw ratunkowy",
@@ -95,7 +95,7 @@
   "Build it your way — 100% customisable": "Zbuduj po swojemu — w 100% konfigurowalny",
   "❤️‍🩹 People helped: 2,418": "❤️‍🩹 Osób, którym pomogliśmy: 2418"
  },
- "08-pin": {
+ "06-pin": {
   "Full privacy.": "Pełna prywatność.",
   "Enter your PIN to continue": "Wprowadź PIN, aby kontynuować",
   "🔐 More info": "🔐 Więcej informacji",

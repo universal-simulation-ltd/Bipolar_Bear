@@ -1,5 +1,5 @@
 {
- "03-steps": {
+ "08-steps": {
   "Every step,": "Varje steg,",
   "counted by": "räknat av",
   "your phone": "din telefon",
@@ -24,7 +24,7 @@
   "Auto-filled · long-press to rate quality": "Ifyllt · håll in för att betygsätta",
   "Works with": "Fungerar med"
  },
- "05-anonymous": {
+ "07-anonymous": {
   "Share your thoughts,": "Dela dina tankar,",
   "not your identity": "inte din identitet",
   "📢 Announcements": "📢 Meddelanden",
@@ -41,7 +41,7 @@
   "+ You": "+ Du",
   "End-to-end encrypted · no real name required": "End-to-end-krypterat · inget riktigt namn krävs"
  },
- "06-patterns": {
+ "03-patterns": {
   "Spot your patterns": "Se dina mönster",
   "Personalised Feedback": "Personlig återkoppling",
   "From your last 90 days": "Från dina senaste 90 dagar",
@@ -67,7 +67,7 @@
   "Energy &amp; Mood": "Energi &amp; humör",
   "&nbsp; · &nbsp;Sober days:": "&nbsp; · &nbsp;Nyktra dagar:"
  },
- "07-survivalkit": {
+ "05-survivalkit": {
   "Build your own": "Bygg din egen",
   "survival kit": "överlevnadskit",
   "Bipolar survival kit": "Bipolärt överlevnadskit",
@@ -95,7 +95,7 @@
   "Build it your way — 100% customisable": "Bygg som du vill — 100% anpassningsbart",
   "❤️‍🩹 People helped: 2,418": "❤️‍🩹 Personer hjälpta: 2 418"
  },
- "08-pin": {
+ "06-pin": {
   "Full privacy.": "Full integritet.",
   "Enter your PIN to continue": "Ange din PIN för att fortsätta",
   "🔐 More info": "🔐 Mer info",

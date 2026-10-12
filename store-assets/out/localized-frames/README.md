@@ -9,13 +9,16 @@ out/localized-frames/<lang>/
   01-hero.png        White opener — "Every high. / Every low." (slanted phones)
   02-hero.png        Orange — "Track every mood in seconds" (mood faces)
                      ↑ 01 + 02 are ONE scene: the mood phone bridges the seam
-  03-steps.png       Step / energy tracking
-  04-sleep.png       Sleep sync
-  05-anonymous.png   Anonymous peer board
-  06-patterns.png    Personalised insights
-  07-survivalkit.png Survival Kit
-  08-pin.png         Full-privacy PIN + E2E encryption
+  03-patterns.png    Spot your patterns (personalised insights)
+  04-sleep.png       Sync sleep
+  05-survivalkit.png Survival Kit
+  06-pin.png         Full privacy (PIN + E2E encryption)
+  07-anonymous.png   Share your thoughts (Anonymous peer board)
+  08-steps.png       Sync steps
 ```
+The filename number IS the store order (the upload scripts sort by name), and
+`screens-i18n/screens_<lang>.json` is keyed by the same names.
+
 `<lang>` ∈ en, es, fr, de, it, pt, nl, pl, sv, zh.
 
 **Render on macOS.** The screens use emoji (👟 😴 🍺 …); macOS Chrome draws them

@@ -14,7 +14,8 @@
 //             description = the App Store copy in screens-i18n/listing_<app>.json, for
 //             es-ES fr-FR de-DE it-IT pt-PT nl-NL pl-PL sv-SE zh-CN (en-GB is never touched)
 // --shots     replaces each language's phone screenshots with <dir>/<lang>/*.png in
-//             filename order; skipped when the sha256s already match
+//             filename order; skipped when the sha256s already match. Unlike the
+//             listings, this includes en-GB (from <dir>/en) when that folder exists
 // --bundle    uploads the .aab and releases it on --track (default production) to 100%,
 //             with the release notes from play_listings.json ("en" → en-GB)
 // --promote   no upload: releases an already-uploaded versionCode (e.g. one tested on the
@@ -109,8 +110,8 @@ try {
     if (diff.length && APPLY) await call('PUT', `${E}/listings/${want.language}`, { json: want });
   }
 
-  if (SHOTS) for (const l of Object.keys(LANGS)) {
-    const lang = LANGS[l], dir = path.join(SHOTS, l);
+  if (SHOTS) for (const l of ['en', ...Object.keys(LANGS)]) {
+    const lang = l === 'en' ? 'en-GB' : LANGS[l], dir = path.join(SHOTS, l);
     if (!existsSync(dir)) { console.log(`${lang}: no ${dir} — skipped`); continue; }
     const files = readdirSync(dir).filter(f => f.endsWith('.png')).sort().map(f => path.join(dir, f));
     const sums = files.map(f => sha256(readFileSync(f)));
@@ -118,7 +119,8 @@ try {
     if (cur.length === sums.length && cur.every((im, i) => im.sha256 === sums[i])) {
       console.log(`${lang}: ${files.length} screenshots already uploaded`); continue;
     }
-    console.log(`${lang}: screenshots — ${cur.length ? `replace ${cur.length} with` : 'upload'} ${files.length}`);
+    const reorder = cur.length === sums.length && [...sums].sort().join() === cur.map(im => im.sha256).sort().join();
+    console.log(`${lang}: screenshots — ${reorder ? 'same images, new order:' : cur.length ? `replace ${cur.length} with` : 'upload'} ${files.length}`);
     if (!APPLY) continue;
     if (cur.length) await call('DELETE', `${E}/listings/${lang}/phoneScreenshots`);
     for (const f of files) await call('POST', `${EU}/listings/${lang}/phoneScreenshots?uploadType=media`,
