@@ -176,9 +176,13 @@ entries/
 userSettings/
   {uid}
     dailyGoals          string[]        — user's daily goal list
-    currentMedList      {name,dosage}[] — medication list
-    moodDefinitions     object          — per-mood personal definitions
-    copingStrategies    object          — per-mood coping strategies
+    secureEnc           {_enc,_iv,v,updatedAt} — since 2026-10-12 (§2.20): the
+                                          sensitive fields currentMedList,
+                                          moodDefinitions, moodMemories,
+                                          copingStrategies, myCommitments,
+                                          customReminders, survivalGratitude,
+                                          rememberThis — no longer stored as
+                                          plaintext fields
     logoVariant         number          — 0|1|2 (easter egg logo index)
     onboardingStep      number          — highest tutorial step reached (0–12)
     tutorialToastShown  bool            — "tutorial complete" popup has been shown
@@ -190,7 +194,10 @@ userSettings/
                                           leaves the device. null after a reset.
 
 personalDetails/
-  {uid}
+  {uid}                    — since 2026-10-12 only: secureEnc {_enc,_iv,v,updatedAt}
+                             + updatedAt (AES-GCM of the fields below; §2.20).
+                             Older store builds may still add the plaintext
+                             fields; the next current-build sync folds them in.
     personalName               string
     personalDOB                string
     personalMedicalNum         string
@@ -225,8 +232,11 @@ Firestore rules
   to false once those builds are no longer in use.
 
 bbAnonLinks/
-  {uid}                   — written by verifyAnonCode (Admin SDK) only
+  {uid}                   — written by verifyAnonCode / anonProfileId (Admin SDK) only
     emailHash   string    — sha256(email) this session proved with a code
+    emailHashes string[]  — every address this session proved (code or account)
+    profileIds  string[]  — board profiles it owns ('p2_' + HMAC, §2.20)
+    profiles    map       — emailHash → profileId (for moving old profiles)
     verifiedAt  Timestamp
   Never readable by clients; the rules use it to recognise the owner of
   anonProfiles/{emailHash} (and the admin on the email-code path).
@@ -345,6 +355,10 @@ bbPresence/{sessionId}
   kit in one tab reuses one presence document and reads as one live person.
 
 #### The UNI·SIM suite-wide count
+
+> ⚠️ **Since 2026-10-12 (privacy round, §2.20) these apps send no beat and
+> mint no install id** — only the read below, and only after someone taps the
+> line to the suite figure. The rest of this section describes the old beat.
 
 Both apps moved into the `universal-simulation-ltd` organisation on 2026-09-17
 and joined the counter every Universal Simulation app shows. `BB.userCount.suite`
@@ -1461,6 +1475,72 @@ It never hides, flags or reports anything. English uses word-boundary regexes;
 the other nine languages use plain substrings, because `\b` is ASCII-only. Test
 with `node scripts/test-crisis-bot.js`, and add a case there when you change a
 pattern.
+
+### 2.20 Privacy round (2026-10-12)
+
+James approved the privacy audit ("action all and follow your recs"). Server
+side: `functions/privacy.js`; client side: `js/shared/secure-store.js` plus
+edits in the page scripts. Rules tests: `scripts/firestore-rules`
+(compat-shipped / compat-store141 / compat-next / security).
+
+**Encrypted personal details and survival-kit lists** (`BB.secure`).
+`personalDetails/{uid}` and these `userSettings` fields — `currentMedList,
+moodDefinitions, moodMemories, copingStrategies, myCommitments,
+customReminders, survivalGratitude, rememberThis` — live only inside a
+`secureEnc` blob (`{_enc,_iv,v,updatedAt}`, AES-GCM under the journal data
+key, the safety-plan pattern). localStorage keeps the device copy under the
+same keys, so the pages render as before. The key comes from
+`sessionStorage.bb_user_key`, or for a Standard account from the
+`journalWrapKey` unwrap (never minted here, never SecureStorage). With no key
+(Private and not yet unlocked this session) a save is kept on the device and
+marked pending (`bbSecurePending`, per uid) and goes up encrypted later —
+nothing sensitive is ever written in plaintext. The first sync with a key
+folds plaintext into the blob and deletes it in one transaction. Older store
+builds still write plaintext: plaintext personal details next to a blob are
+newer and win; plaintext settings fill only fields the blob lacks (old builds
+re-upload stale device copies through their guest-data claim). The rules
+refuse new plaintext once `legacyClients()` is false. `guest-data.js` now
+claims only goals/budget; the sensitive fields are claimed by secure-store.
+
+**Board documents carry no uid.** Posts, comments and `bbAnonMonikas` carry
+`owner = sha256(uid + '/' + document path)` — checkable by the rules
+(`ownerStamp()`), different on every document. 1.41-era builds that still
+write `uid` are converted on create (`anonOwnerOnPost/OnComment/OnMonika`);
+`privacySweep` converts any left over. `createAnonPoll` writes a stamp.
+
+**Board profiles keyed by a server secret.** `anonProfiles/p2_<HMAC-SHA256(
+ANON_PROFILE_SECRET, 'bb-anon-profile:v1:'+email)>`. `verifyAnonCode`
+(returns `profileId`) and the `anonProfileId` callable (Bipolar Bear accounts,
+or a session whose link already proves the address) write
+`bbAnonLinks/{uid}.{profileIds, emailHashes, profiles}`, which the rules read.
+Old sha256 docs move across on the next sign-in, or in `privacySweep` when the
+address is known (links, Auth, recent codes). Builds that don't send `v2` get
+a short-lived owner-only copy at the old id (`compatCopy`), folded back by
+the sweep. The 10-minute restore window and the open delete are gone.
+⚠️ **Never rotate or delete `ANON_PROFILE_SECRET`** (Secret Manager).
+
+**Retention** — `privacySweep`, daily 04:10 London (`RETENTION` in
+privacy.js; keep privacy.html §8 in step): posts 7 days idle (reported 90),
+reports 90, reviewed suggestions 90, translations 7, codes 1 h unused / 25 h
+verified, presence 1 h, feedback + beta sign-ups 12 months, orphaned replies.
+`onAnonPostDeleted` deletes a post's replies whatever deleted it.
+`onAuthUserDeleted` (1st gen auth trigger) removes userSettings,
+personalDetails, entries, bbAnonLinks, uidLinks, translate usage, mood-seen
+markers, feedback, the account email's board profile + push registrations,
+and every board document the uid owns.
+
+**Other:** pending announcement suggestions are listable by the admin only
+(members watch their own by id); journal → board mood check-in is opt-in
+(client and `anonMoodCheckin` both require `anonProfile.journalCheckin ===
+true`); the crisis bear's email carries the post id and a `?post=` link, no
+text or moniker; push registrations carry no `emailHash`
+(`anonPushStripEmailHash` strips older builds'); the native apps keep FCM
+auto-init off until opt-in (`getToken()` turns it on; opting out calls
+`deleteToken()`); the survival kit's counter uses `helpedVote` (no anonymous
+sign-in); no Supabase suite beat (the Firestore live count stays: random
+per-tab id, `lastSeen` only); Firebase SDK and jsPDF self-hosted under
+`vendor/` (jsPDF loads on export via `BB.loadJsPdf()`); no `measurementId`;
+Workers observability off.
 
 ## 3. Algorithm Flowcharts
 

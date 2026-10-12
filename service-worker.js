@@ -1493,7 +1493,15 @@
 //   translations already said so; Standard journals keep a spare key).
 //   Touches fab.js, js/shared/safety-plan.js.
 // v315: app version 1.41 (Bipolar Bear 1.41 / Bipolar Anonymous 1.40 store builds). Touches js/shared/brand-config.js.
-const CACHE_NAME = 'bipolarbear-v315';
+// v316: privacy round. Personal details + sensitive survival-kit lists encrypted
+//   (new js/shared/secure-store.js); board owner stamps + secret-keyed profiles;
+//   opt-in journal check-in; helped counter without an account; no suite beat;
+//   Firebase SDK and jsPDF self-hosted under vendor/ (not precached: the
+//   firebase bypass below covers /vendor/firebasejs/). Touches index.html,
+//   journal.html, survival-kit.html, anonymous.html, privacy.html, js/index.js,
+//   js/journal.js, js/survival-kit.js, js/anonymous.js, js/shared/{anon-push,
+//   brand-config,firebase-config,guest-data,user-count,i18n,secure-store}.js.
+const CACHE_NAME = 'bipolarbear-v316';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -243,19 +243,20 @@
 
     <p data-i18n-html="privacy.s2p3"><strong>Personal details (optional, stored locally and synced if logged in)</strong></p>
     <ul>
-      <li data-i18n="privacy.s2li7">Name, diagnosis, medications, and any notes you choose to enter in the Personal Details section</li>
+      <li data-i18n="privacy.s2li7">Name, date of birth, NHS or medical number, diagnosis, address, phone numbers, emergency contact and any notes you choose to enter in Personal Details. When you are signed in, these are encrypted on your device before they are synced, with the same key as your journal. So are your survival kit's medications, mood definitions, mood memories, coping strategies, commitments, reminders, gratitude list and "remember this" note.</li>
     </ul>
 
     <p data-i18n-html="privacy.s2p4"><strong>Anonymous usage</strong></p>
     <ul>
-      <li data-i18n="privacy.s2li8">When you tap "I needed this today" we record an anonymous count using Firebase. No personal data is stored for this action.</li>
-      <li data-i18n="privacy.s2li9">When you open the app we send a randomly generated ID for this install to our own UNI·SIM server, so the community counter can show how many people use Bipolar Bear and how many use the wider UNI·SIM suite. It is never linked to your account, your journal or anything you have read or written.</li>
-      <li data-i18n="privacy.s2li10">On Bipolar Anonymous, poll votes and the daily mood check-in are stored only as totals. How you voted stays on your device. For the check-in we keep a note that your account has checked in that day, so it counts once; it does not record which mood you chose, and it is deleted after two days. If your Bipolar Anonymous account is also your Bipolar Bear account, saving a journal entry for today or yesterday checks you in: only that entry's mood (one of the five mood names) is sent, and it is added to the day's totals in the same way. You can turn this off, or hide the check-in, under Your Moniker.</li>
+      <li data-i18n="privacy.s2li8">When you tap "I needed this today" our server adds one to a shared count. You don't need an account for this, and nothing about you is stored.</li>
+      <li data-i18n="privacy.s2li9">The "(N live)" figure counts open pages: each browser tab or app session writes a random ID, made up for that tab and forgotten when you leave, with the time it was last seen. It holds nothing else and is deleted within an hour. We no longer send an install ID to the UNI·SIM suite counter.</li>
+      <li data-i18n="privacy.s2li10">On Bipolar Anonymous, poll votes and the daily mood check-in are stored only as totals. How you voted stays on your device. For the check-in we keep a note that your account has checked in that day, so it counts once; it does not record which mood you chose, and it is deleted after two days. If you turn on "Check in from my journal" under Your Moniker (it is off unless you turn it on), saving a Bipolar Bear journal entry for today or yesterday checks you in: only that entry's mood (one of the five mood names) is sent, and it is added to the day's totals in the same way.</li>
+      <li data-i18n="privacy.s2li11">Bipolar Anonymous posts and replies are visible to other members and are not encrypted. They show your moniker, not your name or email, and they carry no account ID, so posts can't be traced back to your account. Your email address is used to send your sign-in code. Your board profile is stored under a key our server works out from it with a secret, so the address can't be used to look the profile up.</li>
     </ul>
 
     <h2 data-i18n="privacy.s3Heading">3. How your data is stored</h2>
     <p data-i18n-html="privacy.s3p1">By default, all journal data is stored <strong>locally on your device</strong> using your browser's local storage. It never leaves your device unless you choose to create an account and enable cloud sync.</p>
-    <p data-i18n-html="privacy.s3p2">If you create an account, your data is synced to <strong>Google Firebase Firestore</strong>, a secure cloud database. Data is stored under your unique user ID and is not accessible to other users.</p>
+    <p data-i18n-html="privacy.s3p2">If you create an account, your data is synced to <strong>Google Firebase Firestore</strong>, a secure cloud database. Data is stored under your unique user ID and is not accessible to other users. Journal entries, personal details, your safety plan and the survival kit's personal lists are encrypted on your device before they are synced.</p>
     <p data-i18n-html="privacy.s3p3">Firebase is a Google service. You can review Google's data practices at <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener">firebase.google.com/support/privacy</a>.</p>
 
     <h2 data-i18n="privacy.s4Heading">4. Health data (Apple Health / HealthKit)</h2>
@@ -267,15 +268,16 @@
     </ul>
 
     <h2 data-i18n="privacy.s5Heading">5. Notifications</h2>
-    <p data-i18n="privacy.s5p1">If you enable daily reminders, notification preferences are stored locally on your device. We do not use a third-party push notification service — reminders are scheduled entirely on-device.</p>
+    <p data-i18n="privacy.s5p1">Daily reminders are scheduled entirely on your device. If you switch on Bipolar Anonymous notifications, your device registers with Firebase Cloud Messaging (Google), and we store that registration with your moniker and the notifications you chose, so replies and announcements can reach you. Notifications never contain what anyone wrote. Switching them off deletes the registration, and the app does not contact Firebase Cloud Messaging until you switch them on.</p>
 
     <h2 data-i18n="privacy.s6Heading">6. Who we share your data with</h2>
     <p data-i18n="privacy.s6p1">We do not sell, rent or share your personal data with third parties for marketing or advertising purposes. The third-party services that may receive your data are:</p>
     <ul>
-      <li data-i18n-html="privacy.s6li1"><strong>Google Firebase</strong> — for cloud sync and authentication, if you create an account</li>
-      <li data-i18n-html="privacy.s6li2"><strong>Universal Simulation Ltd (UNI·SIM)</strong> — a randomly generated install ID and whether it is the web, iPhone or Android app, and nothing else, so the community counter can be shown</li>
+      <li data-i18n-html="privacy.s6li1"><strong>Google Firebase</strong> — sign-in, cloud sync (Firestore), our server functions and, if you switch on Bipolar Anonymous notifications, Firebase Cloud Messaging</li>
+      <li data-i18n-html="privacy.s6li2"><strong>Cloudflare</strong> — hosts the website and the app's files. It handles your connection as any web host does; we don't keep its request logs.</li>
       <li data-i18n-html="privacy.s6li3"><strong>Google Cloud Translation</strong> — the text of a Bipolar Anonymous post or reply, when a member reading in another language has automatic translation switched on. Only the text of the post is sent: never your email address, your moniker or anything that identifies you.</li>
       <li data-i18n-html="privacy.s6li4"><strong>Universal Simulation Ltd (UNI·SIM) — Universal ID</strong> — your email address, if you sign in with Universal ID, the UNI·SIM account. It is used to sign you in and holds nothing you write in Bipolar Bear. Deleting your Bipolar Bear account does not delete your Universal ID, which other UNI·SIM apps may use; email inbox@unisim.co.uk to delete that too.</li>
+      <li data-i18n-html="privacy.s6li5"><strong>Resend</strong> — sends our emails: your Bipolar Anonymous sign-in code, and emails to our team about feedback you send us (your message, and your email if you give it) and moderation alerts (a post ID only, never what a member wrote).</li>
     </ul>
     <p data-i18n="privacy.s6p2">We do not use analytics services, advertising networks or any other third-party tracking.</p>
 
@@ -311,13 +313,14 @@
     <p data-i18n-html="privacy.s7p7">You also have the right to <strong>access</strong> and <strong>portability</strong> — export all your data as JSON at any time via the in-app "Backup data" option.</p>
 
     <h2 data-i18n="privacy.s8Heading">8. Data retention</h2>
-    <p data-i18n="privacy.s8p1">Local data remains on your device until you delete it or uninstall the app. Cloud data is retained until you delete your account. We do not set automatic expiry on your journal entries.</p>
+    <p data-i18n="privacy.s8p1">Local data remains on your device until you delete it or uninstall the app. Your account's data is kept until you delete your account; deleting it removes everything linked to it from our database. We do not set automatic expiry on your journal entries.</p>
+    <p data-i18n="privacy.s8p2">Other data is deleted automatically: Bipolar Anonymous posts and their replies after 7 days without activity (reported posts after 90 days), reports after 90 days, published or refused announcement suggestions after 90 days, cached translations after 7 days, sign-in codes within 25 hours, live-count records within an hour, and feedback and beta sign-ups after 12 months.</p>
 
     <h2 data-i18n="privacy.s9Heading">9. Children</h2>
     <p data-i18n="privacy.s9p1">Bipolar Bear is not directed at children under 13. We do not knowingly collect data from children under 13. If you believe a child has provided us with personal information, please contact us and we will delete it.</p>
 
     <h2 data-i18n="privacy.s10Heading">10. Sensitive data</h2>
-    <p data-i18n="privacy.s10p1">Mental health and health information is considered sensitive personal data under GDPR. We take this seriously. Your journal entries are encrypted on your device before they are backed up, and again in transit (HTTPS) and at rest within Firebase. By default we keep a spare key, so your journal opens on your other devices and isn't lost if you forget a password. With Private journal on (in the journal's Settings) only your journal password opens it, and not even we can read it. We access your data only when necessary to provide technical support, and only with your consent.</p>
+    <p data-i18n="privacy.s10p1">Mental health and health information is considered sensitive personal data under GDPR. We take this seriously. Your journal entries are encrypted on your device before they are backed up, and again in transit (HTTPS) and at rest within Firebase; so are your personal details, your safety plan and the survival kit's personal lists. By default we keep a spare key, so your journal opens on your other devices and isn't lost if you forget a password. With Private journal on (in the journal's Settings) only your journal password opens it, and not even we can read it. We access your data only when necessary to provide technical support, and only with your consent.</p>
 
     <h2 data-i18n="privacy.s11Heading">11. Changes to this policy</h2>
     <p data-i18n="privacy.s11p1">We may update this policy from time to time. We will update the "last updated" date at the top of this page. Continued use of the app after changes constitutes acceptance of the updated policy.</p>

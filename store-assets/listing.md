@@ -164,18 +164,35 @@ https://www.bipolarbear.app/privacy.html
 # App Privacy "nutrition label"  (Apple) / Data Safety  (Google)
 
 Answer these honestly in App Store Connect → App Privacy and Play Console →
-Data safety. Based on the architecture notes in DOCS.md.
+Data safety. Matches the code after the 2026-10-12 privacy round (DOCS.md
+§2.20) and the app-level `PrivacyInfo.xcprivacy` in each native project.
+No tracking, no advertising data, no analytics, no crash reporting, no
+location, no contacts, in either app. Purpose for everything below: **App
+functionality** only. Data is encrypted in transit (HTTPS) in both apps, and
+people can ask for deletion (in-app account deletion + privacy.html §7).
+
+"Encrypted on the device" below means AES-GCM under the journal's data key.
+In the default **Standard** journal UNI·SIM keeps a spare key, so Apple and
+Google count that data as **collected**; only **Private journal** makes it
+unreadable to us. Don't claim end-to-end for Standard.
 
 ## Bipolar Bear
 
-| Data type | Collected? | Linked to user? | Used for tracking? | Notes |
-|-----------|-----------|-----------------|--------------------|-------|
-| Email address | Yes | Yes | No | Firebase Auth account |
-| Health & fitness (mood/sleep/energy) | Yes | Yes* | No | *Encrypted on the device. Standard journal (the default, since 1.41): we keep a spare key, so declare it as collected. Private journal: only the person's password opens it |
-| User content (journal notes) | Yes | Yes* | No | *As above: encrypted on the device; end-to-end only with Private journal |
-| Contact info (PDF export details) | Yes | Yes | No | Optional, user-entered |
-| Identifiers (user ID) | Yes | Yes | No | Firestore document key |
-| Diagnostics / crash data | Check Firebase | — | No | Only if Crashlytics/Analytics enabled |
+| Apple category | Play category | Collected? | Linked? | Notes |
+|---|---|---|---|---|
+| Contact Info → Email Address | Personal info → Email address | Yes | Yes | Firebase Auth sign-in (or Universal ID) |
+| Contact Info → Name, Phone Number, Physical Address | Personal info → Name, Phone number, Address | Yes (optional) | Yes | Personal details for the PDF export; encrypted on the device since 2026-10-12 |
+| Health & Fitness → Health; Fitness | Health and fitness → Health info; Fitness info | Yes | Yes | Mood/sleep/energy journal, diagnosis, medications, HealthKit / Health Connect steps and sleep imported into encrypted entries |
+| Sensitive Info | Personal info → Other info (diagnosis) | Yes (optional) | Yes | Diagnosis in personal details, encrypted on the device |
+| User Content → Other User Content | App activity → Other user-generated content | Yes | Yes | Journal notes, safety plan, survival-kit lists (all encrypted on the device); feedback messages |
+| User Content → Customer Support | App info and performance → Other (feedback) | Yes (optional) | Yes | The in-app feedback form (message, optional email) |
+| Identifiers → User ID | App activity / Device or other IDs → User IDs | Yes | Yes | Firebase uid |
+| Identifiers → Device ID | Device or other IDs | Yes (opt-in) | No | FCM push token, only after the member switches on Bipolar Anonymous notifications |
+
+Not collected: the "I needed this today" counter (no account, nothing stored),
+the "(N live)" count (random per-tab id, deleted within an hour), the
+UNI·SIM suite counter (no beat or install id since 2026-10-12). Board posts
+inside Bipolar Bear: see the Anonymous table.
 
 Encryption / export-compliance answer: app uses standard encryption (HTTPS +
 on-device entry encryption). Most likely qualifies for the exemption — answer the
@@ -184,14 +201,17 @@ exempt), but confirm against current Apple wording.
 
 ## Bipolar Anonymous
 
-| Data type | Collected? | Linked to user? | Used for tracking? | Notes |
-|-----------|-----------|-----------------|--------------------|-------|
-| User content (posts/replies) | Yes | No** | No | **PLAINTEXT on Firestore, public to other users |
-| Email address (hashed) | Yes | Pseudonymous | No | SHA-256 hash only, for cross-device profile |
-| Identifiers (monika) | Yes | Pseudonymous | No | User-chosen handle |
+| Apple category | Play category | Collected? | Linked? | Notes |
+|---|---|---|---|---|
+| Contact Info → Email Address | Personal info → Email address | Yes | Yes | Used to send the sign-in code (Resend). Not stored with the profile: the profile id is an HMAC of it under a server secret; the code record is deleted within 25 h |
+| User Content → Other User Content | App activity → Other user-generated content | Yes | No | Posts and replies: PLAINTEXT, public to other members, shown under a moniker, no account id on them (owner stamp is a per-document hash). Deleted after 7 days without activity |
+| Health & Fitness → Health | Health and fitness → Health info | Yes (optional) | Yes | Medication list / stability streak a member chooses to show on posts |
+| Identifiers → User ID | Device or other IDs → User IDs | Yes | Yes | Firebase anonymous uid |
+| Identifiers → Device ID | Device or other IDs | Yes (opt-in) | No | FCM push token after notifications are switched on |
 
 Be explicit in the Data Safety form that posts are NOT encrypted and are
 visible to other users — Google rejects listings that under-declare this.
+Daily mood check-in and poll votes are stored as totals only (not collected).
 
 ---
 
