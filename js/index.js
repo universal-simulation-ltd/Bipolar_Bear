@@ -2248,6 +2248,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           ? (useToday ? qt('home.quick.doneToday', '✓ Today is logged — nice one')
                       : qt('home.quick.doneYesterday', '✓ Yesterday is logged — nice one'))
           : '';
+        // People who log at night think of the day they've just had as
+        // "today", so in the evening say why the journal is still on
+        // yesterday: an entry's sleep is the night after its day.
+        if (note && done && !useToday && BB.isEvening()) {
+          const sub = document.createElement('span');
+          sub.className = 'qc-done-sub';
+          sub.textContent = qt('home.quick.todayOpens', "Today's entry opens tomorrow, after tonight's sleep.");
+          note.appendChild(sub);
+        }
         // Mood names double as the bears' accessible names.
         card.querySelectorAll('.qc-bear').forEach(b => {
           const m = b.getAttribute('data-mood');

@@ -8743,7 +8743,16 @@ window.addEventListener('pageshow', () => {
         }
         if (actionsRow) actionsRow.style.display = 'flex';
         if (note) note.style.display = 'none';
-      } else {
+      }
+      // Night-time loggers think of the day they've just had as "today": in the
+      // evening, say when today's entry opens (its sleep is tonight's).
+      const opensNote = document.getElementById('todayOpensNote');
+      if (opensNote) {
+        const show = currentDone && !useToday && BB.isEvening();
+        opensNote.textContent = show ? ((window.BB && BB.t) ? BB.t('home.quick.todayOpens') : "Today's entry opens tomorrow, after tonight's sleep.") : '';
+        opensNote.style.display = show ? '' : 'none';
+      }
+      if (!currentDone) {
         // Form is visible — hide pill for a cleaner look
         if (actionsRow) actionsRow.style.display = 'none';
         if (note) { note.innerHTML = ''; note.style.display = 'none'; }

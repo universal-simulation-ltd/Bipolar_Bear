@@ -149,6 +149,16 @@ window.BB.anonButtonShown = function () {
   }
 };
 
+/**
+ * True from 18:00 local time. The journal logs yesterday, because an entry's
+ * sleep is the night after its day; in the evening, once yesterday is logged,
+ * the home card and journal say when today's entry opens (js/index.js,
+ * js/journal.js), since night-time loggers think of their day as "today".
+ */
+window.BB.isEvening = function () {
+  return new Date().getHours() >= 18;
+};
+
 window.BB.anonLiveStreak = function () {
   try {
     var streak = parseInt(window.BB.storage.get('Anon_streak') || '0', 10);

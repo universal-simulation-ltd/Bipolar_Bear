@@ -222,7 +222,7 @@
         anonymous: 'Bipolar Anonymous',
       },
       home: {
-        quick: {"last7": "Last 7 days", "weekLabel": "Last 7 days — open Mood Journal", "dayMood": "{day}: {mood}", "noEntry": "No entry", "doneYesterday": "✓ Yesterday is logged — nice one", "doneToday": "✓ Today is logged — nice one"},
+        quick: {"last7": "Last 7 days", "weekLabel": "Last 7 days — open Mood Journal", "dayMood": "{day}: {mood}", "noEntry": "No entry", "doneYesterday": "✓ Yesterday is logged — nice one", "doneToday": "✓ Today is logged — nice one", "todayOpens": "Today's entry opens tomorrow, after tonight's sleep."},
         tutorialProgressOne: "One more tip comes with your next entry", tutorialProgressMany: "A few more tips come with your next {n} entries",
         signInNote: 'Sign in to join the community',
         logoHint: '🐻 psst… click me!',
@@ -2291,7 +2291,7 @@
         anonymous: 'Bipolar Anonymous',
       },
       home: {
-        quick: {"last7": "Últimos 7 días", "weekLabel": "Últimos 7 días — abrir el Diario de Ánimo", "dayMood": "{day}: {mood}", "noEntry": "Sin registro", "doneYesterday": "✓ Ayer ya está registrado — ¡bien hecho!", "doneToday": "✓ Hoy ya está registrado — ¡bien hecho!"},
+        quick: {"last7": "Últimos 7 días", "weekLabel": "Últimos 7 días — abrir el Diario de Ánimo", "dayMood": "{day}: {mood}", "noEntry": "Sin registro", "doneYesterday": "✓ Ayer ya está registrado — ¡bien hecho!", "doneToday": "✓ Hoy ya está registrado — ¡bien hecho!", "todayOpens": "La entrada de hoy se abre mañana, después de dormir esta noche."},
         tutorialProgressOne: "Un consejo más llegará con tu próxima entrada", tutorialProgressMany: "Llegarán algunos consejos más con tus próximas {n} entradas",
         signInNote: 'Inicia sesión para unirte a la comunidad',
         logoHint: '🐻 psst… ¡haz clic en mí!',
@@ -4366,7 +4366,7 @@
       },
       nav: { journal: "Journal d'Humeur", survivalKit: 'Ton Kit de Survie', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "7 derniers jours", "weekLabel": "7 derniers jours — ouvrir le Journal d'Humeur", "dayMood": "{day} : {mood}", "noEntry": "Aucune entrée", "doneYesterday": "✓ Hier est enregistré — bravo", "doneToday": "✓ Aujourd'hui est enregistré — bravo"},
+        quick: {"last7": "7 derniers jours", "weekLabel": "7 derniers jours — ouvrir le Journal d'Humeur", "dayMood": "{day} : {mood}", "noEntry": "Aucune entrée", "doneYesterday": "✓ Hier est enregistré — bravo", "doneToday": "✓ Aujourd'hui est enregistré — bravo", "todayOpens": "L'entrée d'aujourd'hui s'ouvre demain, après votre nuit de sommeil."},
         tutorialProgressOne: "Encore une astuce avec ta prochaine entrée", tutorialProgressMany: "Encore quelques astuces avec tes {n} prochaines entrées",
         signInNote: 'Connecte-toi pour rejoindre la communauté',
         logoHint: '🐻 psst… clique sur moi !',
@@ -6388,7 +6388,7 @@
       },
       nav: { journal: 'Stimmungstagebuch', survivalKit: 'Dein Überlebenskit', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "Letzte 7 Tage", "weekLabel": "Letzte 7 Tage — Stimmungstagebuch öffnen", "dayMood": "{day}: {mood}", "noEntry": "Kein Eintrag", "doneYesterday": "✓ Gestern ist eingetragen — gut gemacht", "doneToday": "✓ Heute ist eingetragen — gut gemacht"},
+        quick: {"last7": "Letzte 7 Tage", "weekLabel": "Letzte 7 Tage — Stimmungstagebuch öffnen", "dayMood": "{day}: {mood}", "noEntry": "Kein Eintrag", "doneYesterday": "✓ Gestern ist eingetragen — gut gemacht", "doneToday": "✓ Heute ist eingetragen — gut gemacht", "todayOpens": "Der Eintrag für heute öffnet sich morgen, nach dem Schlaf heute Nacht."},
         tutorialProgressOne: "Mit deinem nächsten Eintrag kommt noch ein Tipp", tutorialProgressMany: "Mit deinen nächsten {n} Einträgen kommen noch ein paar Tipps",
         signInNote: 'Anmelden, um der Community beizutreten',
         logoHint: '🐻 psst… klick mich!',
@@ -8393,7 +8393,7 @@
       },
       nav: { journal: "Diario dell'Umore", survivalKit: 'Il Tuo Kit di Sopravvivenza', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "Ultimi 7 giorni", "weekLabel": "Ultimi 7 giorni — apri il Diario dell'Umore", "dayMood": "{day}: {mood}", "noEntry": "Nessuna voce", "doneYesterday": "✓ Ieri è registrato — ottimo lavoro", "doneToday": "✓ Oggi è registrato — ottimo lavoro"},
+        quick: {"last7": "Ultimi 7 giorni", "weekLabel": "Ultimi 7 giorni — apri il Diario dell'Umore", "dayMood": "{day}: {mood}", "noEntry": "Nessuna voce", "doneYesterday": "✓ Ieri è registrato — ottimo lavoro", "doneToday": "✓ Oggi è registrato — ottimo lavoro", "todayOpens": "La voce di oggi si apre domani, dopo il sonno di stanotte."},
         tutorialProgressOne: "Con la tua prossima voce arriva un altro consiglio", tutorialProgressMany: "Con le tue prossime {n} voci arrivano altri consigli",
         signInNote: 'Accedi per unirti alla comunità',
         logoHint: '🐻 psst… cliccami!',
@@ -10398,7 +10398,7 @@
       },
       nav: { journal: 'Diário de Humor', survivalKit: 'O Teu Kit de Sobrevivência', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "Últimos 7 dias", "weekLabel": "Últimos 7 dias — abrir o Diário de Humor", "dayMood": "{day}: {mood}", "noEntry": "Sem registo", "doneYesterday": "✓ Ontem já está registado — muito bem", "doneToday": "✓ Hoje já está registado — muito bem"},
+        quick: {"last7": "Últimos 7 dias", "weekLabel": "Últimos 7 dias — abrir o Diário de Humor", "dayMood": "{day}: {mood}", "noEntry": "Sem registo", "doneYesterday": "✓ Ontem já está registado — muito bem", "doneToday": "✓ Hoje já está registado — muito bem", "todayOpens": "A entrada de hoje abre amanhã, depois de dormir esta noite."},
         tutorialProgressOne: "Com o teu próximo registo chega mais uma dica", tutorialProgressMany: "Com os teus próximos {n} registos chegam mais algumas dicas",
         signInNote: 'Inicia sessão para entrar na comunidade',
         logoHint: '🐻 psst… clica em mim!',
@@ -12403,7 +12403,7 @@
       },
       nav: { journal: 'Stemmingsdagboek', survivalKit: 'Jouw Overlevingskit', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "Afgelopen 7 dagen", "weekLabel": "Afgelopen 7 dagen — Stemmingsdagboek openen", "dayMood": "{day}: {mood}", "noEntry": "Geen invoer", "doneYesterday": "✓ Gisteren is ingevuld — goed gedaan", "doneToday": "✓ Vandaag is ingevuld — goed gedaan"},
+        quick: {"last7": "Afgelopen 7 dagen", "weekLabel": "Afgelopen 7 dagen — Stemmingsdagboek openen", "dayMood": "{day}: {mood}", "noEntry": "Geen invoer", "doneYesterday": "✓ Gisteren is ingevuld — goed gedaan", "doneToday": "✓ Vandaag is ingevuld — goed gedaan", "todayOpens": "De invoer van vandaag opent morgen, na je nachtrust."},
         tutorialProgressOne: "Bij je volgende dagboekitem krijg je nog een tip", tutorialProgressMany: "Bij je volgende {n} dagboekitems krijg je nog een paar tips",
         signInNote: 'Meld je aan om deel te nemen aan de community',
         logoHint: '🐻 psst… klik op mij!',
@@ -14408,7 +14408,7 @@
       },
       nav: { journal: 'Dziennik Nastroju', survivalKit: 'Twój Zestaw Przetrwania', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "Ostatnie 7 dni", "weekLabel": "Ostatnie 7 dni — otwórz Dziennik Nastroju", "dayMood": "{day}: {mood}", "noEntry": "Brak wpisu", "doneYesterday": "✓ Wczoraj jest zapisane — tak trzymaj", "doneToday": "✓ Dzisiaj jest zapisane — tak trzymaj"},
+        quick: {"last7": "Ostatnie 7 dni", "weekLabel": "Ostatnie 7 dni — otwórz Dziennik Nastroju", "dayMood": "{day}: {mood}", "noEntry": "Brak wpisu", "doneYesterday": "✓ Wczoraj jest zapisane — tak trzymaj", "doneToday": "✓ Dzisiaj jest zapisane — tak trzymaj", "todayOpens": "Wpis za dziś otworzy się jutro, po dzisiejszym śnie."},
         tutorialProgressOne: "Przy następnym wpisie pojawi się jeszcze jedna wskazówka", tutorialProgressMany: "Przy kolejnych {n} wpisach pojawi się jeszcze kilka wskazówek",
         signInNote: 'Zaloguj się, aby dołączyć do społeczności',
         logoHint: '🐻 psst… kliknij mnie!',
@@ -16421,7 +16421,7 @@
       },
       nav: { journal: 'Stämningsdagbok', survivalKit: 'Ditt Överlevnadskit', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "Senaste 7 dagarna", "weekLabel": "Senaste 7 dagarna — öppna Stämningsdagbok", "dayMood": "{day}: {mood}", "noEntry": "Ingen anteckning", "doneYesterday": "✓ Gårdagen är loggad — snyggt jobbat", "doneToday": "✓ Dagen är loggad — snyggt jobbat"},
+        quick: {"last7": "Senaste 7 dagarna", "weekLabel": "Senaste 7 dagarna — öppna Stämningsdagbok", "dayMood": "{day}: {mood}", "noEntry": "Ingen anteckning", "doneYesterday": "✓ Gårdagen är loggad — snyggt jobbat", "doneToday": "✓ Dagen är loggad — snyggt jobbat", "todayOpens": "Dagens anteckning öppnas i morgon, efter nattens sömn."},
         tutorialProgressOne: "Med din nästa anteckning kommer ett tips till", tutorialProgressMany: "Med dina nästa {n} anteckningar kommer några tips till",
         signInNote: 'Logga in för att gå med i gemenskapen',
         logoHint: '🐻 psst… klicka på mig!',
@@ -18426,7 +18426,7 @@
       },
       nav: { journal: '情绪日记', survivalKit: '你的生存工具包', anonymous: 'Bipolar Anonymous' },
       home: {
-        quick: {"last7": "最近 7 天", "weekLabel": "最近 7 天 — 打开情绪日记", "dayMood": "{day}：{mood}", "noEntry": "无记录", "doneYesterday": "✓ 昨天已记录 — 做得好", "doneToday": "✓ 今天已记录 — 做得好"},
+        quick: {"last7": "最近 7 天", "weekLabel": "最近 7 天 — 打开情绪日记", "dayMood": "{day}：{mood}", "noEntry": "无记录", "doneYesterday": "✓ 昨天已记录 — 做得好", "doneToday": "✓ 今天已记录 — 做得好", "todayOpens": "今天的记录明天开放，等你睡过今晚之后。"},
         tutorialProgressOne: "下一条记录会带来一个小提示", tutorialProgressMany: "接下来的 {n} 条记录还会带来一些小提示",
         signInNote: '登录以加入社区',
         logoHint: '🐻 嘿……点击我！',

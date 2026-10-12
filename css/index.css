@@ -434,6 +434,7 @@
       font-weight: 700;
       color: #7a3a00;
     }
+    .qc-done-sub { display: block; margin-top: 2px; font-weight: 500; opacity: 0.8; }
     .qc-week {
       display: block;
       width: 100%;
