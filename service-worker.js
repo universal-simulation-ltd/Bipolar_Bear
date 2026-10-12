@@ -1501,7 +1501,11 @@
 //   journal.html, survival-kit.html, anonymous.html, privacy.html, js/index.js,
 //   js/journal.js, js/survival-kit.js, js/anonymous.js, js/shared/{anon-push,
 //   brand-config,firebase-config,guest-data,user-count,i18n,secure-store}.js.
-const CACHE_NAME = 'bipolarbear-v316';
+// v317: the mood journal goes home on a swipe from the left edge (iPhone and
+//   web; Android's back gesture already did). A round arrow follows the finger
+//   and turns orange once letting go will go home. Not while a modal is open;
+//   any draft is saved first. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v317';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

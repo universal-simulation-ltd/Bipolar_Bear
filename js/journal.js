@@ -15497,6 +15497,69 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     }
 
     // ────────────────────────────────────────────
+    // 5b. SWIPE FROM THE LEFT EDGE → home (iPhone, web)
+    // ────────────────────────────────────────────
+    // Android's back gesture already does this (above). iOS has no system back
+    // here: the app has no history, and the PWA has no browser chrome. So a
+    // swipe that starts at the left edge and travels right goes home, the same
+    // as "← Home". A round arrow follows the finger and turns orange once
+    // letting go will go home, so it never happens by surprise.
+    //
+    // Only from the edge (28px), so the mood wheel and the calendar keep their
+    // own horizontal swipes. Not while a modal is open. Any draft is saved
+    // first.
+    function initEdgeSwipeHome() {
+      if (typeof isAndroid === 'function' && isAndroid() && isNative()) return;
+      const EDGE = 28, GO = 90;
+      let x0 = 0, y0 = 0, active = false, armed = false, ind = null;
+      const reset = () => {
+        active = false; armed = false;
+        if (ind) { ind.style.transition = 'transform 0.2s ease, opacity 0.2s ease'; ind.style.transform = 'translate(-56px,-50%)'; ind.style.opacity = '0'; }
+      };
+      const indicator = () => {
+        if (ind) return ind;
+        ind = document.createElement('div');
+        ind.setAttribute('aria-hidden', 'true');
+        ind.textContent = '←';
+        ind.style.cssText = 'position:fixed;left:0;top:50%;width:44px;height:44px;border-radius:50%;'
+          + 'display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;'
+          + 'background:rgba(0,0,0,0.55);color:#fff;z-index:99999;pointer-events:none;opacity:0;'
+          + 'transform:translate(-56px,-50%);box-shadow:0 2px 10px rgba(0,0,0,0.25);';
+        document.body.appendChild(ind);
+        return ind;
+      };
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        const t = e.touches[0];
+        if (t.clientX > EDGE || document.querySelector('.confirm-modal.active')) return;
+        x0 = t.clientX; y0 = t.clientY; active = true; armed = false;
+        indicator().style.transition = 'none';
+      }, { passive: true });
+      document.addEventListener('touchmove', (e) => {
+        if (!active) return;
+        const t = e.touches[0], dx = t.clientX - x0, dy = Math.abs(t.clientY - y0);
+        if (dy > 40 && dy > dx) { reset(); return; } // a scroll, not a swipe
+        const d = Math.max(0, Math.min(dx, GO + 30));
+        armed = dx >= GO && dy < 60;
+        ind.style.opacity = String(Math.min(1, d / GO));
+        ind.style.transform = `translate(${d * 0.6 - 44}px,-50%)`;
+        ind.style.background = armed ? 'var(--brand-primary, #ff9500)' : 'rgba(0,0,0,0.55)';
+      }, { passive: true });
+      document.addEventListener('touchend', () => {
+        if (!active) return;
+        const go = armed;
+        reset();
+        if (!go) return;
+        try { if (typeof saveDraft === 'function') saveDraft(); } catch (_) {}
+        if (typeof _advanceOnboardingStep === 'function') _advanceOnboardingStep(4);
+        location.replace('index.html');
+      }, { passive: true });
+      document.addEventListener('touchcancel', () => { if (active) reset(); }, { passive: true });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initEdgeSwipeHome);
+    else initEdgeSwipeHome();
+
+    // ────────────────────────────────────────────
     // 6. KEYBOARD – scroll to focused input
     // ────────────────────────────────────────────
     function initKeyboardHandling() {
