@@ -10,6 +10,14 @@
  *   flappy — Flappy Bear: fly through the gaps between the highs (red/orange
  *            pillars from the top) and the lows (purple/blue from the bottom).
  *   bricks — Bear Bricks: breakout with one row of bricks per mood.
+ *   balance — Stay Stable: hold to lift, let go to sink, while a growing mood
+ *            swing and life events (☕ 🎉 ⚡ up, 🌧️ 🥀 📉 down, 💊 😴 calm) push
+ *            the bear around a manic-to-depressed scale. Points for time in the
+ *            green; too long at either extreme ends it. The bear's path draws a
+ *            mood chart behind it.
+ *   catch  — Self-care Catch: catch what keeps you steady (💊 😴 💧 🥗 🚶 📔 🎧),
+ *            dodge the triggers (⏰ all-nighter, 📱 3 am scrolling, ☕, ⚡ stress).
+ *            Missing a good thing costs nothing; catching a trigger costs a life.
  *
  * To add a game, write a factory like `_snake(W, H)` that returns
  * `{ score, over, update(dt), draw(ctx, state) }` plus any of `idle(dt)`,
@@ -84,6 +92,15 @@
     ctx.textAlign = align || 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(str, x, y);
+  }
+
+  function _emoji(ctx, ch, x, y, size) {
+    // Colour emoji take the fill's alpha, so draw them with an opaque fill.
+    ctx.fillStyle = '#fff';
+    ctx.font = Math.round(size) + 'px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ch, x, y);
   }
 
   const _clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -360,10 +377,209 @@
     return g;
   }
 
+  // ── Stay Stable ───────────────────────────────────────────────────────────
+
+  function _balance(W, H) {
+    const s = H / 600;
+    // The mood scale, top to bottom, as fractions of the height.
+    const BANDS = [['manic', 0.14], ['elevated', 0.18], ['stable', 0.36], ['low', 0.18], ['depressed', 0.14]];
+    let edge = 0;
+    const bands = BANDS.map(b => { const top = edge * H; edge += b[1]; return { mood: b[0], top: top, bottom: edge * H }; });
+    const X = W * 0.32, R = 20 * s;
+    const LIFT = 820 * s, SINK = 620 * s, MAXV = 520 * s;
+    const PUSH = { up: ['☕', '🎉', '⚡'], down: ['🌧️', '🥀', '📉'], calm: ['💊', '😴'] };
+    let y = H / 2, vy = 0, t = 0, phase = 0, holding = false, calm = 0, steady = 1, inStable = 0, spawn = 1.2;
+    const events = [], trail = [];
+
+    function bandAt(py) { return bands.find(b => py < b.bottom) || bands[bands.length - 1]; }
+    function speed() { return (140 + Math.min(t, 120) * 1.5) * s; }
+    function addEvent() {
+      const r = Math.random();
+      const kind = r < 0.2 ? 'calm' : r < 0.6 ? 'up' : 'down';
+      const list = PUSH[kind];
+      events.push({ x: W + 24 * s, y: _rand(0.08, 0.92) * H, kind: kind, ch: list[Math.floor(Math.random() * list.length)] });
+    }
+
+    const g = {
+      score: 0, over: false,
+      idle(dt) { t += dt * 0.25; y = H / 2 + Math.sin(t * 6) * 10 * s; },
+      start() { t = 0; phase = 0; },
+      update(dt) {
+        t += dt;
+        // A slow mood swing with a faster ripple on top. Both grow stronger and
+        // quicker the longer you play, until no one can hold it for ever.
+        const amp = Math.min(950, 140 + t * 9) * s * (calm > 0 ? 0.2 : 1);
+        phase += dt * (1 + Math.min(t, 150) / 120);
+        const swing = amp * Math.sin(phase * 0.85) + amp * 0.45 * Math.sin(phase * 2.2 + 1);
+        vy += ((holding ? -LIFT : SINK) * (calm > 0 ? 0.6 : 1) + swing) * dt;
+        vy *= 1 - Math.min(1, 1.6 * dt);
+        vy = _clamp(vy, -MAXV, MAXV);
+        y += vy * dt;
+        if (y < R) { y = R; vy = 0; }
+        if (y > H - R) { y = H - R; vy = 0; }
+        calm = Math.max(0, calm - dt);
+
+        const v = speed();
+        spawn -= dt;
+        if (spawn <= 0) { addEvent(); spawn = Math.max(0.55, 1.5 - t * 0.012) * _rand(0.7, 1.3); }
+        for (let i = events.length - 1; i >= 0; i--) {
+          const e = events[i];
+          e.x -= v * dt;
+          const dx = e.x - X, dy = e.y - y;
+          if (dx * dx + dy * dy < (R + 16 * s) * (R + 16 * s)) {
+            if (e.kind === 'calm') { calm = 3.5; vy *= 0.3; }
+            else vy += (e.kind === 'up' ? -1 : 1) * (380 + Math.min(t, 120) * 2) * s;
+            events.splice(i, 1);
+          } else if (e.x < -30 * s) {
+            events.splice(i, 1);
+          }
+        }
+        trail.forEach(p => { p[0] -= v * dt; });
+        trail.push([X, y]);
+        while (trail.length && trail[0][0] < 0) trail.shift();
+
+        const m = bandAt(y).mood;
+        if (m === 'stable') { inStable += dt; steady = Math.min(1, steady + dt / 6); }
+        else if (m === 'manic' || m === 'depressed') steady -= dt / 2.5;
+        g.score = Math.floor(inStable);
+        if (steady <= 0) { steady = 0; g.over = true; }
+      },
+      down() { holding = true; },
+      up() { holding = false; },
+      key(k) { if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') { holding = true; return true; } return false; },
+      keyUp(k) { if (k === ' ' || k === 'ArrowUp' || k === 'w' || k === 'W') holding = false; },
+      draw(ctx) {
+        ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+        bands.forEach(b => {
+          ctx.globalAlpha = b.mood === 'stable' ? 0.2 : 0.14;
+          ctx.fillStyle = COLORS[b.mood];
+          ctx.fillRect(0, b.top, W, b.bottom - b.top);
+          ctx.globalAlpha = 1;
+          _bear(ctx, b.mood, 16 * s, (b.top + b.bottom) / 2, 22 * s);
+        });
+        const st = bands[2];
+        ctx.strokeStyle = 'rgba(81,207,102,0.7)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6 * s, 6 * s]);
+        ctx.beginPath(); ctx.moveTo(0, st.top); ctx.lineTo(W, st.top); ctx.moveTo(0, st.bottom); ctx.lineTo(W, st.bottom); ctx.stroke();
+        ctx.setLineDash([]);
+        if (trail.length > 1) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+          ctx.lineWidth = 3 * s;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          trail.forEach((p, i) => { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+          ctx.stroke();
+        }
+        events.forEach(e => _emoji(ctx, e.ch, e.x, e.y, 30 * s));
+        if (calm > 0) {
+          ctx.strokeStyle = 'rgba(81,207,102,' + (0.4 + 0.4 * Math.sin(t * 10)) + ')';
+          ctx.lineWidth = 3 * s;
+          ctx.beginPath(); ctx.arc(X, y, R * 1.45, 0, Math.PI * 2); ctx.stroke();
+        }
+        _bear(ctx, bandAt(y).mood, X, y, R * 2.5);
+        // Steadiness: drains at the extremes, refills in the green.
+        const bw = W * 0.34, bx = W - bw - 12 * s, by = 12 * s;
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        _rrect(ctx, bx, by, bw, 8 * s, 4 * s); ctx.fill();
+        ctx.fillStyle = steady > 0.35 ? COLORS.stable : COLORS.manic;
+        _rrect(ctx, bx, by, bw * steady, 8 * s, 4 * s); ctx.fill();
+      },
+    };
+    return g;
+  }
+
+  // ── Self-care Catch ───────────────────────────────────────────────────────
+
+  function _catch(W, H) {
+    const s = Math.min(W / 360, H / 600);
+    const GOOD = ['💊', '😴', '💧', '🥗', '🚶', '📔', '🎧'], BAD = ['⏰', '📱', '☕', '⚡'];
+    const BY = H - 64 * s, BR = 30 * s, ITEM = 30 * s;
+    let bx = W / 2, lives = 3, t = 0, fall = 150 * s, spawn = 0.5, hurt = 0, joy = 0;
+    const held = { left: false, right: false }, items = [], pops = [];
+
+    function aim(x) { bx = _clamp(x, BR, W - BR); }
+    function addItem() {
+      const good = Math.random() < Math.max(0.6, 0.75 - t * 0.002);
+      const list = good ? GOOD : BAD;
+      items.push({ x: _rand(ITEM, W - ITEM), y: -ITEM, good: good, ch: list[Math.floor(Math.random() * list.length)],
+        vy: fall * _rand(0.85, 1.2), phase: Math.random() * 6 });
+    }
+
+    const g = {
+      score: 0, over: false,
+      idle(dt) { t += dt; },
+      start() { t = 0; },
+      update(dt) {
+        t += dt;
+        if (held.left) aim(bx - 430 * s * dt);
+        if (held.right) aim(bx + 430 * s * dt);
+        fall += 3.5 * s * dt;
+        spawn -= dt;
+        if (spawn <= 0) { addItem(); spawn = Math.max(0.32, 0.85 - t * 0.008); }
+        hurt = Math.max(0, hurt - dt);
+        joy = Math.max(0, joy - dt);
+        for (let i = items.length - 1; i >= 0; i--) {
+          const it = items[i];
+          it.y += it.vy * dt;
+          if (Math.abs(it.x - bx) < BR + ITEM * 0.4 && Math.abs(it.y - BY) < ITEM * 0.8) {
+            if (it.good) { g.score++; joy = 0.35; pops.push({ x: it.x, y: BY - BR, txt: '+1', c: COLORS.stable, t: 0.8 }); }
+            else { lives--; hurt = 0.7; pops.push({ x: it.x, y: BY - BR, txt: '−1', c: COLORS.manic, t: 0.8 }); }
+            items.splice(i, 1);
+          } else if (it.y > H + ITEM) {
+            items.splice(i, 1);
+          }
+        }
+        pops.forEach(p => { p.t -= dt; p.y -= 50 * s * dt; });
+        while (pops.length && pops[0].t <= 0) pops.shift();
+        if (lives <= 0) g.over = true;
+      },
+      down(x) { aim(x); },
+      move(x) { aim(x); },
+      key(k) {
+        if (k === 'ArrowLeft' || k === 'a' || k === 'A') { held.left = true; return true; }
+        if (k === 'ArrowRight' || k === 'd' || k === 'D') { held.right = true; return true; }
+        return false;
+      },
+      keyUp(k) {
+        if (k === 'ArrowLeft' || k === 'a' || k === 'A') held.left = false;
+        if (k === 'ArrowRight' || k === 'd' || k === 'D') held.right = false;
+      },
+      draw(ctx) {
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#1c2140'); sky.addColorStop(1, BG);
+        ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#231e36'; ctx.fillRect(0, BY + BR * 0.9, W, H - BY);
+        ctx.fillStyle = COLORS.stable; ctx.fillRect(0, BY + BR * 0.9, W, 3 * s);
+        items.forEach(it => {
+          if (!it.good) {
+            ctx.fillStyle = 'rgba(255,68,68,0.22)';
+            ctx.beginPath(); ctx.arc(it.x + Math.sin(t * 3 + it.phase) * 3 * s, it.y, ITEM * 0.62, 0, Math.PI * 2); ctx.fill();
+          }
+          _emoji(ctx, it.ch, it.x + Math.sin(t * 3 + it.phase) * 3 * s, it.y, ITEM);
+        });
+        for (let i = 0; i < lives; i++) _bear(ctx, 'stable', 18 * s + i * 24 * s, 20 * s, 20 * s);
+        const mood = hurt > 0 ? 'low' : 'stable';
+        const bounce = joy > 0 ? Math.sin(joy / 0.35 * Math.PI) * 6 * s : 0;
+        ctx.fillStyle = COLORS.elevated;
+        _rrect(ctx, bx - BR * 1.15, BY + BR * 0.25, BR * 2.3, BR * 0.5, BR * 0.25); ctx.fill();
+        _bear(ctx, mood, bx, BY - bounce, BR * 2.1, hurt > 0 ? Math.sin(hurt * 30) * 0.15 : 0);
+        pops.forEach(p => {
+          ctx.globalAlpha = Math.max(0, p.t / 0.8);
+          _text(ctx, p.txt, p.x, p.y, 18 * s, p.c);
+          ctx.globalAlpha = 1;
+        });
+      },
+    };
+    return g;
+  }
+
   const GAMES = [
     { id: 'snake',  mood: 'stable',   make: _snake,  name: () => _t('snake', 'Bear Snake'),   how: () => _t('snakeHow', 'Swipe or use the arrow keys to steer. Eat the bears, miss the walls and your tail.') },
     { id: 'flappy', mood: 'elevated', make: _flappy, name: () => _t('flappy', 'Flappy Bear'), how: () => _t('flappyHow', 'Tap to flap. Stay in the gap between the highs and the lows.') },
     { id: 'bricks', mood: 'manic',    make: _bricks, name: () => _t('bricks', 'Bear Bricks'), how: () => _t('bricksHow', 'Drag to move the paddle, tap to launch. Clear every mood.') },
+    { id: 'balance', mood: 'stable',  make: _balance, name: () => _t('balance', 'Stay Stable'), how: () => _t('balanceHow', 'Hold to lift, let go to sink. Life pushes you up and down: keep the bear in the green as long as you can. 💊 and 😴 calm things down.') },
+    { id: 'catch',  mood: 'low',      make: _catch,  name: () => _t('catch', 'Self-care Catch'), how: () => _t('catchHow', "Drag to move. Catch what keeps you steady (💊 😴 💧 🥗 🚶), dodge what doesn't (⏰ 📱 ☕ ⚡).") },
   ];
 
   // ── Overlay + runner ──────────────────────────────────────────────────────

@@ -1457,7 +1457,11 @@
 //   Flappy Bear, Bear Bricks). Data Security, Buy Us a Coffee and Leave a
 //   Review move to the picker. New js/shared/bear-arcade.js (precached).
 //   Touches fab.js, js/index.js, js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v304';
+// v305: Bear Arcade gains two games about bipolar itself: Stay Stable (keep
+//   the bear in the green while mood swings and life events push it about;
+//   its path draws a mood chart) and Self-care Catch (catch 💊 😴 💧 🥗, dodge
+//   ⏰ 📱 ☕ ⚡). Touches js/shared/bear-arcade.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v305';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
