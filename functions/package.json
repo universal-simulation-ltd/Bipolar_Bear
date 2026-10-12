@@ -1,6 +1,7 @@
 {
   "name": "bipolarbear-functions",
   "version": "1.0.0",
+  "license": "AGPL-3.0-or-later",
   "engines": { "node": "22" },
   "main": "index.js",
   "dependencies": {
