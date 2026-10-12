@@ -12051,27 +12051,30 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     function _syncStableStreak(entries) {
       if (!currentUser || !db || !entries.length) return;
 
-      // Build date → mood map (normalise date to YYYY-MM-DD)
+      // Build date → mood map, keyed by the LOCAL day. Walking back with
+      // toISOString() keyed local midnight by its UTC date, which east of UTC
+      // (Spain, the UK in summer) is the day before, so the newest day was
+      // never counted. A bare "2026-05-04" is already a local day; parsing it
+      // with new Date() would make it UTC midnight, the day before west of UTC.
+      const toKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const dayKey = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v)) ? String(v) : toKey(new Date(v));
       const moodByDate = {};
       entries.forEach(e => {
         if (!e.date || e.mood == null || e.mood === '') return;
-        const key = String(e.date).slice(0, 10); // handles both "2026-05-04" and timestamp strings
-        moodByDate[key] = e.mood;
+        moodByDate[dayKey(e.date)] = e.mood;
       });
 
       // Walk back from the most recent entry date
-      const sorted = [...entries]
-        .filter(e => e.date)
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
-      if (!sorted.length) return;
+      const days = Object.keys(moodByDate).sort();
+      if (!days.length) return;
 
       let streak = 0;
       let startDate = null;
-      const cur = new Date(sorted[0].date);
-      cur.setHours(0, 0, 0, 0);
+      const [y, m, d] = days[days.length - 1].split('-').map(Number);
+      const cur = new Date(y, m - 1, d);
 
       while (true) {
-        const key = cur.toISOString().slice(0, 10);
+        const key = toKey(cur);
         const mood = moodByDate[key];
         // Numeric spectrum moods in the stable band (4–6) count too, via _moodCat.
         if (mood == null || mood === '' || _moodCat(mood) !== 'stable') break;

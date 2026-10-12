@@ -1447,7 +1447,7 @@
 // v298: Bipolar Anonymous: opening a thread also marks every older thread
 //   (earlier post timestamp) as read, so its red dot doesn't linger.
 //   Touches js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v298';
+const CACHE_NAME = 'bipolarbear-v299';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
