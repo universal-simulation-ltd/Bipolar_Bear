@@ -167,7 +167,7 @@ html.theme-dark .user-count { color: #f0c79a; }
 html.theme-dark .footer-link { background: rgba(168,67,10,0.9); }
 html.theme-dark #_featureHintToast,
 html.theme-dark #achievementToast { box-shadow: 0 0 0 1px var(--dk-line), 0 8px 24px rgba(0,0,0,0.5) !important; }
-html.theme-dark #bbHomeVersion { color: rgba(245,235,221,0.5) !important; }
+html.theme-dark #bbHomeVersion { color: rgba(245,235,221,0.75) !important; }
 
 /* Quick check-in card */
 html.theme-dark .quick-checkin { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255,149,0,0.5), 0 6px 20px rgba(0,0,0,0.45); }

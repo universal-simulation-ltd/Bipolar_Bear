@@ -1479,7 +1479,16 @@
 // v312: the Your Moniker sheet's Stability Counter row lays out on one line
 //   again (shown with display:flex, not '', which dropped the inline flex).
 //   Touches js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v312';
+// v313: home version chip readable on the white dock (grey; white only while
+//   the dock is locked), journal settings links Achievements · Import on one
+//   row with Advanced under it, and new-user defaults: focus-mode wheel on,
+//   journal steps all on except Notes (was Additional), home quick check-in
+//   on (switch renamed "Hide quick check-in"), Anonymous home button off.
+//   Existing users keep their old defaults (bbDefaults20261012 /
+//   bbHomeDefaults20261012 one-off, plus userSettings onboardingStep).
+//   Touches index.html, journal.html, fab.js, css/index.css, css/dark.css,
+//   js/index.js, js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v313';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

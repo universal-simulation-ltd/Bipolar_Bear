@@ -146,6 +146,8 @@
        gesture bar (matching dock rules in fab.js). */
     html.is-android .fab-hint { bottom: calc(38px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))); }
     html.is-android #bbHomeVersion { bottom: calc(8px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))) !important; }
+    /* Dock locked: no white bar behind the version chip, so it sits on the orange page */
+    html.bb-dock-locked:not(.theme-dark) #bbHomeVersion { color: rgba(255,255,255,0.9) !important; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
     .fab-hint {
       position: fixed;
       bottom: 38px;

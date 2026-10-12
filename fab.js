@@ -796,6 +796,9 @@
     // while locked (openChatModal), so it can't be hidden before it's earned.
     // (James, 2026-10-09: replaced the "🆘 Need help now?" text pill that
     // index.html showed under "Get started" until the dock unlocked.)
+    // Lets the home version chip (#bbHomeVersion) switch to white text while
+    // it sits on the page instead of the white dock bar.
+    document.documentElement.classList.toggle('bb-dock-locked', !_fabsUnlocked);
     if (!_fabsUnlocked) {
       if (_footer) _footer.style.display = 'none';
       [document.getElementById('quickNoteFab'),

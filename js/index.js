@@ -551,6 +551,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             if (typeof d.homeAnonEnabled     === 'boolean') BB.storage.set('AnonBtnEnabled',     d.homeAnonEnabled     ? '1' : '0');
             if (typeof d.homeStatsEnabled    === 'boolean') BB.storage.set('HomeStatsEnabled',   d.homeStatsEnabled    ? '1' : '0');
             if (typeof d.homeQuickCheckinEnabled === 'boolean') BB.storage.set('HomeQuickCheckin', d.homeQuickCheckinEnabled ? '1' : '0');
+            // Accounts from before the card became the default (2026-10-12)
+            // that never stored a choice keep it off.
+            else if ((d.onboardingStep || 0) >= 4 && BB.storage.get('HomeQuickCheckin') == null) BB.storage.set('HomeQuickCheckin', '0');
             if (typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
             const _ap = d.anonProfile || {};
             if (typeof _ap.visitStreak === 'number') {
@@ -703,6 +706,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     function _getOnboardingStep() {
       return window.BB.onboarding.getStep();
     }
+
+    // The quick check-in card became the default on 2026-10-12. Anyone on this
+    // device already past the step that shows it (4) keeps it off, once.
+    try {
+      if (BB.storage.get('HomeDefaults20261012') == null) {
+        if (_getOnboardingStep() >= 4 && BB.storage.get('HomeQuickCheckin') == null) BB.storage.set('HomeQuickCheckin', '0');
+        BB.storage.set('HomeDefaults20261012', '1');
+      }
+    } catch (_) {}
     /**
      * Advance the user's onboarding step. No-op if `to` is not strictly
      * greater than the current step. Persists to localStorage and to
@@ -806,19 +818,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       window._bbAccountHintActive = true;
 
       // The finale points the user at the profile button (Customise panel).
-      // Pre-enable the Survival Kit + Bipolar Anonymous home buttons so they
-      // show up already selected in that panel and are visible on the home
-      // screen the moment they close it — they discover the features instead
-      // of having to find the toggles. Only flip each the first time (when it
-      // has never been set), so a user who deliberately turned one off later
-      // isn't overridden on a repeat finale.
+      // Pre-enable the Survival Kit home button so it shows up already
+      // selected in that panel and is visible on the home screen the moment
+      // they close it. Bipolar Anonymous starts off (James, 2026-10-12) and
+      // keeps its NEW pill there. Only flip it the first time (when it has
+      // never been set), so a user who deliberately turned it off later isn't
+      // overridden on a repeat finale.
       let _btnsPreEnabled = false;
       if (BB.storage.get('SurvivalBtnEnabled') == null) {
         BB.storage.set('SurvivalBtnEnabled', '1');
-        _btnsPreEnabled = true;
-      }
-      if (BB.storage.get('AnonBtnEnabled') == null) {
-        BB.storage.set('AnonBtnEnabled', '1');
         _btnsPreEnabled = true;
       }
       if (_btnsPreEnabled && typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
@@ -1482,7 +1490,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         homeSurvivalEnabled: BB.storage.get('SurvivalBtnEnabled') === '1',
         homeAnonEnabled:     BB.storage.get('AnonBtnEnabled') === '1',
         homeStatsEnabled:    BB.storage.get('HomeStatsEnabled') === '1',
-        homeQuickCheckinEnabled: BB.storage.get('HomeQuickCheckin') === '1',
+        homeQuickCheckinEnabled: BB.storage.get('HomeQuickCheckin') !== '0',
       }, { merge: true }).catch(() => {});
     }
 
@@ -1524,11 +1532,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     }
     window._toggleHomeStats = _toggleHomeStats;
 
-    /** Paint the "Quick check-in" pill toggle to match HomeQuickCheckin. */
+    /**
+     * Paint the "Hide quick check-in" pill toggle. The card is on by default
+     * (HomeQuickCheckin unset or '1'), so the switch is worded the other way
+     * round and is ON only when the card is hidden ('0').
+     */
     function _paintQuickCheckinToggle() {
       const btn = document.getElementById('idxQuickCheckinToggle');
       if (!btn) return;
-      const on = BB.storage.get('HomeQuickCheckin') === '1';
+      const on = BB.storage.get('HomeQuickCheckin') === '0';
       btn.style.background = on ? 'var(--brand-primary)' : '#ccc';
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       const thumb = btn.querySelector('span');
@@ -1537,7 +1549,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
     /** Toggle the quick check-in widget (replaces the Mood Journal button). */
     function _toggleHomeQuickCheckin() {
-      const nowEnabled = BB.storage.get('HomeQuickCheckin') !== '1';
+      const nowEnabled = BB.storage.get('HomeQuickCheckin') === '0';
       BB.storage.set('HomeQuickCheckin', nowEnabled ? '1' : '0');
       _paintQuickCheckinToggle();
       if (typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
@@ -2299,7 +2311,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // (the journal's own first-entry tutorial runs from the Mood Journal
       // button), shown to everyone past it — i.e. whenever the Mood Journal
       // button is the normal home button. Called from _applyOnboardingGating.
-      // Opt-in (Profile → Customise → Quick check-in). When shown, the card
+      // On by default since 2026-10-12 (Profile → Customise → Hide quick
+      // check-in turns it off; HomeQuickCheckin '0'). When shown, the card
       // takes the Mood Journal button's place: the button's container is hidden,
       // and with it the button's 🔥/🧘 streak line — the card shows the same
       // figures on its own "Last 7 days" row (qcWeekStreaks), which is what
@@ -2308,7 +2321,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       window._renderQuickCheckin = function () {
         let step = 12;
         try { step = window.BB.onboarding.getStep(); } catch (_) {}
-        const on = step >= 4 && BB.storage.get('HomeQuickCheckin') === '1';
+        const on = step >= 4 && BB.storage.get('HomeQuickCheckin') !== '0';
         card.style.display = on ? '' : 'none';
         if (journalBox) journalBox.style.display = on ? 'none' : '';
         if (on) render();

@@ -69,6 +69,22 @@ window.addEventListener('pageshow', () => {
     function _getOnboardingStep() {
       return window.BB.onboarding.getStep();
     }
+
+    // ── New-user defaults (James, 2026-10-12) ──
+    // Focus mode's wheel is on, and every journal step is on except Notes (it
+    // used to be Additional that started off). Anyone already using the app
+    // keeps the old defaults (wheel off, Additional off): once per device here,
+    // and for accounts in the userSettings sync (onboardingStep >= 1).
+    const _DEFAULT_DISABLED_STEPS = ['notes'];
+    try {
+      if (localStorage.getItem('bbDefaults20261012') === null) {
+        if (_getOnboardingStep() >= 1) {
+          if (localStorage.getItem('wheelModeEnabled') === null) localStorage.setItem('wheelModeEnabled', '0');
+          if (localStorage.getItem('disabledSteps') === null) localStorage.setItem('disabledSteps', '["more_data"]');
+        }
+        localStorage.setItem('bbDefaults20261012', '1');
+      }
+    } catch (_) {}
     /**
      * Advance the user's onboarding step. No-op if `to` is not strictly
      * greater than the current step. Persists to localStorage and to
@@ -568,6 +584,9 @@ window.addEventListener('pageshow', () => {
               }
               if (d.wheelModeEnabled !== undefined) {
                 localStorage.setItem('wheelModeEnabled', d.wheelModeEnabled ? '1' : '0');
+              } else if ((d.onboardingStep || 0) >= 1 && localStorage.getItem('wheelModeEnabled') === null) {
+                // Account from before wheel mode became the default: keep it off.
+                localStorage.setItem('wheelModeEnabled', '0');
               }
               if (d.healthSyncEnabled !== undefined) {
                 BB.storage.set('HealthSyncEnabled', d.healthSyncEnabled ? '1' : '0');
@@ -597,6 +616,9 @@ window.addEventListener('pageshow', () => {
               if (d.customiseFormEnabled !== undefined) localStorage.setItem('customiseFormEnabled', d.customiseFormEnabled ? 'true' : 'false');
               if (d.disabledSteps !== undefined) {
                 try { localStorage.setItem('disabledSteps', JSON.stringify(d.disabledSteps)); } catch(e) {}
+              } else if ((d.onboardingStep || 0) >= 1 && localStorage.getItem('disabledSteps') === null) {
+                // Account from before 2026-10-12: keep its old default (Additional off).
+                localStorage.setItem('disabledSteps', JSON.stringify(['more_data']));
               }
               // Sync onboarding step (take max of local and server)
               const _serverStep = d.onboardingStep || 0;
@@ -1856,9 +1878,10 @@ window.addEventListener('pageshow', () => {
       10: 'Manic',
     };
     function _spectrumEnabled() { return localStorage.getItem('moodSpectrumEnabled') === '1'; }
-    // Focus mode's spinner-wheel experience is opt-in (BETA). Off by default →
-    // focus mode renders each step as a plain tappable list (see _fmRenderContent).
-    function _wheelMode() { return localStorage.getItem('wheelModeEnabled') === '1'; }
+    // Focus mode's spinner-wheel experience (BETA). On by default for new users
+    // (James, 2026-10-12); '0' → focus mode renders each step as a plain
+    // tappable list (see _fmRenderContent).
+    function _wheelMode() { return localStorage.getItem('wheelModeEnabled') !== '0'; }
     // True only for a raw spectrum number (0–10); legacy category strings return false.
     function _isNumericMood(m) {
       return typeof m === 'number'
@@ -11708,7 +11731,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
           achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
           customTrackingFields: [], trackingFields: {}, labelOverrides: {},
-          earlyWarnEnabled: false,
+          earlyWarnEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
         }, { merge: true }).catch(() => {});
       }
       closeSettingsModal();
@@ -11963,7 +11986,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
-              earlyWarnEnabled: false,
+              earlyWarnEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
               moodDefinitions: {}, copingStrategies: {}, safetyPlanEnc: null,
               onboardingStep: 0,
               helpedVoted: false,
@@ -14069,19 +14092,22 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     ];
 
     function _getDisabledSteps() {
-      try { return JSON.parse(localStorage.getItem('disabledSteps') || '["more_data"]'); } catch(e) { return ['more_data']; }
+      try { return JSON.parse(localStorage.getItem('disabledSteps') || JSON.stringify(_DEFAULT_DISABLED_STEPS)); } catch(e) { return _DEFAULT_DISABLED_STEPS.slice(); }
     }
 
     function _onCustomiseDetailsOpen() {
       // Seed disabledSteps on first open if not set
       if (localStorage.getItem('disabledSteps') === null) {
-        localStorage.setItem('disabledSteps', JSON.stringify(['more_data']));
+        localStorage.setItem('disabledSteps', JSON.stringify(_DEFAULT_DISABLED_STEPS));
       }
       _renderStepToggles();
-      // Hint progression: dismiss customise form hint and show additional hint
+      // Hint progression: dismiss customise form hint and show additional hint.
+      // The additional hint asks the user to switch Additional on, so skip it
+      // when Additional is already on (the default since 2026-10-12).
       if (BB.storage.get('CustomiseFormHintDone') !== '1') {
         _dismissCustomiseFormHint();
-        _showCustomiseAdditionalHint();
+        if (_getDisabledSteps().includes('more_data')) _showCustomiseAdditionalHint();
+        else _dismissCustomiseAdditionalHint();
       }
     }
     window._onCustomiseDetailsOpen = _onCustomiseDetailsOpen;
@@ -14118,7 +14144,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const row = document.getElementById('stepTogglesRow');
       if (!row) return;
       let _rawDis = [];
-      try { _rawDis = JSON.parse(localStorage.getItem('disabledSteps') || '[]'); } catch(e) {}
+      try { _rawDis = _getDisabledSteps(); } catch(e) {}
       const _hintActive = BB.storage.get('CustomiseAdditionalHintDone') !== '1' && BB.storage.get('CustomiseFormHintDone') === '1';
       row.innerHTML = _CORE_STEP_TOGGLES.map(t => {
         const on = !_rawDis.includes(t.id);

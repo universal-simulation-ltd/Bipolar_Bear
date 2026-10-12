@@ -1509,15 +1509,15 @@
           </select>
         </div>
 
-        <div style="text-align: center; display: flex; justify-content: center; gap: 16px; margin-bottom: 14px;">
-          <button onclick="showAchievementsPanel()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 8px; letter-spacing: 0.02em;" data-i18n="journal.settings.achievements">🏅 Achievements</button>
+        <div style="text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 0 12px; margin-bottom: 14px;">
+          <button onclick="showAchievementsPanel()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;" data-i18n="journal.settings.achievements">🏅 Achievements</button>
+          <button onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
           <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
             <div id="advancedSettingsBadgeHint" style="display:none;flex-direction:row;align-items:center;gap:3px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-bottom:2px;">
               <span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="13" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round"/><polyline points="3,8 8,13 13,8" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
             </div>
-            <button onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 8px; letter-spacing: 0.02em;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
-            <button id="advancedSettingsBtn" onclick="openAdvancedSettings()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 8px; letter-spacing: 0.02em;" data-i18n="journal.settings.advanced">🛠️ Advanced ▸</button>
+            <button id="advancedSettingsBtn" onclick="openAdvancedSettings()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;" data-i18n="journal.settings.advanced">🛠️ Advanced ▸</button>
           </div>
         </div>
 
