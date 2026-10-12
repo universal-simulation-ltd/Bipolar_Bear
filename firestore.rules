@@ -5,12 +5,23 @@ rules_version = '2';
 // Tested by scripts/firestore-rules (emulator suite): run `npm test` there
 // before deploying. Deploy with `firebase deploy --only firestore:rules`.
 //
-// Compatibility switch: app builds up to and including 1.39 (Bipolar Bear and
-// Bipolar Anonymous) write board posts, comments and monika reservations
-// without an owner `uid`, and the standalone email-code path reads its
-// cross-device profile before it has a Firebase session. While those builds
-// are in use, legacyClients() stays true. Once they are gone, set it to false:
-// the test suite runs against both settings.
+// Compatibility switch: store builds before the 2026-10-12 privacy round
+// (Bipolar Bear <= 1.41, Bipolar Anonymous <= 1.40) write board posts,
+// comments and monika reservations with no owner stamp, or with the author's
+// `uid` (which the anonOwnerOn* Cloud Functions swap for an owner stamp as it
+// lands); they also write the sensitive userSettings fields and personal
+// details in plaintext, and send `emailHash` with their push registration.
+// While those builds are in use, legacyClients() stays true. Once they are
+// gone, set it to false: the test suite runs against both settings.
+//
+// Privacy round 2026-10-12 (functions/privacy.js):
+//   * public board documents carry `owner` = sha256(uid + '/' + doc path),
+//     never the uid;
+//   * board profiles are keyed 'p2_' + HMAC(server secret, email), and a
+//     session owns one when bbAnonLinks/{uid}.profileIds lists it; no more
+//     read window for anyone holding the email hash, no more open delete;
+//   * personal details and the sensitive userSettings fields are AES-GCM
+//     ciphertext (`secureEnc`) written on the device.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -32,11 +43,18 @@ service cloud.firestore {
     }
 
     // The session proved the address with an email code. bbAnonLinks is
-    // written only by the verifyAnonCode Cloud Function (Admin SDK).
+    // written only by Cloud Functions (verifyAnonCode, anonProfileId).
+    function link() { return get(/databases/$(database)/documents/bbAnonLinks/$(request.auth.uid)).data; }
+    function hasLink() {
+      return signedIn() && exists(/databases/$(database)/documents/bbAnonLinks/$(request.auth.uid));
+    }
     function linkedEmailHashIs(hash) {
-      return signedIn()
-        && exists(/databases/$(database)/documents/bbAnonLinks/$(request.auth.uid))
-        && get(/databases/$(database)/documents/bbAnonLinks/$(request.auth.uid)).data.emailHash == hash;
+      return hasLink()
+        && (link().get('emailHash', '') == hash || link().get('emailHashes', []).hasAny([hash]));
+    }
+    // The session may use the board profile `id` ('p2_…', see anonProfiles).
+    function linkedProfileIs(id) {
+      return hasLink() && link().get('profileIds', []).hasAny([id]);
     }
 
     function ownsEmailHash(hash) {
@@ -64,20 +82,32 @@ service cloud.firestore {
             || incoming().get(field, 0) - resource.data.get(field, 0) == -1);
     }
 
-    // A new document either carries the writer's uid, or (legacy builds only)
-    // no uid at all.
-    function ownerOnCreate() {
-      return ('uid' in incoming())
-        ? (signedIn() && incoming().uid == request.auth.uid)
-        : legacyClients();
+    // The owner stamp for the document at `docPath` (e.g. 'bbAnonPosts/abc'):
+    // sha256(uid + '/' + docPath). Different for every document, so public
+    // documents can't be tied to each other or to an account.
+    function ownerStamp(docPath) {
+      return hashing.sha256(request.auth.uid + '/' + docPath).toHexString().lower();
     }
 
-    // An existing document belongs to the caller (or predates owner uids and
+    // A new document carries the writer's owner stamp; or (store builds from
+    // before 2026-10-12 only) their uid, swapped for a stamp server-side as it
+    // lands, or nothing at all.
+    function ownerOnCreate(docPath) {
+      return ('owner' in incoming())
+        ? (signedIn() && incoming().owner == ownerStamp(docPath) && !('uid' in incoming()))
+        : (('uid' in incoming())
+            ? (legacyClients() && signedIn() && incoming().uid == request.auth.uid)
+            : legacyClients());
+    }
+
+    // An existing document belongs to the caller (or predates owner stamps and
     // legacy builds are still supported).
-    function ownsExisting() {
-      return ('uid' in resource.data)
-        ? (signedIn() && resource.data.uid == request.auth.uid)
-        : legacyClients();
+    function ownsExisting(docPath) {
+      return ('owner' in resource.data)
+        ? (signedIn() && resource.data.owner == ownerStamp(docPath))
+        : (('uid' in resource.data)
+            ? (signedIn() && resource.data.uid == request.auth.uid)
+            : legacyClients());
     }
 
     function adminFlagOk() {
@@ -121,8 +151,10 @@ service cloud.firestore {
           && incoming().get('tab', '') == 'general';
       }
 
+      function postPath() { return 'bbAnonPosts/' + postId; }
+
       allow create: if createShapeOk()
-        && (incoming().get('isTopic', false) == true ? topicCreateOk() : ownerOnCreate());
+        && (incoming().get('isTopic', false) == true ? topicCreateOk() : ownerOnCreate(postPath()));
 
       // Updates any member may make to any post.
       function likeOk()   { return changedKeys().hasOnly(['likes']) && stepped('likes'); }
@@ -144,7 +176,7 @@ service cloud.firestore {
       function renameOk() {
         return changedKeys().hasOnly(['name', 'initials', 'grad1', 'grad2'])
           && !isTopicDoc()
-          && ownsExisting();
+          && ownsExisting(postPath());
       }
 
       allow update: if likeOk() || replyOk() || reportOk() || topicRetireOk() || renameOk() || isAdmin();
@@ -162,17 +194,18 @@ service cloud.firestore {
 
       allow delete: if (isTopicDoc() && resource.data.get('commentCount', 0) == 0)
         || expired()
-        || (!isTopicDoc() && ownsExisting())
+        || (!isTopicDoc() && ownsExisting(postPath()))
         || isAdmin();
 
       match /comments/{commentId} {
+        function commentPath() { return 'bbAnonPosts/' + postId + '/comments/' + commentId; }
         allow read: if true;
         allow create: if signedIn()
           && adminFlagOk()
           && incoming().get('timestamp', null) == request.time
-          && ownerOnCreate();
+          && ownerOnCreate(commentPath());
         allow update: if isAdmin();
-        allow delete: if signedIn() && (ownsExisting() || isAdmin());
+        allow delete: if signedIn() && (ownsExisting(commentPath()) || isAdmin());
       }
     }
 
@@ -190,27 +223,28 @@ service cloud.firestore {
       allow get: if true;
       allow create: if incoming().get('monika', '') is string
         && incoming().get('monika', '').lower() == id
-        && incoming().keys().hasOnly(['monika', 'createdAt', 'uid'])
-        && ownerOnCreate();
-      allow delete: if ownsExisting() || isAdmin();
+        && incoming().keys().hasOnly(['monika', 'createdAt', 'uid', 'owner'])
+        && ownerOnCreate('bbAnonMonikas/' + id);
+      allow delete: if ownsExisting('bbAnonMonikas/' + id) || isAdmin();
     }
 
-    // Cross-device profile for the email-code path, id = sha256(email).
-    // `restoreUntil` is stamped by verifyAnonCode: for a few minutes after a
-    // successful code, builds that read the profile before signing in can
-    // still restore it.
-    match /anonProfiles/{hash} {
-      function restoreWindowOpen() {
-        return legacyClients()
-          && resource != null
-          && resource.data.get('restoreUntil', null) is timestamp
-          && resource.data.restoreUntil > request.time;
-      }
-      allow get: if ownsEmailHash(hash) || restoreWindowOpen();
-      allow create: if ownsEmailHash(hash) && !('restoreUntil' in incoming());
-      allow update: if (ownsEmailHash(hash) || restoreWindowOpen())
-        && !changedKeys().hasAny(['restoreUntil']);
-      allow delete: if ownsEmailHash(hash) || legacyClients();
+    // Cross-device board profile.
+    //   'p2_' + HMAC(server secret, email) — the current id. Only the server
+    //   can work it out; a session owns it when bbAnonLinks lists it.
+    //   sha256(email) — the old id, still written by store builds from before
+    //   2026-10-12. Owner-only (a verified account email or an email code);
+    //   privacySweep / the next sign-in moves it to the new id.
+    // Nobody else can read, write or delete either kind, at any time.
+    match /anonProfiles/{id} {
+      function isCurrentId() { return id.matches('^p2_[0-9a-f]{64}$'); }
+      function owns() { return isCurrentId() ? linkedProfileIs(id) : ownsEmailHash(id); }
+      allow get: if owns();
+      allow create: if owns()
+        && !incoming().keys().hasAny(['restoreUntil', 'compatCopy', 'compatUntil']);
+      allow update: if owns() && !changedKeys().hasAny(['restoreUntil', 'compatCopy', 'compatUntil']);
+      // Deleting nothing is harmless, and older builds' account deletion does
+      // it for a profile that has already moved.
+      allow delete: if owns() || resource == null;
     }
 
     match /bbAnonReports/{docId} { allow create: if true; }
@@ -221,8 +255,12 @@ service cloud.firestore {
     }
 
     // Member-suggested announcements awaiting the admin.
+    // Pending suggestions are the admin's to read. Members open their own by id
+    // (kept on the device that wrote it); ids are random and nobody but the
+    // admin can list the collection.
     match /bbAnonAnnSuggestions/{id} {
-      allow read:   if signedIn();
+      allow list:   if isAdmin();
+      allow get:    if signedIn();
       allow create: if signedIn() && incoming().status == 'pending';
       allow update: if isAdmin();                                // publish / refuse
       allow delete: if isAdmin() || (signedIn() && resource.data.get('status', '') == 'rejected');
@@ -237,7 +275,9 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && incoming().token == token
         && incoming().keys().hasOnly(
-             ['token', 'prefs', 'monikaLower', 'emailHash', 'platform', 'bundle', 'lang', 'updatedAt']);
+             ['token', 'prefs', 'monikaLower', 'emailHash', 'platform', 'bundle', 'lang', 'updatedAt'])
+        // Older builds still send emailHash (stripped server-side as it lands).
+        && (legacyClients() || !('emailHash' in incoming()));
       allow delete: if true;
     }
 
@@ -264,11 +304,30 @@ service cloud.firestore {
     }
 
     // ── Private per-user data ──
-    match /userSettings/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
+    // These userSettings fields are kept only inside `secureEnc`, encrypted
+    // on the device with the journal's data key (js/shared/secure-store.js).
+    // Older builds still write them in plaintext; the next sign-in on a current
+    // build folds them in and deletes them.
+    function sensitiveSettings() {
+      return ['currentMedList', 'moodDefinitions', 'moodMemories', 'copingStrategies',
+              'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis'];
     }
+    function noNewPlaintext() {
+      return legacyClients()
+        || (resource == null
+            ? !incoming().keys().hasAny(sensitiveSettings())
+            : !incoming().diff(resource.data).addedKeys().hasAny(sensitiveSettings())
+              && !incoming().diff(resource.data).changedKeys().hasAny(sensitiveSettings()));
+    }
+    match /userSettings/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid && noNewPlaintext();
+    }
+    // Personal details: only `secureEnc` (+ updatedAt) once older builds are gone.
     match /personalDetails/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && (legacyClients() || incoming().keys().hasOnly(['secureEnc', 'updatedAt']));
     }
     match /entries/{docId} {
       allow read, delete: if signedIn() && request.auth.uid == resource.data.userId;

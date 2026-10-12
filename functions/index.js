@@ -12,6 +12,12 @@ const { BOT_NAME, looksLikeCrisis, crisisReplyText } = require('./crisis-bot');
 admin.initializeApp();
 const db = admin.firestore();
 
+// Privacy round 2026-10-12: owner stamps, secret-keyed board profiles,
+// retention sweep, account-deletion clean-up. See functions/privacy.js.
+const privacy = require('./privacy');
+const P = privacy._lib;
+Object.keys(privacy).forEach((k) => { if (k !== '_lib') exports[k] = privacy[k]; });
+
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 
 const REGION          = 'europe-west1';
@@ -165,33 +171,11 @@ exports.sendAnonCode = onCall(
   }
 );
 
-// After a correct code, record what it proved so the Firestore rules can use it:
-//   bbAnonLinks/{uid}      — the caller's Firebase session owns sha256(email).
-//                            Lets that session read and write
-//                            anonProfiles/{sha256(email)}. Clients never read it.
-//   anonProfiles/{hash}    — `restoreUntil` a few minutes ahead, so app builds
-//                            that check the code before they have a Firebase
-//                            session (<= 1.39) can still restore the profile.
-// Best-effort: a failure here must not fail the verification itself.
-const RESTORE_WINDOW_MS = 10 * 60 * 1000;
-async function recordVerifiedEmail(request, email, now) {
-  if (!email) return;
-  const emailHash = anonEmailHash(email);
-  const writes = [
-    db.collection('anonProfiles').doc(emailHash).set({
-      restoreUntil: admin.firestore.Timestamp.fromMillis(now + RESTORE_WINDOW_MS),
-    }, { merge: true }),
-  ];
-  if (request.auth && request.auth.uid) {
-    writes.push(db.collection('bbAnonLinks').doc(request.auth.uid).set({
-      emailHash,
-      verifiedAt: admin.firestore.Timestamp.fromMillis(now),
-    }));
-  }
-  try { await Promise.all(writes); }
-  catch (e) { console.error('[verifyAnonCode] recording the verified email failed', e); }
-}
-
+// After a correct code, privacy.js recordVerifiedEmail() records what it proved
+// so the Firestore rules can use it: bbAnonLinks/{uid} gets the profile id
+// (HMAC of the address under ANON_PROFILE_SECRET), and an old-style profile
+// (sha256 of the address) is moved to that id. The old 10-minute window in
+// which anyone holding the email hash could read the profile is gone.
 // ── verifyAnonCode ───────────────────────────────────────────────────────────
 // The whole check runs inside a Firestore transaction so concurrent
 // attempts can't race past the MAX_ATTEMPTS budget. The attempts counter
@@ -199,7 +183,7 @@ async function recordVerifiedEmail(request, email, now) {
 // successful ones — so a parallel burst of guesses can't slip a verified
 // write through without first exhausting attempts.
 exports.verifyAnonCode = onCall(
-  { region: REGION, invoker: 'public' },
+  { region: REGION, invoker: 'public', secrets: [P.ANON_PROFILE_SECRET] },
   async (request) => {
     const { sessionId, code } = request.data || {};
     if (typeof sessionId !== 'string' || !sessionId ||
@@ -245,10 +229,16 @@ exports.verifyAnonCode = onCall(
       return { kind: 'verified', email: data.email };
     });
 
-    if (outcome.kind === 'verified') await recordVerifiedEmail(request, outcome.email, now);
+    // `v2` is sent by builds that know profile ids; older ones still read the
+    // sha256-keyed profile, so they get a short-lived copy only they can read.
+    let profileId = null;
+    if (outcome.kind === 'verified') {
+      profileId = await P.recordVerifiedEmail(request, outcome.email, !!(request.data && request.data.v2));
+    }
 
     switch (outcome.kind) {
       case 'verified':
+        return { success: true, profileId };
       case 'already-verified':
         return { success: true };
       case 'not-found':
@@ -808,11 +798,13 @@ async function crisisBotReply(postId, who, text, origin) {
   const { error } = await resend.emails.send({
     from:    FROM_ADDRESS,
     to:      FEEDBACK_TO,
-    subject: `[Bipolar Anonymous] 🆘 Possible crisis: [${who || 'unknown'}]`,
-    text:    `The Friendly neighbourhood Bipolar Bear replied automatically to a ${origin} by [${who || 'unknown'}] `
-           + `that may be from someone in crisis. Please check in on them.\n\n`
-           + `What they wrote:\n${text}\n\n`
-           + `Open the board: https://bipolaranonymous.app/anonymous.html (post ${postId})`,
+    // No text and no name: email is not where a member's words should end up.
+    // The moderator reads the thread on the board.
+    subject: `[Bipolar Anonymous] 🆘 Possible crisis (post ${postId})`,
+    text:    `The Friendly neighbourhood Bipolar Bear replied automatically to a ${origin} `
+           + `that may be from someone in crisis. Please check in on them on the board.\n\n`
+           + `Post: ${postId}\n`
+           + `Moderate: https://bipolaranonymous.app/anonymous.html?post=${encodeURIComponent(postId)}\n`,
   });
   if (error) console.error('[crisisBot] Resend error:', JSON.stringify(error));
 }
@@ -1013,7 +1005,7 @@ async function counterValue(id) {
 }
 
 exports.backfillUserCounts = onCall(
-  { region: REGION, invoker: 'public', timeoutSeconds: 540, memory: '512MiB' },
+  { region: REGION, invoker: 'public', timeoutSeconds: 540, memory: '512MiB', secrets: [P.ANON_PROFILE_SECRET] },
   async (request) => {
     const caller = request.auth && request.auth.token && request.auth.token.email;
     if (!caller || String(caller).toLowerCase() !== ADMIN_ACCOUNT_EMAIL) {
@@ -1022,6 +1014,10 @@ exports.backfillUserCounts = onCall(
     const apply = !!(request.data && request.data.apply === true);
 
     const emails = await authEmailsByUid();
+    const secret = P.ANON_PROFILE_SECRET.value();
+    // Old-style (sha256) profile ids of known addresses → their current id.
+    const legacyToId = new Map();
+    emails.forEach((e) => legacyToId.set(anonEmailHash(e), P.profileIdFor(e, secret)));
 
     // ── Bipolar Bear accounts ────────────────────────────────────────────────
     // One `userSettings/{uid}` document per account — the same thing the
@@ -1044,13 +1040,14 @@ exports.backfillUserCounts = onCall(
       bearTotal++;
       if (doc.get('userCounted') !== true) bearToFlag.push(doc.ref);
       const ap = doc.get('anonProfile');
-      if (ap && ap.monika) anonHashes.add(anonEmailHash(email));
+      if (ap && ap.monika) anonHashes.add(P.profileIdFor(email, secret));
     });
 
     await scanCollection('anonProfiles', (doc) => {
       if (!doc.get('monika')) return;   // signed up but never picked a monika
-      anonHashes.add(doc.id);
-      if (doc.get('counted') === true) anonFlagged.add(doc.id);
+      const id = legacyToId.get(doc.id) || doc.id;
+      anonHashes.add(id);
+      if (doc.get('counted') === true) anonFlagged.add(id);
     });
 
     const anonToFlag = Array.from(anonHashes)
@@ -1398,7 +1395,8 @@ exports.createAnonPoll = onCall(
 
     const num = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt);
     const colour = (v) => (/^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? String(v) : '');
-    const ref = await db.collection(POSTS).add({
+    const ref = db.collection(POSTS).doc();
+    await ref.set({
       name,
       text,
       tab:       'general',
@@ -1416,7 +1414,9 @@ exports.createAnonPoll = onCall(
       likes:     0,
       isSystem:  false,
       poll:      { options, votes: options.map(() => 0) },
-      uid:       request.auth.uid,   // owner, for self-delete / rename (firestore.rules)
+      // Owner stamp for self-delete / rename (firestore.rules) — not the uid,
+      // which would tie the poll to the account (functions/privacy.js).
+      owner:     P.ownerHash(request.auth.uid, `${POSTS}/${ref.id}`),
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
     return { id: ref.id };
@@ -1469,9 +1469,16 @@ exports.anonMoodCheckin = onCall(
   async (request) => {
     requireAuth(request);
     const raw  = request.data && request.data.mood != null ? String(request.data.mood) : null;
-    const mood = raw === null ? null : (MOOD_KINDS.includes(raw) ? raw : (MOOD_LEGACY[raw] || ''));
+    let mood = raw === null ? null : (MOOD_KINDS.includes(raw) ? raw : (MOOD_LEGACY[raw] || ''));
     if (mood === '') throw new HttpsError('invalid-argument', 'Unknown mood.');
     const via      = request.data && request.data.source === 'journal' ? 'journal' : 'board';
+    // A journal entry only answers for you if you turned that on (opt-in since
+    // 2026-10-12). Enforced here so older app builds, which assumed it was on
+    // unless switched off, follow the same rule: they get a read, not a check-in.
+    if (via === 'journal' && mood !== null) {
+      const us = await db.collection('userSettings').doc(request.auth.uid).get();
+      if (!(us.exists && us.get('anonProfile.journalCheckin') === true)) mood = null;
+    }
     const day      = boardDay();
     const totalRef = db.collection(MOOD_COL).doc(day);
     const seenRef  = db.collection(MOOD_SEEN_COL).doc(`${day}_${request.auth.uid}`);

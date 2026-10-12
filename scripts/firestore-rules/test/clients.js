@@ -1,25 +1,43 @@
 'use strict';
 /**
  * The Firestore calls the apps make, transcribed from the client code so the
- * rules can be checked against them. Two flavours:
+ * rules can be checked against them. Three flavours:
  *
- *   shipped — app builds 1.38 / 1.39 (iOS + Play) and the web app before this
- *             branch. Same call shapes in both builds (js/anonymous.js 5b64da2
- *             and 0ef0d18): no owner uid on board writes, monika reserved and
- *             the cross-device profile read before any Firebase session.
- *   next    — the clients on this branch: board writes carry `uid`, the
- *             session exists before the email code is checked.
+ *   shipped  — store builds Bipolar Bear <= 1.40 / Bipolar Anonymous <= 1.39
+ *              (js/anonymous.js 5b64da2 and 0ef0d18): no owner on board
+ *              writes, monika reserved and the cross-device profile read
+ *              before any Firebase session; plaintext personal details.
+ *   store141 — Bipolar Bear 1.41 / Bipolar Anonymous 1.40 as built on
+ *              2026-10-12 (web v315): board writes carry `uid`, the session
+ *              exists before the email code, profiles keyed sha256(email).
+ *   next     — the clients since the 2026-10-12 privacy round: board writes
+ *              carry an owner stamp, profiles keyed by the server's profile
+ *              id, personal details and sensitive settings encrypted.
  *
  * Source references are to js/anonymous.js unless noted.
  */
-const { FV, TS, DAY, emailHash } = require('./helpers');
+const { FV, TS, DAY, emailHash, profileId, ownerStamp } = require('./helpers');
 
 const POSTS = 'bbAnonPosts';
 const MONIKAS = 'bbAnonMonikas';
 const RETENTION_DAYS = 7;
 
-function withUid(flavour, uid, obj) {
-  return flavour === 'next' && uid ? Object.assign({ uid }, obj) : obj;
+/** Owner field for `flavour` on the document at `path`. */
+function stamp(flavour, uid, path, obj) {
+  if (!uid) return obj;
+  if (flavour === 'next') return Object.assign({ owner: ownerStamp(uid, path) }, obj);
+  if (flavour === 'store141') return Object.assign({ uid }, obj);
+  return obj;
+}
+/** Is this board document this session's, as the client decides it? */
+function isMine(flavour, uid, doc) {
+  const d = doc.data();
+  if (flavour === 'next') return d.owner ? d.owner === ownerStamp(uid, doc.ref.path) : !('uid' in d) || d.uid === uid;
+  return !('uid' in d) || d.uid === uid;
+}
+/** The profile id each flavour uses. */
+function profileRef(db, email, flavour) {
+  return db.collection('anonProfiles').doc(flavour === 'next' ? profileId(email) : emailHash(email));
 }
 
 function profileOf(over = {}) {
@@ -36,16 +54,18 @@ const board = {
 
   // setupMonika() → reserve the name
   reserveMonika: (db, monika, { flavour, uid } = {}) =>
-    db.collection(MONIKAS).doc(monika.toLowerCase()).set(withUid(flavour, uid, {
+    db.collection(MONIKAS).doc(monika.toLowerCase()).set(stamp(flavour, uid, `${MONIKAS}/${monika.toLowerCase()}`, {
       monika, createdAt: FV.serverTimestamp(),
     })),
 
+  profileRef,
+
   // _anonRestoreProfile()
-  anonRestoreProfile: (db, email) => db.collection('anonProfiles').doc(emailHash(email)).get(),
+  anonRestoreProfile: (db, email, flavour) => profileRef(db, email, flavour).get(),
 
   // _anonSaveProfile()
-  anonSaveProfile: (db, email, p = profileOf()) =>
-    db.collection('anonProfiles').doc(emailHash(email)).set({
+  anonSaveProfile: (db, email, p = profileOf(), flavour) =>
+    profileRef(db, email, flavour).set({
       monika: p.monika || null, colorKey: p.colorKey || 'orange', customInit: p.customInit || '',
       showMeds: p.showMeds, medList: p.medList, showStable: p.showStable,
       stableSince: p.stableSince || null, stableStreak: p.stableStreak,
@@ -69,12 +89,12 @@ const board = {
     db.collection('counters').doc(counterId).set({ count: FV.increment(-1) }, { merge: true }),
 
   // _bbRestoreProfile(): Bipolar Bear account on the board
-  async bbRestoreProfile(db, uid, email) {
+  async bbRestoreProfile(db, uid, email, flavour) {
     const us = await db.collection('userSettings').doc(uid).get();
-    const anonDoc = await db.collection('anonProfiles').doc(emailHash(email)).get();
+    const anonDoc = await profileRef(db, email, flavour).get();
     const ap = anonDoc.exists && anonDoc.data().monika ? anonDoc.data() : profileOf();
     await db.collection('userSettings').doc(uid).set({ anonProfile: ap }, { merge: true });
-    await db.collection('anonProfiles').doc(emailHash(email)).set({
+    await profileRef(db, email, flavour).set({
       monika: ap.monika, colorKey: 'orange', customInit: '', showMeds: false, medList: [],
       showStable: true, stableSince: null, visitStreak: 0, visitDate: null, joinedAt: null,
       updatedAt: FV.serverTimestamp(),
@@ -83,12 +103,12 @@ const board = {
   },
 
   // _bbSaveProfile()
-  async bbSaveProfile(db, uid, email) {
+  async bbSaveProfile(db, uid, email, flavour) {
     const data = { monika: 'Robin', colorKey: 'orange', customInit: '', showMeds: false,
       medList: [], showStable: true, stableSince: null, visitStreak: 1, visitDate: null,
       joinedAt: null, verified: true, termsAccepted: true };
     await db.collection('userSettings').doc(uid).set({ anonProfile: data }, { merge: true });
-    await db.collection('anonProfiles').doc(emailHash(email))
+    await profileRef(db, email, flavour)
       .set({ ...data, updatedAt: FV.serverTimestamp() }, { merge: true });
   },
 
@@ -121,12 +141,15 @@ const board = {
   },
 
   // compose → post
-  createPost: (db, { flavour, uid, isAdmin = false, tab = 'general', name = 'Robin' } = {}) =>
-    db.collection(POSTS).add(withUid(flavour, uid, {
+  async createPost(db, { flavour, uid, isAdmin = false, tab = 'general', name = 'Robin' } = {}) {
+    const ref = db.collection(POSTS).doc();
+    await ref.set(stamp(flavour, uid, ref.path, {
       name, streak: 3, initials: 'RO', grad1: '#ffd54f', grad2: '#f9a825', isAdmin,
       text: 'first post', med: '', stable: 0, joinedAt: null, tab, likes: 0, isSystem: false,
       timestamp: FV.serverTimestamp(),
-    })),
+    }));
+    return ref;
+  },
 
   // like toggle
   like: (db, id, delta) => db.collection(POSTS).doc(id).update({ likes: FV.increment(delta) }),
@@ -151,7 +174,8 @@ const board = {
   // setupThread() — comment, then bump the parent
   async comment(db, postId, { flavour, uid, isAdmin = false, name = 'Sam' } = {}) {
     const postRef = db.collection(POSTS).doc(postId);
-    const ref = await postRef.collection('comments').add(withUid(flavour, uid, {
+    const ref = postRef.collection('comments').doc();
+    await ref.set(stamp(flavour, uid, ref.path, {
       name, text: 'same here', streak: 2, initials: 'SA', grad1: '#ffd54f', grad2: '#f9a825',
       isAdmin, timestamp: FV.serverTimestamp(),
     }));
@@ -177,16 +201,16 @@ const board = {
   async rename(db, oldMonika, newMonika, { flavour, uid } = {}) {
     const snap = await db.collection(POSTS).where('name', '==', oldMonika).get();
     const patch = { name: newMonika, initials: 'NE', grad1: '#ffd54f', grad2: '#f9a825' };
-    if (flavour === 'next') {
+    if (flavour === 'next' || flavour === 'store141') {
       // Reserve the new name first (fails if taken), then move this device's
       // posts one by one so a post it can't change doesn't sink the rest,
       // then release the old name (best effort).
       if (oldMonika.toLowerCase() !== newMonika.toLowerCase()) {
         await db.collection(MONIKAS).doc(newMonika.toLowerCase())
-          .set({ monika: newMonika, createdAt: FV.serverTimestamp(), uid });
+          .set(stamp(flavour, uid, `${MONIKAS}/${newMonika.toLowerCase()}`, { monika: newMonika, createdAt: FV.serverTimestamp() }));
       }
       const results = await Promise.all(snap.docs
-        .filter((d) => d.data().uid === uid || !('uid' in d.data()))
+        .filter((d) => isMine(flavour, uid, d))
         .map((d) => d.ref.update(patch).then(() => true, () => false)));
       if (oldMonika.toLowerCase() !== newMonika.toLowerCase()) {
         await db.collection(MONIKAS).doc(oldMonika.toLowerCase()).delete().catch(() => {});
@@ -207,17 +231,23 @@ const board = {
   async deleteAccount(db, { monika, email, flavour, uid, counted = true, pushToken }) {
     if (counted) await board.uncount(db, 'anonUserCount');
     const snap = await db.collection(POSTS).where('name', '==', monika).get();
-    if (flavour === 'next') {
-      await Promise.all(snap.docs.filter((d) => d.data().uid === uid || !('uid' in d.data()))
+    if (flavour === 'next' || flavour === 'store141') {
+      await Promise.all(snap.docs.filter((d) => isMine(flavour, uid, d))
         .map((d) => d.ref.delete().catch(() => {})));
       await db.collection(MONIKAS).doc(monika.toLowerCase()).delete().catch(() => {});
     } else {
-      const batch = db.batch();
-      snap.docs.forEach((d) => batch.delete(d.ref));
-      if (snap.size) await batch.commit();
-      await db.collection(MONIKAS).doc(monika.toLowerCase()).delete();
+      // The shipped build catches each step (js/anonymous.js deleteAnonAccount).
+      try {
+        const batch = db.batch();
+        snap.docs.forEach((d) => batch.delete(d.ref));
+        if (snap.size) await batch.commit();
+      } catch (_) { /* posts */ }
+      await db.collection(MONIKAS).doc(monika.toLowerCase()).delete().catch(() => {});
     }
-    if (email) await db.collection('anonProfiles').doc(emailHash(email)).delete();
+    if (email) {
+      const del = profileRef(db, email, flavour).delete();
+      if (flavour === 'next') await del; else await del.catch(() => {});
+    }
     if (pushToken) await db.collection('bbAnonPush').doc(pushToken).delete();
   },
 
@@ -247,19 +277,21 @@ const board = {
     joinedAt: null, text: 'Meet-up idea', status: 'pending', timestamp: FV.serverTimestamp(),
   }),
 
-  // listenSuggestions()
+  // listenSuggestions(): the admin's queue (and older builds, for everyone)
   listenSuggestions: (db) =>
     db.collection('bbAnonAnnSuggestions').orderBy('timestamp', 'desc').limit(40).get(),
+  // ... a member, since 2026-10-12: their own suggestions, by id
+  watchOwnSuggestion: (db, id) => db.collection('bbAnonAnnSuggestions').doc(id).get(),
 
   // dismissSuggestion() — author clearing a refused suggestion
   dismissSuggestion: (db, id) => db.collection('bbAnonAnnSuggestions').doc(id).delete(),
 
   // js/shared/anon-push.js writeToken() / deleteToken()
-  pushRegister: (db, token) => db.collection('bbAnonPush').doc(token).set({
+  pushRegister: (db, token, flavour) => db.collection('bbAnonPush').doc(token).set(Object.assign({
     token, prefs: { replies: true, announcements: true, posts: false, weekly: true },
-    monikaLower: 'robin', emailHash: null, platform: 'ios', bundle: 'anonymous', lang: 'en',
+    monikaLower: 'robin', platform: 'ios', bundle: 'anonymous', lang: 'en',
     updatedAt: FV.serverTimestamp(),
-  }, { merge: true }),
+  }, flavour === 'next' ? {} : { emailHash: null }), { merge: true }),
   pushUnregister: (db, token) => db.collection('bbAnonPush').doc(token).delete(),
 
   // js/shared/user-count.js presence + counters
@@ -307,7 +339,8 @@ const admin = {
 
   // approveSuggestion() / rejectSuggestion()
   async approve(db, id, { flavour, uid } = {}) {
-    await db.collection(POSTS).add(withUid(flavour, uid, {
+    const ref = db.collection(POSTS).doc();
+    await ref.set(stamp(flavour, uid, ref.path, {
       name: 'Robin', streak: 3, initials: 'RO', grad1: '#ffd54f', grad2: '#f9a825',
       isAdmin: false, text: 'Meet-up idea', med: '', stable: 0, joinedAt: null,
       tab: 'announcements', likes: 0, isSystem: false, suggestedBy: 'Robin',
@@ -324,13 +357,38 @@ const admin = {
 
 // The Bipolar Bear app itself (index.js, journal.js, survival-kit.js, fab.js).
 const bear = {
-  async settings(db, uid) {
+  async settings(db, uid, flavour) {
     await db.collection('userSettings').doc(uid).get();
     await db.collection('userSettings').doc(uid).set({ reminderEnabled: true, currentStreak: 3 }, { merge: true });
+    if (flavour === 'next') {
+      // js/shared/secure-store.js: fold plaintext into secureEnc, delete it.
+      await db.runTransaction(async (tx) => {
+        const ref = db.collection('userSettings').doc(uid);
+        await tx.get(ref);
+        tx.set(ref, {
+          secureEnc: { _enc: 'c2VjcmV0', _iv: 'aXY=', v: 1, updatedAt: Date.now() },
+          currentMedList: FV.delete(), moodDefinitions: FV.delete(), copingStrategies: FV.delete(),
+        }, { merge: true });
+      });
+    } else {
+      // survival-kit.js saveMedList() and friends, before 2026-10-12
+      await db.collection('userSettings').doc(uid).set({ currentMedList: [{ name: 'Lithium' }] }, { merge: true });
+    }
   },
-  async personalDetails(db, uid) {
-    await db.collection('personalDetails').doc(uid).get();
-    await db.collection('personalDetails').doc(uid).set({ name: 'x' }, { merge: true });
+  async personalDetails(db, uid, flavour) {
+    const ref = db.collection('personalDetails').doc(uid);
+    await ref.get();
+    if (flavour === 'next') {
+      await db.runTransaction(async (tx) => {
+        await tx.get(ref);
+        tx.set(ref, {
+          secureEnc: { _enc: 'c2VjcmV0', _iv: 'aXY=', v: 1 }, updatedAt: Date.now(),
+          personalName: FV.delete(), personalMedicalNum: FV.delete(),
+        }, { merge: true });
+      });
+    } else {
+      await ref.set({ personalName: 'x', personalMedicalNum: '123' }, { merge: true });
+    }
   },
   async entries(db, uid) {
     const ref = await db.collection('entries').add({ userId: uid, timestamp: Date.now(), enc: 'blob' });
@@ -352,11 +410,11 @@ const bear = {
     await ref.set({ count: FV.increment(delta) }, { merge: true });
   },
   // index.js / journal.js account deletion
-  async deleteAccount(db, uid, email, monika) {
+  async deleteAccount(db, uid, email, monika, flavour) {
     await db.collection('userSettings').doc(uid).delete();
     await db.collection('personalDetails').doc(uid).delete();
     if (monika) await db.collection(MONIKAS).doc(monika.toLowerCase()).delete();
-    await db.collection('anonProfiles').doc(emailHash(email)).delete();
+    await profileRef(db, email, flavour).delete();
   },
   // index.js unread badge + today's-post check
   async boardBadges(db, monika) {

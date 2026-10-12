@@ -38,9 +38,23 @@ const FV = firebase.firestore.FieldValue;
 const TS = firebase.firestore.Timestamp;
 const DAY = 86400000;
 
-/** sha256(lower-case trimmed email) as lower-case hex — same as the clients. */
+/** sha256(lower-case trimmed email) as lower-case hex — the old profile id. */
 function emailHash(email) {
   return crypto.createHash('sha256').update(String(email).toLowerCase().trim()).digest('hex');
+}
+
+/**
+ * The current board profile id (functions/privacy.js profileIdFor), with a
+ * stand-in secret: the rules only care that bbAnonLinks lists it.
+ */
+function profileId(email) {
+  return 'p2_' + crypto.createHmac('sha256', 'test-secret')
+    .update('bb-anon-profile:v1:' + String(email).toLowerCase().trim()).digest('hex');
+}
+
+/** The owner stamp on a public board document — sha256(uid + '/' + path). */
+function ownerStamp(uid, docPath) {
+  return crypto.createHash('sha256').update(uid + '/' + docPath).digest('hex');
 }
 
 /**
@@ -85,16 +99,35 @@ async function seed(env, docs) {
   });
 }
 
-/** What verifyAnonCode writes on a successful code. */
-async function seedVerified(env, { uid, email, windowMs = 10 * 60 * 1000 }) {
+/**
+ * What verifyAnonCode writes on a successful code (since 2026-10-12): the link
+ * from the caller's session (if it had one) to the address and its profile id.
+ * No restore window any more: a caller with no session gets nothing.
+ */
+async function seedVerified(env, { uid, email }) {
   const hash = emailHash(email);
+  const pid = profileId(email);
   await env.withSecurityRulesDisabled(async (ctx) => {
     const db = ctx.firestore();
-    if (uid) await db.doc(`bbAnonLinks/${uid}`).set({ emailHash: hash, verifiedAt: TS.now() });
-    await db.doc(`anonProfiles/${hash}`).set(
-      { restoreUntil: TS.fromMillis(Date.now() + windowMs) }, { merge: true });
+    if (uid) {
+      await db.doc(`bbAnonLinks/${uid}`).set({
+        emailHash: hash, emailHashes: [hash], profileIds: [pid], profiles: { [hash]: pid }, verifiedAt: TS.now(),
+      });
+    }
   });
   return hash;
+}
+
+/** What anonProfileId writes for a Bipolar Bear account. */
+async function seedAccountLink(env, { uid, email }) {
+  const hash = emailHash(email);
+  const pid = profileId(email);
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await ctx.firestore().doc(`bbAnonLinks/${uid}`).set({
+      emailHashes: [hash], profileIds: [pid], profiles: { [hash]: pid }, verifiedAt: TS.now(),
+    });
+  });
+  return pid;
 }
 
 /** A board post as an existing member's client wrote it. */
@@ -116,6 +149,6 @@ function commentDoc(over = {}) {
 }
 
 module.exports = {
-  makeEnvs, people, seed, seedVerified, emailHash, postDoc, commentDoc,
+  makeEnvs, people, seed, seedVerified, seedAccountLink, emailHash, profileId, ownerStamp, postDoc, commentDoc,
   assertSucceeds, assertFails, FV, TS, DAY, ADMIN_EMAIL,
 };

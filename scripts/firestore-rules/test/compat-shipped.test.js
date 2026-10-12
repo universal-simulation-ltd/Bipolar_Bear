@@ -1,13 +1,21 @@
 'use strict';
 /**
- * Compatibility: app builds 1.38 / 1.39 (and the web app before this branch)
+ * Compatibility: store builds Bipolar Bear <= 1.40 / Bipolar Anonymous <= 1.39
  * must keep working against the committed rules (legacyClients() == true).
+ *
+ * Deliberate losses since the 2026-10-12 privacy round (degraded, nothing
+ * deleted): these builds checked the email code with no Firebase session and
+ * then read the board profile in a 10-minute window open to anyone holding
+ * sha256(email). That window is gone, so on a NEW device they can't restore a
+ * board profile (they ask for a monika) and can't save one; and members can no
+ * longer list the suggestions queue. Posting, replying, likes, reports,
+ * deleting their own things and account deletion all still work.
  */
 const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
 const {
   makeEnvs, people, seed, seedVerified, emailHash, postDoc, commentDoc,
-  assertSucceeds, TS, DAY, ADMIN_EMAIL,
+  assertSucceeds, assertFails, TS, DAY, ADMIN_EMAIL,
 } = require('./helpers');
 const { board, admin, bear, profileOf } = require('./clients');
 
@@ -23,23 +31,22 @@ describe('standalone email-code path (anonymous auth)', () => {
     const email = 'new.member@example.com';
     await assertSucceeds(board.monikaInUse(who.guest(), 'Robin'));
     await seedVerified(env, { uid: null, email });       // verifyAnonCode, caller had no session
-    const snap = await assertSucceeds(board.anonRestoreProfile(who.guest(), email));
-    assert.strictEqual(snap.data().monika, undefined);   // nothing to restore → monika screen
+    // The profile read fails (as "nothing to restore" in the client): monika screen.
+    await assertFails(board.anonRestoreProfile(who.guest(), email));
     await assertSucceeds(board.reserveMonika(who.guest(), 'Robin'));
-    // initBoard(): anonymous session, profile saved, member counted, first post
+    // initBoard(): anonymous session; the profile save and member count are
+    // refused (the client swallows both), the first post lands.
     const db = who.anon('anon-new');
-    await assertSucceeds(board.anonSaveProfile(db, email));
-    await assertSucceeds(board.countOnce(db, db.collection('anonProfiles').doc(emailHash(email)), 'anonUserCount', 'counted'));
+    await assertFails(board.anonSaveProfile(db, email));
     await assertSucceeds(board.createPost(db, { flavour }));
   });
 
-  it('returning member on a new device restores their profile after the code', async () => {
+  it('returning member on a new device can no longer read the profile by email hash', async () => {
     const email = 'robin@example.com';
     await seed(env, { [`anonProfiles/${emailHash(email)}`]: profileOf() });
     await seedVerified(env, { uid: null, email });
-    const snap = await assertSucceeds(board.anonRestoreProfile(who.guest(), email));
-    assert.strictEqual(snap.data().monika, 'Robin');
-    await assertSucceeds(board.anonSaveProfile(who.anon('anon-2'), email));
+    await assertFails(board.anonRestoreProfile(who.guest(), email));
+    await assertFails(board.anonRestoreProfile(who.anon('anon-2'), email));
   });
 
   it('a post written before the session resolves still lands', async () => {
@@ -112,10 +119,10 @@ describe('standalone email-code path (anonymous auth)', () => {
     assert.strictEqual(n, 2);
   });
 
-  it('announcement suggestions: submit, see own, dismiss when refused', async () => {
+  it("announcement suggestions: submit, dismiss when refused (the queue is the admin's now)", async () => {
     const db = who.anon('anon-1');
     const ref = await assertSucceeds(board.submitSuggestion(db));
-    await assertSucceeds(board.listenSuggestions(db));
+    await assertFails(board.listenSuggestions(db));          // admin-only since 2026-10-12
     await seed(env, { [`bbAnonAnnSuggestions/${ref.id}`]: { name: 'Robin', text: 'x', status: 'rejected', timestamp: TS.now() } });
     await assertSucceeds(board.dismissSuggestion(db, ref.id));
   });

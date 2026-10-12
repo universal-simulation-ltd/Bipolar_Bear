@@ -1,18 +1,21 @@
 'use strict';
 /**
- * Compatibility: the clients on this branch must work against the committed
- * rules AND against the strict rules (legacyClients() == false), so the switch
- * can be flipped without another client release.
+ * Compatibility: the clients since the 2026-10-12 privacy round must work
+ * against the committed rules AND against the strict rules
+ * (legacyClients() == false), so the switch can be flipped without another
+ * client release. Board documents carry owner stamps, profiles use the
+ * server's profile id, personal details and sensitive settings are encrypted.
  */
 const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
 const {
-  makeEnvs, people, seed, seedVerified, emailHash, postDoc, commentDoc,
-  assertSucceeds, TS, DAY, ADMIN_EMAIL,
+  makeEnvs, people, seed, seedVerified, seedAccountLink, emailHash, profileId, ownerStamp,
+  postDoc, commentDoc, assertSucceeds, assertFails, TS, DAY, ADMIN_EMAIL,
 } = require('./helpers');
 const { board, admin, bear, profileOf } = require('./clients');
 
 const flavour = 'next';
+const owned = (uid, path, over = {}) => Object.assign({ owner: ownerStamp(uid, path) }, over);
 let envs;
 before(async () => { envs = await makeEnvs('next'); });
 after(async () => { await envs.cleanup(); });
@@ -31,27 +34,27 @@ for (const mode of ['legacy', 'strict']) {
         const db = who.anon(uid);
         await assertSucceeds(board.monikaInUse(db, 'Robin'));
         await seedVerified(env, { uid, email });                // verifyAnonCode with a session
-        await assertSucceeds(board.anonRestoreProfile(db, email));
+        await assertSucceeds(board.anonRestoreProfile(db, email, flavour));
         await assertSucceeds(board.reserveMonika(db, 'Robin', { flavour, uid }));
-        await assertSucceeds(board.anonSaveProfile(db, email));
-        await assertSucceeds(board.countOnce(db, db.collection('anonProfiles').doc(emailHash(email)), 'anonUserCount', 'counted'));
+        await assertSucceeds(board.anonSaveProfile(db, email, undefined, flavour));
+        await assertSucceeds(board.countOnce(db, board.profileRef(db, email, flavour), 'anonUserCount', 'counted'));
         const ref = await assertSucceeds(board.createPost(db, { flavour, uid }));
         await assertSucceeds(board.comment(db, ref.id, { flavour, uid, name: 'Robin' }));
       });
 
       it('returning member on a new device restores, and keeps saving later', async () => {
-        await seed(env, { [`anonProfiles/${emailHash(email)}`]: profileOf() });
-        await seedVerified(env, { uid: 'anon-device-2', email, windowMs: -1000 }); // window long gone
+        await seed(env, { [`anonProfiles/${profileId(email)}`]: profileOf() });
+        await seedVerified(env, { uid: 'anon-device-2', email });
         const db = who.anon('anon-device-2');
-        const snap = await assertSucceeds(board.anonRestoreProfile(db, email));
+        const snap = await assertSucceeds(board.anonRestoreProfile(db, email, flavour));
         assert.strictEqual(snap.data().monika, 'Robin');
-        await assertSucceeds(board.anonSaveProfile(db, email));
+        await assertSucceeds(board.anonSaveProfile(db, email, undefined, flavour));
       });
 
       it('board reads, topics, likes, reports, comments, suggestions, push, presence', async () => {
         const db = who.anon(uid);
         await seed(env, {
-          'bbAnonPosts/p1': postDoc({ name: 'Sam', uid: 'sam' }),
+          'bbAnonPosts/p1': postDoc(owned('sam', 'bbAnonPosts/p1', { name: 'Sam' })),
           'bbAnonPosts/legacy': postDoc({ name: 'Old' }),
           'bbAnonPosts/topic-2026-10-03': postDoc({ isTopic: true, dayStr: '2026-10-03', commentCount: 2 }),
           'bbAnonPosts/topic-2026-10-02': postDoc({ isTopic: true, dayStr: '2026-10-02' }),
@@ -71,10 +74,10 @@ for (const mode of ['legacy', 'strict']) {
         await assertSucceeds(board.sos(db));
         await assertSucceeds(board.listenBanned(db));
         const s = await assertSucceeds(board.submitSuggestion(db));
-        await assertSucceeds(board.listenSuggestions(db));
+        await assertSucceeds(board.watchOwnSuggestion(db, s.id));
         await seed(env, { [`bbAnonAnnSuggestions/${s.id}`]: { name: 'Robin', text: 'x', status: 'rejected', timestamp: TS.now() } });
         await assertSucceeds(board.dismissSuggestion(db, s.id));
-        await assertSucceeds(board.pushRegister(db, 'tok-n'));
+        await assertSucceeds(board.pushRegister(db, 'tok-n', flavour));
         await assertSucceeds(board.pushUnregister(who.guest(), 'tok-n'));
         await assertSucceeds(board.presence(db, 'bbAnonPresence', 'sn'));
       });
@@ -83,12 +86,13 @@ for (const mode of ['legacy', 'strict']) {
         const db = who.anon(uid);
         const old = TS.fromMillis(Date.now() - 8 * DAY);
         await seed(env, {
-          'bbAnonPosts/a': postDoc({ uid }), 'bbAnonPosts/b': postDoc({ uid }),
-          'bbAnonPosts/c': postDoc({ uid: 'other-device' }),
+          'bbAnonPosts/a': postDoc(owned(uid, 'bbAnonPosts/a')),
+          'bbAnonPosts/b': postDoc(owned(uid, 'bbAnonPosts/b')),
+          'bbAnonPosts/c': postDoc(owned('other-device', 'bbAnonPosts/c')),
           'bbAnonPosts/legacy': postDoc(),
-          'bbAnonPosts/oldOther': postDoc({ uid: 'sam', name: 'Sam', timestamp: old }),
+          'bbAnonPosts/oldOther': postDoc(owned('sam', 'bbAnonPosts/oldOther', { name: 'Sam', timestamp: old })),
           'bbAnonPosts/oldLegacy': postDoc({ name: 'Sam', timestamp: old }),
-          'bbAnonMonikas/robin': { monika: 'Robin', uid },
+          'bbAnonMonikas/robin': owned(uid, 'bbAnonMonikas/robin', { monika: 'Robin' }),
         });
         await assertSucceeds(board.selfDeletePost(db, 'a'));
         const moved = await assertSucceeds(board.rename(db, 'Robin', 'Robyn', { flavour, uid }));
@@ -99,12 +103,12 @@ for (const mode of ['legacy', 'strict']) {
 
       it('account deletion', async () => {
         await seed(env, {
-          'bbAnonPosts/a': postDoc({ uid }), 'bbAnonPosts/legacy': postDoc(),
-          'bbAnonMonikas/robin': { monika: 'Robin', uid },
-          [`anonProfiles/${emailHash(email)}`]: profileOf({ counted: true }),
-          [`bbAnonLinks/${uid}`]: { emailHash: emailHash(email) },
+          'bbAnonPosts/a': postDoc(owned(uid, 'bbAnonPosts/a')), 'bbAnonPosts/legacy': postDoc(),
+          'bbAnonMonikas/robin': owned(uid, 'bbAnonMonikas/robin', { monika: 'Robin' }),
+          [`anonProfiles/${profileId(email)}`]: profileOf({ counted: true }),
           'counters/anonUserCount': { count: 10 },
         });
+        await seedVerified(env, { uid, email });
         await assertSucceeds(board.deleteAccount(who.anon(uid), { monika: 'Robin', email, flavour, uid }));
       });
     });
@@ -113,20 +117,26 @@ for (const mode of ['legacy', 'strict']) {
       const uid = 'bb-1';
       const email = 'Kim@Example.com';
 
-      it('verified account email: restore, mirror, count, post', async () => {
+      it('verified account email: profile id from anonProfileId, restore, mirror, count, post', async () => {
         const db = who.bb(uid, email);
-        await seed(env, { [`anonProfiles/${emailHash(email)}`]: profileOf({ monika: 'Kim' }) });
-        await assertSucceeds(board.bbRestoreProfile(db, uid, email));
-        await assertSucceeds(board.bbSaveProfile(db, uid, email));
-        await assertSucceeds(board.countOnce(db, db.collection('anonProfiles').doc(emailHash(email)), 'anonUserCount', 'counted'));
+        await seedAccountLink(env, { uid, email });
+        await seed(env, { [`anonProfiles/${profileId(email)}`]: profileOf({ monika: 'Kim' }) });
+        await assertSucceeds(board.bbRestoreProfile(db, uid, email, flavour));
+        await assertSucceeds(board.bbSaveProfile(db, uid, email, flavour));
+        await assertSucceeds(board.countOnce(db, board.profileRef(db, email, flavour), 'anonUserCount', 'counted'));
         await assertSucceeds(board.createPost(db, { flavour, uid, name: 'Kim' }));
       });
 
       it('unverified account email, proved with the board email code', async () => {
         const db = who.bb(uid, email, false);
         await seedVerified(env, { uid, email });
-        await assertSucceeds(board.bbRestoreProfile(db, uid, email));
-        await assertSucceeds(board.bbSaveProfile(db, uid, email));
+        await assertSucceeds(board.bbRestoreProfile(db, uid, email, flavour));
+        await assertSucceeds(board.bbSaveProfile(db, uid, email, flavour));
+      });
+
+      it('without the link, the verified account email alone opens no current profile', async () => {
+        await seed(env, { [`anonProfiles/${profileId(email)}`]: profileOf({ monika: 'Kim' }) });
+        await assertFails(board.anonRestoreProfile(who.bb(uid, email), email, flavour));
       });
     });
 
@@ -138,10 +148,10 @@ for (const mode of ['legacy', 'strict']) {
         it(`${label}: posts as admin, announces, pins, deletes, bans, reviews`, async () => {
           await seed(env, {
             'bbAnonLinks/adm': { emailHash: emailHash(ADMIN_EMAIL) },
-            'bbAnonPosts/p1': postDoc({ name: 'Troll', uid: 'troll' }),
+            'bbAnonPosts/p1': postDoc(owned('troll', 'bbAnonPosts/p1', { name: 'Troll' })),
             'bbAnonPosts/p2': postDoc({ name: 'Sam', pinned: true }),
-            'bbAnonPosts/p3': postDoc({ name: 'Sam', uid: 'sam' }),
-            'bbAnonPosts/p1/comments/c1': commentDoc({ name: 'Troll', uid: 'troll' }),
+            'bbAnonPosts/p3': postDoc(owned('sam', 'bbAnonPosts/p3', { name: 'Sam' })),
+            'bbAnonPosts/p1/comments/c1': commentDoc(owned('troll', 'bbAnonPosts/p1/comments/c1', { name: 'Troll' })),
             'bbAnonPosts/p1/comments/c2': commentDoc({ name: 'Troll' }),
             'bbAnonAnnSuggestions/s1': { name: 'Robin', text: 'x', status: 'pending', timestamp: TS.now() },
             'bbAnonAnnSuggestions/s2': { name: 'Robin', text: 'y', status: 'pending', timestamp: TS.now() },
@@ -157,6 +167,7 @@ for (const mode of ['legacy', 'strict']) {
           await assertSucceeds(admin.deletePost(db, 'p1'));
           await assertSucceeds(admin.ban(db, 'Troll'));
           await assertSucceeds(admin.unban(db, 'Troll'));
+          await assertSucceeds(board.listenSuggestions(db));
           await assertSucceeds(admin.approve(db, 's1', { flavour, uid: 'adm' }));
           await assertSucceeds(admin.reject(db, 's2'));
         });
@@ -168,20 +179,23 @@ for (const mode of ['legacy', 'strict']) {
       const email = 'lee@example.com';
       it('settings, details, entries, feedback, counters, badges, account deletion', async () => {
         const db = who.bb(uid, email);
+        await seedAccountLink(env, { uid, email });
         await seed(env, {
           'counters/appCosts': { monthly: 12 },
-          'bbAnonMonikas/lee': { monika: 'Lee', uid },
-          [`anonProfiles/${emailHash(email)}`]: profileOf({ monika: 'Lee' }),
+          'bbAnonMonikas/lee': owned(uid, 'bbAnonMonikas/lee', { monika: 'Lee' }),
+          [`anonProfiles/${profileId(email)}`]: profileOf({ monika: 'Lee' }),
+          [`userSettings/${uid}`]: { currentMedList: [{ name: 'Lithium' }], moodDefinitions: {}, copingStrategies: {} },
+          [`personalDetails/${uid}`]: { personalName: 'Lee', personalMedicalNum: '943 476 5919' },
         });
-        await assertSucceeds(bear.settings(db, uid));
-        await assertSucceeds(bear.personalDetails(db, uid));
+        await assertSucceeds(bear.settings(db, uid, flavour));
+        await assertSucceeds(bear.personalDetails(db, uid, flavour));
         await assertSucceeds(bear.entries(db, uid));
         await assertSucceeds(bear.feedback(db, uid));
         await assertSucceeds(bear.appCosts(db));
         await assertSucceeds(bear.helped(db, 1));
         await assertSucceeds(board.countOnce(db, db.collection('userSettings').doc(uid), 'userCount', 'userCounted'));
         await assertSucceeds(bear.boardBadges(db, 'Lee'));
-        await assertSucceeds(bear.deleteAccount(db, uid, email, 'Lee'));
+        await assertSucceeds(bear.deleteAccount(db, uid, email, 'Lee', flavour));
       });
     });
   });
