@@ -396,10 +396,44 @@ async function sweepByTime(collection, field, olderThanMs, apply, { filter, asNu
   return refs.length;
 }
 
+/**
+ * Public board documents still carrying `uid` (written before the owner
+ * stamps, or a trigger that didn't run) get the stamp instead.
+ */
+async function sweepUids(apply) {
+  const out = { posts: 0, comments: 0, monikas: 0 };
+  const fix = async (doc, kind) => {
+    const d = doc.data();
+    if (!Object.prototype.hasOwnProperty.call(d, 'uid')) return;
+    out[kind]++;
+    if (!apply) return;
+    const patch = { uid: FV.delete() };
+    if (typeof d.uid === 'string' && d.uid && !d.owner) patch.owner = ownerHash(d.uid, doc.ref.path);
+    await doc.ref.update(patch).catch(() => {});
+  };
+  for (const d of (await db.collection(POSTS).get()).docs) await fix(d, 'posts');
+  for (const d of (await db.collectionGroup('comments').get()).docs) await fix(d, 'comments');
+  for (const d of (await db.collection(MONIKAS).get()).docs) await fix(d, 'monikas');
+  return out;
+}
+
+/** Push registrations still carrying sha256(email). */
+async function sweepPushHashes(apply) {
+  let n = 0;
+  for (const d of (await db.collection('bbAnonPush').get()).docs) {
+    if (!Object.prototype.hasOwnProperty.call(d.data(), 'emailHash')) continue;
+    n++;
+    if (apply) await d.ref.update({ emailHash: FV.delete() }).catch(() => {});
+  }
+  return n;
+}
+
 /** One pass of every retention rule. Safe to repeat. */
 async function runPrivacySweep({ apply = true, secret } = {}) {
   const r = {};
   const now = Date.now();
+  r.ownerStamps = await sweepUids(apply);
+  r.pushEmailHash = await sweepPushHashes(apply);
   // anonVerify: dead codes after an hour, verified ones after getBBStats' 24 h.
   {
     const snap = await db.collection('anonVerify')
