@@ -756,9 +756,7 @@ function _sktMood(moodKey) {
       if (!window.db || !window.currentUser) return;
       clearTimeout(rememberDebounce);
       rememberDebounce = setTimeout(() => {
-        window.db.collection('userSettings').doc(window.currentUser.uid).set(
-          { rememberThis: text }, { merge: true }
-        ).catch(() => {});
+        BB.secure.saveSettings(window.currentUser.uid, { rememberThis: text });
       }, 1000);
     }
 
@@ -853,9 +851,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('currentMedList', JSON.stringify(list));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid).set(
-          { currentMedList: list }, { merge: true }
-        ).catch(e => console.warn('saveMedList error:', e));
+        BB.secure.saveSettings(window.currentUser.uid, { currentMedList: list });
       }
       loadMedInfo();
       if (typeof updateMedicationAccordions === 'function') updateMedicationAccordions();
@@ -999,8 +995,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('survivalGratitude', JSON.stringify(list));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid)
-          .set({ survivalGratitude: list }, { merge: true }).catch(e => console.warn('saveGratitude error:', e));
+        BB.secure.saveSettings(window.currentUser.uid, { survivalGratitude: list });
       }
     }
 
@@ -1125,6 +1120,7 @@ function _sktMood(moodKey) {
       ];
       const quote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
 
+      try { await BB.loadJsPdf(); } catch (e) { console.warn('jsPDF unavailable', e); return; }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const pageW = 297, pageH = 210;
@@ -1350,8 +1346,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('customReminders', JSON.stringify(list));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid)
-          .set({ customReminders: list }, { merge: true }).catch(e => console.warn('saveCustomReminders error:', e));
+        BB.secure.saveSettings(window.currentUser.uid, { customReminders: list });
       }
     }
 
@@ -1462,8 +1457,7 @@ function _sktMood(moodKey) {
     function saveMemories(data) {
       localStorage.setItem('moodMemories', JSON.stringify(data));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid)
-          .set({ moodMemories: data }, { merge: true }).catch(() => {});
+        BB.secure.saveSettings(window.currentUser.uid, { moodMemories: data });
       }
       _skUpdateTicks();
     }
@@ -1624,8 +1618,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('copingStrategies', JSON.stringify(data));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid)
-          .set({ copingStrategies: data }, { merge: true }).catch(e => console.warn('saveCopingStrategies error:', e));
+        BB.secure.saveSettings(window.currentUser.uid, { copingStrategies: data });
       }
       _skUpdateTicks();
     }
@@ -1738,9 +1731,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('moodDefinitions', JSON.stringify(data));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid)
-          .set({ moodDefinitions: data }, { merge: true })
-          .catch(e => console.warn('saveMoodDefinitions Firestore error:', e));
+        BB.secure.saveSettings(window.currentUser.uid, { moodDefinitions: data });
       }
     }
 
@@ -1975,8 +1966,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('myCommitments', JSON.stringify(list));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
-        window.db.collection('userSettings').doc(window.currentUser.uid)
-          .set({ myCommitments: list }, { merge: true }).catch(e => console.warn('saveCommitmentsData error:', e));
+        BB.secure.saveSettings(window.currentUser.uid, { myCommitments: list });
       }
       _skUpdateTicks();
     }
@@ -2129,25 +2119,17 @@ function _sktMood(moodKey) {
       // If browser restores this page from bfcache, force a clean reload
       window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
 
-      // Ensure user has auth (anonymous if not signed in) for Firestore access
-      async function ensureAuth() {
-        if (!auth.currentUser) {
-          try { await auth.signInAnonymously(); }
-          catch(e) { console.error('Anonymous sign-in failed:', e); }
-        }
-      }
-
       // Single unified counter for all platforms, seeded at 1
       const counterDocId = () => 'helpedCount';
       const counterSeed  = () => 1;
 
-      // Adjust counter using FieldValue.increment (atomic, no transaction needed)
+      // Move the counter through the helpedVote Cloud Function. Reading it needs
+      // no session, and since 2026-10-12 neither does voting: the page used to
+      // sign every visitor in anonymously (a Firebase account each) just for
+      // this one number.
       async function adjustCounter(delta) {
-        const ref = db.collection('counters').doc(counterDocId());
-        await ref.set(
-          { count: firebase.firestore.FieldValue.increment(delta) },
-          { merge: true }
-        );
+        const fn = firebase.app().functions('europe-west1').httpsCallable('helpedVote');
+        await fn({ delta });
       }
 
       // Animate the count number rolling in from a direction
@@ -2191,11 +2173,9 @@ function _sktMood(moodKey) {
       // Load real people-helped count from Firestore and restore vote button state
       async function loadHelpedCount() {
         try {
-          await ensureAuth();
           const seed = counterSeed();
           const doc = await db.collection('counters').doc(counterDocId()).get({ source: 'server' });
           if (!doc.exists) {
-            await db.collection('counters').doc(counterDocId()).set({ count: seed });
             document.getElementById('helpedCount').textContent = fmtCount(seed);
           } else {
             document.getElementById('helpedCount').textContent = fmtCount(doc.data().count || seed);
@@ -2238,7 +2218,6 @@ function _sktMood(moodKey) {
           animateCount(fmtCount(current + 1), 'up');
           await setVotedState(true);
           try {
-            await ensureAuth();
             await adjustCounter(1);
           } catch(e) { console.error('Counter increment failed:', e); }
         } else {
@@ -2247,7 +2226,6 @@ function _sktMood(moodKey) {
           animateCount(fmtCount(current - 1), 'down');
           await setVotedState(false);
           try {
-            await ensureAuth();
             await adjustCounter(-1);
           } catch(e) { console.error('Counter decrement failed:', e); }
         }
@@ -2260,7 +2238,7 @@ function _sktMood(moodKey) {
         const signinBtn = document.getElementById('signinBtn');
         const userInfo = document.getElementById('userInfo');
         const userEmail = document.getElementById('userEmail');
-        // Load counter once per page, now that auth state is known (avoids premature signInAnonymously)
+        // Load counter once per page, now that auth state is known
         if (!_helpedCountLoaded) { _helpedCountLoaded = true; loadHelpedCount(); }
         // Report this session to the home screen's "(N live)" figure — reading
         // your survival kit is using the app. No callback: nothing here shows a
@@ -2278,7 +2256,7 @@ function _sktMood(moodKey) {
           // Skip overwriting if the user saved locally within the last 60 seconds (prevents race condition)
           const _skSavedAt = parseInt(localStorage.getItem('_sk_savedAt') || '0', 10);
           const _skSkipOverwrite = Date.now() - _skSavedAt < 60000;
-          db.collection('userSettings').doc(user.uid).get().then(doc => {
+          db.collection('userSettings').doc(user.uid).get().then(async doc => {
             // Back guest-entered data (meds, goals, coping strategies, mood
             // definitions, memories, reminders, commitments, …) up to the
             // account. The tutorial saves these only to localStorage; creating
@@ -2287,8 +2265,14 @@ function _sktMood(moodKey) {
             // account is covered, and independently of _skSkipOverwrite because
             // it only ever *adds* missing data, never overwrites.
             if (window.BB && BB.claimGuestData) BB.claimGuestData(db, user, doc);
-            if (!doc.exists) return;
-            const d = doc.data();
+            // Medications, coping strategies, mood definitions, memories,
+            // reminders, commitments, gratitude and "remember this" are kept
+            // encrypted (js/shared/secure-store.js): decrypt them (moving any
+            // plaintext into the encrypted copy) before reading them below.
+            const _raw = doc.exists ? doc.data() : null;
+            const _sec = await BB.secure.settings(user.uid, _raw, { timeoutMs: 2500 });
+            if (!doc.exists && !Object.keys(_sec.view).length) return;
+            const d = BB.secure.mergeView(_raw, _sec.view);
             if (d.logoVariant !== undefined) {
               const idx = d.logoVariant;
               localStorage.setItem('logoVariant', idx);
@@ -2354,9 +2338,9 @@ function _sktMood(moodKey) {
             if (btn) btn.classList.toggle('voted', voted);
           }).catch(() => {});
           // Also load name + emergency contact from personalDetails
-          db.collection('personalDetails').doc(user.uid).get().then(doc => {
-            if (doc.exists) {
-              const data = doc.data();
+          // (encrypted; js/shared/secure-store.js decrypts it).
+          BB.secure.personal(user.uid).then(data => {
+            if (data) {
               const ec = data.personalEmergencyContact;
               if (ec) {
                 localStorage.setItem('personalEmergencyContact', ec);
@@ -2392,6 +2376,7 @@ function _sktMood(moodKey) {
         // account-specific, so the next account on this device still counts.
         'bbUserCounted', 'bbAnon_counted',
       ].forEach(k => localStorage.removeItem(k));
+      try { BB.secure.clearPending(); } catch (_) {}
       if (auth) auth.signOut();
     }
 
@@ -2438,9 +2423,7 @@ function _sktMood(moodKey) {
       localStorage.setItem('personalEmergencyContact', value);
       if (currentUser && db) {
         try {
-          await db.collection('personalDetails').doc(currentUser.uid).set(
-            { personalEmergencyContact: value }, { merge: true }
-          );
+          await BB.secure.savePersonal(currentUser.uid, { personalEmergencyContact: value });
         } catch(e) { console.error('Failed to sync emergency contact:', e); }
       }
       closeEcModal();
@@ -2456,13 +2439,7 @@ function _sktMood(moodKey) {
     const _pdIds    = ['pdName','pdDOB','pdMedicalNum','pdDiagnosis','pdDiagnosisDate','pdAddress','pdMobile','pdEmail','pdEmergencyContact','pdNotes'];
     async function showPersonalDetailsModal() {
       if (window.db && window.currentUser) {
-        try {
-          const doc = await window.db.collection('personalDetails').doc(window.currentUser.uid).get();
-          if (doc.exists) {
-            const d = doc.data();
-            _pdFields.forEach(k => { if (d[k] !== undefined) localStorage.setItem(k, d[k]); });
-          }
-        } catch(e) {}
+        try { await BB.secure.personal(window.currentUser.uid); } catch(e) {}
       }
       _pdIds.forEach((id, i) => {
         const el = document.getElementById(id);
@@ -2483,7 +2460,7 @@ function _sktMood(moodKey) {
         data[_pdFields[i]] = val;
       });
       if (window.db && window.currentUser) {
-        try { await window.db.collection('personalDetails').doc(window.currentUser.uid).set(data, { merge: true }); } catch(e) {}
+        try { await BB.secure.savePersonal(window.currentUser.uid, data); } catch(e) {}
       }
       alert(_skt('sk.pd.saved'));
       closePersonalDetailsModal();

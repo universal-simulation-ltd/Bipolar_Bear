@@ -110,6 +110,7 @@ const SHARED_MODULES = [
   'js/shared/version-check.js',
   'js/shared/user-count.js',
   'js/shared/anon-push.js',
+  'js/shared/secure-store.js',
 ];
 for (const f of SHARED_MODULES) copy(f);
 
@@ -134,6 +135,9 @@ fs.writeFileSync(brandPath, brand);
 // favicons subset is harmless to include and saves on surprise 404s
 // from anything that probes /favicon.ico.
 copyDir('icons');
+
+// ─── 7b. Firebase SDK (self-hosted since 2026-10-12) ─────────────────
+copyDir('vendor');
 
 // ─── 7a. Mood bears (small) ─────────────────────────────────────────
 // The daily check-in on the greeting card uses Bipolar Bear's five mood

@@ -444,7 +444,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           const _vBanner = document.getElementById('bbEmailVerifyBanner');
           if (_vBanner) _vBanner.remove();
           // Load user settings from Firestore (logo variant + survival kit data for ticks)
-          db.collection('userSettings').doc(user.uid).get().then(doc => {
+          db.collection('userSettings').doc(user.uid).get().then(async doc => {
             // Back guest-entered data (meds, goals, coping strategies, mood
             // definitions, …) up to the account. Guest data lives only in
             // localStorage; signup/login only ever pulled settings down, so
@@ -453,8 +453,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             // !doc.exists return so brand-new accounts are covered. Idempotent
             // and non-destructive — only uploads what the account is missing.
             if (window.BB && BB.claimGuestData) BB.claimGuestData(db, user, doc);
-            if (!doc.exists) return;
-            const d = doc.data();
+            // The sensitive survival-kit fields are kept encrypted
+            // (js/shared/secure-store.js): decrypt — and move any plaintext
+            // across — before reading them below.
+            const _raw = doc.exists ? doc.data() : null;
+            const _sec = await BB.secure.settings(user.uid, _raw, { timeoutMs: 2500 });
+            if (!doc.exists && !Object.keys(_sec.view).length) return;
+            const d = BB.secure.mergeView(_raw, _sec.view);
             if (d.logoVariant !== undefined) {
               localStorage.setItem('logoVariant', d.logoVariant);
               applyLogoVariant(d.logoVariant);
@@ -1339,6 +1344,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
       // The safety plan is synced (encrypted) to the account, so it goes with it.
       try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
+      try { BB.secure.clearPending(); } catch (_) {}
 
       // Non-prefixed user-data keys: shared across variants, cleared via
       // raw localStorage.
@@ -1408,15 +1414,14 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         if (el) el.value = localStorage.getItem(lsKey) || '';
       });
       document.getElementById('personalDetailsModal').classList.add('active');
-      // Then try to freshen from Firestore in the background
+      // Then freshen from the account in the background — decrypted by
+      // js/shared/secure-store.js, which also updates the device copy.
       if (currentUser && db) {
         try {
-          const doc = await db.collection('personalDetails').doc(currentUser.uid).get();
-          if (doc.exists) {
-            const d = doc.data();
+          const d = await BB.secure.personal(currentUser.uid);
+          if (d) {
             _pdFields.forEach(([elId, lsKey]) => {
               if (d[lsKey] !== undefined) {
-                localStorage.setItem(lsKey, d[lsKey]);
                 const el = document.getElementById(elId);
                 if (el) el.value = d[lsKey];
               }
@@ -1436,7 +1441,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         data[lsKey] = val;
       });
       if (currentUser && db) {
-        try { await db.collection('personalDetails').doc(currentUser.uid).set(data, { merge: true }); } catch(e) {}
+        // Encrypted on this device before it goes up (js/shared/secure-store.js).
+        try { await BB.secure.savePersonal(currentUser.uid, data); } catch(e) {}
       }
       closePersonalDetailsModal();
     }
@@ -1852,6 +1858,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         BB.storage.remove('_recentMoods');
         try { BB.platform.syncWidgetMoods(); } catch (_) {}
         try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
+      try { BB.secure.clearPending(); } catch (_) {}
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
          'rememberThis','myCommitments','customReminders','currentMedList',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
@@ -1901,6 +1908,12 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email.toLowerCase().trim()));
               return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
             };
+            // The board profile under its current id (cached by the board); the
+            // onAuthUserDeleted Cloud Function also removes the account email's.
+            try {
+              const _pid = JSON.parse(BB.storage.get('Anon_profileId') || 'null');
+              if (_pid && _pid.id) await db.collection('anonProfiles').doc(_pid.id).delete().catch(() => {});
+            } catch (_) {}
             const _emails = [currentUser.email, BB.storage.get('Anon_email')]
               .filter(Boolean).filter((e, i, arr) => arr.indexOf(e) === i);
             for (const _e of _emails) {
@@ -1911,12 +1924,15 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             }
           } else {
             db.collection('userSettings').doc(currentUser.uid).set({
-              currentMedList: [], dailyGoals: [], dailyBudget: '', logoVariant: 0,
+              // Sensitive settings live in secureEnc (js/shared/secure-store.js): drop it
+              // and any plaintext left from older builds.
+              ...BB.secure.resetPatch(),
+              dailyGoals: [], dailyBudget: '', logoVariant: 0,
               focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false, earlyWarnEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
-              moodDefinitions: {}, copingStrategies: {}, safetyPlanEnc: null,
+              safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,
               personalHintDone: false,
               homeSurvivalEnabled: false, homeAnonEnabled: false, homeStatsEnabled: false,
@@ -1926,7 +1942,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         }
 
         // Clear anon-board localStorage so the next user on this browser starts clean.
-        ['Anon_monika','Anon_email','Anon_verified','Anon_isAdmin',
+        ['Anon_monika','Anon_email','Anon_verified','Anon_isAdmin','Anon_profileId',
          'Anon_streak','Anon_med','Anon_medList','Anon_showMeds',
          'Anon_showStable','Anon_stableSince','Anon_stableStreak',
          'Anon_colorKey','Anon_initials','Anon_liked','Anon_hasPosted',

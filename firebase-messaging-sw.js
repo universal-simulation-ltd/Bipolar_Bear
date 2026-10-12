@@ -16,8 +16,8 @@
  * @file firebase-messaging-sw.js
  */
 /* eslint-env serviceworker */
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+importScripts('/vendor/firebasejs/10.7.1/firebase-app-compat.js');
+importScripts('/vendor/firebasejs/10.7.1/firebase-messaging-compat.js');
 
 firebase.initializeApp({
   apiKey: 'AIzaSyBlF7DjbOvU4xgM47kAd6Ttx42_W1BPVUY',

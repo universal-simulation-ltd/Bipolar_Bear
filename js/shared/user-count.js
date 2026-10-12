@@ -355,7 +355,11 @@
   // both against Supabase's REST endpoint, both deliberately separate from the
   // Firestore counters above:
   //
-  //   * a BEAT — app_presence_beat {p_product, p_install_id, p_platform}, on
+  // ⚠ Since 2026-10-12 (privacy round) these two apps send NO beat: only the
+  // READ below runs, and only once someone taps the line to the suite figure.
+  // The helpers for the beat are left unused.
+  //
+  //   * (no longer sent) a BEAT — app_presence_beat {p_product, p_install_id, p_platform}, on
   //     load (on the web: on the first interaction — see INTERACTION_EVENTS)
   //     and every 45 s while the page is visible (migration 0175; the
   //     platform since 0187), which is what puts this app's users INTO the
@@ -392,6 +396,12 @@
   /** Last known suite TOTAL (via BB.storage). Never the live figure: a stale
    *  "live" is a lie, where a stale total is merely a little behind. */
   var SUITE_CACHE_KEY = 'SuiteUserCountCache';
+
+  // The beat is gone (2026-10-12), so the install id it sent is no longer
+  // needed: remove the copy older versions left on this device. The apps' own
+  // live counts use a random per-TAB id in sessionStorage (bbPresenceId) and
+  // a document holding only lastSeen, so nothing there persists or names anyone.
+  try { localStorage.removeItem(INSTALL_ID_KEY); } catch (_) {}
 
   /**
    * A v4 UUID. `crypto.randomUUID` is missing on the older WebViews this app
@@ -573,68 +583,37 @@
     },
 
     /**
-     * Join the suite counter, and keep the caller supplied with the suite
-     * figure for as long as its line is showing one.
+     * Keep the caller supplied with the suite figure while its line shows it.
      *
-     * Mirrors startPresence() above — beat now, then every 45 s while the page
-     * is visible, and again the moment a backgrounded tab comes back — but
-     * against Supabase rather than Firestore, and with no dependency on
-     * Firebase having initialised, so it runs on a page whose Firestore
-     * counter never resolves.
+     * Privacy round 2026-10-12: Bipolar Bear and Bipolar Anonymous no longer
+     * send a presence BEAT to the suite counter (no install id, nothing about
+     * this device leaves it). The suite figure is only READ, and only while
+     * the line is showing it (the person tapped it); the apps' own Firestore
+     * counts are unchanged. `unisim:install-id` is no longer minted here.
      *
-     * After one read on the first tick, the READ is skipped unless `wantsSuite()`
-     * says the line is showing the suite figure — so a page nobody taps costs
-     * one small POST per 45 s and nothing else.
-     *
-     * @param {'app'|'anon'} kind
+     * @param {'app'|'anon'} kind  (kept for the callers; unused)
      * @param {function(): boolean} wantsSuite  is the line showing the suite figure?
      * @param {function({total: number, live: number})} onCounts  called with a fresh figure
-     * @returns {function()} stop function (clears the timer; the row ages out on its own)
+     * @returns {function()} stop function
      */
     start: function (kind, wantsSuite, onCounts) {
       var self = this;
-      var product = SUITE_PRODUCT[kind] || SUITE_PRODUCT.app;
-      var id = _installId();
       var timer = null;
       var stopped = false;
-      var beaten = false;
-      var first = true;
-
-      function beat() {
-        return _suiteRpc('app_presence_beat', { p_product: product, p_install_id: id, p_platform: _platform() })
-          .then(function () { beaten = true; })
-          .catch(function (e) {
-            _warn('[userCount] suite beat for ' + product + ' failed:', e && (e.message || e));
-          });
-      }
 
       function read() {
         if (stopped || typeof onCounts !== 'function') return;
-        // Read once on the first tick whatever the scope — that one read is what
-        // lets the suite figure stand in when this app's own is missing (offline,
-        // or Firestore refused), which a first-time visitor has no cache for.
-        // After that, only while the line is actually showing it.
-        if (first) first = false;
-        else if (typeof wantsSuite === 'function' && !wantsSuite()) return;
+        if (typeof wantsSuite === 'function' && !wantsSuite()) return;
         return self.load().then(function (counts) {
           if (stopped || !counts) return;
-          // Whoever is reading this is using a suite app right now; a read that
-          // raced its own beat must not answer "(0 live)".
-          if (beaten && counts.live < 1) counts.live = 1;
           onCounts(counts);
         });
       }
 
       function tick() {
         if (stopped || _hidden()) return;
-        // Not yet interacted with (web only): read, so the line can still show
-        // the suite figure, but don't count this visit.
-        if (!_mayBeat()) { read(); return; }
-        beat().then(read);
+        read();
       }
-
-      // The first interaction beats straight away rather than up to 45 s later.
-      if (!_mayBeat()) _interactionWaiters.push(function () { if (!stopped && !_hidden()) beat(); });
 
       tick();
       timer = setInterval(tick, BEAT_MS);

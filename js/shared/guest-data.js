@@ -32,17 +32,15 @@
   // [ localStorage key, Firestore field, kind ]
   // kind: 'array' | 'map' | 'string'. localStorage key === Firestore field for
   // every entry today, but both are listed so they can diverge if ever needed.
+  //
+  // Only the non-sensitive fields are claimed here. Medications, coping
+  // strategies, mood definitions, mood memories, reminders, commitments,
+  // gratitude and "remember this" are claimed by js/shared/secure-store.js,
+  // which uploads them only encrypted (privacy round, 2026-10-12) — never add
+  // them back to this list.
   var FIELDS = [
-    ['currentMedList',    'currentMedList',    'array'],
     ['dailyGoals',        'dailyGoals',        'array'],
-    ['dailyBudget',       'dailyBudget',       'string'],
-    ['copingStrategies',  'copingStrategies',  'map'],
-    ['moodDefinitions',   'moodDefinitions',   'map'],
-    ['moodMemories',      'moodMemories',      'array'],
-    ['customReminders',   'customReminders',   'array'],
-    ['myCommitments',     'myCommitments',     'array'],
-    ['survivalGratitude', 'survivalGratitude', 'array'],
-    ['rememberThis',      'rememberThis',      'string']
+    ['dailyBudget',       'dailyBudget',       'string']
   ];
 
   // A map (mood -> string, or mood -> array) counts as "having content" when at

@@ -1531,6 +1531,7 @@ const STATIC_ASSETS = [
   './js/shared/safety-plan.js',
   './js/shared/translate.js',
   './js/shared/guest-data.js',
+  './js/shared/secure-store.js',
   './js/shared/user-count.js',
   './js/shared/universal-id.js',
   './js/shared/auth-splash.js',

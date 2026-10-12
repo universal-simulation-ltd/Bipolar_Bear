@@ -269,3 +269,23 @@ window.BB.isAnonymousApp = function () {
     return false;
   }
 };
+
+/**
+ * Load jsPDF only when a PDF is being made (privacy round 2026-10-12: it used
+ * to load from a CDN on every journal and survival-kit visit). Self-hosted
+ * under vendor/, so nothing is fetched from a third party. Resolves
+ * window.jspdf; rejects if it can't be loaded.
+ */
+window.BB.loadJsPdf = function () {
+  if (window.jspdf) return Promise.resolve(window.jspdf);
+  if (window.BB._jsPdfPromise) return window.BB._jsPdfPromise;
+  window.BB._jsPdfPromise = new Promise(function (resolve, reject) {
+    var el = document.createElement('script');
+    el.src = 'vendor/jspdf/2.5.1/jspdf.umd.min.js';
+    el.async = true;
+    el.onload = function () { window.jspdf ? resolve(window.jspdf) : reject(new Error('jsPDF missing')); };
+    el.onerror = function () { window.BB._jsPdfPromise = null; reject(new Error('jsPDF failed to load')); };
+    document.head.appendChild(el);
+  });
+  return window.BB._jsPdfPromise;
+};

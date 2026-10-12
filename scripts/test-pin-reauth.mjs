@@ -130,10 +130,10 @@ async function openPage(file, T, { native = null, local = {} } = {}) {
       if (/service-worker\.js|firebase-messaging-sw\.js/.test(u)) return route.abort();
       return route.continue();
     }
-    if (u.includes('gstatic.com/firebasejs/') && u.includes('firebase-app-compat')) {
+    if (u.includes('firebasejs/') && u.includes('firebase-app-compat')) {
       return route.fulfill({ contentType: 'text/javascript', body: FIREBASE_STUB });
     }
-    if (u.includes('gstatic.com/firebasejs/')) return route.fulfill({ contentType: 'text/javascript', body: '' });
+    if (u.includes('firebasejs/')) return route.fulfill({ contentType: 'text/javascript', body: '' });
     if (u.includes('supabase.co/auth/v1/')) {
       const p = new URL(u).pathname.replace('/auth/v1/', '');
       await page.evaluate(n => window.__calls.push('supabase:' + n), p).catch(() => {});

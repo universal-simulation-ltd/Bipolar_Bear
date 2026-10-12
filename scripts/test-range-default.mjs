@@ -82,8 +82,8 @@ async function open(saved, { dark = false, coarse = false } = {}) {
   await page.route('**/*', route => {
     const u = route.request().url();
     if (u.startsWith(BASE)) return /service-worker\.js|firebase-messaging-sw\.js/.test(u) ? route.abort() : route.continue();
-    if (u.includes('gstatic.com/firebasejs/') && u.includes('firebase-app-compat')) return route.fulfill({ contentType: 'text/javascript', body: FIREBASE_STUB });
-    if (u.includes('gstatic.com/firebasejs/')) return route.fulfill({ contentType: 'text/javascript', body: '' });
+    if (u.includes('firebasejs/') && u.includes('firebase-app-compat')) return route.fulfill({ contentType: 'text/javascript', body: FIREBASE_STUB });
+    if (u.includes('firebasejs/')) return route.fulfill({ contentType: 'text/javascript', body: '' });
     return route.abort();
   });
   await page.addInitScript(({ saved, dark }) => {

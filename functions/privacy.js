@@ -36,9 +36,9 @@ const functionsV1 = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
 
+const { FieldValue: FV, Timestamp: TS, FieldPath } = require('firebase-admin/firestore');
+
 const db = admin.firestore();
-const FV = admin.firestore.FieldValue;
-const TS = admin.firestore.Timestamp;
 const REGION = 'europe-west1';
 const ANON_PROFILE_SECRET = defineSecret('ANON_PROFILE_SECRET');
 
@@ -100,7 +100,7 @@ async function allDocs(query, page = 400) {
   const out = [];
   let cursor = null;
   for (;;) {
-    let q = query.orderBy(admin.firestore.FieldPath.documentId()).limit(page);
+    let q = query.orderBy(FieldPath.documentId()).limit(page);
     if (cursor) q = q.startAfter(cursor);
     const snap = await q.get();
     out.push(...snap.docs);

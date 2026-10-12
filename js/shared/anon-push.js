@@ -65,7 +65,7 @@
   }
 
   var _db       = null;
-  var _identity = function () { return {}; };  // () => { monika, emailHash }
+  var _identity = function () { return {}; };  // () => { monika }
   var _onMessage = null;                       // foreground push handler
   // () => Promise — makes sure there's a Firebase Auth session before a
   // bbAnonPush write (the rules require one). Deletes don't need it.
@@ -193,7 +193,7 @@
     if (!window.firebase) return Promise.resolve(false);
     return new Promise(function (resolve) {
       var el = document.createElement('script');
-      el.src = 'https://www.gstatic.com/firebasejs/' + SDK_VERSION + '/firebase-messaging-compat.js';
+      el.src = 'vendor/firebasejs/' + SDK_VERSION + '/firebase-messaging-compat.js'; // self-hosted
       el.onload  = function () { resolve(!!(window.firebase && window.firebase.messaging)); };
       el.onerror = function () { resolve(false); };
       document.head.appendChild(el);
@@ -270,7 +270,9 @@
       },
       // Replies are addressed by monika: a post carries a name, not an account.
       monikaLower: (who.monika || '').toLowerCase() || null,
-      emailHash:   who.emailHash || null,
+      // Older builds sent sha256(email) here; nothing reads it, so a refresh
+      // removes it (privacy round, 2026-10-12).
+      emailHash:   firebase.firestore.FieldValue.delete(),
       platform:    isNative() ? (isIOS() ? 'ios' : 'android') : 'web',
       bundle:      brand.bundle || 'main',
       lang:        (window.BB && window.BB.i18n && window.BB.i18n.getLang()) || 'en',
@@ -293,6 +295,19 @@
   function deleteToken(token) {
     if (!_db || !token) return Promise.resolve();
     return _db.collection(COLLECTION).doc(token).delete().catch(function () {});
+  }
+
+  // Nothing switched on any more: let the device forget its FCM token too, so
+  // no registration lingers on the phone. (The native apps keep FCM from
+  // starting at all until the member first opts in — Info.plist /
+  // AndroidManifest auto-init off; getToken() turns it on.)
+  function dropNativeToken() {
+    try {
+      var fm = plugin('FirebaseMessaging');
+      if (fm && typeof fm.deleteToken === 'function') {
+        Promise.resolve(fm.deleteToken()).catch(function () {});
+      }
+    } catch (_) {}
   }
 
   // ── Public API ──────────────────────────────────────────────────────────
@@ -346,6 +361,7 @@
     var token = get(TOKEN_KEY);
     if (!anyOn(prefs)) {
       remove(TOKEN_KEY);
+      dropNativeToken();
       return deleteToken(token).then(function () { return { ok: true }; });
     }
     if (token) {
@@ -400,6 +416,7 @@
     remove(ASKED_KEY);
     remove(POSTS_ASKED_KEY);
     writePrefsLocally(allOff());
+    dropNativeToken();
     return deleteToken(token);
   }
 
@@ -407,7 +424,7 @@
    * Wire the module to the page.
    * @param {object} opts
    * @param {object} opts.db          Firestore handle (compat SDK)
-   * @param {function} opts.identity  () => ({ monika, emailHash })
+   * @param {function} opts.identity  () => ({ monika })
    * @param {function} [opts.onMessage] called with a push received in the foreground
    */
   function configure(opts) {

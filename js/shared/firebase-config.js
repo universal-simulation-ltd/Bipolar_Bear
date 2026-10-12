@@ -19,8 +19,8 @@ window.BB_FIREBASE_CONFIG = {
   projectId: "bipolarbear-app",
   storageBucket: "bipolarbear-app.firebasestorage.app",
   messagingSenderId: "566288727451",
-  appId: "1:566288727451:web:8921f3242193df115df53e",
-  measurementId: "G-7TX0FRWEF1"
+  appId: "1:566288727451:web:8921f3242193df115df53e"
+  // No measurementId: the app has no Analytics (removed 2026-10-12).
 };
 
 /**

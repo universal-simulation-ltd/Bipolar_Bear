@@ -13,10 +13,10 @@
  *   - Profile getters (read-through to localStorage for bbAnon_* keys)
  *   - Firebase init (initFirebase) + auth-state handler
  *   - boot() — the screen router
- *   - Helpers (esc, initials, timeAgo, _anonEmailHash, ...)
+ *   - Helpers (esc, initials, timeAgo, _ownerStamp, _anonProfileId, ...)
  *   - Screens: setupVerify, setupMonika, setupColor, setupMeds, setupStable, initBoard
  *   - Compose / like / SOS / report / self-delete / admin-delete flows
- *   - Cross-device profile mirror to anonProfiles/{emailHash}
+ *   - Cross-device profile mirror to anonProfiles/{profile id}
  *
  * innerHTML safety: every innerHTML containing user-supplied content
  * (monika, post body, medication name, email) routes through `esc()` —
@@ -315,11 +315,56 @@ function _authUid() {
   } catch (e) { return null; }
 }
 
-// Board documents carry their author's uid: the Firestore rules let only that
-// session delete or rename them. Left off if sign-in failed.
-function _withOwner(doc) {
+// Board documents carry an owner stamp, sha256(uid + '/' + document path):
+// the Firestore rules let only that session delete or rename them, but the
+// stamp is different on every document, so posts, replies and names can't be
+// tied to each other or to an account (privacy round, 2026-10-12 — they used
+// to carry the uid itself). Left off if sign-in failed.
+async function _ownerStamp(docPath) {
   const uid = _authUid();
-  return uid ? { ...doc, uid } : doc;
+  if (!uid || !window.crypto || !crypto.subtle) return null;
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(uid + '/' + docPath));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function _withOwner(docPath, doc) {
+  const owner = await _ownerStamp(docPath);
+  return owner ? { ...doc, owner } : doc;
+}
+// Is this board document this session's? (Older ones carry a uid, or nothing.)
+async function _isMine(snap) {
+  const d = snap.data() || {};
+  if (d.owner) return d.owner === await _ownerStamp(snap.ref.path);
+  return !d.uid || d.uid === _authUid();
+}
+
+// ── Board profile id ─────────────────────────────────────────────
+// anonProfiles are keyed by 'p2_' + an HMAC of the email under a server
+// secret (2026-10-12; it used to be sha256(email), which anyone who knew the
+// address could work out). verifyAnonCode returns it after a code, and the
+// anonProfileId callable gives it to a Bipolar Bear account or to a session
+// that proved the address before ids existed. Cached per address.
+function _cachedProfileId(email) {
+  try {
+    const c = JSON.parse(BB.storage.get('Anon_profileId') || 'null');
+    return c && c.email === email && /^p2_[0-9a-f]{64}$/.test(c.id || '') ? c.id : null;
+  } catch (_) { return null; }
+}
+function _rememberProfileId(email, id) {
+  if (email && id) BB.storage.set('Anon_profileId', JSON.stringify({ email: email.toLowerCase().trim(), id }));
+}
+const _profileIdInflight = {};
+async function _anonProfileId(email) {
+  const e = String(email || '').toLowerCase().trim();
+  if (!e) return null;
+  const cached = _cachedProfileId(e);
+  if (cached) return cached;
+  if (!_profileIdInflight[e]) {
+    _profileIdInflight[e] = _callFn('anonProfileId', { email: e })
+      .then(res => { if (res.profileId) _rememberProfileId(e, res.profileId); return res.profileId || null; })
+      .catch(err => { console.warn('[Anonymous] board profile id unavailable', err && err.message); return null; })
+      .finally(() => { delete _profileIdInflight[e]; });
+  }
+  return _profileIdInflight[e];
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1178,7 +1223,9 @@ function _myMood() {
 }
 // Settings (Your Moniker sheet). Both default ON; stored as '0' when off.
 function _moodAskShown()     { return BB.storage.get('Anon_moodAsk') !== '0'; }
-function _journalCheckinOn() { return BB.storage.get('Anon_journalCheckin') !== '0'; }
+// Opt-in (2026-10-12): off unless the member turned it on. The server checks
+// userSettings.anonProfile.journalCheckin === true as well.
+function _journalCheckinOn() { return BB.storage.get('Anon_journalCheckin') === '1'; }
 // Holds the check-in's place on the greeting card while anonMoodCheckin
 // answers, so the feed under it doesn't jump when the answer lands (James,
 // 2026-09-30). It takes the shape the answer will probably have: the tally
@@ -1548,7 +1595,9 @@ function setupVerify() {
         await _ensureAuthSession();
       } else {
         await _ensureAuthSession();
-        await window._anonVerifyCode({ sessionId: _sessionId, code });
+        // v2: this build knows profile ids (no old-style copy needed).
+        const vr = await window._anonVerifyCode({ sessionId: _sessionId, code, v2: true });
+        if (vr && vr.data && vr.data.profileId) _rememberProfileId(_pendingEmail, vr.data.profileId);
       }
       // ✅ Verified
       if (_pendingEmail.toLowerCase() === ADMIN_EMAIL) {
@@ -1701,9 +1750,10 @@ function setupMonika() {
     errEl.style.display = 'none';
     BB.storage.set('Anon_monika', monika);
     if (db) {
+      const _mref = db.collection(BB_BRAND.collections.monikas).doc(monika.toLowerCase());
       _ensureAuthSession()
-        .then(() => db.collection(BB_BRAND.collections.monikas).doc(monika.toLowerCase())
-          .set(_withOwner({ monika, createdAt: firebase.firestore.FieldValue.serverTimestamp() })))
+        .then(() => _withOwner(_mref.path, { monika, createdAt: firebase.firestore.FieldValue.serverTimestamp() }))
+        .then(doc => _mref.set(doc))
         .catch(() => {});
     }
     _bbSaveProfile(); // persist monika to userSettings for cross-device recovery
@@ -1722,8 +1772,11 @@ function setupMeds() {
     if (_bbUser && db) {
       try {
         const snap = await db.collection('userSettings').doc(_bbUser.uid).get();
-        if (snap.exists) {
-          const list = snap.data().currentMedList || [];
+        // The medication list is stored encrypted (js/shared/secure-store.js).
+        const sec = await BB.secure.settings(_bbUser.uid, snap.exists ? snap.data() : null);
+        if (sec.view.currentMedList !== undefined || snap.exists) {
+          const list = sec.view.currentMedList
+            || (() => { try { return JSON.parse(localStorage.getItem('currentMedList') || '[]'); } catch (_) { return []; } })();
           if (list.length > 0) {
             BB.storage.set('Anon_medList', JSON.stringify(list));
             BB.storage.set('Anon_med', list.map(m => m.name).filter(Boolean).join(', '));
@@ -1760,9 +1813,7 @@ async function _anonSaveMedList(list) {
   // Sync back to BB App if the user is signed into BipolarBear
   if (_bbUser && db) {
     try {
-      await db.collection('userSettings').doc(_bbUser.uid).set(
-        { currentMedList: list }, { merge: true }
-      );
+      await BB.secure.saveSettings(_bbUser.uid, { currentMedList: list });
     } catch(e) { console.warn('[Anonymous] medList sync failed', e); }
   }
 }
@@ -1771,20 +1822,14 @@ async function _anonSaveMedList(list) {
 // Standalone profile persistence (Firestore, keyed by email hash)
 // ─────────────────────────────────────────────────────────────────
 
-// SHA-256 of email — never the raw address, so it's not directly linkable
-async function _anonEmailHash(email) {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(email.toLowerCase().trim()));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// Write current profile to anonProfiles/{hash}. No-op for BB users (they use userSettings).
+// Write current profile to anonProfiles/{profile id}. No-op for BB users (they use userSettings).
 async function _anonSaveProfile() {
   if (!db || _bbUser) return;
   const email = BB.storage.get('Anon_email');
   if (!email) return;
   try {
-    const hash = await _anonEmailHash(email);
+    const hash = await _anonProfileId(email);
+    if (!hash) return;
     await db.collection('anonProfiles').doc(hash).set({
       monika:       profile.monika      || null,
       colorKey:     profile.colorKey    || 'orange',
@@ -1806,7 +1851,8 @@ async function _anonSaveProfile() {
 async function _anonRestoreProfile(email) {
   if (!db) return false;
   try {
-    const hash = await _anonEmailHash(email);
+    const hash = await _anonProfileId(email);
+    if (!hash) return false;
     const doc  = await db.collection('anonProfiles').doc(hash).get();
     if (!doc.exists) return false;
     const d = doc.data();
@@ -1860,9 +1906,9 @@ async function _bbRestoreProfile(uid) {
     // future sessions take the fast path.
     if (!ap.monika && _bbUser && _bbUser.email) {
       try {
-        const hash    = await _anonEmailHash(_bbUser.email);
-        const anonDoc = await db.collection('anonProfiles').doc(hash).get();
-        if (anonDoc.exists && anonDoc.data().monika) {
+        const hash    = await _anonProfileId(_bbUser.email);
+        const anonDoc = hash ? await db.collection('anonProfiles').doc(hash).get() : null;
+        if (anonDoc && anonDoc.exists && anonDoc.data().monika) {
           ap = anonDoc.data();
           db.collection('userSettings').doc(uid).set(
             { anonProfile: ap }, { merge: true }
@@ -1890,7 +1936,15 @@ async function _bbRestoreProfile(uid) {
     // hasn't stored its own stableSince yet (e.g. first visit to the board).
     const resolvedStableSince = ap.stableSince || d.stableStreakStart || null;
     if (resolvedStableSince) BB.storage.set('Anon_stableSince', resolvedStableSince);
-    const medList = ap.medList && ap.medList.length ? ap.medList : (d.currentMedList || []);
+    // The account's own list is encrypted (js/shared/secure-store.js); only
+    // decrypt it when the board profile has none of its own.
+    let medList = ap.medList && ap.medList.length ? ap.medList : [];
+    if (!medList.length && _bbUser) {
+      try {
+        const sec = await BB.secure.settings(uid, d, { timeoutMs: 2500 });
+        medList = sec.view.currentMedList || [];
+      } catch (_) {}
+    }
     if (medList.length) {
       BB.storage.set('Anon_medList', JSON.stringify(medList));
       BB.storage.set('Anon_med', medList.map(m => m.name).filter(Boolean).join(', '));
@@ -1909,7 +1963,7 @@ async function _bbRestoreProfile(uid) {
     // Mirror restored profile to anonProfiles so standalone email-code path
     // can restore it on a fresh browser/device without needing Firebase Auth.
     if (ap.monika && _bbUser && _bbUser.email) {
-      _anonEmailHash(_bbUser.email).then(hash =>
+      _anonProfileId(_bbUser.email).then(hash => hash &&
         db.collection('anonProfiles').doc(hash).set({
           monika:      ap.monika,
           colorKey:    ap.colorKey    || 'orange',
@@ -1952,7 +2006,7 @@ function _bbSaveProfile() {
   ).catch(e => console.warn('[BB] _bbSaveProfile failed', e));
   // Mirror to anonProfiles so standalone email-code path finds the profile
   if (_bbUser.email) {
-    _anonEmailHash(_bbUser.email).then(hash =>
+    _anonProfileId(_bbUser.email).then(hash => hash &&
       db.collection('anonProfiles').doc(hash).set(
         { ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() },
         { merge: true }
@@ -2195,7 +2249,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 /**
  * Count this member towards `counters/anonUserCount`, exactly once ever.
  *
- * The flag lives on `anonProfiles/{sha256(email)}` — the one document that
+ * The flag lives on `anonProfiles/{profile id}` — the one document that
  * identifies a member across both entry paths (BipolarBear account and the
  * standalone email-code flow) and across devices, so the same person can't be
  * counted twice. Members who joined before this shipped get counted the first
@@ -2207,7 +2261,8 @@ async function _countAnonMember() {
   const email = (_bbUser && _bbUser.email) || BB.storage.get('Anon_email');
   if (!email) return;
   try {
-    const hash    = await _anonEmailHash(email);
+    const hash    = await _anonProfileId(email);
+    if (!hash) return;
     const counted = await BB.userCount.countOnce(
       db, 'anon', db.collection('anonProfiles').doc(hash), 'counted'
     );
@@ -2215,7 +2270,24 @@ async function _countAnonMember() {
   } catch (e) { /* best-effort — the board doesn't depend on this */ }
 }
 
+// ?post=<id> opens that thread once the feed has it — the link the crisis
+// bear's email to the moderators carries (no post text goes by email).
+let _deepLinkTried = false;
+function _openDeepLinkedPost() {
+  if (_deepLinkTried) return;
+  _deepLinkTried = true;
+  let id = null;
+  try { id = new URLSearchParams(location.search).get('post'); } catch (_) {}
+  if (!id) return;
+  let tries = 0;
+  (function attempt() {
+    if (localPosts.some(p => p.id === id)) { openThread(id).catch(() => {}); return; }
+    if (++tries < 20) setTimeout(attempt, 500);
+  })();
+}
+
 function initBoard() {
+  _openDeepLinkedPost();
   BB.storage.set('AnonLastVisit', Date.now());
   // Opening the board reads everything up to now — record it so the home
   // screen's Bipolar Anonymous tick is already active on the way back, before
@@ -2325,7 +2397,7 @@ function _anonMarkPostedToday() {
 async function _postCountTargets() {
   const email = (_bbUser && _bbUser.email) || BB.storage.get('Anon_email') || '';
   let hash = null;
-  if (email) { try { hash = await _anonEmailHash(email); } catch (_) {} }
+  if (email) { try { hash = await _anonProfileId(email); } catch (_) {} }
   return { uid: _bbUser ? _bbUser.uid : null, hash };
 }
 function _countMyPost() {
@@ -4322,17 +4394,35 @@ function listenSuggestions() {
   if (unsubSuggestions) { unsubSuggestions(); unsubSuggestions = null; }
   suggestions = [];
   if (!db || (!profile.isAdmin && !mySuggestionIds().length)) return;
-  unsubSuggestions = db.collection(BB_BRAND.collections.annSuggestions)
-    .orderBy('timestamp', 'desc')
-    .limit(40)
-    .onSnapshot(snap => {
-      suggestions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // A suggestion of yours that made it onto the board is now an ordinary
-      // announcement — stop tracking it so the listener can retire.
-      suggestions.forEach(x => { if (x.status === 'approved') forgetSuggestion(x.id); });
-      if (currentTab === 'announcements') renderPosts(announcementFeed());
-      renderTabBadges();
-    }, err => console.warn('[Anonymous] suggestions listener error', err));
+  const onList = (list) => {
+    suggestions = list;
+    // A suggestion of yours that made it onto the board is now an ordinary
+    // announcement — stop tracking it so the listener can retire.
+    suggestions.forEach(x => { if (x.status === 'approved') forgetSuggestion(x.id); });
+    if (currentTab === 'announcements') renderPosts(announcementFeed());
+    renderTabBadges();
+  };
+  if (profile.isAdmin) {
+    unsubSuggestions = db.collection(BB_BRAND.collections.annSuggestions)
+      .orderBy('timestamp', 'desc')
+      .limit(40)
+      .onSnapshot(snap => onList(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        err => console.warn('[Anonymous] suggestions listener error', err));
+    return;
+  }
+  // A member watches only their own, by id: the queue itself is the admin's
+  // to read (Firestore rules, 2026-10-12), so nobody else's pending
+  // suggestion reaches this device.
+  const byId = {};
+  const unsubs = mySuggestionIds().map(id =>
+    db.collection(BB_BRAND.collections.annSuggestions).doc(id).onSnapshot(doc => {
+      if (doc.exists) byId[id] = { id, ...doc.data() };
+      else { delete byId[id]; forgetSuggestion(id); }
+      onList(Object.values(byId).sort((a, b) =>
+        ((b.timestamp && b.timestamp.toMillis && b.timestamp.toMillis()) || 0)
+        - ((a.timestamp && a.timestamp.toMillis && a.timestamp.toMillis()) || 0)));
+    }, err => console.warn('[Anonymous] suggestion listener error', err)));
+  unsubSuggestions = () => unsubs.forEach(u => u());
 }
 
 // Suggestions this viewer should see, newest first, as feed-shaped cards.
@@ -4386,7 +4476,8 @@ async function approveSuggestion(id) {
   if (!x || !db || !profile.isAdmin) return;
   try {
     await _ensureAuthSession();
-    await db.collection(BB_BRAND.collections.posts).add(_withOwner({
+    const _aref = db.collection(BB_BRAND.collections.posts).doc();
+    await _aref.set(await _withOwner(_aref.path, {
       name:        x.name,
       streak:      num(x.streak, 1),
       initials:    x.initials || initials(x.name || ''),
@@ -4882,7 +4973,8 @@ function setupThread() {
       try {
         await _ensureAuthSession(); // comment writes require request.auth
         const postRef = db.collection(BB_BRAND.collections.posts).doc(commentTargetId);
-        await postRef.collection('comments').add(_withOwner(comment));
+        const cref = postRef.collection('comments').doc();
+        await cref.set(await _withOwner(cref.path, comment));
         sent = true;
         _threadStickToBottom = true; // follow your own comment down to the end
         // Your own reply is read the instant you send it. The thread listener
@@ -5538,8 +5630,9 @@ function setupCompose() {
           const res = await _callFn('createAnonPoll', { ...fields, options: pollOpts, asMember: !asAdmin });
           docId = res.id || null;
         } else {
-          await _ensureAuthSession(); // the post records its author's uid
-          const ref = await db.collection(BB_BRAND.collections.posts).add(_withOwner({
+          await _ensureAuthSession(); // the post records its author's owner stamp
+          const ref = db.collection(BB_BRAND.collections.posts).doc();
+          await ref.set(await _withOwner(ref.path, {
             ...entry,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           }));
@@ -5629,15 +5722,9 @@ const NOTIF_SHORT = {
 
 function _push() { return (window.BB && BB.anonPush) || null; }
 
-// sha256 of the member's email, resolved once. It identifies the same person
-// across devices without the server ever holding the address — the same hash
-// anonProfiles is keyed by.
-let _pushEmailHash = null;
-function _resolvePushEmailHash() {
-  const email = (_bbUser && _bbUser.email) || BB.storage.get('Anon_email') || '';
-  if (!email || _pushEmailHash) return;
-  _anonEmailHash(email).then(h => { _pushEmailHash = h; }).catch(() => {});
-}
+// Push registrations carry the monika only (replies are addressed by it).
+// They used to carry sha256(email) too; nothing read it, so it went
+// (privacy round, 2026-10-12).
 
 // Hand the push module the page's Firestore handle and identity, then bring
 // any existing registration up to date (tokens rotate; permission can be
@@ -5645,10 +5732,9 @@ function _resolvePushEmailHash() {
 function initPush() {
   const push = _push();
   if (!push) return;
-  _resolvePushEmailHash();
   push.configure({
     db,
-    identity: () => ({ monika: profile.monika, emailHash: _pushEmailHash }),
+    identity: () => ({ monika: profile.monika }),
     // bbAnonPush writes require request.auth, and standalone members have no
     // Firebase session until something asks for one.
     ensureAuth: _ensureAuthSession,
@@ -6302,22 +6388,30 @@ async function deleteAnonAccount() {
           // Only posts this session wrote (or written before posts carried an
           // owner uid) — anything else under the name isn't ours to delete.
           // One by one, so a refused delete doesn't take the rest with it.
-          const uid = _authUid();
+          const mine = await Promise.all(snap.docs.map(doc => _isMine(doc)));
           await Promise.all(snap.docs
-            .filter(doc => { const o = doc.get('uid'); return !o || o === uid; })
+            .filter((doc, i) => mine[i])
             .map(doc => doc.ref.delete().catch(() => {})));
+          // Their replies too (the server also removes a deleted post's replies).
+          try {
+            const cs = await db.collectionGroup('comments').where('name', '==', monika).get();
+            const cm = await Promise.all(cs.docs.map(doc => _isMine(doc)));
+            await Promise.all(cs.docs.filter((doc, i) => cm[i] && doc.data().owner)
+              .map(doc => doc.ref.delete().catch(() => {})));
+          } catch (e) { console.warn('[AnonDelete] replies', e); }
         } catch (e) { console.warn('[AnonDelete] posts', e); }
 
         // 2. Release the monika reservation so the name frees up.
         await db.collection(BB_BRAND.collections.monikas).doc(monika.toLowerCase()).delete().catch(() => {});
       }
 
-      // 3. Delete the cross-device profile (keyed by hashed email).
+      // 3. Delete the cross-device profile (keyed by the server's profile id).
       if (email) {
         try {
-          const hash = await _anonEmailHash(email);
-          await db.collection('anonProfiles').doc(hash).delete();
+          const hash = await _anonProfileId(email);
+          if (hash) await db.collection('anonProfiles').doc(hash).delete();
         } catch (e) { console.warn('[AnonDelete] anonProfile', e); }
+        BB.storage.remove('Anon_profileId');
       }
 
       // 3b. Drop the push registration — nothing should still be notifying a
@@ -6395,15 +6489,15 @@ document.getElementById('ms-save').addEventListener('click', async () => {
       const nameChanged = oldMonika.toLowerCase() !== newMonika.toLowerCase();
       // Reserve the new name first: if someone else holds it, nothing moves.
       if (nameChanged) {
-        await db.collection(BB_BRAND.collections.monikas).doc(newMonika.toLowerCase())
-          .set(_withOwner({ monika: newMonika, createdAt: firebase.firestore.FieldValue.serverTimestamp() }));
+        const nref = db.collection(BB_BRAND.collections.monikas).doc(newMonika.toLowerCase());
+        await nref.set(await _withOwner(nref.path, { monika: newMonika, createdAt: firebase.firestore.FieldValue.serverTimestamp() }));
       }
       // Rename this session's posts (and any from before posts carried an
-      // owner uid), one by one so a refused update doesn't stop the rest.
-      const uid   = _authUid();
+      // owner), one by one so a refused update doesn't stop the rest.
       const snap  = await db.collection(BB_BRAND.collections.posts).where('name', '==', oldMonika).get();
+      const mine  = await Promise.all(snap.docs.map(doc => _isMine(doc)));
       await Promise.all(snap.docs
-        .filter(doc => { const o = doc.get('uid'); return !o || o === uid; })
+        .filter((doc, i) => mine[i])
         .map(doc => doc.ref.update({
           name:     newMonika,
           initials: newInit || initials(newMonika),

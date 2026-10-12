@@ -748,6 +748,16 @@ window.addEventListener('pageshow', () => {
             // The account and its encryption key are in place: a save that was
             // waiting on sign-in (see _gateGuestSave) can go ahead now.
             _markAuthReady();
+            // Personal details and the sensitive settings are stored encrypted
+            // under the same key (js/shared/secure-store.js). Now that it's in
+            // hand, move anything still in plaintext across, push saves made
+            // without it, and freshen this device's copies.
+            if (_userCryptoKey && window.BB && BB.secure) {
+              BB.secure.settings(user.uid, doc.exists ? doc.data() : null).then((r) => {
+                if (r && r.view && r.view.currentMedList !== undefined && typeof loadMedicationList === 'function') loadMedicationList();
+              }).catch(() => {});
+              BB.secure.personal(user.uid).catch(() => {});
+            }
             // Migrate guest entries (decrypt with guest key, re-encrypt with user key), then load
             await migrateGuestEntriesIfNeeded(user);
             loadEntries();
@@ -1002,6 +1012,7 @@ window.addEventListener('pageshow', () => {
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
       // The safety plan is synced (encrypted) to the account, so it goes with it.
       try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
+      try { BB.secure.clearPending(); } catch (_) {}
       if (isNative()) {
         const _ss = window.Capacitor?.Plugins?.SecureStorage;
         if (_ss) {
@@ -2257,7 +2268,8 @@ window.addEventListener('pageshow', () => {
     // Bipolar Anonymous "How are you today?", answered by the journal (30 Sep
     // 2026). Only for an account that also has a board moniker (Anon_linked,
     // from userSettings.anonProfile.monika) and hasn't switched it off on the
-    // board (anonProfile.journalCheckin === false → Anon_journalCheckin '0').
+    // board. OPT-IN since 2026-10-12: only when anonProfile.journalCheckin is
+    // true (Anon_journalCheckin '1'); never on by default.
     // Only an entry for today or yesterday counts, and only its mood category
     // leaves the device — into the board's daily totals, where the server keeps
     // no record of who picked what. One check-in per account per UK day; the
@@ -2266,7 +2278,9 @@ window.addEventListener('pageshow', () => {
       try {
         if (!currentUser) return;
         if (BB.storage.get('Anon_linked') !== '1' && !BB.storage.get('Anon_monika')) return;
-        if (BB.storage.get('Anon_journalCheckin') === '0') return;
+        // Opt-in since 2026-10-12: only for someone who turned it on (the
+        // server also refuses a journal check-in unless anonProfile.journalCheckin).
+        if (BB.storage.get('Anon_journalCheckin') !== '1') return;
         const cat = _moodCat(entry.mood);
         if (!['manic', 'elevated', 'stable', 'low', 'depressed'].includes(cat)) return;
         const d = new Date(entry.date); d.setHours(0, 0, 0, 0);
@@ -2660,13 +2674,12 @@ window.addEventListener('pageshow', () => {
           const batch = db.batch();
           await Promise.all(guestEntries.slice(i, i + BATCH_SIZE).map(async entry => {
             const { localKey, ...data } = entry;
-            let fsData;
-            if (_userCryptoKey) {
-              const enc = await _userEncrypt(_userCryptoKey, { ...data, userId: user.uid });
-              fsData = { userId: user.uid, timestamp: data.timestamp, ...enc };
-            } else {
-              fsData = { ...data, userId: user.uid };
-            }
+            // Encrypted or not at all: there is no plaintext branch. (The key
+            // is checked at the top; if it went away mid-way, this throws and
+            // the entries stay on the device for the next attempt.)
+            if (!_userCryptoKey) throw new Error('journal key missing');
+            const enc = await _userEncrypt(_userCryptoKey, { ...data, userId: user.uid });
+            const fsData = { userId: user.uid, timestamp: data.timestamp, ...enc };
             batch.set(db.collection('entries').doc(), fsData);
           }));
           await batch.commit();
@@ -10126,8 +10139,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (!recentEntriesPeriod) recentEntriesPeriod = '30d';
       try {
         if (typeof window.jspdf === 'undefined') {
-          alert(BB.t('journal.dlg.pdfLibLoading'));
-          return;
+          try { await BB.loadJsPdf(); }
+          catch (e) { alert(BB.t('journal.dlg.pdfLibLoading')); return; }
         }
 
         // Load ALL entries — and DECRYPT them. On Firestore only userId/timestamp are
@@ -10310,15 +10323,10 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
         // ── PERSONAL DETAILS (left) + MEDICATIONS (right) ──
         // For logged-in users, refresh from Firestore so data survives localStorage being cleared
+        // (Decrypted by js/shared/secure-store.js, which writes the device copy.)
         if (currentUser && db) {
-          try {
-            const pdDoc = await db.collection('personalDetails').doc(currentUser.uid).get();
-            if (pdDoc.exists) {
-              const d = pdDoc.data();
-              const pdFields = ['personalName','personalDOB','personalMedicalNum','personalDiagnosis','personalDiagnosisDate','personalAddress','personalMobile','personalEmail','personalEmergencyContact','personalNotes'];
-              pdFields.forEach(k => { if (d[k] !== undefined) localStorage.setItem(k, d[k]); });
-            }
-          } catch(e) { console.warn('Could not load personal details for PDF', e); }
+          try { await BB.secure.personal(currentUser.uid); }
+          catch(e) { console.warn('Could not load personal details for PDF', e); }
         }
         const personalName = localStorage.getItem('personalName') || '';
         const personalDOB = localStorage.getItem('personalDOB') || '';
@@ -11881,6 +11889,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         BB.storage.remove('_recentMoods');
         try { BB.platform.syncWidgetMoods(); } catch (_) {}
         try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
+      try { BB.secure.clearPending(); } catch (_) {}
         localStorage.removeItem('moodDefinitions');
         localStorage.removeItem('copingStrategies');
         localStorage.removeItem('moodMemories');
@@ -11969,6 +11978,12 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(email.toLowerCase().trim()));
               return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
             };
+            // The board profile under its current id (cached by the board); the
+            // onAuthUserDeleted Cloud Function also removes the account email's.
+            try {
+              const _pid = JSON.parse(BB.storage.get('Anon_profileId') || 'null');
+              if (_pid && _pid.id) await db.collection('anonProfiles').doc(_pid.id).delete().catch(() => {});
+            } catch (_) {}
             const _emails = [currentUser.email, BB.storage.get('Anon_email')]
               .filter(Boolean)
               .filter((e, i, arr) => arr.indexOf(e) === i); // de-dup
@@ -11981,13 +11996,16 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           } else {
             // Reset-only path: keep the userSettings doc, fields go back to defaults.
             db.collection('userSettings').doc(currentUser.uid).set({
-              currentMedList: [], dailyGoals: [], dailyBudget: '', logoVariant: 0,
+              // Sensitive settings live in secureEnc (js/shared/secure-store.js): drop it
+              // and any plaintext left from older builds.
+              ...BB.secure.resetPatch(),
+              dailyGoals: [], dailyBudget: '', logoVariant: 0,
               focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
               earlyWarnEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
-              moodDefinitions: {}, copingStrategies: {}, safetyPlanEnc: null,
+              safetyPlanEnc: null,
               onboardingStep: 0,
               helpedVoted: false,
               healthSyncEnabled: false,
@@ -12000,7 +12018,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
         // Clear anon-board localStorage so the next user on this browser
         // starts clean.
-        ['Anon_monika','Anon_email','Anon_verified','Anon_isAdmin',
+        ['Anon_monika','Anon_email','Anon_verified','Anon_isAdmin','Anon_profileId',
          'Anon_streak','Anon_med','Anon_medList','Anon_showMeds',
          'Anon_showStable','Anon_stableSince','Anon_stableStreak',
          'Anon_colorKey','Anon_initials','Anon_liked','Anon_hasPosted',
@@ -12264,8 +12282,10 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (currentUser && db) {
         try {
           const doc = await db.collection('userSettings').doc(currentUser.uid).get();
-          if (doc.exists && doc.data().currentMedList !== undefined) {
-            localStorage.setItem('currentMedList', JSON.stringify(doc.data().currentMedList));
+          // Decrypted (js/shared/secure-store.js), which also updates the device copy.
+          const r = await BB.secure.settings(currentUser.uid, doc.exists ? doc.data() : null);
+          if (r.view.currentMedList !== undefined) {
+            localStorage.setItem('currentMedList', JSON.stringify(r.view.currentMedList));
           }
         } catch(e) {}
       }
@@ -12329,9 +12349,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
     function syncMedListToFirestore(list) {
       if (currentUser && db) {
-        db.collection('userSettings').doc(currentUser.uid).set(
-          { currentMedList: list }, { merge: true }
-        ).catch(() => {});
+        BB.secure.saveSettings(currentUser.uid, { currentMedList: list });
       }
     }
 
@@ -13394,12 +13412,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         for (const entry of entries) {
           const withUid = { ...entry, userId: currentUser.uid };
           const ref = db.collection('entries').doc();
-          if (_userCryptoKey) {
-            const enc = await _userEncrypt(_userCryptoKey, withUid);
-            batch.set(ref, { userId: currentUser.uid, timestamp: entry.timestamp, ...enc });
-          } else {
-            batch.set(ref, withUid);
-          }
+          const enc = await _userEncrypt(_userCryptoKey, withUid);
+          batch.set(ref, { userId: currentUser.uid, timestamp: entry.timestamp, ...enc });
         }
         await batch.commit();
       } else {
@@ -14689,16 +14703,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
     async function showPersonalDetailsModal() {
       // For logged-in users, try to load from Firestore first
+      // Encrypted in the account (js/shared/secure-store.js); this decrypts
+      // it and updates the device copy for every field it knows.
       if (currentUser && db) {
-        try {
-          const doc = await db.collection('personalDetails').doc(currentUser.uid).get();
-          if (doc.exists) {
-            const d = doc.data();
-            const fields = ['personalName','personalDOB','personalMedicalNum','personalDiagnosis','personalDiagnosisDate','personalAddress','personalMobile','personalEmail','personalEmergencyContact','personalNotes'];
-            // Only overwrite localStorage if the Firestore value is actually defined
-            fields.forEach(k => { if (d[k] !== undefined) localStorage.setItem(k, d[k]); });
-          }
-        } catch(e) { console.warn('Could not load personal details from Firestore', e); }
+        try { await BB.secure.personal(currentUser.uid); }
+        catch(e) { console.warn('Could not load personal details', e); }
       }
       // Load into form from localStorage
       document.getElementById('personalName').value = localStorage.getItem('personalName') || '';
@@ -14726,11 +14735,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         localStorage.setItem(k, val);
         data[k] = val;
       });
-      // Sync to Firestore for logged-in users so details persist across devices
+      // Sync to the account, encrypted, so details persist across devices
+      // (without the key yet, they wait on this device and go up later).
       if (currentUser && db) {
-        try {
-          await db.collection('personalDetails').doc(currentUser.uid).set(data, { merge: true });
-        } catch(e) { console.warn('Could not save personal details to Firestore', e); }
+        try { await BB.secure.savePersonal(currentUser.uid, data); }
+        catch(e) { console.warn('Could not save personal details', e); }
       }
       alert(BB.t('journal.dlg.personalDetailsSaved'));
       closePersonalDetailsModal();
