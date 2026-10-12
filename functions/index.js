@@ -330,6 +330,7 @@ function feedbackEmailHtml(d) {
   const typeLabel = d.type ? `${TYPE_EMOJI[d.type] || '📣'} ${d.type}` : '📣 unknown';
   const ts = d.ts ? new Date(d.ts).toUTCString() : 'unknown';
   const rows = [
+    ['Name',     d.name    || '(not given)'],
     ['Type',     typeLabel],
     ['Message',  d.message || '(empty)'],
     ['Page',     d.page    || '—'],
@@ -405,7 +406,8 @@ exports.onFeedbackSubmitted = onDocumentCreated(
   async (event) => {
     const d = event.data.data();
     const typeLabel = d.type || 'feedback';
-    const subject = `[BipolarBear] New ${typeLabel} from ${d.email || d.uid || 'guest'}`;
+    const from    = [d.name, d.email].filter(Boolean).join(' · ') || d.uid || 'guest';
+    const subject = `[BipolarBear] New ${typeLabel} from ${from}`;
 
     const resend = new Resend(RESEND_API_KEY.value());
     const shot   = screenshotAttachment(d.screenshot);
@@ -415,7 +417,7 @@ exports.onFeedbackSubmitted = onDocumentCreated(
       subject,
       html:    feedbackEmailHtml(d),
       ...(shot ? { attachments: [shot] } : {}),
-      text:    `Type: ${typeLabel}\nMessage: ${d.message || ''}\nPage: ${d.page || ''}\nPlatform: ${d.platform || ''}\nUID: ${d.uid || 'guest'}\nUser email: ${d.email || '—'}\nNotify: ${d.notify ? 'yes' : 'no'}\nTime: ${d.ts ? new Date(d.ts).toUTCString() : 'unknown'}`,
+      text:    `Name: ${d.name || '(not given)'}\nType: ${typeLabel}\nMessage: ${d.message || ''}\nPage: ${d.page || ''}\nPlatform: ${d.platform || ''}\nUID: ${d.uid || 'guest'}\nUser email: ${d.email || '—'}\nNotify: ${d.notify ? 'yes' : 'no'}\nTime: ${d.ts ? new Date(d.ts).toUTCString() : 'unknown'}`,
     });
 
     if (error) {

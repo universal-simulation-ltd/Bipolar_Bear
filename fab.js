@@ -469,6 +469,10 @@
           </div>
           <textarea id="bbFbMessage" placeholder="Tell us what's on your mind…" data-i18n-placeholder="feedback.messagePlaceholder" rows="4"
             style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;resize:none;font-family:inherit;margin-bottom:12px;"></textarea>
+          <div id="bbFbNameRow" style="margin-bottom:12px;display:none;">
+            <input type="text" id="bbFbName" placeholder="Your name" data-i18n-placeholder="feedback.namePlaceholder" autocomplete="given-name" maxlength="80"
+              style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;font-family:inherit;">
+          </div>
           <div id="bbFbEmailRow" style="margin-bottom:12px;display:none;">
             <input type="email" id="bbFbEmail" placeholder="Your email (optional)" data-i18n-placeholder="feedback.emailPlaceholder"
               style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;font-family:inherit;">
@@ -1165,8 +1169,23 @@
   };
 
   /**
-   * Open the feedback modal, resetting type selection and message field, and
-   * filling in the page/version metadata line.
+   * The name we already have for this user, or ''. Checked in order: the
+   * name in their Personal Details (cached as `personalName`), the one they
+   * typed into this form before (`bbFeedbackName`), then the account's own
+   * display name. The Bipolar Anonymous nickname is left out on purpose —
+   * it's meant to stay unlinked from the account.
+   * @returns {string}
+   */
+  function _fbKnownName() {
+    const _user = window.currentUser || (window.firebase && window.firebase.auth ? window.firebase.auth().currentUser : null);
+    return (localStorage.getItem('personalName') || BB.storage.get('FeedbackName') ||
+      (_user && _user.displayName) || '').trim();
+  }
+
+  /**
+   * Open the feedback modal, resetting type selection and message field,
+   * filling in the page/version metadata line, and asking for a name only
+   * when we don't already have one.
    */
   window.openFabFeedback = function () {
     _fbType = null;
@@ -1182,6 +1201,8 @@
       const _ver = window._APP_VERSION ? ' · v' + window._APP_VERSION : '';
       _meta.textContent = _page + _ver;
     }
+    const _nameRow = document.getElementById('bbFbNameRow');
+    if (_nameRow) _nameRow.style.display = _fbKnownName() ? 'none' : '';
     window._clearFbScreenshot();
     if (_modal) _modal.classList.add('open');
   };
@@ -1223,8 +1244,12 @@
     if (!_msg)    { if (_errEl) { _errEl.textContent = _bbT('fab.fb.writeFirst', 'Please write something first.'); _errEl.style.display = ''; } return; }
     const _notifyEl = document.getElementById('bbFbNotify');
     const _emailEl  = document.getElementById('bbFbEmail');
+    const _nameRow  = document.getElementById('bbFbNameRow');
+    const _nameEl   = document.getElementById('bbFbName');
+    const _typed    = (_nameRow && _nameRow.style.display !== 'none' && _nameEl) ? _nameEl.value.trim().slice(0, 80) : '';
     const payload = {
       type: _fbType, message: _msg, page: window.location.pathname,
+      name: _typed || _fbKnownName() || null,
       version: window._APP_VERSION || null,
       platform: _getFbPlatform(),
       notify: _notifyEl ? _notifyEl.checked : false,
@@ -1247,6 +1272,8 @@
       // gets an anonymous one first.
       if (_auth && !_auth.currentUser) { try { await _auth.signInAnonymously(); } catch (e) {} }
       await _db.collection('feedback').add(payload);
+      // Remember a typed name so the next feedback doesn't ask again.
+      if (_typed) BB.storage.set('FeedbackName', _typed);
       window.closeFabFeedback();
       alert(_bbT('fab.fb.thanks', 'Thanks for your feedback! 🐻'));
     } catch (e) {
@@ -1256,10 +1283,14 @@
 
   /**
    * Tag feedback submissions with their runtime so we can triage by platform.
-   * @returns {'native'|'pwa'|'web'}
+   * Builds before v302 sent a bare 'native'.
+   * @returns {'native (iOS)'|'native (Android)'|'native'|'pwa'|'web'}
    */
   function _getFbPlatform() {
-    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) return 'native';
+    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
+      const _os = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : '';
+      return _os === 'ios' ? 'native (iOS)' : _os === 'android' ? 'native (Android)' : 'native';
+    }
     if (window.matchMedia('(display-mode: standalone)').matches) return 'pwa';
     return 'web';
   }

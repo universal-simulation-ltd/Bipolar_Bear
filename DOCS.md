@@ -485,6 +485,7 @@ bbWaFabHidden           "1"           — WhatsApp FAB permanently hidden
 bbQuickNoteFabHidden    "1"           — Quick Note FAB permanently hidden
 bbCoffeeFabHidden       "1"           — Buy Me a Coffee FAB permanently hidden
 bbFeedbackFabHidden     "1"           — Feedback FAB permanently hidden
+bbFeedbackName          string        — name typed into the feedback form (asked only when no personalName / account name)
 
 ── UNI·SIM suite counter (NOT bb-prefixed — shared with the whole suite) ────
 unisim:install-id       uuid          — this install, as the suite knows it

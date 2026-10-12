@@ -1447,7 +1447,12 @@
 // v298: Bipolar Anonymous: opening a thread also marks every older thread
 //   (earlier post timestamp) as read, so its red dot doesn't linger.
 //   Touches js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v301';
+// v302: the Send Feedback form asks "Your name" when no name is known
+//   (personalName, an earlier feedback name, or the account's displayName);
+//   feedback docs carry `name`, which the notification email shows, and a
+//   native app's platform says iOS or Android ("native (iOS)").
+//   Touches fab.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v302';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
