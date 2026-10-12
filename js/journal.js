@@ -11450,6 +11450,16 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const prev = byDay.get(key);
         if (!prev || at >= prev.at) byDay.set(key, { at, day, r, mood });
       }
+      // Their sleep on a day is the night before it (it can be logged the same
+      // morning); ours is the night after, so it moves to the previous day's
+      // entry. A night before a day with no mood record has nowhere to go.
+      const sleepByDay = new Map();
+      for (const { day, r } of byDay.values()) {
+        const s = r.sleep == null || r.sleep === '' ? NaN : Number(r.sleep);
+        if (isNaN(s)) continue;
+        const prev = new Date(day); prev.setDate(prev.getDate() - 1);
+        sleepByDay.set(_importDayKey(prev), s);
+      }
       const entries = [];
       let skipped = 0, future = 0;
       for (const [key, { day, r, mood }] of [...byDay].sort()) {
@@ -11464,7 +11474,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           mood,
           linkedMood: null, linkedMoods: [],
           energy: null,
-          sleep: r.sleep == null || isNaN(Number(r.sleep)) ? null : Number(r.sleep),
+          sleep: sleepByDay.has(key) ? sleepByDay.get(key) : null,
           medication: r.meds,
           ...(r.steps != null && !isNaN(Number(r.steps)) ? { steps: Number(r.steps) } : {}),
           notes: notes.filter(Boolean).join('\n'),
