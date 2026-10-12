@@ -44,7 +44,7 @@ Bipolar Bear es un diario de ánimo gratuito y privado, pensado para personas qu
 Registra tu estado de ánimo, tu energía y tu sueño día a día, descubre los patrones que importan y crea un kit de supervivencia con herramientas de afrontamiento a las que recurrir en los días difíciles.
 
 TUS DATOS SON TUYOS
-Las entradas del diario están cifradas de extremo a extremo. Solo tú puedes leerlas: ni nosotros ni nadie más. Tus notas, tus estados de ánimo y todo lo que registras se cifran en tu dispositivo antes de salir de él.
+Las entradas del diario se cifran en tu dispositivo antes de salir de él. Activa Diario privado en los Ajustes del diario y solo tú podrás leerlas: ni siquiera nosotros.
 
 QUÉ INCLUYE
 • Diario de ánimo diario — registra ánimo, energía, sueño y notas libres en segundos
@@ -105,7 +105,7 @@ Bipolar Bear est un journal d'humeur gratuit et privé, conçu pour les personne
 Note ton humeur, ton énergie et ton sommeil au quotidien, repère les schémas qui comptent et constitue une boîte à outils de stratégies d'adaptation à laquelle recourir les jours difficiles.
 
 TES DONNÉES T'APPARTIENNENT
-Les entrées du journal sont chiffrées de bout en bout. Toi seul peux les lire — ni nous, ni personne d'autre. Tes notes, tes humeurs et tout ce que tu enregistres sont chiffrés sur ton appareil avant même d'en sortir.
+Les entrées du journal sont chiffrées sur ton appareil avant de le quitter. Active Journal privé dans les Réglages du journal et toi seul peux les lire : même pas nous.
 
 CE QUE TU Y TROUVES
 • Journal d'humeur quotidien — note humeur, énergie, sommeil et texte libre en quelques secondes
@@ -166,7 +166,7 @@ Bipolar Bear ist ein kostenloses, privates Stimmungstagebuch für Menschen, die 
 Erfasse Tag für Tag deine Stimmung, Energie und deinen Schlaf, erkenne die Muster, die zählen, und baue dir einen Notfallkoffer mit Bewältigungshilfen für die schweren Tage auf.
 
 DEINE DATEN GEHÖREN DIR
-Tagebucheinträge sind Ende-zu-Ende-verschlüsselt. Nur du kannst sie lesen – nicht wir, niemand sonst. Deine Notizen, Stimmungen und alles, was du festhältst, werden auf deinem Gerät verschlüsselt, bevor sie es überhaupt verlassen.
+Tagebucheinträge werden auf deinem Gerät verschlüsselt, bevor sie es verlassen. Schalte in den Tagebuch-Einstellungen Privates Tagebuch ein, dann kannst nur du sie lesen – nicht einmal wir.
 
 WAS DICH ERWARTET
 • Tägliches Stimmungstagebuch – erfasse Stimmung, Energie, Schlaf und freie Notizen in Sekunden
@@ -375,7 +375,7 @@ Bipolar Bear è un diario dell'umore gratuito e privato, pensato per le persone 
 Registra ogni giorno il tuo umore, la tua energia e il tuo sonno, individua gli schemi che contano e crea un kit di sopravvivenza con strumenti di supporto a cui ricorrere nei giorni difficili.
 
 I TUOI DATI SONO TUOI
-Le voci del diario sono cifrate end-to-end. Solo tu puoi leggerle: né noi né nessun altro. Le tue note, i tuoi stati d'animo e tutto ciò che registri vengono cifrati sul tuo dispositivo prima ancora di uscirne.
+Le voci del diario sono cifrate sul tuo dispositivo prima di lasciarlo. Attiva Diario privato nelle Impostazioni del diario e solo tu potrai leggerle: nemmeno noi.
 
 COSA TROVI
 • Diario dell'umore quotidiano — registra umore, energia, sonno e note libere in pochi secondi
@@ -432,7 +432,7 @@ O Bipolar Bear é um diário de humor gratuito e privado, criado para pessoas qu
 Regista o teu humor, a tua energia e o teu sono dia após dia, descobre os padrões que importam e cria um kit de sobrevivência com ferramentas de apoio a que possas recorrer nos dias difíceis.
 
 OS TEUS DADOS SÃO TEUS
-As entradas do diário são cifradas de ponta a ponta. Só tu as podes ler — nem nós, nem mais ninguém. As tuas notas, os teus estados de humor e tudo o que registas são cifrados no teu dispositivo antes de sequer saírem dele.
+As entradas do diário são cifradas no teu dispositivo antes de saírem dele. Ativa Diário privado nas Definições do diário e só tu as podes ler: nem nós.
 
 O QUE ENCONTRAS
 • Diário de humor diário — regista humor, energia, sono e notas livres em segundos
@@ -489,7 +489,7 @@ Bipolar Bear is een gratis, privé stemmingsdagboek voor mensen die leven met ee
 Houd dag voor dag je stemming, energie en slaap bij, ontdek de patronen die ertoe doen en bouw een survivalkit op met copingmiddelen waar je op de moeilijke dagen naar kunt grijpen.
 
 JOUW GEGEVENS BLIJVEN VAN JOU
-Dagboekvermeldingen zijn end-to-end versleuteld. Alleen jij kunt ze lezen — wij niet, niemand anders. Je notities, je stemmingen en alles wat je vastlegt worden op je apparaat versleuteld voordat ze het ooit verlaten.
+Dagboekitems worden op je apparaat versleuteld voordat ze het verlaten. Zet Privé dagboek aan in de dagboekinstellingen en alleen jij kunt ze lezen: zelfs wij niet.
 
 WAT JE VINDT
 • Dagelijks stemmingsdagboek — leg stemming, energie, slaap en vrije notities in seconden vast
@@ -546,7 +546,7 @@ Bipolar Bear to bezpłatny, prywatny dziennik nastroju stworzony dla osób żyj�
 Zapisuj dzień po dniu swój nastrój, energię i sen, dostrzegaj ważne wzorce i buduj zestaw ratunkowy z narzędziami do radzenia sobie, po które możesz sięgnąć w trudne dni.
 
 TWOJE DANE NALEŻĄ DO CIEBIE
-Wpisy w dzienniku są szyfrowane end-to-end. Tylko Ty możesz je odczytać — nie my, nikt inny. Twoje notatki, nastroje i wszystko, co zapisujesz, są szyfrowane na Twoim urządzeniu, zanim je opuszczą.
+Wpisy w dzienniku są szyfrowane na Twoim urządzeniu, zanim je opuszczą. Włącz Prywatny dziennik w Ustawieniach dziennika, a tylko Ty będziesz mógł je przeczytać: nawet my nie.
 
 CO ZNAJDZIESZ W ŚRODKU
 • Codzienny dziennik nastroju — zapisuj nastrój, energię, sen i dowolne notatki w kilka sekund
@@ -603,7 +603,7 @@ Bipolar Bear är en gratis, privat humördagbok för dig som lever med bipolär 
 Registrera ditt humör, din energi och din sömn dag för dag, upptäck mönstren som spelar roll och bygg en överlevnadslåda med hanteringsverktyg att ta till på de svåra dagarna.
 
 DINA DATA ÄR DINA
-Dagboksinlägg är totalsträckskrypterade (end-to-end). Bara du kan läsa dem — inte vi, ingen annan. Dina anteckningar, ditt humör och allt du loggar krypteras på din enhet innan det ens lämnar den.
+Dagboksinlägg krypteras på din enhet innan de lämnar den. Slå på Privat dagbok i dagbokens Inställningar så kan bara du läsa dem: inte ens vi.
 
 VAD SOM FINNS INUTI
 • Daglig humördagbok — logga humör, energi, sömn och fria anteckningar på några sekunder
@@ -660,7 +660,7 @@ Bipolar Bear 是一款免费、私密的情绪日记，专为与双相情感障�
 逐日记录你的情绪、精力和睡眠，发现真正重要的规律，并建立一个应对工具包，在艰难的日子里随手可用。
 
 你的数据属于你
-日记条目采用端到端加密。只有你能读到——我们不能，其他任何人也不能。你的笔记、情绪以及记录的一切，在离开设备之前就已在本地加密。
+日记条目在离开设备之前会在你的设备上加密。在日记的设置中开启私密日记后，只有你能读取：连我们也不能。
 
 应用内容
 • 每日情绪日记——数秒内记录情绪、精力、睡眠和自由文字

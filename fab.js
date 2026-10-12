@@ -434,9 +434,9 @@
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:12px;" data-i18n="fab.security.title">How your data stays safe</div>
           <div style="text-align:left;font-size:0.84em;color:#495057;line-height:1.65;margin-bottom:16px;">
             <p style="margin-bottom:8px;" data-i18n-html="fab.security.pinBody"><strong>🔑 Your PIN</strong> locks the app locally on your device. Without it, nobody can open Bipolar Bear — even if they have your phone.</p>
-            <p style="margin-bottom:8px;" data-i18n-html="fab.security.passwordBody"><strong>🔒 Your password</strong> encrypts your journal entries before they ever leave your device. The data is scrambled using a key only you hold.</p>
-            <p style="margin-bottom:8px;" data-i18n-html="fab.security.firebaseBody"><strong>☁️ Firebase (our database)</strong> stores only the encrypted version. Even we can't read your entries — they're meaningless without your password.</p>
-            <p style="margin-bottom:0;" data-i18n-html="fab.security.e2eeBody"><strong>🛡️ End-to-end encryption</strong> means your data is protected at every step — on your device, in transit, and in storage.</p>
+            <p style="margin-bottom:8px;" data-i18n-html="fab.security.passwordBody"><strong>🔒 Encrypted on your device</strong>: your journal entries are scrambled before they ever leave it.</p>
+            <p style="margin-bottom:8px;" data-i18n-html="fab.security.firebaseBody"><strong>☁️ Firebase (our database)</strong> stores only the encrypted version. By default we keep a spare key, so your journal opens on your new devices. Turn on <strong>Private journal</strong> in Settings and only your journal password opens it: not even we can.</p>
+            <p style="margin-bottom:0;" data-i18n-html="fab.security.e2eeBody"><strong>🛡️ Encrypted at every step</strong>: on your device, in transit, and in storage.</p>
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <button onclick="closeSecurityModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.gotIt">Got it</button>

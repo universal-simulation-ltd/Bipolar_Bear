@@ -39,7 +39,7 @@
   "✏️ Post 🐻": "✏️ Napisz 🐻",
   "People who actually get it": "Ludzie, którzy naprawdę rozumieją",
   "+ You": "+ Ty",
-  "End-to-end encrypted · no real name required": "Szyfrowane end-to-end · bez podawania imienia"
+  "Anonymous · no real name required": "Anonimowo · bez podawania imienia"
  },
  "03-patterns": {
   "Spot your patterns": "Odkryj swoje wzorce",
@@ -100,9 +100,9 @@
   "Enter your PIN to continue": "Wprowadź PIN, aby kontynuować",
   "🔐 More info": "🔐 Więcej informacji",
   "Forgot PIN?": "Nie pamiętasz PIN-u?",
-  "Not even we can": "Nawet my nie możemy",
-  "read your entries": "czytać Twoich wpisów",
-  "End-to-end encrypted journal": "Dziennik szyfrowany end-to-end"
+  "Encrypted on": "Szyfrowany na",
+  "your device": "Twoim urządzeniu",
+  "Private journal: only you can read it": "Prywatny dziennik: tylko Ty go przeczytasz"
  },
  "01-hero": {
   "Every high.": "Każdy wzlot.",

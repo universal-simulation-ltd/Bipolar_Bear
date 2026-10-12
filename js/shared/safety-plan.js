@@ -14,11 +14,12 @@
  *     crisis, so it must open offline, instantly, and (only if the person
  *     opts in) from the PIN lock screen before anything is unlocked.
  *   - Signed in: ALSO in the person's own `userSettings/{uid}` doc, but only
- *     as `safetyPlanEnc` — AES-GCM ciphertext under the same end-to-end data
- *     key the journal entries use (sessionStorage `bb_user_key`, put there by
- *     js/journal.js). The plaintext never leaves the device, so the plan is
- *     unreadable to anyone but the person even if the Firestore rules were
- *     ever loosened. When the key isn't in this session yet (the journal
+ *     as `safetyPlanEnc` — AES-GCM ciphertext under the same data key the
+ *     journal entries use (sessionStorage `bb_user_key`, put there by
+ *     js/journal.js). The plaintext never leaves the device, so loosened
+ *     Firestore rules wouldn't expose it. With a Standard journal the server
+ *     keeps a spare wrap of that key (journalWrapKey), so only Private makes
+ *     it readable by the person alone. When the key isn't in this session yet (the journal
  *     hasn't been opened) the plan just stays local and is pushed later.
  *     Never written to any new or shared collection.
  *   - Guests: this device only.
@@ -102,7 +103,7 @@
       onLockDesc: 'Lets you read it without your PIN. Anyone holding your phone could read it too.',
       onWidget: 'Call from the home-screen widget',
       widgetHelp: 'Add the “Call for support” widget to your home screen to call this person in one tap.',
-      savedSignedIn: 'Saved on this phone and, end-to-end encrypted, to your account. Only you can read it.',
+      savedSignedIn: 'Saved on this phone and, encrypted, to your account.',
       savedGuest: 'Saved on this phone only.',
       delete: 'Delete my safety plan',
       deleteConfirm: "Delete your whole safety plan? This can't be undone.",

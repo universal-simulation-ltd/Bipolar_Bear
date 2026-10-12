@@ -22,7 +22,7 @@ Mood journal & survival kit
 
 ### Promotional text  (max 170 chars, editable any time without review)
 ```
-Log mood, energy and sleep in under a minute, see what shapes tomorrow’s mood, and keep a survival kit for the hard days. Journal entries are end-to-end encrypted.
+Log mood, energy and sleep in under a minute, see what shapes tomorrow’s mood, and keep a survival kit for the hard days. Journal entries are encrypted on your device.
 ```
 
 ### Keywords  (max 100 chars, comma-separated, no spaces after commas)
@@ -53,7 +53,7 @@ ANONYMOUS COMMUNITY
 Connect with others who get it. Share your thoughts without sharing your identity on the optional anonymous community board.
 
 PRIVATE BY DESIGN
-Journal entries are end-to-end encrypted: only you can read them, not us and not anyone else. Insights stay on your device. No ads, and we never sell your data.
+Journal entries are encrypted on your device before they leave it. Turn on Private journal and only you can read them: not even we can. Insights stay on your device. No ads, and we never sell your data.
 
 Bipolar Bear is for people living with bipolar disorder, their families, and anyone who wants to understand their mental health better.
 
@@ -171,14 +171,14 @@ Data safety. Based on the architecture notes in DOCS.md.
 | Data type | Collected? | Linked to user? | Used for tracking? | Notes |
 |-----------|-----------|-----------------|--------------------|-------|
 | Email address | Yes | Yes | No | Firebase Auth account |
-| Health & fitness (mood/sleep/energy) | Yes | Yes* | No | *Stored end-to-end ENCRYPTED — we cannot read it |
-| User content (journal notes) | Yes | Yes* | No | *End-to-end encrypted |
+| Health & fitness (mood/sleep/energy) | Yes | Yes* | No | *Encrypted on the device. Standard journal (the default, since 1.41): we keep a spare key, so declare it as collected. Private journal: only the person's password opens it |
+| User content (journal notes) | Yes | Yes* | No | *As above: encrypted on the device; end-to-end only with Private journal |
 | Contact info (PDF export details) | Yes | Yes | No | Optional, user-entered |
 | Identifiers (user ID) | Yes | Yes | No | Firestore document key |
 | Diagnostics / crash data | Check Firebase | — | No | Only if Crashlytics/Analytics enabled |
 
 Encryption / export-compliance answer: app uses standard encryption (HTTPS +
-E2E entry encryption). Most likely qualifies for the exemption — answer the
+on-device entry encryption). Most likely qualifies for the exemption — answer the
 `ITSAppUsesNonExemptEncryption` question accordingly (typically "No" /
 exempt), but confirm against current Apple wording.
 
@@ -243,7 +243,7 @@ source, so nothing needs softening:
 
 | Claim | Verified in |
 |-------|-------------|
-| End-to-end encrypted journal | entries E2E (DOCS.md) |
+| Journal encrypted on the device; Private journal end to end | DOCS.md §2.18 (Standard / Private, 2026-10-07) |
 | Mood / energy / sleep logging | journal.html, js/journal.js |
 | Patterns & stats | js/journal.js |
 | Survival kit (coping/goals/medications/memories) | js/survival-kit.js |

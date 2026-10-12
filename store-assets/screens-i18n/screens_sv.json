@@ -39,7 +39,7 @@
   "✏️ Post 🐻": "✏️ Posta 🐻",
   "People who actually get it": "Människor som verkligen förstår",
   "+ You": "+ Du",
-  "End-to-end encrypted · no real name required": "End-to-end-krypterat · inget riktigt namn krävs"
+  "Anonymous · no real name required": "Anonymt · inget riktigt namn krävs"
  },
  "03-patterns": {
   "Spot your patterns": "Se dina mönster",
@@ -100,9 +100,9 @@
   "Enter your PIN to continue": "Ange din PIN för att fortsätta",
   "🔐 More info": "🔐 Mer info",
   "Forgot PIN?": "Glömt PIN?",
-  "Not even we can": "Inte ens vi kan",
-  "read your entries": "läsa dina anteckningar",
-  "End-to-end encrypted journal": "End-to-end-krypterad dagbok"
+  "Encrypted on": "Krypterad på",
+  "your device": "din enhet",
+  "Private journal: only you can read it": "Privat dagbok: bara du kan läsa den"
  },
  "01-hero": {
   "Every high.": "Varje topp.",

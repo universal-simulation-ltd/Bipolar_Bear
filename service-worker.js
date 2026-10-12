@@ -1488,7 +1488,11 @@
 //   bbHomeDefaults20261012 one-off, plus userSettings onboardingStep).
 //   Touches index.html, journal.html, fab.js, css/index.css, css/dark.css,
 //   js/index.js, js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v313';
+// v314: the English fallbacks of the 🔐 security pop-up and the safety plan's
+//   "saved" line no longer promise end-to-end / "only you can read it" (the
+//   translations already said so; Standard journals keep a spare key).
+//   Touches fab.js, js/shared/safety-plan.js.
+const CACHE_NAME = 'bipolarbear-v314';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
