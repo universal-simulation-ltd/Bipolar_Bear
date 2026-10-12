@@ -1466,7 +1466,7 @@
 //   four mood bears), Mood Pairs (card flip; a bear is lost only when the
 //   match had been seen) and Mood Week (fill a week of moods back in).
 //   Touches js/shared/bear-arcade.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v308';
+const CACHE_NAME = 'bipolarbear-v309';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

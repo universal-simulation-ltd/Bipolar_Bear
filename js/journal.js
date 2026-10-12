@@ -4737,6 +4737,38 @@ window.addEventListener('pageshow', () => {
       catch (_) { return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }); }
     }
 
+    // The day the entry is for (the date picker, else yesterday).
+    function _fmEntryDay() {
+      const val = document.getElementById('entryDate')?.value;
+      if (val) return new Date(val + 'T00:00:00');
+      const y = new Date(); y.setHours(0,0,0,0); y.setDate(y.getDate() - 1);
+      return y;
+    }
+
+    // The night after day d as its two dates: "11th–12th" (withMonth:
+    // "11th–12th October"; across months "31st Oct – 1st Nov").
+    function _fmNightRange(d, withMonth) {
+      const n = new Date(d); n.setDate(n.getDate() + 1);
+      const lang = (window.BB && BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en';
+      const loc = lang === 'zh' ? 'zh-Hans' : lang;
+      const sameMonth = d.getMonth() === n.getMonth();
+      const fmt = (x, o) => { try { return x.toLocaleDateString(loc, o); } catch (_) { return x.toLocaleDateString('en-GB', o); } };
+      if (lang === 'en') {
+        const ord = x => { const v = x.getDate(); return v + (v % 10 === 1 && v !== 11 ? 'st' : v % 10 === 2 && v !== 12 ? 'nd' : v % 10 === 3 && v !== 13 ? 'rd' : 'th'); };
+        if (!sameMonth) return `${ord(d)} ${fmt(d, { month: 'short' })} – ${ord(n)} ${fmt(n, { month: 'short' })}`;
+        return `${ord(d)}–${ord(n)}` + (withMonth ? ' ' + fmt(n, { month: 'long' }) : '');
+      }
+      if (!sameMonth) return `${fmt(d, { day: 'numeric', month: 'short' })} – ${fmt(n, { day: 'numeric', month: 'short' })}`;
+      if (lang === 'zh') return (withMonth ? `${n.getMonth() + 1}月` : '') + `${d.getDate()}–${n.getDate()}日`;
+      const dot = lang === 'de' ? '.' : '';
+      if (!withMonth) return `${d.getDate()}${dot}–${n.getDate()}${dot}`;
+      // "11–12 de octubre", "11.–12. Oktober": the second date's own wording
+      // with the first day number in front.
+      return `${d.getDate()}${dot}–` + fmt(n, { day: 'numeric', month: 'long' });
+    }
+    // The same, unbreakable: a title may wrap before the dates, never inside them.
+    const _fmNightRangeNoWrap = (d, withMonth) => _fmNightRange(d, withMonth).replace(/ /g, '\u00a0').replace(/–/g, '\u2060–\u2060');
+
     function _fmDateHelper() {
       const val = document.getElementById('entryDate')?.value;
       const _t = (k, vars) => (window.BB && BB.t) ? BB.t(k, vars) : k;
@@ -4781,9 +4813,12 @@ window.addEventListener('pageshow', () => {
         const _slNotYet = _sleepNotYet();
         steps.push({
           id:'sleep',
+          // The night after the entry's day, with its two dates, because
+          // "last night" means a different night depending on when you log
+          // (James, 2026-10-12): "How was last night's sleep? (11th–12th)".
           title: _slNotYet ? _t('journal.fm.sleepNotYetTitle')
-            : _dh.isYest ? _t('journal.fm.sleepTitleYest')
-            : _t('journal.fm.sleepTitleOther', { phrase: _dh.nightPhrase }),
+            : _dh.isYest ? `${_t('journal.fm.sleepTitleYest')} (${_fmNightRangeNoWrap(_fmEntryDay(), false)})`
+            : _t('journal.fm.sleepTitleOther', { phrase: _t('journal.phrase.nightOfDate', { date: _fmNightRangeNoWrap(_fmEntryDay(), true) }) }),
           // Full spectrum replaces the tappable ranges with a slider, so "Tap a
           // range" would be describing a control that isn't there.
           subtitle: _slNotYet ? '' : _t(_spectrumEnabled() && !_wheelMode() ? 'journal.fm.sleepSubSlider' : 'journal.fm.sleepSub'),
