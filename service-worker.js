@@ -1452,7 +1452,12 @@
 //   feedback docs carry `name`, which the notification email shows, and a
 //   native app's platform says iOS or Android ("native (iOS)").
 //   Touches fab.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v302';
+// v303: the dock's default layout is 🆘 · + · 🕹️ · 📣, and the new 🕹️ Bear
+//   Arcade opens a random retro game drawn with the mood bears (Bear Snake,
+//   Flappy Bear, Bear Bricks). Data Security, Buy Us a Coffee and Leave a
+//   Review move to the picker. New js/shared/bear-arcade.js (precached).
+//   Touches fab.js, js/index.js, js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v303';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1497,6 +1502,7 @@ const STATIC_ASSETS = [
   './js/shared/meds-reminder.js',
   './js/shared/pin-guard.js',
   './js/shared/pin-reauth.js',
+  './js/shared/bear-arcade.js',
 
   // NOTE: firebase-messaging-sw.js is deliberately NOT precached either — it
   // is a service worker in its own right, registered by js/shared/anon-push.js,

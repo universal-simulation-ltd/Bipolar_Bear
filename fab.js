@@ -5,7 +5,7 @@
  * anonymous.html (that page uses its own yellow-themed FAB layout).
  *
  * Self-contained IIFE that on load:
- *   1. Marks the first run (every default FAB shows, Crisis Support in slot 1).
+ *   1. Marks the first run (default dock: 🆘 · + · 🕹️ · 📣).
  *   2. Injects all FAB markup, CSS and modals into the document.
  *   3. Wires global handlers exposed on `window.*` for inline `onclick=` use.
  *
@@ -33,6 +33,7 @@
  *   bbCoffeeFabHidden         — coffee FAB hidden
  *   bbFeedbackFabHidden       — feedback FAB hidden
  *   bbReviewFabHidden         — review (app-store rating) FAB hidden
+ *   bbGameFabHidden           — game (🕹️ Bear Arcade) FAB hidden
  *   bbFooterHidden            — entire footer hidden
  *   bbFabsUnlocked            — '1' once the onboarding tutorial has unlocked the dock
  *   bbFabFirstRunDone         — '1' after first-run defaults applied (one-shot)
@@ -96,7 +97,7 @@
       const v = BB.storage.get('FabSlot_' + s);
       if (v) fabState['slot' + s] = v;
     }
-    ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbFooterHidden'].forEach(k => {
+    ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden'].forEach(k => {
       if (localStorage.getItem(k) === '1') fabState[k] = '1';
     });
     window.db.collection('userSettings').doc(window.currentUser.uid)
@@ -107,16 +108,14 @@
   // ── First-run defaults ────────────────────────────────────────────────────
 
   /**
-   * One-shot first-run marker. New installs keep every default FAB, so the
-   * Crisis Support (🆘) FAB sits in slot 1 from the start; with four slots
-   * for five defaults, the review FAB is then left out of the dock and
-   * offered in the picker instead (on iOS, where the coffee FAB is
-   * suppressed, it takes slot 3).
+   * One-shot first-run marker. The default dock is Crisis Support (🆘) in
+   * slot 1, an empty `+` in slot 2, the Bear Arcade (🕹️) in slot 3 and Send
+   * Feedback (📣) in slot 4 (James, 2026-10-12). Data Security, Buy Us a
+   * Coffee and Leave a Review are picker-only (`auto: false` below).
    *
    * Installs from before 2026-10-05 ran an older version of this block that
-   * hid Crisis Support on a brand-new install (bbWaFabHidden = '1'), which
-   * handed slot 1 to "Leave a Review". That flag is indistinguishable from a
-   * user's own choice, so it is left alone — existing docks don't change.
+   * hid Crisis Support on a brand-new install (bbWaFabHidden = '1'). That
+   * flag is indistinguishable from a user's own choice, so it is left alone.
    *
    * Idempotent via the bbFabFirstRunDone flag (set on first run, never reset
    * except by full account/data deletion).
@@ -148,22 +147,22 @@
   };
 
   /**
-   * Default FABs, one per slot. `hiddenKey` is the localStorage flag that
-   * removes the FAB from the dock when set to '1'. Reordering this array
-   * does not move existing users' FABs — slot persistence is keyed on `id`
-   * via bbFabSlot_*.
+   * Default FABs. `hiddenKey` is the localStorage flag that removes the FAB
+   * from the dock when set to '1'. `auto: true` FABs take their `slotNum`
+   * (or the lowest free slot) without being picked; the rest only appear once
+   * the user puts them in a slot from the picker (an explicit bbFabSlot_N
+   * assignment), so an install that had them docked before 2026-10-12 without
+   * ever picking them loses them to the new default dock. Nothing auto-fills
+   * slot 2: it shows the `+` placeholder. Reordering this array does not move
+   * existing users' FABs — slot persistence is keyed on `id` via bbFabSlot_*.
    */
   const _FAB_DEFAULTS = [
-    { id: 'chat',     icon: '🆘', label: 'Crisis Support',  desc: 'Samaritans & community chat', hiddenKey: 'bbWaFabHidden',        slotNum: 1 },
-    { id: 'e2ee',     icon: '🔐', label: 'Data Security',   desc: 'How your data is kept safe',  hiddenKey: 'bbQuickNoteFabHidden',  slotNum: 2 },
-    { id: 'coffee',   icon: '☕', label: 'Buy Us a Coffee', desc: 'Support Bipolar Bear',         hiddenKey: 'bbCoffeeFabHidden',     slotNum: 3 },
-    { id: 'feedback', icon: '📣', label: 'Send Feedback',   desc: 'Help us make it better',      hiddenKey: 'bbFeedbackFabHidden',   slotNum: 4 },
-    // The dock only has four slots, so `review` is the one default without a
-    // slot of its own — it claims the first free slot (slot 3 on iOS, where
-    // the coffee FAB is suppressed; slot 1 on installs from before
-    // 2026-10-05, whose first run hid Crisis Support). When every slot is
-    // taken it stays out of the dock and is offered in the picker instead.
-    { id: 'review',   icon: '⭐', label: 'Leave a Review',  desc: 'Rate Bipolar Bear on the app store', hiddenKey: 'bbReviewFabHidden', slotNum: 1 },
+    { id: 'chat',     icon: '🆘', label: 'Crisis Support',  desc: 'Samaritans & community chat', hiddenKey: 'bbWaFabHidden',        slotNum: 1, auto: true },
+    { id: 'game',     icon: '🕹️', label: 'Bear Arcade',     desc: 'A random retro game, bear style', hiddenKey: 'bbGameFabHidden', slotNum: 3, auto: true },
+    { id: 'feedback', icon: '📣', label: 'Send Feedback',   desc: 'Help us make it better',      hiddenKey: 'bbFeedbackFabHidden',   slotNum: 4, auto: true },
+    { id: 'e2ee',     icon: '🔐', label: 'Data Security',   desc: 'How your data is kept safe',  hiddenKey: 'bbQuickNoteFabHidden',  auto: false },
+    { id: 'coffee',   icon: '☕', label: 'Buy Us a Coffee', desc: 'Support Bipolar Bear',         hiddenKey: 'bbCoffeeFabHidden',     auto: false },
+    { id: 'review',   icon: '⭐', label: 'Leave a Review',  desc: 'Rate Bipolar Bear on the app store', hiddenKey: 'bbReviewFabHidden', auto: false },
   ];
   /**
    * Extra FABs available via the picker — never auto-assigned, only added
@@ -533,6 +532,9 @@
         </div>
       </div>
 
+      <!-- Bear Arcade: opens a random retro game (js/shared/bear-arcade.js, loaded on first tap) -->
+      <button class="bb-extra-fab game-fab" id="gameFab" onclick="openArcade()" title="Bear Arcade" aria-label="Bear Arcade" data-i18n-title="arcade.title" data-i18n-aria-label="arcade.title" style="display:none;">🕹️</button>
+
       <!-- Center auth FAB (always at 50%, not part of slot system) -->
       <button id="bbAuthFab" class="bb-auth-fab" onclick="(window._fabOpenAuth||function(){})()" title="Profile / Sign in">👤</button>
 
@@ -788,7 +790,7 @@
       if (_footer) _footer.style.display = 'none';
       [document.getElementById('quickNoteFab'),
        document.getElementById('coffeeFab'), document.querySelector('.feedback-fab'),
-       document.getElementById('reviewFab')].forEach(el => { if (el) el.style.display = 'none'; });
+       document.getElementById('reviewFab'), document.getElementById('gameFab')].forEach(el => { if (el) el.style.display = 'none'; });
       Object.values(_extraMap).forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
       for (let s = 1; s <= 4; s++) { const ph = document.getElementById('fabPh' + s); if (ph) ph.style.display = 'none'; }
       const _chat = document.getElementById('chatFab');
@@ -805,6 +807,7 @@
       coffee:   !_COFFEE_BLOCKED && BB.storage.get('CoffeeFabHidden') !== '1',
       feedback: BB.storage.get('FeedbackFabHidden')  !== '1',
       review:   BB.storage.get('ReviewFabHidden')    !== '1',
+      game:     BB.storage.get('GameFabHidden')      !== '1',
     };
     const _defEl = {
       chat:     document.getElementById('chatFab'),
@@ -812,16 +815,17 @@
       coffee:   document.getElementById('coffeeFab'),
       feedback: document.querySelector('.feedback-fab'),
       review:   document.getElementById('reviewFab'),
+      game:     document.getElementById('gameFab'),
     };
 
     // Resolve which slot each visible default FAB lives in, in three passes:
     //   1. an explicit picker assignment (bbFabSlot_N === id) always wins;
-    //   2. otherwise the FAB's natural `slotNum`, if still free;
+    //   2. otherwise, for `auto` FABs only, the natural `slotNum` if still free;
     //   3. otherwise the lowest free slot.
-    // There are five defaults and only four slots, so a FAB can end up with no
-    // slot at all — it is then left out of the dock and offered in the picker
-    // (see `_placedDefaults`). Hidden defaults never reserve a slot, which is
-    // what frees slot 1 when Crisis Support is hidden and slot 3 on iOS.
+    // Slots the user gave to an extra FAB are skipped by passes 2 and 3, so a
+    // default never evicts a button the user chose to dock. A FAB left without
+    // a slot stays out of the dock and is offered in the picker (see
+    // `_placedDefaults`), as are the non-`auto` defaults until they're picked.
     const _defaultSlotMap = {};
     const _slotOccupied = {};
     const _visibleDefaults = _FAB_DEFAULTS.filter(_def => _defVis[_def.id]);
@@ -834,23 +838,21 @@
       if (_found !== null) {
         _defaultSlotMap[_def.id] = _found;
         _slotOccupied[_found] = true;
-      } else {
+      } else if (_def.auto) {
         _unassigned.push(_def);
       }
     });
-    _unassigned.forEach(_def => {
-      if (!_slotOccupied[_def.slotNum]) {
-        _defaultSlotMap[_def.id] = _def.slotNum;
-        _slotOccupied[_def.slotNum] = true;
-      }
-    });
-    // Slots the user has explicitly given to an extra FAB are off-limits to
-    // pass 3, so adding `review` never evicts a button the user chose to dock.
     const _extraClaimed = {};
     for (let s = 1; s <= 4; s++) {
       const _a = BB.storage.get('FabSlot_' + s);
       if (_a && _extraMap[_a]) _extraClaimed[s] = true;
     }
+    _unassigned.forEach(_def => {
+      if (!_slotOccupied[_def.slotNum] && !_extraClaimed[_def.slotNum]) {
+        _defaultSlotMap[_def.id] = _def.slotNum;
+        _slotOccupied[_def.slotNum] = true;
+      }
+    });
     _unassigned.forEach(_def => {
       if (_defaultSlotMap[_def.id]) return;
       for (let s = 1; s <= 4; s++) {
@@ -1294,6 +1296,25 @@
     if (window.matchMedia('(display-mode: standalone)').matches) return 'pwa';
     return 'web';
   }
+
+  // ── Bear Arcade ───────────────────────────────────────────────────────────
+
+  /**
+   * Open the 🕹️ Bear Arcade: a random retro game drawn with the mood bears.
+   * The games live in js/shared/bear-arcade.js, loaded on the first tap so
+   * the pages that never open it don't pay for it.
+   */
+  window.openArcade = function () {
+    const _opts = { onHide: () => window._showHidePermanently('game') };
+    if (window.BB && BB.arcade) { BB.arcade.open(_opts); return; }
+    if (document.getElementById('bbArcadeScript')) return;
+    const _s = document.createElement('script');
+    _s.id = 'bbArcadeScript';
+    _s.src = 'js/shared/bear-arcade.js';
+    _s.onload = () => { if (window.BB && BB.arcade) BB.arcade.open(_opts); };
+    _s.onerror = () => _s.remove();
+    document.head.appendChild(_s);
+  };
 
   // ── Extra FAB modals ──────────────────────────────────────────────────────
 
@@ -1908,7 +1929,7 @@
    * Firestore. The hidden FAB then appears in the picker as a re-addable
    * option.
    *
-   * @param {'chat'|'wa'|'quicknote'|'feedback'|'coffee'|'review'} type
+   * @param {'chat'|'wa'|'quicknote'|'feedback'|'coffee'|'review'|'game'} type
    */
   window._showHidePermanently = function (type) {
     if (type === 'chat' || type === 'wa') {
@@ -1926,6 +1947,9 @@
     } else if (type === 'review') {
       window.closeReviewModal();
       BB.storage.set('ReviewFabHidden', '1');
+    } else if (type === 'game') {
+      if (window.BB && BB.arcade) BB.arcade.close();
+      BB.storage.set('GameFabHidden', '1');
     }
     _applyFabDock();
     _syncFabsToFirestore();

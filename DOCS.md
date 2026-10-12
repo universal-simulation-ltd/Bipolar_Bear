@@ -132,7 +132,8 @@ To enable verbose Chrome DevTools logging from a connected Android device:
 
 `fab.js` is loaded on `index.html`, `journal.html`, and `survival-kit.html`. It provides:
 
-- **FAB dock** — up to 4 configurable floating action buttons (Chat, E2EE, Coffee, Feedback, Stats, Celebrity, Goals, Quick Note)
+- **FAB dock** — up to 4 configurable floating action buttons (Chat, Game, Feedback, E2EE, Coffee, Review, Stats, Celebrity, Goals, Quick Note). Default dock (2026-10-12): 🆘 Crisis Support · empty `+` · 🕹️ Bear Arcade · 📣 Send Feedback; E2EE, Coffee and Review are `auto: false` defaults, docked only from the picker
+- **🕹️ Bear Arcade** — `js/shared/bear-arcade.js`, loaded on the first tap (`openArcade()`): a random retro game (Bear Snake, Flappy Bear, Bear Bricks), never the one played last, drawn with `images/moods/sm/*` and the mood colours. Add a game by writing a factory and listing it in `GAMES` (see the file header)
 - **Account modal** — sign in, sign up, change password, change email, personal information, delete account
 - **Stats modal** — mood distribution, correlations, AI feedback
 - Dock layout persisted in `localStorage` (`bbFabSlot_1` … `bbFabSlot_4`); hidden buttons tracked per-key (e.g. `bbWaFabHidden`)
@@ -485,6 +486,9 @@ bbWaFabHidden           "1"           — WhatsApp FAB permanently hidden
 bbQuickNoteFabHidden    "1"           — Quick Note FAB permanently hidden
 bbCoffeeFabHidden       "1"           — Buy Me a Coffee FAB permanently hidden
 bbFeedbackFabHidden     "1"           — Feedback FAB permanently hidden
+bbReviewFabHidden       "1"           — Leave a Review FAB permanently hidden
+bbGameFabHidden         "1"           — 🕹️ Bear Arcade FAB permanently hidden
+bbArcade                JSON          — {"last":"snake","best":{"snake":12,…}}; device-only, never synced
 bbFeedbackName          string        — name typed into the feedback form (asked only when no personalName / account name)
 
 ── UNI·SIM suite counter (NOT bb-prefixed — shared with the whole suite) ────
