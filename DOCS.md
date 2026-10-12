@@ -413,7 +413,7 @@ bbJournalView           "calendar"|"life" — the Your Journey card's default vi
                                         suite's useDefaultView gesture, orange mark; v293)
 
 ── Settings ─────────────────────────────────────────────────────────────────
-journalDefaultToday     "true"|null   — log today vs yesterday
+journalDefaultToday     "true"|null   — log today vs yesterday (no switch since v0.77: always yesterday, because an entry's sleep is the night after its day)
 focusedModeEnabled      "true"|null   — focused mode on/off
 showMoodSuggestion      "1"|"0"       — mood suggestion toggle
 moreDataOpenByDefault   "true"|null   — expand extra fields by default

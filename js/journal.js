@@ -999,7 +999,11 @@ window.addEventListener('pageshow', () => {
     window.logout = logout;
 
     let selectedMood = null;
-    let selectedLinkedMood = null;
+    // Every other mood felt that day ("How else were you feeling?"), in the
+    // order they were picked. Saved as linkedMoods; linkedMood keeps the
+    // first so builds from before 2026-10-12 still show one.
+    let selectedLinkedMoods = [];
+    const _linkedMoodsOf = e => !e ? [] : Array.isArray(e.linkedMoods) ? e.linkedMoods : (e.linkedMood ? [e.linkedMood] : []);
     let selectedEnergy = 5; // default energy level (5-6 range)
     let selectedSleep = 7.5; // default sleep (7-8 range)
     let selectedSleepQuality = null; // 'good' | 'bad' | null
@@ -1361,13 +1365,31 @@ window.addEventListener('pageshow', () => {
         _fmLongPressed = true;
         nativeHaptic && nativeHaptic('medium');
         // Dismiss the one-time hint permanently
-        if (!BB.storage.get('_fmMoodTipShown')) {
-          BB.storage.set('_fmMoodTipShown', '1');
-          _renderFocusedStep();
-        }
-        showMoodInfo(mood);
+        if (!BB.storage.get('_fmMoodTipShown')) BB.storage.set('_fmMoodTipShown', '1');
+        _fmOpenAlsoPicker(mood);
       }, 600);
     }
+    // Holding a bear makes it the main mood and turns the bears into "How else
+    // were you feeling?": tap as many others as you like, then Continue. The
+    // mood's info sheet is the ⓘ link on that screen.
+    function _fmOpenAlsoPicker(mood) {
+      _fmPrevMood = null;
+      _fmLinkMoodPickerOpen = true;
+      const changed = selectedMood !== mood;
+      selectedMood = mood;
+      selectedLinkedMoods = selectedLinkedMoods.filter(m => m !== mood);
+      _fmApplyMoodTheme(mood);
+      _renderFocusedStep();
+      scheduleDraftSave();
+      if (changed && mood === 'depressed') _fmShowDepressedSupport();
+    }
+    function _fmCloseAlsoPicker(keep) {
+      _fmLinkMoodPickerOpen = false;
+      if (!keep) selectedLinkedMoods = [];
+      scheduleDraftSave();
+      if (keep) _fmAdvance(); else _renderFocusedStep();
+    }
+    window._fmCloseAlsoPicker = _fmCloseAlsoPicker;
     function _fmLongPressCancel() {
       clearTimeout(_fmLongPressTimer);
       _fmLongPressTimer = null;
@@ -1383,49 +1405,32 @@ window.addEventListener('pageshow', () => {
         if (_overlay) _overlay.style.display = 'none';
         // Fall through — allow the tap to also select the mood
       }
-      // Block taps during "Tap & Hold" hint — must long press
+      // "Felt more than one? Tap & Hold" hint: a plain tap is fine too (one
+      // mood is the usual answer) and retires the hint like a hold does.
       if (BB.storage.get('_fmMoodTipShown') !== '1' &&
           BB.storage.get('_fmChooseMoodHintDone') === '1' &&
           BB.storage.get('_fmTapHoldHintReady') === '1') {
-        const _hint = document.getElementById('_fmTapHoldHintEl');
-        const _moodBtns = document.querySelectorAll('.mood-btn');
-        [_hint, ..._moodBtns].forEach(el => {
-          if (!el) return;
-          const prev = el.style.animation;
-          el.style.animation = 'none'; el.offsetHeight;
-          el.style.animation = 'bbHintNudge 0.5s ease';
-          setTimeout(() => { el.style.animation = prev; }, 520);
-        });
-        return;
+        BB.storage.set('_fmMoodTipShown', '1');
       }
-      // Linking mode: tap another mood to set as secondary, or tap primary to skip
+      // "How else were you feeling?": each tap adds or removes another mood.
+      // The main mood stays put; Continue moves on.
       if (_fmLinkMoodPickerOpen) {
-        _fmLinkMoodPickerOpen = false;
         if (mood !== selectedMood) {
-          selectedLinkedMood = mood;
+          const i = selectedLinkedMoods.indexOf(mood);
+          if (i >= 0) selectedLinkedMoods.splice(i, 1); else selectedLinkedMoods.push(mood);
+          nativeHaptic && nativeHaptic('light');
           scheduleDraftSave();
+          _renderFocusedStep();
         }
-        _fmAdvance();
         return;
       }
       _fmLinkMoodPickerOpen = false;
       _fmPrevMood = null; // clear any applied suggestion when user manually picks
-      selectedLinkedMood = null; // fresh tap replaces both moods
+      selectedLinkedMoods = []; // a fresh tap replaces every mood
       if (mood === 'depressed') {
         selectedMood = 'depressed';
         _renderFocusedStep();
-        const _ec = localStorage.getItem('personalEmergencyContact') || '';
-        const _ecEl = document.getElementById('depressedEmergencyContact');
-        if (_ec && _ecEl) {
-          document.getElementById('depressedEmergencyText').textContent = _ec;
-          const _ecNum = _ec.match(/[\d\s\+\-\(\)]{6,}/)?.[0]?.trim();
-          document.getElementById('depressedEmergencyLink').href = _ecNum ? 'tel:' + _ecNum.replace(/\s/g,'') : '#';
-          _ecEl.style.display = '';
-        } else if (_ecEl) {
-          _ecEl.style.display = 'none';
-        }
-        _applyDepressedCrisisLines();
-        document.getElementById('depressedSupportModal').classList.add('active');
+        _fmShowDepressedSupport();
         _fmMoodPop('depressed');
       } else {
         selectedMood = mood;
@@ -1440,6 +1445,21 @@ window.addEventListener('pageshow', () => {
           _fmAdvance();
         }
       }
+    }
+    // The "You matter" card, with the personal emergency contact if one is set.
+    function _fmShowDepressedSupport() {
+      const _ec = localStorage.getItem('personalEmergencyContact') || '';
+      const _ecEl = document.getElementById('depressedEmergencyContact');
+      if (_ec && _ecEl) {
+        document.getElementById('depressedEmergencyText').textContent = _ec;
+        const _ecNum = _ec.match(/[\d\s\+\-\(\)]{6,}/)?.[0]?.trim();
+        document.getElementById('depressedEmergencyLink').href = _ecNum ? 'tel:' + _ecNum.replace(/\s/g,'') : '#';
+        _ecEl.style.display = '';
+      } else if (_ecEl) {
+        _ecEl.style.display = 'none';
+      }
+      _applyDepressedCrisisLines();
+      document.getElementById('depressedSupportModal').classList.add('active');
     }
     // The "You matter" card's crisis line is Samaritans (UK). Anywhere else
     // show that country's lines (js/shared/crisis.js), or findahelpline.com.
@@ -1461,6 +1481,7 @@ window.addEventListener('pageshow', () => {
     }
     function _fmDismissDepressedMsg() {
       document.getElementById('depressedSupportModal').classList.remove('active');
+      if (_fmLinkMoodPickerOpen) return; // held Depressed: carry on picking other moods
       _fmAdvance();
     }
     // Focused-mode tap for the 0–10 spectrum wheel — commits the numeric mood.
@@ -1468,7 +1489,7 @@ window.addEventListener('pageshow', () => {
       n = Number(n);
       _fmLinkMoodPickerOpen = false;
       _fmPrevMood = null;
-      selectedLinkedMood = null;
+      selectedLinkedMoods = [];
       selectedMood = n;
       if (n <= 1) {
         // Severe low — surface the same support modal as the 'depressed' category.
@@ -1550,7 +1571,8 @@ window.addEventListener('pageshow', () => {
       const draft = {
         targetKey,
         mood: selectedMood,
-        linkedMood: selectedLinkedMood || null,
+        linkedMood: selectedLinkedMoods[0] || null,
+        linkedMoods: selectedLinkedMoods.slice(),
         energy: selectedEnergy,
         sleep: selectedSleep,
         sleepQuality: selectedSleepQuality || null,
@@ -1603,7 +1625,7 @@ window.addEventListener('pageshow', () => {
         moodBtn.classList.add('selected');
         selectedMood = draft.mood;
       }
-      selectedLinkedMood = draft.linkedMood || null;
+      selectedLinkedMoods = _linkedMoodsOf(draft).slice();
       if (typeof _fmApplyMoodTheme === 'function') _fmApplyMoodTheme(_moodCat(draft.mood));
       document.querySelectorAll('.hidden-until-mood').forEach(el => {
         el.classList.remove('hidden-until-mood');
@@ -2067,83 +2089,9 @@ window.addEventListener('pageshow', () => {
       const hasPersonalData = _personalDef || strategies.length > 0 || memories.length > 0;
       document.getElementById('moodInfoSurvivalLink').style.display = hasPersonalData ? 'none' : '';
 
-      // Link mood button
+      // Linking other moods lives on the mood step now (hold a bear), not here.
       const _linkRow = document.getElementById('moodInfoLinkRow');
-      const _linkBtn = document.getElementById('moodInfoLinkBtn');
-      const _linkCaption = document.getElementById('moodInfoLinkCaption');
-      if (_linkRow && _linkBtn) {
-        const _tMoodName = (m) => {
-          const _map = { manic:'mood.manic', elevated:'mood.elevated', stable:'mood.good', good:'mood.good', low:'mood.low', depressed:'mood.depressed' };
-          if (_map[m] && window.BB && BB.t) return BB.t(_map[m]);
-          return m.charAt(0).toUpperCase() + m.slice(1);
-        };
-        const _moodLinkingOn = localStorage.getItem('moodLinkingEnabled') === '1';
-        const _isPrimary = selectedMood && mood === selectedMood;
-        const _isDifferent = selectedMood && mood !== selectedMood;
-        if (_isPrimary && _moodLinkingOn) {
-          // Long-pressed own mood — offer to open secondary picker
-          _linkRow.style.display = '';
-          if (selectedLinkedMood) {
-            _linkBtn.textContent = _t('journal.moodInfo.removeLinkedWithMood', { mood: _tMoodName(selectedLinkedMood) });
-            _linkCaption.style.display = 'none';
-            _linkBtn.onclick = () => {
-              selectedLinkedMood = null;
-              _fmLinkMoodPickerOpen = false;
-              closeMoodInfo();
-              if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
-              scheduleDraftSave();
-            };
-          } else {
-            _linkBtn.textContent = _t('journal.moodInfo.addSecondary');
-            _linkCaption.style.display = '';
-            _linkBtn.onclick = () => {
-              _fmLinkMoodPickerOpen = true;
-              closeMoodInfo();
-              if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
-            };
-          }
-        } else if (_isDifferent && _moodLinkingOn) {
-          // Long-pressed a different mood — offer to link it directly
-          _linkRow.style.display = '';
-          if (selectedLinkedMood === mood) {
-            _linkBtn.textContent = _t('journal.moodInfo.removeLinked');
-            _linkCaption.style.display = 'none';
-            _linkBtn.onclick = () => {
-              selectedLinkedMood = null;
-              closeMoodInfo();
-              if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
-              scheduleDraftSave();
-            };
-          } else {
-            _linkBtn.textContent = _t('journal.moodInfo.linkAsSecondary', { mood: _tMoodName(mood) });
-            _linkCaption.style.display = '';
-            _linkBtn.onclick = () => {
-              selectedLinkedMood = mood;
-              _fmLinkMoodPickerOpen = false;
-              closeMoodInfo();
-              scheduleDraftSave();
-              if (typeof _fmActive !== 'undefined' && _fmActive) {
-                _renderFocusedStep();
-                setTimeout(() => _fmAdvance(), 600);
-              }
-            };
-          }
-        } else if (!selectedMood && _moodLinkingOn && typeof _fmActive !== 'undefined' && _fmActive) {
-          // No primary selected yet in focus mode — offer to select this as primary and enter link mode
-          _linkRow.style.display = '';
-          _linkBtn.textContent = _t('journal.moodInfo.linkMood');
-          _linkCaption.textContent = _t('journal.moodInfo.linkMoodCaption');
-          _linkCaption.style.display = '';
-          _linkBtn.onclick = () => {
-            selectedMood = mood;
-            _fmLinkMoodPickerOpen = true;
-            closeMoodInfo();
-            _renderFocusedStep();
-          };
-        } else {
-          _linkRow.style.display = 'none';
-        }
-      }
+      if (_linkRow) _linkRow.style.display = 'none';
 
       document.getElementById('moodInfoModal').classList.add('active');
       // Hint 3: "Close to continue" — shown when tap+hold hint was just fired (first time seeing moodInfoModal)
@@ -2334,7 +2282,8 @@ window.addEventListener('pageshow', () => {
       const entry = {
         date: selectedDate.toISOString(),
         mood: selectedMood,
-        linkedMood: selectedLinkedMood || null,
+        linkedMood: selectedLinkedMoods[0] || null,
+        linkedMoods: selectedLinkedMoods.slice(),
         energy: selectedEnergy,
         sleep: selectedSleep,
         sleepQuality: selectedSleepQuality || null,
@@ -2915,7 +2864,7 @@ window.addEventListener('pageshow', () => {
                 <div class="entry-date" style="flex:1; min-width:0;">${date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${recordedStr}</div>
                 <div style="display:flex; align-items:center; gap:8px; flex-shrink:0; margin-left:8px;">
                   <img src="${_moodImg(entry.mood)}" alt="${_moodLabelOf(entry.mood)}" class="entry-mood" style="width:32px;height:32px;object-fit:contain;">
-                  ${entry.linkedMood ? `<img src="${_moodImg(entry.linkedMood)}" alt="${_moodLabelOf(entry.linkedMood)}" style="width:22px;height:22px;object-fit:contain;opacity:0.75;margin-left:-4px;" title="Also: ${_moodLabelOf(entry.linkedMood)}">` : ''}
+                  ${_linkedMoodsOf(entry).map(lm => `<img src="${_moodImg(lm)}" alt="${_moodLabelOf(lm)}" style="width:22px;height:22px;object-fit:contain;opacity:0.75;margin-left:-4px;" title="Also: ${_moodLabelOf(lm)}">`).join('')}
                   ${entry.pdfHide ? `<span style="font-size:1em;line-height:1;opacity:0.7;" title="${BB.t('journal.ui.privateTitle')}">🕵️</span>` : ''}
                   ${entry.autoFilled ? `<span style="font-size:0.6em;font-weight:700;letter-spacing:0.05em;color:var(--brand-primary);border:1.5px solid rgba(255,149,0,0.45);border-radius:6px;padding:2px 4px;line-height:1;" title="${BB.t('journal.autofill.badgeTitle')}">${BB.t('journal.autofill.badge')}</span>` : ''}
                   ${entry.favourite ? `<span style="font-size:1em;color:var(--brand-primary);line-height:1;" title="${BB.t('journal.ui.favouriteTitle')}">★</span>` : ''}
@@ -3152,7 +3101,7 @@ window.addEventListener('pageshow', () => {
       statsEntries.forEach(e => {
         const _c = _moodCat(e.mood);
         moodCounts[_c] = (moodCounts[_c] || 0) + 1;
-        if (e.linkedMood) { const _lc = _moodCat(e.linkedMood); moodCounts[_lc] = (moodCounts[_lc] || 0) + 1; }
+        _linkedMoodsOf(e).forEach(lm => { const _lc = _moodCat(lm); moodCounts[_lc] = (moodCounts[_lc] || 0) + 1; });
       });
       const _sortedMoods = Object.entries(moodCounts).sort((a, b) => b[1] - a[1]);
       const mostCommon = _sortedMoods[0];
@@ -3378,7 +3327,7 @@ window.addEventListener('pageshow', () => {
         entries.forEach(e => {
           const _c = _moodCat(e.mood);
           if (counts[_c] !== undefined) counts[_c]++;
-          if (e.linkedMood) { const _lc = _moodCat(e.linkedMood); if (counts[_lc] !== undefined) counts[_lc]++; }
+          _linkedMoodsOf(e).forEach(lm => { const _lc = _moodCat(lm); if (counts[_lc] !== undefined) counts[_lc]++; });
         });
         const sortedMoods = [...allMoods].sort((a, b) => counts[b] - counts[a]);
         title.textContent = `🧠 Mood Breakdown`;
@@ -4753,6 +4702,18 @@ window.addEventListener('pageshow', () => {
       return _t('journal.prompt.howDate', { date: _fmFormatPromptDate(d) });
     }
 
+    // The mood step's title while picking other moods (hold a bear).
+    function _fmAlsoTitle() {
+      const val = document.getElementById('entryDate')?.value;
+      const _t = (k, vars) => (window.BB && BB.t) ? BB.t(k, vars) : k;
+      const now = new Date(); now.setHours(0,0,0,0);
+      const toKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+      if (!val || val === toKey(yesterday)) return _t('journal.prompt.alsoYesterday');
+      if (val === toKey(now)) return _t('journal.prompt.alsoToday');
+      return _t('journal.prompt.alsoDate', { date: _fmFormatPromptDate(new Date(val + 'T00:00:00')) });
+    }
+
     function _fmIsTracking(key, legacy) {
       if (_editFieldOverrides !== null) return !!_editFieldOverrides[key];
       if (localStorage.getItem(key) !== null) return localStorage.getItem(key) === 'true';
@@ -4861,7 +4822,7 @@ window.addEventListener('pageshow', () => {
       // Switching modes changes what `selectedMood` should hold (number vs string),
       // so clear any in-progress selection to avoid a mismatched value being saved.
       selectedMood = null;
-      selectedLinkedMood = null;
+      selectedLinkedMoods = [];
       _applyMoodSpectrumMode();
       if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
       if (window.db && window.currentUser) {
@@ -5090,7 +5051,7 @@ window.addEventListener('pageshow', () => {
     function _fmOnSpectrumSlide(v) {
       const n = Number(v);
       selectedMood = n;
-      selectedLinkedMood = null;
+      selectedLinkedMoods = [];
       _fmPrevMood = null;
       const cat = _moodCat(n);
       const color = moodColors[cat] || 'var(--brand-primary)';
@@ -5212,7 +5173,7 @@ window.addEventListener('pageshow', () => {
       const val = chk && chk.checked ? '1' : '0';
       localStorage.setItem('moodLinkingEnabled', val);
       if (!chk || !chk.checked) {
-        selectedLinkedMood = null;
+        selectedLinkedMoods = [];
         if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
       }
       if (window.db && window.currentUser) {
@@ -5617,7 +5578,7 @@ window.addEventListener('pageshow', () => {
       });
       // Populate selected* variables from entry
       selectedMood         = entry.mood;
-      selectedLinkedMood   = entry.linkedMood || null;
+      selectedLinkedMoods  = _linkedMoodsOf(entry).slice();
       selectedEnergy       = entry.energy;
       selectedSleep        = entry.sleep;
       selectedMedication   = entry.medication || null;
@@ -5907,7 +5868,7 @@ window.addEventListener('pageshow', () => {
       const _freshFirstStep = _fmStepIndex === 0 && _fmHighWater === 0;
       document.getElementById('focusedModeCard').classList.toggle('fm-fresh-first', _freshFirstStep);
       // Title / subtitle / eyebrow
-      document.getElementById('fmTitle').textContent    = step.title;
+      document.getElementById('fmTitle').textContent    = (step.id === 'mood' && _fmLinkMoodPickerOpen) ? _fmAlsoTitle() : step.title;
       document.getElementById('fmSubtitle').textContent = step.subtitle || '';
       const _eyebrowEl = document.getElementById('fmEyebrow');
       if (_eyebrowEl) {
@@ -6105,6 +6066,12 @@ window.addEventListener('pageshow', () => {
       if (el.dataset.type === type) return;
       el.dataset.type = type;
       el.innerHTML = _AURA_HTML[type] || '';
+    }
+
+    // The other moods picked for the day, as a row of small bears + names.
+    function _fmAlsoMoodsLine(px) {
+      if (!selectedLinkedMoods.length) return '';
+      return `<div style="margin-top:6px;font-size:1.05em;font-weight:700;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;">${selectedLinkedMoods.map(lm => `<span style="color:${_FM_MOOD_COLORS[_moodCat(lm)] || '#6c757d'};white-space:nowrap;"><img src="images/moods/${lm}.png" alt="" style="width:${px}px;height:${px}px;object-fit:contain;vertical-align:middle;margin-right:3px;">${_moodLabelOf(lm)}</span>`).join('')}</div>`;
     }
 
     function _fmHeroHtml() {
@@ -6410,7 +6377,7 @@ window.addEventListener('pageshow', () => {
 
       const cat = _suggestMoodFromHealth(steps, sleepH) || 'stable';
       selectedMood = _spectrumEnabled() ? _FM_SPECTRUM_FOR_CAT[cat] : cat;
-      selectedLinkedMood = null;
+      selectedLinkedMoods = [];
       if (steps != null) {
         selectedEnergy  = _energyFromSteps(steps);
         _fmEnergyClear  = false;
@@ -6520,14 +6487,16 @@ window.addEventListener('pageshow', () => {
             } catch(_) {}
           }
           let _linkedChip = '';
-          if (selectedLinkedMood) {
-            _linkedChip = '';
-          } else if (_fmLinkMoodPickerOpen && selectedMood) {
-            _linkedChip = `<p style="text-align:center;font-size:0.82em;color:var(--brand-primary);font-weight:600;margin-top:12px;margin-bottom:0;">${BB.t('journal.ui.nowTapLink')}</p>
-              <p style="text-align:center;font-size:0.72em;color:#adb5bd;margin-top:4px;margin-bottom:0;">${BB.t('journal.ui.tapAgainSkip', { mood: `<strong>${cap(selectedMood)}</strong>` })} &nbsp;<button onclick="_fmLinkMoodPickerOpen=false;_renderFocusedStep();" style="background:none;border:none;color:#adb5bd;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0;text-decoration:underline;">${BB.t('common.cancel')}</button></p>`;
-          } else if (selectedMood && localStorage.getItem('moodLinkingEnabled') === '1') {
-            _linkedChip = `<p style="text-align:center;font-size:0.72em;color:#adb5bd;margin-top:8px;margin-bottom:0;">${BB.t('journal.ui.holdToLink')}</p>`;
+          const _linkBtnCss = 'background:none;border:none;color:#adb5bd;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0;text-decoration:underline;';
+          if (_fmLinkMoodPickerOpen && selectedMood) {
+            _linkedChip = `<p style="text-align:center;font-size:0.82em;color:var(--brand-primary);font-weight:600;margin-top:12px;margin-bottom:0;">${BB.t('journal.ui.alsoPick')}</p>
+              <p style="text-align:center;font-size:0.72em;color:#adb5bd;margin-top:6px;margin-bottom:0;"><button onclick="showMoodInfo(selectedMood)" style="${_linkBtnCss}">${BB.t('journal.ui.aboutMood', { mood: _moodLabelOf(selectedMood) })}</button> &nbsp;·&nbsp; <button onclick="_fmCloseAlsoPicker(false)" style="${_linkBtnCss}">${BB.t('common.cancel')}</button></p>`;
+          } else if (selectedMood && !selectedLinkedMoods.length) {
+            _linkedChip = `<p style="text-align:center;font-size:0.72em;color:#adb5bd;margin-top:8px;margin-bottom:0;">${BB.t('journal.ui.holdForMore')}</p>`;
           }
+          // Continue: shown once another mood is picked (and when coming back
+          // to a day that already has some). In the picker it closes it too.
+          const _alsoContinue = selectedLinkedMoods.length ? `<button onclick="_fmCloseAlsoPicker(true)" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : '';
           // ── Plain mode (wheel BETA off) — the original pre-wheel focus form:
           // the same horizontal mood buttons (bear image + label) as the classic
           // form. Spectrum (0–10) falls back to a vertical list (it predates the
@@ -6560,7 +6529,7 @@ window.addEventListener('pageshow', () => {
               <button id="fmSpectrumContinue" onclick="_fmSpectrumTap(document.getElementById('fmMscSlider').value)" style="width:100%;margin-top:2px;padding:12px;background:${_sCol};color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>`;
             } else {
               _moodControl = `<div class="mood-selector" style="margin-bottom:0;">${['manic','elevated','stable','low','depressed'].map(m =>
-                `<button class="mood-btn mood-${m} ${selectedMood===m?'selected':''} ${(selectedLinkedMood===m || (_fmLinkMoodPickerOpen && m!==selectedMood)) ? 'linked':''}"
+                `<button class="mood-btn mood-${m} ${selectedMood===m?'selected':''} ${selectedLinkedMoods.includes(m) ? 'linked':''}"
                   onclick="_fmMoodTap('${m}')"
                   ontouchstart="_fmLongPressStart('${m}',event)" ontouchend="_fmLongPressCancel()" ontouchmove="_fmLongPressCancel()" onmousedown="_fmLongPressStart('${m}',event)" onmouseup="_fmLongPressCancel()" onmouseleave="_fmLongPressCancel()">
                   <img class="emoji" src="images/moods/${m}.png" alt="${m}">
@@ -6569,7 +6538,7 @@ window.addEventListener('pageshow', () => {
             }
             return `${_quickNotesHtml}${_prevIntentionHtml}${_moodControl}
             ${_linkedChip}
-            ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
+            ${_alsoContinue}
             ${_chooseHint}${_tapHoldHint}${_fmDayFillBtnHtml()}`;
           }
           // Full mood spectrum — render an 11-point (0–10) wheel instead of the
@@ -6604,14 +6573,15 @@ window.addEventListener('pageshow', () => {
             img: `images/moods/${m}.png`,
             label: BB.t('mood.' + m),
             color: _FM_MOOD_COLORS[m],
-            cls: `${selectedMood===m?'sel':''}${(selectedLinkedMood===m || (_fmLinkMoodPickerOpen && m!==selectedMood)) ? ' linked' : ''}`,
+            cls: `${selectedMood===m?'sel':''}${selectedLinkedMoods.includes(m) ? ' linked' : ''}`,
             init: m === _initMood,
             onclick: `_fmMoodTap('${m}')`,
             extra: `ontouchstart="_fmLongPressStart('${m}',event)" ontouchend="_fmLongPressCancel()" ontouchmove="_fmLongPressCancel()" onmousedown="_fmLongPressStart('${m}',event)" onmouseup="_fmLongPressCancel()" onmouseleave="_fmLongPressCancel()"`,
           })));
           return `${_quickNotesHtml}${_prevIntentionHtml}${_fmHeroHtml()}${_moodWheel}
+          ${_fmLinkMoodPickerOpen ? _fmAlsoMoodsLine(22) : ''}
           ${_linkedChip}
-          ${selectedLinkedMood ? `<button onclick="_fmAdvance()" style="width:100%;margin-top:14px;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>` : ''}
+          ${_alsoContinue}
           ${_showChooseMoodHint ? `<div id="_fmChooseMoodHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:8px;">
             <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
               <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
@@ -7311,13 +7281,14 @@ window.addEventListener('pageshow', () => {
             ? `<div style="background:var(--brand-tint,#fff6ec);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:0.82em;color:#6c757d;line-height:1.45;text-align:left;">${BB.t('journal.autofill.dayReview')}</div>`
             : '';
           // Bear hero: the chosen mood shown big, instead of as a summary row.
-          const _linkedHero = selectedLinkedMood ? ` <span style="color:#adb5bd;font-weight:600;">/</span> <img src="images/moods/${selectedLinkedMood}.png" style="width:34px;height:34px;object-fit:contain;vertical-align:middle;opacity:0.9;"> ${cap(selectedLinkedMood)}` : '';
+          // Other moods felt that day: a smaller line under the main one.
+          const _linkedHero = _fmAlsoMoodsLine(26);
           const _doneAura = _FM_AURAS[_moodCat(selectedMood)] || '';
           const _heroHtml = `<div class="fm-hero">
               <div class="fm-hero-emoji-wrap">${_fmSparksHtml()}<div class="fm-aura" data-type="${_doneAura}">${_AURA_HTML[_doneAura] || ''}</div>
                 <div class="fm-hero-emoji"><img src="${_moodImg(selectedMood)}" alt=""></div>
               </div>
-              <div class="fm-hero-value" style="color:${mc};">${_moodLabelNum(selectedMood)}${_linkedHero}</div>
+              <div class="fm-hero-value" style="color:${mc};">${_moodLabelNum(selectedMood)}</div>${_linkedHero}
             </div>`;
           // Delete + Save styled as wheel pills, sitting in the wheel slot.
           const _noChanges = editingEntry && !_hasEditChanges();
@@ -7405,7 +7376,7 @@ window.addEventListener('pageshow', () => {
         if (s.id === 'mood' && selectedMood != null && selectedMood !== '') {
           const col = _FM_MOOD_COLORS[_moodCat(selectedMood)] || '#adb5bd';
           const lbl = _moodLabelNum(selectedMood);
-          html = `<img src="${_moodImg(selectedMood)}" style="width:16px;height:16px;vertical-align:middle;margin-right:3px;">${lbl}`;
+          html = `<img src="${_moodImg(selectedMood)}" style="width:16px;height:16px;vertical-align:middle;margin-right:3px;">${lbl}${selectedLinkedMoods.length ? ' +' + selectedLinkedMoods.length : ''}`;
           borderColor = col;
         } else if (s.id === 'energy' && !_fmEnergyClear) {
           // Fall back to the banded meta for any value outside the five coarse
@@ -8934,7 +8905,7 @@ window.addEventListener('pageshow', () => {
     function _captureEditState(entry) {
       _editOriginalState = {
         mood:         entry.mood,
-        linkedMood:   entry.linkedMood || null,
+        linkedMoods:  _linkedMoodsOf(entry),
         energy:       entry.energy,
         sleep:        entry.sleep,
         sleepQuality: entry.sleepQuality || null,
@@ -8961,7 +8932,7 @@ window.addEventListener('pageshow', () => {
       const notesEl = document.getElementById('fmNotesInput') || document.getElementById('notes');
       return {
         mood:         selectedMood,
-        linkedMood:   selectedLinkedMood || null,
+        linkedMoods:  selectedLinkedMoods.slice(),
         energy:       _getDisabledSteps().includes('energy') ? null : selectedEnergy,
         sleep:        selectedSleep,
         sleepQuality: selectedSleepQuality || null,
@@ -9529,7 +9500,7 @@ window.addEventListener('pageshow', () => {
       if (_sleepBtnRow) _sleepBtnRow.style.display = '';
       document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
       selectedMood = null;
-      selectedLinkedMood = null;
+      selectedLinkedMoods = [];
       if (typeof _fmApplyMoodTheme === 'function') _fmApplyMoodTheme(null);
       selectedEnergy = 5;
       selectedSleep = 7.5;
@@ -9992,7 +9963,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           ...customFieldIds.map(customLabel),
         ];
         const rows = entries.map(e => [
-          _esc(e.date), _esc(e.mood), _esc(e.linkedMood || ''),
+          _esc(e.date), _esc(e.mood), _esc(_linkedMoodsOf(e).join(' / ')),
           _esc(e.energy), _esc(e.sleep), _esc(e.sleepQuality || ''),
           _esc(e.medication || ''), _esc(e.goals || ''), _esc(e.budget || ''),
           _esc(e.anxiety || ''), _esc(e.stress || ''), _esc(e.irritability || ''),
@@ -10658,7 +10629,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           const bucket = months.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
           if (bucket) {
             bucket.counts[_moodCat(e.mood)] = (bucket.counts[_moodCat(e.mood)]||0)+1;
-            if (e.linkedMood) bucket.counts[_moodCat(e.linkedMood)] = (bucket.counts[_moodCat(e.linkedMood)]||0)+1;
+            _linkedMoodsOf(e).forEach(lm => { bucket.counts[_moodCat(lm)] = (bucket.counts[_moodCat(lm)]||0)+1; });
             if (e.sleep  != null) bucket.sleeps.push(e.sleep);
             if (e.energy != null) bucket.energies.push(e.energy);
             if (e.steps  != null && e.steps > 0) bucket.steps.push(e.steps);
@@ -12285,7 +12256,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
       // Select mood and reveal form sections
       selectedMood = entry.mood;
-      selectedLinkedMood = entry.linkedMood || null;
+      selectedLinkedMoods = _linkedMoodsOf(entry).slice();
       if (typeof _fmApplyMoodTheme === 'function') _fmApplyMoodTheme(_moodCat(entry.mood));
       if (_isNumericMood(entry.mood)) {
         // Numeric (spectrum) mood — show the slider set to the entry's value.
@@ -13070,6 +13041,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         date: date.toISOString(),
         mood: plan.mood,
         linkedMood: null,
+        linkedMoods: [],
         energy: plan.energy,
         sleep: plan.sleep,
         sleepQuality: null,
@@ -13543,7 +13515,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           }).catch(() => {});
         }
       }
-      document.getElementById('moodLinkingToggle').checked = localStorage.getItem('moodLinkingEnabled') === '1';
+      // Mood Linking switch removed 2026-10-12: holding a bear adds other moods for everyone.
       const _msToggle = document.getElementById('moodSpectrumToggle');
       if (_msToggle) _msToggle.checked = _spectrumEnabled();
       const _wmToggle = document.getElementById('wheelModeToggle');
