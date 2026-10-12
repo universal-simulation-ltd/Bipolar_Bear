@@ -1492,7 +1492,8 @@
 //   "saved" line no longer promise end-to-end / "only you can read it" (the
 //   translations already said so; Standard journals keep a spare key).
 //   Touches fab.js, js/shared/safety-plan.js.
-const CACHE_NAME = 'bipolarbear-v314';
+// v315: app version 1.41 (Bipolar Bear 1.41 / Bipolar Anonymous 1.40 store builds). Touches js/shared/brand-config.js.
+const CACHE_NAME = 'bipolarbear-v315';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
