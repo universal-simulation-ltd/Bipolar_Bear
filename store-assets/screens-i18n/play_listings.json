@@ -55,6 +55,19 @@
    "pl": "• Nie pamiętasz PIN-u? poprosi o odcisk palca lub kod\n• Szyfrowane na Twoim urządzeniu; Prywatny dziennik tylko dla Ciebie\n• Przytrzymaj misia, aby zapisać kilka nastrojów\n• Salon gier Misia: dziewięć gier retro\n• Import z Mood Tracker od Bipolar UK lub arkusza\n• Mój plan bezpieczeństwa i widżet Zadzwoń po wsparcie\n• Widżety z nastrojami z ostatnich 7 dni\n• Wstecz wraca do startu zamiast zamykać aplikację\n• Wiele poprawek",
    "sv": "• Glömt PIN? ber om fingeravtryck eller lösenkod\n• Krypterat på din enhet; Privat dagbok bara för dig\n• Håll in en björn för att logga flera humör\n• Björnarkad: nio retrospel\n• Importera från Bipolar UK:s Mood Tracker eller ett kalkylark\n• Min säkerhetsplan och widgeten Ring efter stöd\n• Widgetar med ditt humör de senaste 7 dagarna\n• Bakåt går till start i stället för att stänga appen\n• Många rättningar",
    "zh": "• 忘记PIN码？会要求指纹或手机密码\n• 在你的设备上加密；私密日记只有你能读\n• 长按一只熊即可记录多种情绪\n• 小熊街机：九款复古小游戏\n• 可从 Bipolar UK 的 Mood Tracker 或电子表格导入\n• 我的安全计划，以及“求助电话”小组件\n• 小组件显示你最近 7 天的情绪\n• 返回键回到首页，而不是关闭应用\n• 多项修复"
+  },
+  "releaseNotes_1.42": {
+   "en": "• Thanks to Stuart for the suggestion behind the import from Bipolar UK's Mood Tracker",
+   "es": "• Gracias a Stuart por la sugerencia de importar desde el Mood Tracker de Bipolar UK",
+   "fr": "• Merci à Stuart pour la suggestion d'importer depuis le Mood Tracker de Bipolar UK",
+   "de": "• Danke an Stuart für den Vorschlag, den Verlauf aus dem Mood Tracker von Bipolar UK zu übernehmen",
+   "it": "• Grazie a Stuart per il suggerimento di importare dal Mood Tracker di Bipolar UK",
+   "pt": "• Obrigado ao Stuart pela sugestão de importar do Mood Tracker da Bipolar UK",
+   "pt-BR": "• Obrigado ao Stuart pela sugestão de importar do Mood Tracker da Bipolar UK",
+   "nl": "• Dank aan Stuart voor de suggestie om te importeren uit de Mood Tracker van Bipolar UK",
+   "pl": "• Dziękujemy Stuartowi za sugestię importu z Mood Tracker od Bipolar UK",
+   "sv": "• Tack till Stuart för förslaget att importera från Bipolar UK:s Mood Tracker",
+   "zh": "• 感谢 Stuart 提议加入从 Bipolar UK 的 Mood Tracker 导入的功能"
   }
  },
  "anonymous": {
