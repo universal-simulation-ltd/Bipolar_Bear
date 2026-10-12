@@ -4973,8 +4973,14 @@ function setupThread() {
       try {
         await _ensureAuthSession(); // comment writes require request.auth
         const postRef = db.collection(BB_BRAND.collections.posts).doc(commentTargetId);
-        const cref = postRef.collection('comments').doc();
-        await cref.set(await _withOwner(cref.path, comment));
+        if (asAdmin) {
+          // As "Bipolar Bear Admin": written by the adminAnonPost callable with
+          // no owner stamp (see the compose sheet), which also bumps the post.
+          await _callFn('adminAnonPost', { kind: 'comment', postId: commentTargetId, text });
+        } else {
+          const cref = postRef.collection('comments').doc();
+          await cref.set(await _withOwner(cref.path, comment));
+        }
         sent = true;
         _threadStickToBottom = true; // follow your own comment down to the end
         // Your own reply is read the instant you send it. The thread listener
@@ -4986,7 +4992,8 @@ function setupThread() {
         _countMyPost();
         // Bump the parent post to the top of the board and update count.
         // Separate try — a failed bump shouldn't read as a failed comment.
-        try {
+        // (adminAnonPost has already done it for an admin reply.)
+        if (!asAdmin) try {
           await postRef.update({
             lastActivity: firebase.firestore.FieldValue.serverTimestamp(),
             commentCount: firebase.firestore.FieldValue.increment(1),
@@ -5628,6 +5635,14 @@ function setupCompose() {
           // tallies at zero) rather than a direct write.
           const { timestamp, poll, ...fields } = entry;
           const res = await _callFn('createAnonPoll', { ...fields, options: pollOpts, asMember: !asAdmin });
+          docId = res.id || null;
+        } else if (asAdmin) {
+          // "Bipolar Bear Admin" posts are written by the adminAnonPost
+          // callable with no owner stamp: a stamp comes from the same account
+          // as the stamps on the admin's moniker posts ("Post as a member"),
+          // so it could tie the two together. The rules refuse a device-written
+          // one once legacyAdminClients() is off.
+          const res = await _callFn('adminAnonPost', { kind: 'post', text, tab: currentTab });
           docId = res.id || null;
         } else {
           await _ensureAuthSession(); // the post records its author's owner stamp

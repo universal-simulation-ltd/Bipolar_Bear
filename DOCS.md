@@ -229,7 +229,23 @@ Firestore rules
   call the shipped apps make, so add the call there when a client gains one.
   legacyClients() at the top of the rules keeps app builds <= 1.39 working
   (board writes without an owner uid, profile restore before sign-in); set it
-  to false once those builds are no longer in use.
+  to false once those builds are no longer in use. legacyAdminClients() next
+  to it lets a device write an admin-label post (isAdmin: true) itself, as
+  every build up to 1.41 / 1.40 does; current clients use adminAnonPost
+  (§2.20). Only the admin is affected, so set it to false once the admin's
+  own devices run a later build. The suite runs three rule sets: legacy,
+  strict (both switches off) and adminStrict (only the admin switch off).
+
+bbAnonAdminAuthored/
+  {path with '/' → '__'}  — Cloud Functions only (adminAnonPost, createAnonPoll,
+                            the anonOwnerOn* triggers, privacySweep)
+    path        string    — the admin-label post or reply
+    postId      string
+    uid         string    — the admin session that wrote it
+    createdAt   Timestamp
+  Never readable by clients. Admin-label posts carry no owner, so this is
+  how account deletion finds them; onAnonPostDeleted and privacySweep remove
+  records whose post is gone.
 
 bbAnonLinks/
   {uid}                   — written by verifyAnonCode / anonProfileId (Admin SDK) only
@@ -1507,6 +1523,36 @@ claims only goals/budget; the sensitive fields are claimed by secure-store.
 (`ownerStamp()`), different on every document. 1.41-era builds that still
 write `uid` are converted on create (`anonOwnerOnPost/OnComment/OnMonika`);
 `privacySweep` converts any left over. `createAnonPoll` writes a stamp.
+
+**Admin-label posts carry no owner at all** (James, 2026-10-12: "Yes, via a
+function"). The admin posts as "Bipolar Bear Admin" and, with **Post as a
+member** on (Your Moniker, admin only), under their moniker. An owner stamp
+on an admin-label post comes from the same uid as the stamps on the moniker's
+posts, so anyone holding that uid could tie the two together. So the web
+client sends admin-label posts and replies to the **`adminAnonPost`**
+callable (`{kind:'post', text, tab}` / `{kind:'comment', postId, text}`;
+europe-west1). It checks the caller the way the rules' `isAdmin()` does
+(admin account email on the token, or `bbAnonLinks` holding the admin address
+hash), trims and caps the text (10,000 characters), and writes the neutral
+author (`adminLabel()`: Bipolar Bear Admin / BB / yellow / streak 0), no
+`owner`, no `uid`; a reply also bumps its post (`lastActivity`,
+`commentCount`). `createAnonPoll` does the same for an admin-label poll (and
+now recognises the email-code admin too). Who wrote each one goes in the
+server-only `bbAnonAdminAuthored`, which `onAuthUserDeleted` uses. The admin
+edits, pins and deletes these posts with admin rights, as any post; with no
+owner, nobody else can (`ownsExisting()` no longer treats an ownerless
+admin-label post as a legacy post anyone may delete).
+Store builds up to 1.41 / 1.40 (including the v317 rebuilds) still write
+admin-label posts from the device, with a uid, an owner stamp or nothing;
+`legacyAdminClients()` keeps that working, and `anonOwnerOnPost` /
+`OnComment` drop the uid or stamp as the post lands, put the neutral author
+on it (builds before 2026-10-09 wrote the admin's own moniker there) and
+record the writer (an owner stamp is matched against the admin's uids).
+`privacySweep` does the same for any left over. The rules refuse a
+device-written admin-label post once `legacyAdminClients()` is false.
+Not covered: an announcement suggestion the admin publishes is credited to
+the member who wrote it and still carries the admin's owner stamp. Nothing
+in it names the admin's moniker.
 
 **Board profiles keyed by a server secret.** `anonProfiles/p2_<HMAC-SHA256(
 ANON_PROFILE_SECRET, 'bb-anon-profile:v1:'+email)>`. `verifyAnonCode`

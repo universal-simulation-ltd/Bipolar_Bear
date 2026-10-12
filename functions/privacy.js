@@ -235,11 +235,101 @@ async function recordVerifiedEmail(request, email, wantsV2) {
   return profileId;
 }
 
+// ── Admin-label posts carry no owner at all ─────────────────────────────────
+// (James, 2026-10-12: "Yes, via a function".) The admin posts both as
+// "Bipolar Bear Admin" and, with "Post as a member" on, under their moniker.
+// An owner stamp on an admin-label post is derived from the same uid as the
+// stamps on the moniker's posts, so anyone holding that uid could tie the two
+// together. Admin-label posts and replies are therefore written by the
+// adminAnonPost callable (and createAnonPoll) with no `owner` and no `uid`,
+// and who wrote them is kept here, server-only:
+//   bbAnonAdminAuthored/{path with '/' → '__'} = { path, postId, uid, createdAt }
+// It is used to clean up after account deletion (deleteUserData); the admin
+// edits and deletes these posts with the admin's own rights, as any post.
+// Store builds up to Bipolar Bear 1.41 / Bipolar Anonymous 1.40 still write
+// admin-label posts from the device (legacyAdminClients() in firestore.rules);
+// boardDocCreated strips their uid / owner as they land and records them here.
+
+const ADMIN_AUTHORED = 'bbAnonAdminAuthored';
+/** The admin *account* — matches ADMIN_EMAIL in js/anonymous.js and isAdmin() in the rules. */
+const ADMIN_ACCOUNT_EMAIL = 'inbox@jamesmarkey.co.uk';
+const ADMIN_EMAIL_HASH = sha256Hex(ADMIN_ACCOUNT_EMAIL);
+
+/** The neutral author an admin-label post shows (js/anonymous.js `_adminAuthorFields`). */
+function adminLabel(kind) {
+  const base = { name: 'Bipolar Bear Admin', initials: 'BB', grad1: '#ffe566', grad2: '#c49e00', streak: 0 };
+  return kind === 'post' ? { ...base, med: '', stable: 0, joinedAt: null } : base;
+}
+
+/**
+ * Is this caller the board admin? The same test as isAdmin() in
+ * firestore.rules: the admin's Bipolar Bear account, or a session that proved
+ * the admin address with an email code (bbAnonLinks).
+ */
+async function isBoardAdmin(auth) {
+  if (!auth || !auth.uid) return false;
+  const tok = auth.token || {};
+  if (typeof tok.email === 'string' && tok.email === ADMIN_ACCOUNT_EMAIL) return true;
+  const link = await db.collection(LINKS).doc(auth.uid).get();
+  if (!link.exists) return false;
+  const d = link.data();
+  return d.emailHash === ADMIN_EMAIL_HASH
+    || (Array.isArray(d.emailHashes) && d.emailHashes.includes(ADMIN_EMAIL_HASH));
+}
+
+function adminAuthoredRef(docPath) {
+  return db.collection(ADMIN_AUTHORED).doc(docPath.split('/').join('__'));
+}
+function adminAuthoredDoc(docPath, uid) {
+  return { path: docPath, postId: docPath.split('/')[1], uid, createdAt: FV.serverTimestamp() };
+}
+
+/** Every uid that counts as the admin (to read an owner stamp an older build wrote). */
+async function adminUids() {
+  const out = new Set();
+  try { out.add((await admin.auth().getUserByEmail(ADMIN_ACCOUNT_EMAIL)).uid); } catch (e) { /* no account */ }
+  const [a, b] = await Promise.all([
+    db.collection(LINKS).where('emailHash', '==', ADMIN_EMAIL_HASH).get(),
+    db.collection(LINKS).where('emailHashes', 'array-contains', ADMIN_EMAIL_HASH).get(),
+  ]);
+  a.forEach((d) => out.add(d.id));
+  b.forEach((d) => out.add(d.id));
+  return [...out];
+}
+
+/**
+ * An admin-label document a device wrote with a uid or an owner stamp: drop
+ * both, put the neutral author on it (builds before 2026-10-09 wrote the
+ * admin's own moniker there), and remember the writer server-side.
+ * Returns true if it changed anything.
+ */
+async function unlinkAdminDoc(ref, d, docPath, uids) {
+  const has = (k) => Object.prototype.hasOwnProperty.call(d, k);
+  if (!has('uid') && !has('owner')) return false;   // adminAnonPost / createAnonPoll wrote it
+  let uid = typeof d.uid === 'string' && d.uid ? d.uid : null;
+  if (!uid && typeof d.owner === 'string') {
+    const list = uids || await adminUids();
+    uid = list.find((u) => ownerHash(u, docPath) === d.owner) || null;
+  }
+  const patch = { ...adminLabel(docPath.includes('/comments/') ? 'comment' : 'post'),
+    uid: FV.delete(), owner: FV.delete() };
+  try { await ref.update(patch); }
+  catch (e) { if (e.code !== 5) console.warn('[adminLabel] unlink failed', docPath, e.message); return false; }
+  if (uid) await adminAuthoredRef(docPath).set(adminAuthoredDoc(docPath, uid)).catch(() => {});
+  return true;
+}
+
 // ── Owner stamps instead of uids ────────────────────────────────────────────
 
 async function swapUidForOwner(snap, docPath) {
   const d = snap && snap.data();
-  if (!d || !Object.prototype.hasOwnProperty.call(d, 'uid')) return;
+  if (!d) return;
+  // Admin-label posts and replies get no owner (see above).
+  if (d.isAdmin === true && !d.isTopic && !docPath.startsWith(MONIKAS + '/')) {
+    await unlinkAdminDoc(snap.ref, d, docPath);
+    return;
+  }
+  if (!Object.prototype.hasOwnProperty.call(d, 'uid')) return;
   const patch = { uid: FV.delete() };
   if (typeof d.uid === 'string' && d.uid && !d.owner) patch.owner = ownerHash(d.uid, docPath);
   try { await snap.ref.update(patch); }
@@ -265,6 +355,9 @@ const onAnonPostDeleted = onDocumentDeleted(
   { document: `${POSTS}/{postId}`, region: REGION },
   async (event) => {
     await db.recursiveDelete(db.collection(POSTS).doc(event.params.postId).collection('comments'));
+    // ... and so does the record of who wrote it, if the admin did.
+    const authored = await db.collection(ADMIN_AUTHORED).where('postId', '==', event.params.postId).get();
+    await deleteRefs(authored.docs.map((d) => d.ref));
   }
 );
 
@@ -401,9 +494,19 @@ async function sweepByTime(collection, field, olderThanMs, apply, { filter, asNu
  * stamps, or a trigger that didn't run) get the stamp instead.
  */
 async function sweepUids(apply) {
-  const out = { posts: 0, comments: 0, monikas: 0 };
+  const out = { posts: 0, comments: 0, monikas: 0, adminLabel: 0 };
+  let uids = null;
   const fix = async (doc, kind) => {
     const d = doc.data();
+    // Admin-label posts and replies: no uid and no owner stamp either.
+    if (kind !== 'monikas' && d.isAdmin === true && !d.isTopic
+        && (Object.prototype.hasOwnProperty.call(d, 'uid') || Object.prototype.hasOwnProperty.call(d, 'owner'))) {
+      out.adminLabel++;
+      if (!apply) return;
+      if (!uids) uids = await adminUids();
+      await unlinkAdminDoc(doc.ref, d, doc.ref.path, uids);
+      return;
+    }
     if (!Object.prototype.hasOwnProperty.call(d, 'uid')) return;
     out[kind]++;
     if (!apply) return;
@@ -415,6 +518,17 @@ async function sweepUids(apply) {
   for (const d of (await db.collectionGroup('comments').get()).docs) await fix(d, 'comments');
   for (const d of (await db.collection(MONIKAS).get()).docs) await fix(d, 'monikas');
   return out;
+}
+
+/** Records of admin-label posts that no longer exist. */
+async function sweepAdminAuthored(apply) {
+  const stale = [];
+  for (const m of (await db.collection(ADMIN_AUTHORED).get()).docs) {
+    const path = m.get('path');
+    if (typeof path !== 'string' || !(await db.doc(path).get()).exists) stale.push(m.ref);
+  }
+  if (apply) await deleteRefs(stale);
+  return stale.length;
 }
 
 /** Push registrations still carrying sha256(email). */
@@ -453,6 +567,7 @@ async function runPrivacySweep({ apply = true, secret } = {}) {
   r.anonPresence = await sweepByTime('bbAnonPresence', 'lastSeen', RETENTION.presenceHours * 3600000, apply);
   r.posts = await sweepPosts(apply);
   r.orphanComments = await sweepOrphanComments(apply);
+  r.adminAuthored = await sweepAdminAuthored(apply);
   if (secret) r.profiles = await migrateLegacyProfiles(secret, { apply });
   return r;
 }
@@ -488,6 +603,12 @@ async function boardDocsOf(uid) {
   comments.forEach((c) => { if (mine(c, c.ref.path)) refs.push(c.ref); });
   const monikas = await db.collection(MONIKAS).get();
   monikas.forEach((m) => { if (mine(m, m.ref.path)) refs.push(m.ref); });
+  // Admin-label posts and replies carry no owner; the server kept who wrote them.
+  const authored = await db.collection(ADMIN_AUTHORED).where('uid', '==', uid).get();
+  authored.forEach((a) => {
+    if (typeof a.get('path') === 'string') refs.push(db.doc(a.get('path')));
+    refs.push(a.ref);
+  });
   return refs;
 }
 
@@ -536,5 +657,6 @@ module.exports = {
     ANON_PROFILE_SECRET, RETENTION, emailHash, profileIdFor, ownerHash, isLegacyProfileId,
     recordVerifiedEmail, mergeLegacyProfile, migrateLegacyProfiles, runPrivacySweep, boardDocsOf,
     deleteUserData, sha256Hex,
+    ADMIN_ACCOUNT_EMAIL, adminLabel, isBoardAdmin, adminAuthoredRef, adminAuthoredDoc,
   },
 };

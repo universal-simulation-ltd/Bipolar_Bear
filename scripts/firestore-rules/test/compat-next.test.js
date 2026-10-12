@@ -10,7 +10,7 @@ const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
 const {
   makeEnvs, people, seed, seedVerified, seedAccountLink, emailHash, profileId, ownerStamp,
-  postDoc, commentDoc, assertSucceeds, assertFails, TS, DAY, ADMIN_EMAIL,
+  postDoc, commentDoc, adminLabelPost, adminLabelComment, assertSucceeds, assertFails, TS, DAY, ADMIN_EMAIL,
 } = require('./helpers');
 const { board, admin, bear, profileOf } = require('./clients');
 
@@ -20,7 +20,7 @@ let envs;
 before(async () => { envs = await makeEnvs('next'); });
 after(async () => { await envs.cleanup(); });
 
-for (const mode of ['legacy', 'strict']) {
+for (const mode of ['legacy', 'strict', 'adminStrict']) {
   describe(`[${mode}]`, () => {
     let env, who;
     before(() => { env = envs[mode]; who = people(env); });
@@ -157,9 +157,26 @@ for (const mode of ['legacy', 'strict']) {
             'bbAnonAnnSuggestions/s2': { name: 'Robin', text: 'y', status: 'pending', timestamp: TS.now() },
           });
           const db = ctx(who);
-          await assertSucceeds(admin.post(db, { flavour, uid: 'adm', name: 'Admin' }));
-          await assertSucceeds(admin.post(db, { flavour, uid: 'adm', name: 'Admin', tab: 'announcements' }));
-          await assertSucceeds(board.comment(db, 'p3', { flavour, uid: 'adm', isAdmin: true, name: 'Admin' }));
+          // "Bipolar Bear Admin" posts and replies: the current client calls
+          // adminAnonPost. Writing one from the device (as the v316/v317 web
+          // and the 1.41 / 1.40 rebuilds do) works only while
+          // legacyAdminClients() is on.
+          const device = mode === 'legacy' ? assertSucceeds : assertFails;
+          await device(admin.post(db, { flavour, uid: 'adm', name: 'Admin' }));
+          await device(admin.post(db, { flavour, uid: 'adm', name: 'Admin', tab: 'announcements' }));
+          await device(board.comment(db, 'p3', { flavour, uid: 'adm', isAdmin: true, name: 'Admin' }));
+          await seed(env, {                                      // what adminAnonPost writes
+            'bbAnonPosts/a1': adminLabelPost(),
+            'bbAnonPosts/a2': adminLabelPost({ tab: 'announcements' }),
+            'bbAnonPosts/p3/comments/ac1': adminLabelComment(),
+          });
+          await assertSucceeds(board.listenTab(db, 'announcements'));
+          await assertSucceeds(admin.pin(db, 'a2', 'announcements'));
+          await assertSucceeds(db.doc('bbAnonPosts/p3/comments/ac1').delete());
+          await assertSucceeds(db.doc('bbAnonPosts/a1').delete());
+          // "Post as a member": an ordinary owner-stamped post under the moniker.
+          await assertSucceeds(board.createPost(db, { flavour, uid: 'adm', name: 'Robin' }));
+          await assertSucceeds(board.comment(db, 'p3', { flavour, uid: 'adm', name: 'Robin' }));
           await assertSucceeds(admin.pin(db, 'p3', 'general'));
           await assertSucceeds(admin.unpin(db, 'p3'));
           await assertSucceeds(board.deleteComment(db, 'p1', 'c1'));

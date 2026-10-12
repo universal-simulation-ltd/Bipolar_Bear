@@ -14,6 +14,16 @@ rules_version = '2';
 // While those builds are in use, legacyClients() stays true. Once they are
 // gone, set it to false: the test suite runs against both settings.
 //
+// Second switch, legacyAdminClients(): admin-label posts and replies
+// (isAdmin: true, "Bipolar Bear Admin") are written by the adminAnonPost /
+// createAnonPoll Cloud Functions with no owner and no uid, so they can't be
+// tied to the admin's moniker. Store builds up to Bipolar Bear 1.41 /
+// Bipolar Anonymous 1.40 (including the v317 rebuilds of 2026-10-12) still
+// write them from the device; anonOwnerOnPost / OnComment strip the uid or
+// owner stamp as they land. Only the admin is affected, so this can be set to
+// false as soon as the admin's own devices run a later build (or the admin
+// posts only from the web), independently of legacyClients().
+//
 // Privacy round 2026-10-12 (functions/privacy.js):
 //   * public board documents carry `owner` = sha256(uid + '/' + doc path),
 //     never the uid;
@@ -27,6 +37,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function legacyClients() { return true; }
+    function legacyAdminClients() { return true; }
 
     // ── Identity ─────────────────────────────────────────────────────────
 
@@ -101,17 +112,21 @@ service cloud.firestore {
     }
 
     // An existing document belongs to the caller (or predates owner stamps and
-    // legacy builds are still supported).
+    // legacy builds are still supported). An admin-label post or reply with
+    // neither (adminAnonPost writes them that way) belongs to nobody: only
+    // the admin, through isAdmin(), may change or remove it.
     function ownsExisting(docPath) {
       return ('owner' in resource.data)
         ? (signedIn() && resource.data.owner == ownerStamp(docPath))
         : (('uid' in resource.data)
             ? (signedIn() && resource.data.uid == request.auth.uid)
-            : legacyClients());
+            : (legacyClients() && resource.data.get('isAdmin', false) != true));
     }
 
+    // A device may write isAdmin: true only from an older build (see
+    // legacyAdminClients() above); current clients go through adminAnonPost.
     function adminFlagOk() {
-      return incoming().get('isAdmin', false) == false || isAdmin();
+      return incoming().get('isAdmin', false) == false || (isAdmin() && legacyAdminClients());
     }
 
     // ── Cloud Functions only (Admin SDK bypasses rules) ──
@@ -119,6 +134,8 @@ service cloud.firestore {
     match /verifyRateLimit/{docId} { allow read, write: if false; }
     match /betaSignups/{docId}     { allow read, write: if false; }
     match /bbAnonLinks/{uid}       { allow read, write: if false; }
+    // Who wrote each admin-label post (adminAnonPost; functions/privacy.js).
+    match /bbAnonAdminAuthored/{id} { allow read, write: if false; }
     // Universal ID ↔ Bipolar Bear account join (uidSignIn / uidLink).
     match /uidLinks/{supabaseId}   { allow read, write: if false; }
 

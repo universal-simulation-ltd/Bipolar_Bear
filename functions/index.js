@@ -1390,35 +1390,100 @@ exports.createAnonPoll = onCall(
     if (new Set(options.map((o) => o.toLowerCase())).size !== options.length) {
       throw new HttpsError('invalid-argument', 'Options must differ.');
     }
-    const banned = await db.collection(BANNED_COL).doc(name.toLowerCase()).get();
-    if (banned.exists) throw new HttpsError('permission-denied', 'Posting is disabled for this member.');
+    // The admin posts under the shared "Bipolar Bear Admin" label (see
+    // authorLabel in js/anonymous.js); trusted from the session (the rules'
+    // isAdmin() test), not the client. `asMember` (the admin's "Post as a
+    // member" switch) can only turn it off.
+    const asAdmin = d.asMember !== true && await P.isBoardAdmin(request.auth);
+    if (!asAdmin) {
+      const banned = await db.collection(BANNED_COL).doc(name.toLowerCase()).get();
+      if (banned.exists) throw new HttpsError('permission-denied', 'Posting is disabled for this member.');
+    }
 
     const num = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt);
     const colour = (v) => (/^#[0-9a-f]{3,8}$/i.test(String(v || '')) ? String(v) : '');
     const ref = db.collection(POSTS).doc();
-    await ref.set({
+    const author = asAdmin ? P.adminLabel('post') : {
       name,
-      text,
-      tab:       'general',
       streak:    num(d.streak, 1),
       initials:  str(d.initials, 2),
       grad1:     colour(d.grad1),
       grad2:     colour(d.grad2),
-      // The admin posts under the shared "Bipolar Bear Admin" label (see
-      // authorLabel in js/anonymous.js); trusted from the token, not the client.
-      // `asMember` (the admin's "Post as a member" switch) can only turn it off.
-      isAdmin:   !!(request.auth.token && request.auth.token.email === ADMIN_ACCOUNT_EMAIL) && d.asMember !== true,
       med:       str(d.med, 60),
       stable:    num(d.stable, 0),
       joinedAt:  d.joinedAt ? str(d.joinedAt, 40) : null,
-      likes:     0,
-      isSystem:  false,
-      poll:      { options, votes: options.map(() => 0) },
       // Owner stamp for self-delete / rename (firestore.rules) — not the uid,
       // which would tie the poll to the account (functions/privacy.js).
       owner:     P.ownerHash(request.auth.uid, `${POSTS}/${ref.id}`),
+    };
+    const batch = db.batch();
+    batch.set(ref, {
+      ...author,
+      text,
+      tab:       'general',
+      isAdmin:   asAdmin,
+      likes:     0,
+      isSystem:  false,
+      poll:      { options, votes: options.map(() => 0) },
       timestamp: admin.firestore.FieldValue.serverTimestamp(),
     });
+    // An admin-label poll carries no owner: who wrote it is kept server-side.
+    if (asAdmin) batch.set(P.adminAuthoredRef(ref.path), P.adminAuthoredDoc(ref.path, request.auth.uid));
+    await batch.commit();
+    return { id: ref.id };
+  }
+);
+
+// ── Admin-label posts and replies ────────────────────────────────────────────
+// adminAnonPost({ kind: 'post', text, tab }) → { id }
+// adminAnonPost({ kind: 'comment', postId, text }) → { id }
+// What the board admin posts as "Bipolar Bear Admin" (James, 2026-10-12). It
+// used to be written from the device, so it carried the admin's owner stamp,
+// made from the same uid as the stamps on their moniker's posts ("Post as a
+// member"). Written here, it carries no owner and no uid; who wrote it is kept
+// in the server-only bbAnonAdminAuthored (functions/privacy.js). The admin
+// still deletes or moves it with their admin rights, like any post. A reply
+// also bumps its post, as the client does for a member's reply.
+const ADMIN_TEXT_CHARS = 10000;
+exports.adminAnonPost = onCall(
+  { region: REGION, invoker: 'public' },
+  async (request) => {
+    requireAuth(request);
+    if (!(await P.isBoardAdmin(request.auth))) {
+      throw new HttpsError('permission-denied', 'Only the board admin can post as Bipolar Bear Admin.');
+    }
+    const d = request.data || {};
+    const text = String(d.text == null ? '' : d.text).trim();
+    if (!text) throw new HttpsError('invalid-argument', 'Nothing to post.');
+    if (text.length > ADMIN_TEXT_CHARS) throw new HttpsError('invalid-argument', 'Too long.');
+    const uid = request.auth.uid;
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    if (d.kind === 'comment') {
+      const postId = String(d.postId || '');
+      if (!postId || postId.includes('/')) throw new HttpsError('invalid-argument', 'Which post?');
+      const postRef = db.collection(POSTS).doc(postId);
+      const ref = postRef.collection('comments').doc();
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(postRef);
+        if (!snap.exists || snap.data().deleted) throw new HttpsError('not-found', 'Post not found.');
+        tx.set(ref, { ...P.adminLabel('comment'), text, isAdmin: true, timestamp: now });
+        tx.update(postRef, { lastActivity: now, commentCount: admin.firestore.FieldValue.increment(1) });
+        tx.set(P.adminAuthoredRef(ref.path), P.adminAuthoredDoc(ref.path, uid));
+      });
+      return { id: ref.id };
+    }
+
+    if (d.kind !== 'post') throw new HttpsError('invalid-argument', 'Post or comment?');
+    const tab = String(d.tab || 'general');
+    if (tab !== 'general' && tab !== 'announcements') throw new HttpsError('invalid-argument', 'No such tab.');
+    const ref = db.collection(POSTS).doc();
+    const batch = db.batch();
+    batch.set(ref, {
+      ...P.adminLabel('post'), text, tab, isAdmin: true, likes: 0, isSystem: false, timestamp: now,
+    });
+    batch.set(P.adminAuthoredRef(ref.path), P.adminAuthoredDoc(ref.path, uid));
+    await batch.commit();
     return { id: ref.id };
   }
 );

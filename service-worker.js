@@ -1505,7 +1505,11 @@
 //   web; Android's back gesture already did). A round arrow follows the finger
 //   and turns orange once letting go will go home. Not while a modal is open;
 //   any draft is saved first. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v317';
+// v318: Bipolar Anonymous — the admin's "Bipolar Bear Admin" posts and replies
+//   go through the adminAnonPost Cloud Function, which writes them with no
+//   owner stamp, so they can't be tied to the admin's moniker. Touches
+//   js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v318';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

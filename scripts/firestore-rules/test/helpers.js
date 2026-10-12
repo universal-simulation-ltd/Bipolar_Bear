@@ -2,10 +2,13 @@
 /**
  * Shared set-up for the Firestore rules suite.
  *
- * Every test file gets two emulator projects loaded with ../../firestore.rules:
- *   legacy  — the rules as committed (legacyClients() == true), i.e. what is
- *             deployed while app builds <= 1.39 are still installed;
- *   strict  — the same file with legacyClients() switched to false.
+ * Every test file gets three emulator projects loaded with ../../firestore.rules:
+ *   legacy      — the rules as committed (legacyClients() and
+ *                 legacyAdminClients() both true), i.e. what is deployed while
+ *                 older app builds are still installed;
+ *   strict      — the same file with both switches set to false;
+ *   adminStrict — only legacyAdminClients() set to false (the admin's own
+ *                 devices have moved on before everyone else's have).
  *
  * Identities mirror what the real clients carry:
  *   anon(uid)           standalone email-code path: Firebase anonymous auth,
@@ -31,7 +34,12 @@ const LEGACY_SWITCH = 'function legacyClients() { return true; }';
 if (!RULES.includes(LEGACY_SWITCH)) {
   throw new Error('firestore.rules no longer contains the legacyClients() switch the suite flips');
 }
-const STRICT_RULES = RULES.replace(LEGACY_SWITCH, 'function legacyClients() { return false; }');
+const ADMIN_SWITCH = 'function legacyAdminClients() { return true; }';
+if (!RULES.includes(ADMIN_SWITCH)) {
+  throw new Error('firestore.rules no longer contains the legacyAdminClients() switch the suite flips');
+}
+const ADMIN_STRICT_RULES = RULES.replace(ADMIN_SWITCH, 'function legacyAdminClients() { return false; }');
+const STRICT_RULES = ADMIN_STRICT_RULES.replace(LEGACY_SWITCH, 'function legacyClients() { return false; }');
 
 const ADMIN_EMAIL = 'inbox@jamesmarkey.co.uk';
 const FV = firebase.firestore.FieldValue;
@@ -68,10 +76,12 @@ async function makeEnvs(name) {
   });
   const legacy = await mk('legacy', RULES);
   const strict = await mk('strict', STRICT_RULES);
+  const adminStrict = await mk('adminstrict', ADMIN_STRICT_RULES);
   return {
     legacy,
     strict,
-    async cleanup() { await legacy.cleanup(); await strict.cleanup(); },
+    adminStrict,
+    async cleanup() { await legacy.cleanup(); await strict.cleanup(); await adminStrict.cleanup(); },
   };
 }
 
@@ -148,7 +158,26 @@ function commentDoc(over = {}) {
   }, over);
 }
 
+/**
+ * An admin-label post / reply as the adminAnonPost callable writes it: the
+ * neutral "Bipolar Bear Admin" author, no owner, no uid.
+ */
+function adminLabelPost(over = {}) {
+  return Object.assign({
+    name: 'Bipolar Bear Admin', initials: 'BB', grad1: '#ffe566', grad2: '#c49e00', streak: 0,
+    med: '', stable: 0, joinedAt: null, text: 'From the team', tab: 'general', isAdmin: true,
+    likes: 0, isSystem: false, timestamp: TS.fromMillis(Date.now() - 60 * 1000),
+  }, over);
+}
+function adminLabelComment(over = {}) {
+  return Object.assign({
+    name: 'Bipolar Bear Admin', initials: 'BB', grad1: '#ffe566', grad2: '#c49e00', streak: 0,
+    text: 'Thanks for sharing', isAdmin: true, timestamp: TS.fromMillis(Date.now() - 60 * 1000),
+  }, over);
+}
+
 module.exports = {
+  adminLabelPost, adminLabelComment,
   makeEnvs, people, seed, seedVerified, seedAccountLink, emailHash, profileId, ownerStamp, postDoc, commentDoc,
   assertSucceeds, assertFails, FV, TS, DAY, ADMIN_EMAIL,
 };

@@ -8,7 +8,7 @@ const { describe, it, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert');
 const {
   makeEnvs, people, seed, seedVerified, seedAccountLink, emailHash, profileId, ownerStamp,
-  postDoc, commentDoc, assertSucceeds, assertFails, FV, TS, DAY, ADMIN_EMAIL,
+  postDoc, commentDoc, adminLabelPost, adminLabelComment, assertSucceeds, assertFails, FV, TS, DAY, ADMIN_EMAIL,
 } = require('./helpers');
 const { board, admin, profileOf } = require('./clients');
 
@@ -16,11 +16,13 @@ let envs;
 before(async () => { envs = await makeEnvs('security'); });
 after(async () => { await envs.cleanup(); });
 
-for (const mode of ['legacy', 'strict']) {
+for (const mode of ['legacy', 'strict', 'adminStrict']) {
   describe(`[${mode}]`, () => {
     let env, who;
     const strictOnly = (name, fn) => it(name, { skip: mode !== 'strict' }, fn);
     const legacyOnly = (name, fn) => it(name, { skip: mode !== 'legacy' }, fn);
+    // Device-written admin-label posts: allowed only while legacyAdminClients() is on.
+    const adminDevice = (p) => (mode === 'legacy' ? assertSucceeds(p) : assertFails(p));
     before(() => { env = envs[mode]; who = people(env); });
     beforeEach(async () => { await env.clearFirestore(); });
 
@@ -139,7 +141,56 @@ for (const mode of ['legacy', 'strict']) {
         await assertFails(board.createPost(who.bb('u', 'kim@example.com'), { isAdmin: true, flavour: 'next', uid: 'u' }));
         await assertFails(who.anon('a1').collection('bbAnonPosts/p1/comments')
           .add(Object.assign(commentDoc({ isAdmin: true, uid: 'a1' }), { timestamp: FV.serverTimestamp() })));
-        await assertSucceeds(admin.post(who.admin('adm'), { flavour: 'next', uid: 'adm' }));
+        await adminDevice(admin.post(who.admin('adm'), { flavour: 'next', uid: 'adm' }));
+      });
+
+      it('admin-label posts and replies come from adminAnonPost, not the device', async () => {
+        await seed(env, { 'bbAnonPosts/p1': postDoc() });
+        const db = who.admin('adm');
+        // Every shape a device has written them in: owner stamp (v316+), uid
+        // (1.41 / 1.40 as first built), nothing (older builds).
+        for (const flavour of ['next', 'store141', 'shipped']) {
+          await adminDevice(admin.post(db, { flavour, uid: 'adm' }));
+          await adminDevice(admin.post(db, { flavour, uid: 'adm', tab: 'announcements' }));
+          await adminDevice(board.comment(db, 'p1', { flavour, uid: 'adm', isAdmin: true }));
+        }
+        // With no owner of any kind it is still refused once the switch is off.
+        await adminDevice(db.collection('bbAnonPosts').add(Object.assign(adminLabelPost(), { timestamp: FV.serverTimestamp() })));
+        await adminDevice(db.collection('bbAnonPosts/p1/comments')
+          .add(Object.assign(adminLabelComment(), { timestamp: FV.serverTimestamp() })));
+        // The admin still publishes a member's suggestion and posts as a member.
+        await seed(env, { 'bbAnonAnnSuggestions/s1': { name: 'Robin', text: 'x', status: 'pending', timestamp: TS.now() } });
+        await assertSucceeds(admin.approve(db, 's1', { flavour: 'next', uid: 'adm' }));
+        await assertSucceeds(board.createPost(db, { flavour: 'next', uid: 'adm', name: 'Robin' }));
+      });
+
+      it('admin-label posts written by the function are the admin\'s to moderate', async () => {
+        await seed(env, {
+          'bbAnonPosts/a1': adminLabelPost(),
+          'bbAnonPosts/a1/comments/c1': adminLabelComment(),
+        });
+        // Nobody else can delete or rename them; they carry no owner to match.
+        await assertFails(who.anon('a1').doc('bbAnonPosts/a1').delete());
+        await assertFails(who.anon('a1').doc('bbAnonPosts/a1').update({ name: 'Robin', initials: 'RO', grad1: '#fff', grad2: '#000' }));
+        await assertFails(who.anon('a1').doc('bbAnonPosts/a1/comments/c1').delete());
+        // Members still like and reply.
+        await assertSucceeds(board.like(who.anon('a1'), 'a1', 1));
+        await assertSucceeds(board.comment(who.anon('a1'), 'a1', { flavour: 'next', uid: 'a1' }));
+        // The admin deletes them with admin rights (any of the admin's sessions).
+        await assertSucceeds(who.admin('adm-2').doc('bbAnonPosts/a1/comments/c1').delete());
+        await assertSucceeds(who.admin('adm-2').doc('bbAnonPosts/a1').delete());
+      });
+
+      it('who wrote an admin-label post is server-only', async () => {
+        await seed(env, {
+          'bbAnonAdminAuthored/bbAnonPosts__a1': { path: 'bbAnonPosts/a1', postId: 'a1', uid: 'adm', createdAt: TS.now() },
+        });
+        for (const db of [who.guest(), who.anon('adm'), who.admin('adm')]) {
+          await assertFails(db.doc('bbAnonAdminAuthored/bbAnonPosts__a1').get());
+          await assertFails(db.collection('bbAnonAdminAuthored').get());
+          await assertFails(db.doc('bbAnonAdminAuthored/bbAnonPosts__a2').set({ path: 'bbAnonPosts/a2', uid: 'adm' }));
+          await assertFails(db.doc('bbAnonAdminAuthored/bbAnonPosts__a1').delete());
+        }
       });
 
       it('the admin flag cannot be added to an existing post', async () => {
@@ -150,7 +201,7 @@ for (const mode of ['legacy', 'strict']) {
 
       it('an email code for the admin address counts as the admin', async () => {
         await seed(env, { 'bbAnonLinks/adm-anon': { emailHash: emailHash(ADMIN_EMAIL) } });
-        await assertSucceeds(admin.post(who.anon('adm-anon'), { flavour: 'next', uid: 'adm-anon' }));
+        await adminDevice(admin.post(who.anon('adm-anon'), { flavour: 'next', uid: 'adm-anon' }));
         await assertSucceeds(admin.ban(who.anon('adm-anon'), 'Troll'));
       });
 
