@@ -42,3 +42,6 @@ BACKLOG.md
 ANDROID_TODO.md
 NOTIFICATIONS.md
 INTERNAL-NOTES.md
+
+# App Store header + search renders (store-assets/build-creative.mjs rebuilds them, ~110 MB)
+store-assets/creative/*/out/
