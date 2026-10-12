@@ -1223,6 +1223,11 @@
         <button class="confirm-btn" onclick="selectImportFormat('daylio')" style="background: white; color: #4dabf7; border: 2px solid #4dabf7; width: 100%;" data-i18n="journal.mods.importDaylio">
           📊 Daylio Export (.csv)
         </button>
+        <div style="width:100%;">
+          <button class="confirm-btn" onclick="selectImportFormat('sheet')" style="background: white; color: #2f9e44; border: 2px solid #2f9e44; width: 100%;" data-i18n="journal.mods.importSheet">📄 Spreadsheet or text file (.csv, .txt)</button>
+          <p style="font-size:0.8em;color:#6c757d;line-height:1.45;margin:8px 4px 4px;" data-i18n="journal.mods.importSheetHelp">One row per day, or per stretch of days: date, end date (optional), mood (a bear's name or 0–10), notes (optional).</p>
+          <button type="button" onclick="downloadImportExample()" style="background:none;border:none;color:#2f9e44;font-size:0.82em;font-weight:600;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.importExample">⬇️ Download an example file</button>
+        </div>
         <button class="confirm-btn confirm-btn-no" onclick="closeImportModal()" style="width: 100%;" data-i18n="common.cancel">Cancel</button>
         <button class="confirm-btn" onclick="closeImportModal();window.location.href='index.html#feedback'" style="background:white;color:#495057;border:2px solid #6c757d;width:100%;font-size:0.82em;" data-i18n="journal.mods.importRequest">📣 Request a new import format</button>
       </div>
@@ -1231,6 +1236,7 @@
 
   <input type="file" id="importFileBipolarBear" accept=".json" style="display: none;" onchange="importBipolarBearData(event)">
   <input type="file" id="importFileDaylio" accept=".csv" style="display: none;" onchange="importDaylioData(event)">
+  <input type="file" id="importFileSheet" accept=".csv,.tsv,.txt,text/csv,text/plain,text/tab-separated-values" style="display: none;" onchange="importSpreadsheetData(event)">
 
   <!-- Edit Entry Modal -->
   <div class="confirm-modal" id="editEntryModal" onclick="if(event.target===this && !window._healthSyncInProgress)closeEditModal()">
@@ -1505,6 +1511,7 @@
               <span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="13" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round"/><polyline points="3,8 8,13 13,8" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
             </div>
+            <button onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 8px; letter-spacing: 0.02em;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
             <button id="advancedSettingsBtn" onclick="openAdvancedSettings()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 8px; letter-spacing: 0.02em;" data-i18n="journal.settings.advanced">🛠️ Advanced ▸</button>
           </div>
         </div>

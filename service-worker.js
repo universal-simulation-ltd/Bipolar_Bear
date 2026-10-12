@@ -1457,7 +1457,7 @@
 //   Flappy Bear, Bear Bricks). Data Security, Buy Us a Coffee and Leave a
 //   Review move to the picker. New js/shared/bear-arcade.js (precached).
 //   Touches fab.js, js/index.js, js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v303';
+const CACHE_NAME = 'bipolarbear-v304';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

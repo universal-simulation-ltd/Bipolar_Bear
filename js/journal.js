@@ -2786,7 +2786,10 @@ window.addEventListener('pageshow', () => {
           }
           _allEntries = [];
           _writeRecentMoods([]);
-          document.getElementById('entries').innerHTML = '<div class="no-entries">' + BB.t('journal.noEntries') + '</div>';
+          // Import lives with the entry list, which an empty journal doesn't
+          // have, so offer it here: new users are the ones moving their history in.
+          document.getElementById('entries').innerHTML = '<div class="no-entries">' + BB.t('journal.noEntries') + '</div>'
+            + '<div style="text-align:center;margin-top:10px;"><button type="button" onclick="showImportModal()" style="background:none;border:none;color:var(--brand-primary);font-size:0.88em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">' + _esc(BB.t('journal.mods.importHistory')) + '</button></div>';
           document.getElementById('stats').style.display = 'none';
           document.getElementById('chart').style.display = 'none';
           const entriesHeader = document.querySelector('.entries-header');
@@ -2888,7 +2891,7 @@ window.addEventListener('pageshow', () => {
                 if (entry.drugs)      _chips.push([`🌿 ${entry.drugs==='yes'?'Yes':'No'}`, entry.drugs==='no'?_G:_R]);
                 Object.entries(entry.customFields||{}).forEach(([id,v])=>{if(!v)return;const cf=getCustomFields().find(f=>f.id===id);if(cf)_chips.push([`${cf.emoji||cf.label} ${v==='yes'?'Yes':'No'}`,_N]);});
                 const _achStr = _chips.length ? `<span style="flex-basis:100%;font-size:0.88em;margin-top:1px;text-align:left;">${_chips.map(([t,c])=>`<span style="color:${c};font-weight:600">${t}</span>`).join('<span style="color:#dee2e6">  </span>')}</span>` : '';
-                const _eLabel = entry.energy === 0 ? '💀 Not enough' : entry.energy <= 4 ? '🪫 Less than usual' : entry.energy <= 6 ? '⚡️ Normal' : entry.energy <= 8 ? '🔋 More than usual' : '🚀 Too much';
+                const _eLabel = entry.energy == null ? '⚡️ —' : entry.energy === 0 ? '💀 Not enough' : entry.energy <= 4 ? '🪫 Less than usual' : entry.energy <= 6 ? '⚡️ Normal' : entry.energy <= 8 ? '🔋 More than usual' : '🚀 Too much';
                 const _sleepBuckets = new Set([5, 6.5, 8, 9.5, 11]);
                 const _sLabel = entry.sleep == null ? '?' : !_sleepBuckets.has(entry.sleep) ? `${entry.sleep}h` : entry.sleep <= 5 ? '≤5h' : entry.sleep < 7 ? '6-7h' : entry.sleep < 9 ? '7-9h' : entry.sleep < 10 ? '9-10h' : '10+h';
                 const _sqLabel = entry.sleepQuality === 'good' ? ' 😊' : entry.sleepQuality === 'bad' ? ' 😴' : entry.sleepQuality === 'unsure' ? ' 😐' : '';
@@ -9827,35 +9830,22 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       chartContainer.style.borderBottom = 'none';
     }
 
+    /**
+     * The entries to put in a backup or CSV: the journal's own decrypted list.
+     * Reading Firestore / localStorage directly exported the encrypted blobs
+     * (signed-in users, and every guest with a PIN), so the files had no moods
+     * and a backup restored nothing. Fixed 2026-10-12.
+     */
+    function _exportableEntries() {
+      return (_allEntries || []).map(e => {
+        const { id, userId, ...rest } = e;
+        return rest;
+      }).sort((a, b) => a.timestamp - b.timestamp);
+    }
+
     async function exportData() {
       try {
-        const entries = [];
-
-        if (currentUser) {
-          // Export from Firestore for logged-in users
-          const snapshot = await db.collection('entries')
-            .where('userId', '==', currentUser.uid)
-            .get();
-
-          snapshot.forEach(doc => {
-            entries.push(doc.data());
-          });
-        } else {
-          // Export from localStorage for guests
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('entry:')) {
-              try {
-                const value = localStorage.getItem(key);
-                if (value) {
-                  entries.push(JSON.parse(value));
-                }
-              } catch (e) {
-                console.error('Error loading entry:', e);
-              }
-            }
-          }
-        }
+        const entries = _exportableEntries();
 
         if (entries.length === 0) {
           alert(BB.t('journal.dlg.noDataExport'));
@@ -9929,18 +9919,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
     async function exportDataCSV() {
       try {
-        const entries = [];
-        if (currentUser) {
-          const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
-          snapshot.forEach(doc => entries.push(doc.data()));
-        } else {
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith('entry:')) {
-              try { entries.push(JSON.parse(localStorage.getItem(key))); } catch(e) {}
-            }
-          }
-        }
+        const entries = _exportableEntries();
         if (entries.length === 0) { alert(BB.t('journal.dlg.noDataExport')); return; }
         entries.sort((a, b) => a.timestamp - b.timestamp);
 
@@ -9963,7 +9942,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           ...customFieldIds.map(customLabel),
         ];
         const rows = entries.map(e => [
-          _esc(e.date), _esc(e.mood), _esc(_linkedMoodsOf(e).join(' / ')),
+          _esc(_importDayKey(new Date(e.date))), _esc(e.mood), _esc(_linkedMoodsOf(e).join(' / ')),
           _esc(e.energy), _esc(e.sleep), _esc(e.sleepQuality || ''),
           _esc(e.medication || ''), _esc(e.goals || ''), _esc(e.budget || ''),
           _esc(e.anxiety || ''), _esc(e.stress || ''), _esc(e.irritability || ''),
@@ -11073,232 +11052,368 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         document.getElementById('importFileBipolarBear').click();
       } else if (format === 'daylio') {
         document.getElementById('importFileDaylio').click();
+      } else if (format === 'sheet') {
+        document.getElementById('importFileSheet').click();
       }
     }
 
-    async function importBipolarBearData(event) {
+    // ── Import ───────────────────────────────────────────────────────────────
+    // Three formats, one way of saving. _importSave writes entries the way
+    // saveEntry does: encrypted per entry for signed-in users (asking for the
+    // journal key first if this session doesn't have it), encrypted
+    // localStorage for guests once they have a PIN. Until 2026-10-12 the
+    // importers wrote plaintext to Firestore, which the one-time encryption
+    // migration (encMigrated) never came back for.
+
+    const _importDayKey = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const _importLoggedDays = () => new Set((_allEntries || []).map(e => _importDayKey(new Date(e.date))));
+
+    /** Saves imported entries; false if it couldn't (key declined, PIN being set). */
+    async function _importSave(entries, resume) {
+      if (currentUser) {
+        if (!(await _requireUserKey())) {
+          if (!_journalKeyDeclined) alert(BB.t('journalKey.offline'));
+          return false;
+        }
+        for (let i = 0; i < entries.length; i += 400) {
+          const batch = db.batch();
+          for (const entry of entries.slice(i, i + 400)) {
+            const enc = await _userEncrypt(_userCryptoKey, { ...entry, userId: currentUser.uid });
+            batch.set(db.collection('entries').doc(), { userId: currentUser.uid, timestamp: entry.timestamp, ...enc });
+          }
+          await batch.commit();
+        }
+        return true;
+      }
+      // Guests: the same PIN gate as a first save; the PIN overlay's callback
+      // picks the import back up.
+      if (!(await _gateGuestSave())) return false;
+      if (BB.storage.get('PinEnabled') !== '1' || !BB.storage.get('GuestPinSalt')) {
+        _showGuestPinSetup(() => { resume(); });
+        return false;
+      }
+      if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
+      if (!_guestCryptoKey) return false;
+      for (const entry of entries) {
+        localStorage.setItem(`entry:${entry.timestamp}`, JSON.stringify(await _guestEncrypt(_guestCryptoKey, entry)));
+      }
+      return true;
+    }
+
+    async function _importFinish(entries, doneMsg) {
+      try {
+        if (!(await _importSave(entries, () => _importFinish(entries, doneMsg)))) return;
+      } catch (error) {
+        console.error('Import failed:', error);
+        alert(BB.t('journal.dlg.importDataFail'));
+        return;
+      }
+      nativeHaptic && nativeHaptic('success');
+      const journalCard = document.getElementById('journalCard');
+      const toggleBtn = document.getElementById('journalToggleBtn');
+      if (journalCard && journalCard.style.display === 'none') {
+        journalCard.style.display = 'block';
+        if (toggleBtn) toggleBtn.innerHTML = BB.t('journal.btn.closeJournal');
+      }
+      currentPage = 1;
+      await loadEntries();
+      alert(doneMsg);
+    }
+
+    function _importReadFile(event, onText) {
       const file = event.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const parsed = JSON.parse(e.target.result);
-
-          // Support both old format (plain array) and new format ({ version, entries, settings })
-          const entries = Array.isArray(parsed) ? parsed : (parsed.entries || []);
-          const settings = (!Array.isArray(parsed) && parsed.settings) ? parsed.settings : null;
-
-          if (!Array.isArray(entries)) {
-            alert(BB.t('journal.dlg.invalidBackup'));
-            return;
-          }
-
-          let imported = 0;
-          for (const entry of entries) {
-            if (entry.timestamp && entry.mood) {
-              if (currentUser) {
-                entry.userId = currentUser.uid;
-                await db.collection('entries').add(entry);
-              } else {
-                localStorage.setItem(`entry:${entry.timestamp}`, JSON.stringify(entry));
-              }
-              imported++;
-            }
-          }
-
-          // Restore settings if present
-          if (settings) {
-            Object.keys(settings).forEach(k => localStorage.setItem(k, settings[k]));
-
-            // Push settings to Firestore if logged in
-            if (currentUser && window.db) {
-              const _boolKey = v => v === 'true' ? true : v === 'false' ? false : v;
-              const fsSettings = {};
-              ['focusedModeEnabled','fmConfirmStep','fmAutoAdvance','fmAutoAdvanceMoreData',
-               'elaborateResponsesEnabled','intentionEnabled','incognitoMode','pdfHideByDefault',
-               'showMoodSuggestion','moreDataOpenByDefault','achievementToastsEnabled',
-               'weeklySummaryEnabled','customiseFormEnabled','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled',
-               'earlyWarnEnabled'].forEach(k => {
-                if (settings[k] !== undefined) fsSettings[k] = _boolKey(settings[k]);
-              });
-              if (settings.statsStartDate) fsSettings.statsStartDate = settings.statsStartDate;
-              if (settings.disabledSteps) {
-                try { fsSettings.disabledSteps = JSON.parse(settings.disabledSteps); } catch(e) {}
-              }
-              if (settings.customTrackingFields) {
-                try { fsSettings.customTrackingFields = JSON.parse(settings.customTrackingFields); } catch(e) {}
-              }
-              // Build trackingFields object for Firestore
-              const trackingFields = {};
-              ['trackGoals','trackBudget','trackExercise','trackOutside','trackAnxiety','trackAlcohol','trackEmotions'].forEach(k => {
-                if (settings[k] !== undefined) trackingFields[k.replace('track','')] = _boolKey(settings[k]);
-              });
-              if (Object.keys(trackingFields).length) fsSettings.trackingFields = trackingFields;
-              // Label overrides
-              const labelOverrides = {};
-              Object.keys(settings).filter(k => k.startsWith('_labelOverride_')).forEach(k => {
-                labelOverrides[k.replace('_labelOverride_', '')] = settings[k];
-              });
-              if (Object.keys(labelOverrides).length) fsSettings.labelOverrides = labelOverrides;
-              window.db.collection('userSettings').doc(currentUser.uid).set(fsSettings, { merge: true }).catch(() => {});
-            }
-
-            // Refresh UI to reflect imported settings
-            if (typeof _renderStepToggles === 'function') _renderStepToggles();
-            if (typeof _applyStepVisibility === 'function') _applyStepVisibility();
-            if (typeof applyTrackingPrefs === 'function') applyTrackingPrefs();
-            if (typeof renderFieldPickerList === 'function') renderFieldPickerList();
-            if (typeof renderCustomTrackingRows === 'function') renderCustomTrackingRows();
-          }
-
-          // Open journal card if closed, then reload entries
-          const journalCard = document.getElementById('journalCard');
-          const toggleBtn = document.getElementById('journalToggleBtn');
-          if (journalCard && journalCard.style.display === 'none') {
-            journalCard.style.display = 'block';
-            if (toggleBtn) toggleBtn.innerHTML = BB.t('journal.btn.closeJournal');
-          }
-          await loadEntries();
-          const settingsNote = settings ? BB.t('journal.dlg.settingsRestored') : '';
-          alert(BB.t('journal.dlg.importSuccess', { n: imported, note: settingsNote }));
-          event.target.value = '';
-        } catch (error) {
-          console.error('Error importing:', error);
+      reader.onload = e => {
+        event.target.value = '';
+        Promise.resolve(onText(String(e.target.result || ''))).catch(err => {
+          console.error('Import failed:', err);
           alert(BB.t('journal.dlg.importDataFail'));
-        }
+        });
       };
-
       reader.readAsText(file);
     }
 
-    async function importDaylioData(event) {
-      const file = event.target.files[0];
-      if (!file) return;
+    // ── 🐻 BipolarBear backup (.json) ──
+    async function importBipolarBearData(event) {
+      _importReadFile(event, async text => {
+        let parsed;
+        try { parsed = JSON.parse(text); } catch (_) { alert(BB.t('journal.dlg.invalidBackup')); return; }
+        // Old format: a plain array. New: { version, entries, settings }.
+        const raw = Array.isArray(parsed) ? parsed : (parsed && parsed.entries);
+        const settings = (!Array.isArray(parsed) && parsed && parsed.settings) ? parsed.settings : null;
+        if (!Array.isArray(raw)) { alert(BB.t('journal.dlg.invalidBackup')); return; }
 
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const csvText = e.target.result;
-          const lines = csvText.split('\n');
-          
-          // Skip header line
-          if (lines.length < 2) {
-            alert(BB.t('journal.dlg.csvEmpty'));
-            return;
+        // Backups made before 2026-10-12 hold the encrypted copies. They open
+        // if they came from this journal (same key); otherwise they're counted
+        // and left out.
+        if (currentUser && raw.some(e => e && e._enc) && !(await _requireUserKey())) return;
+        if (!_guestCryptoKey && !currentUser) _guestCryptoKey = await _guestImportKeyFromSession();
+        const have = new Set((_allEntries || []).map(e => e.timestamp));
+        const entries = [];
+        let locked = 0;
+        for (const item of raw) {
+          if (!item) continue;
+          let e = item;
+          if (item._enc) {
+            e = null;
+            if (_userCryptoKey) { try { e = await _userDecrypt(_userCryptoKey, item); } catch (_) {} }
+            if (!e && _guestCryptoKey) { try { e = await _guestDecrypt(_guestCryptoKey, item); } catch (_) {} }
+            if (!e) { locked++; continue; }
           }
-
-          // Daylio CSV format: full_date,date,weekday,time,mood,activities,note_title,note
-          // Daylio uses a 7-point scale: "3 or less", "4 - OKish", "5 Healthy", "6 OK++", "7 or more"
-          
-          let imported = 0;
-          
-          /* === CUSTOMIZE MOOD MAPPING FOR YOUR DAYLIO EXPORT ===
-           * If your Daylio uses different mood labels, update the mapping below.
-           * 
-           * To find your mood labels:
-           * 1. Open your Daylio CSV in a text editor
-           * 2. Look at the 5th column (after date, weekday, time)
-           * 3. Update the left side of each line below to match your mood labels
-           * 4. Keep the right side as the BipolarBear mood (manic/elevated/stable/low/depressed)
-           * 
-           * Example: If your CSV shows "awesome" instead of "7 or more", change:
-           *   '7 or more': 'manic'    →    'awesome': 'manic'
-           */
-          
-          // Map Daylio's mood scale to BipolarBear's bipolar-specific moods
-          const moodMap = {
-            '7 or more': 'manic',      // Highest mood/energy → Manic
-            '6 ok++': 'elevated',       // Above baseline → Elevated
-            '5 healthy': 'stable',       // Baseline/stable → Stable
-            '4 - okish': 'low',         // Below baseline → Low
-            '3 or less': 'depressed',   // Lowest mood → Depressed
-            // Legacy Daylio format (if using standard 5-point scale)
-            'rad': 'manic',
-            'good': 'elevated',
-            'meh': 'stable',
-            'bad': 'low',
-            'awful': 'depressed'
-          };
-
-          for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            // Parse CSV (handle quoted fields with commas)
-            const fields = [];
-            let currentField = '';
-            let inQuotes = false;
-            
-            for (let char of line) {
-              if (char === '"') {
-                inQuotes = !inQuotes;
-              } else if (char === ',' && !inQuotes) {
-                fields.push(currentField.trim());
-                currentField = '';
-              } else {
-                currentField += char;
-              }
-            }
-            fields.push(currentField.trim());
-
-            if (fields.length < 5) continue;
-
-            const [fullDate, , , , daylioMood, activities, noteTitle, noteText] = fields;
-            const mappedMood = moodMap[daylioMood.toLowerCase()] || 'stable'; // Default to 'stable' if mood not recognized
-            
-            // Parse date
-            const dateParts = fullDate.split('-');
-            if (dateParts.length !== 3) continue;
-            
-            const entryDate = new Date(fullDate);
-            const timestamp = entryDate.getTime();
-
-            // Build notes from note text only (exclude activities)
-            let notes = '';
-            if (noteText && noteText !== '""') {
-              notes = noteText.replace(/"/g, '');
-            }
-
-            const entry = {
-              timestamp: timestamp,
-              date: entryDate.toISOString(),
-              mood: mappedMood,
-              energy: 5, // Default middle value
-              sleep: 7, // Default 7 hours
-              medication: 'taken', // Default to taken
-              notes: notes || ''
-            };
-
-            try {
-              if (currentUser) {
-                entry.userId = currentUser.uid;
-                await db.collection('entries').add(entry);
-              } else {
-                localStorage.setItem(`entry:${timestamp}`, JSON.stringify(entry));
-              }
-              imported++;
-            } catch (err) {
-              console.error('Error importing entry:', err);
-            }
-          }
-
-          const jCard = document.getElementById('journalCard');
-          const tBtn = document.getElementById('journalToggleBtn');
-          if (jCard && jCard.style.display === 'none') {
-            jCard.style.display = 'block';
-            if (tBtn) tBtn.innerHTML = BB.t('journal.btn.closeJournal');
-          }
-          await loadEntries();
-          alert(BB.t('journal.dlg.daylioImportSuccess', { n: imported }));
-          event.target.value = '';
-        } catch (error) {
-          console.error('Error importing Daylio data:', error);
-          alert(BB.t('journal.dlg.daylioImportFail'));
+          const { id, userId, _enc, _iv, ...entry } = e;
+          if (!entry.timestamp || entry.mood == null || entry.mood === '') continue;
+          if (have.has(entry.timestamp)) continue; // already in this journal: restoring twice adds nothing
+          entries.push(entry);
         }
+
+        if (settings) {
+          Object.keys(settings).forEach(k => localStorage.setItem(k, settings[k]));
+          if (currentUser && window.db) {
+            const _boolKey = v => v === 'true' ? true : v === 'false' ? false : v;
+            const fsSettings = {};
+            ['focusedModeEnabled','fmConfirmStep','fmAutoAdvance','fmAutoAdvanceMoreData',
+             'elaborateResponsesEnabled','intentionEnabled','incognitoMode','pdfHideByDefault',
+             'showMoodSuggestion','moreDataOpenByDefault','achievementToastsEnabled',
+             'weeklySummaryEnabled','customiseFormEnabled','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled',
+             'earlyWarnEnabled'].forEach(k => {
+              if (settings[k] !== undefined) fsSettings[k] = _boolKey(settings[k]);
+            });
+            if (settings.statsStartDate) fsSettings.statsStartDate = settings.statsStartDate;
+            if (settings.disabledSteps) {
+              try { fsSettings.disabledSteps = JSON.parse(settings.disabledSteps); } catch(e) {}
+            }
+            if (settings.customTrackingFields) {
+              try { fsSettings.customTrackingFields = JSON.parse(settings.customTrackingFields); } catch(e) {}
+            }
+            const trackingFields = {};
+            ['trackGoals','trackBudget','trackExercise','trackOutside','trackAnxiety','trackAlcohol','trackEmotions'].forEach(k => {
+              if (settings[k] !== undefined) trackingFields[k.replace('track','')] = _boolKey(settings[k]);
+            });
+            if (Object.keys(trackingFields).length) fsSettings.trackingFields = trackingFields;
+            const labelOverrides = {};
+            Object.keys(settings).filter(k => k.startsWith('_labelOverride_')).forEach(k => {
+              labelOverrides[k.replace('_labelOverride_', '')] = settings[k];
+            });
+            if (Object.keys(labelOverrides).length) fsSettings.labelOverrides = labelOverrides;
+            window.db.collection('userSettings').doc(currentUser.uid).set(fsSettings, { merge: true }).catch(() => {});
+          }
+          if (typeof _renderStepToggles === 'function') _renderStepToggles();
+          if (typeof _applyStepVisibility === 'function') _applyStepVisibility();
+          if (typeof applyTrackingPrefs === 'function') applyTrackingPrefs();
+          if (typeof renderFieldPickerList === 'function') renderFieldPickerList();
+          if (typeof renderCustomTrackingRows === 'function') renderCustomTrackingRows();
+        }
+
+        let msg = BB.t('journal.dlg.importSuccess', { n: entries.length, note: settings ? BB.t('journal.dlg.settingsRestored') : '' });
+        if (locked) msg += '\n\n' + BB.t('journal.dlg.backupLocked', { n: locked });
+        if (!entries.length) { alert(msg); await loadEntries(); return; }
+        await _importFinish(entries, msg);
+      });
+    }
+
+    // ── 📊 Daylio export (.csv) ──
+    // full_date,date,weekday,time,mood,activities,note_title,note
+    async function importDaylioData(event) {
+      _importReadFile(event, async text => {
+        const lines = text.replace(/^﻿/, '').split(/\r\n|\n|\r/);
+        if (lines.length < 2) { alert(BB.t('journal.dlg.csvEmpty')); return; }
+
+        // Daylio's default labels, plus a custom 5-point set. Edit the left side
+        // to match a Daylio export that uses its own mood names.
+        const moodMap = {
+          '7 or more': 'manic', '6 ok++': 'elevated', '5 healthy': 'stable', '4 - okish': 'low', '3 or less': 'depressed',
+          'rad': 'manic', 'good': 'elevated', 'meh': 'stable', 'bad': 'low', 'awful': 'depressed'
+        };
+        const logged = _importLoggedDays();
+        const entries = [];
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          const [fullDate, , , time, daylioMood, , , noteText] = _splitCsvLine(lines[i], ',');
+          const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(fullDate || '');
+          if (!m || !daylioMood) continue;
+          // Local time on that day (the old code read the date as UTC
+          // midnight, the day before anywhere west of the UK).
+          const t = /^(\d{1,2}):(\d{2})\s*(am|pm)?$/i.exec((time || '').trim());
+          let h = t ? Number(t[1]) % (t[3] ? 12 : 24) : 12;
+          if (t && t[3] && t[3].toLowerCase() === 'pm') h += 12;
+          const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), h, t ? Number(t[2]) : 0);
+          if (logged.has(_importDayKey(d))) continue;
+          entries.push({
+            timestamp: d.getTime(),
+            date: d.toISOString(),
+            mood: moodMap[daylioMood.toLowerCase()] || _importMood(daylioMood) || 'stable',
+            linkedMood: null, linkedMoods: [],
+            // Daylio has no energy, sleep or medication: left blank, not made up.
+            energy: null, sleep: null, medication: null,
+            notes: noteText || '',
+            imported: 'daylio', // no recordedAt: the list would show the import time as that day's
+          });
+        }
+        if (!entries.length) { alert(BB.t('journal.dlg.sheetNothing')); return; }
+        await _importFinish(entries, BB.t('journal.dlg.daylioImportSuccess', { n: entries.length }));
+      });
+    }
+
+    // ── 📄 Spreadsheet or text file (.csv, .tsv, .txt) ──
+    // One row per day or per stretch of days: date, end date (optional), mood
+    // (a bear's name, in English or the app's language, or 0–10), notes. A
+    // header row is optional. Later rows win, so a stretch followed by a
+    // single day overrides that day. Days already in the journal are kept.
+    function _splitCsvLine(line, sep) {
+      const out = [];
+      let cur = '', q = false;
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') {
+          if (q && line[i + 1] === '"') { cur += '"'; i++; } else q = !q;
+        } else if (c === sep && !q) { out.push(cur.trim()); cur = ''; }
+        else cur += c;
+      }
+      out.push(cur.trim());
+      return out;
+    }
+
+    function _importMood(v) {
+      const raw = String(v == null ? '' : v).trim();
+      if (!raw) return null;
+      const num = raw.replace(',', '.');
+      if (/^\d+(\.\d+)?$/.test(num)) {
+        const n = Number(num);
+        return n >= 0 && n <= 10 ? n : null;
+      }
+      const w = raw.toLowerCase().replace(/[^\p{L}\s-]/gu, '').trim();
+      const words = {
+        manic: 'manic', mania: 'manic',
+        elevated: 'elevated', hypomanic: 'elevated', hypomania: 'elevated', high: 'elevated',
+        stable: 'stable', good: 'stable', ok: 'stable', okay: 'stable', normal: 'stable',
+        low: 'low', down: 'low',
+        depressed: 'depressed', depression: 'depressed',
       };
-      
-      reader.readAsText(file);
+      if (words[w]) return words[w];
+      for (const m of ['manic', 'elevated', 'stable', 'low', 'depressed']) {
+        try { if (String(BB.t('mood.' + m)).toLowerCase() === w) return m; } catch (_) {}
+      }
+      return null;
+    }
+
+    // "2026-03-01" / "2026/03/01", or day-first "01/03/2026", "1.3.26".
+    function _importDateParts(v) {
+      const s = String(v == null ? '' : v).trim();
+      let m = /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/.exec(s);
+      if (m) return { y: +m[1], a: +m[2], b: +m[3], iso: true };
+      m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2}|\d{4})$/.exec(s);
+      if (m) return { y: m[3].length === 2 ? 2000 + +m[3] : +m[3], a: +m[1], b: +m[2], iso: false };
+      return null;
+    }
+
+    function _parseSpreadsheet(text) {
+      const lines = text.replace(/^﻿/, '').split(/\r\n|\n|\r/);
+      const first = lines.find(l => l.trim()) || '';
+      const sep = ['\t', ';', ','].map(c => [c, first.split(c).length]).sort((x, y) => y[1] - x[1])[0][0];
+      const rows = lines.map((l, i) => ({ n: i + 1, cells: l.trim() ? _splitCsvLine(l, sep) : null })).filter(r => r.cells);
+
+      // Header row → column positions; no header → work them out per row.
+      const norm = c => c.toLowerCase().replace(/[^a-z]/g, '');
+      const H = { date: ['date', 'startdate', 'start', 'from', 'day'], end: ['enddate', 'end', 'to', 'until'], mood: ['mood', 'value', 'score', 'rating'], notes: ['notes', 'note', 'comment', 'comments'] };
+      let cols = null;
+      if (rows.length && !_importDateParts(rows[0].cells[0])) {
+        const head = rows[0].cells.map(norm);
+        const at = k => head.findIndex(c => H[k].includes(c));
+        if (at('date') >= 0 && at('mood') >= 0) { cols = { date: at('date'), end: at('end'), mood: at('mood'), notes: at('notes') }; rows.shift(); }
+      }
+      const pick = r => {
+        if (cols) return { d: r.cells[cols.date], e: cols.end >= 0 ? r.cells[cols.end] : '', m: r.cells[cols.mood], n: cols.notes >= 0 ? r.cells[cols.notes] : '' };
+        const c = r.cells;
+        return _importDateParts(c[1]) ? { d: c[0], e: c[1], m: c[2], n: c[3] } : { d: c[0], e: '', m: c[1], n: c[2] };
+      };
+
+      // Day-first unless the file can only be month-first (a "13" in the
+      // middle), or there's nothing to tell and the phone is set to US.
+      const parts = rows.flatMap(r => { const p = pick(r); return [_importDateParts(p.d), _importDateParts(p.e)]; }).filter(p => p && !p.iso);
+      const monthFirst = !parts.some(p => p.a > 12) && (parts.some(p => p.b > 12) || /^en-US$/i.test(navigator.language || ''));
+      const toDate = p => {
+        if (!p) return null;
+        const [mo, da] = p.iso || monthFirst ? [p.a, p.b] : [p.b, p.a];
+        const d = new Date(p.y, mo - 1, da, 12, 0, 0, 0);
+        return d.getFullYear() === p.y && d.getMonth() === mo - 1 && d.getDate() === da ? d : null;
+      };
+
+      const days = new Map();
+      const bad = [];
+      for (const r of rows) {
+        const p = pick(r);
+        const start = toDate(_importDateParts(p.d));
+        const end = p.e ? toDate(_importDateParts(p.e)) : start;
+        const mood = _importMood(p.m);
+        if (!start || !end || end < start || mood == null || (end - start) / 864e5 > 3660) { bad.push(r.n); continue; }
+        for (const d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          days.set(_importDayKey(d), { time: new Date(d), mood, notes: p.n || '' });
+        }
+      }
+      return { days, bad };
+    }
+
+    async function importSpreadsheetData(event) {
+      _importReadFile(event, async text => {
+        const { days, bad } = _parseSpreadsheet(text);
+        const logged = _importLoggedDays();
+        const today = new Date(); today.setHours(23, 59, 59, 999);
+        const entries = [];
+        let skipped = 0, future = 0;
+        for (const [key, v] of [...days].sort()) {
+          if (v.time > today) { future++; continue; }
+          if (logged.has(key)) { skipped++; continue; }
+          entries.push({
+            timestamp: v.time.getTime(),
+            date: v.time.toISOString(),
+            mood: v.mood,
+            linkedMood: null, linkedMoods: [],
+            energy: null, sleep: null, medication: null,
+            notes: v.notes,
+            imported: 'spreadsheet',
+          });
+        }
+        const lines = [];
+        if (skipped) lines.push(BB.t('journal.dlg.sheetSkipped', { n: skipped }));
+        if (future) lines.push(BB.t('journal.dlg.sheetFuture', { n: future }));
+        if (bad.length) lines.push(BB.t('journal.dlg.sheetBadRows', { rows: bad.slice(0, 12).join(', ') + (bad.length > 12 ? '…' : '') }));
+        if (!entries.length) { alert([BB.t('journal.dlg.sheetNothing'), ...lines].join('\n\n')); return; }
+        if (!confirm([BB.t('journal.dlg.sheetConfirm', { n: entries.length }), ...lines].join('\n\n'))) return;
+        await _importFinish(entries, BB.t('journal.dlg.sheetDone', { n: entries.length }));
+      });
+    }
+
+    const _IMPORT_EXAMPLE = [
+      'date,end_date,mood,notes',
+      '2026-01-05,,stable,An ordinary day',
+      '2026-01-06,2026-01-12,low,A flat week: every day from the 6th to the 12th is Low',
+      '2026-01-09,,depressed,A later row wins: the 9th is Depressed',
+      '2026-01-13,,7,Numbers work too: 0 to 10',
+      '2026-01-14,2026-01-20,elevated,',
+      '2026-01-21,,manic,',
+    ].join('\n') + '\n';
+
+    /** Saves the example file: a download on the web, the share sheet in the app. */
+    async function downloadImportExample() {
+      const filename = 'bipolarbear-import-example.csv';
+      try {
+        if (isNative()) {
+          const Filesystem = getPlugin('Filesystem');
+          const Share = getPlugin('Share');
+          if (!Filesystem) { alert(BB.t('journal.dlg.fsPluginNA')); return; }
+          const result = await Filesystem.writeFile({ path: filename, data: btoa(_IMPORT_EXAMPLE), directory: 'DOCUMENTS' });
+          if (Share) await Share.share({ title: filename, url: result.uri });
+        } else {
+          const url = URL.createObjectURL(new Blob([_IMPORT_EXAMPLE], { type: 'text/csv' }));
+          const a = document.createElement('a');
+          a.href = url; a.download = filename;
+          document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+      } catch (e) {
+        console.error('Example file failed:', e);
+      }
     }
 
     function closeConfirmModal() {
@@ -14670,6 +14785,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     window.selectImportFormat = selectImportFormat;
     window.importBipolarBearData = importBipolarBearData;
     window.importDaylioData = importDaylioData;
+    window.importSpreadsheetData = importSpreadsheetData;
+    window.downloadImportExample = downloadImportExample;
     window.confirmDeleteAll = confirmDeleteAll;
     window.deleteAllEntries = deleteAllEntries;
     window.showMissingDates = showMissingDates;
