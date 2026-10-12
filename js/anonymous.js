@@ -6096,7 +6096,7 @@ function openMonikaSettings() {
   // Stability counter is BB-app only — standalone (anon-direct) users
   // don't track journal-driven streaks, so the option is hidden for them.
   const msStableBtn = document.getElementById('ms-stable-btn');
-  if (msStableBtn) msStableBtn.style.display = _bbUser ? '' : 'none';
+  if (msStableBtn) msStableBtn.style.display = _bbUser ? 'flex' : 'none';
 
   const msStableStatus = document.getElementById('ms-stable-status');
   if (msStableStatus && _bbUser) {

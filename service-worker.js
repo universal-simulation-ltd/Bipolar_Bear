@@ -1476,7 +1476,10 @@
 //   count on the profile, seeded once from Firestore. Touches index.html,
 //   css/index.css, js/index.js, js/anonymous.js, js/journal.js,
 //   js/shared/brand-config.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v311';
+// v312: the Your Moniker sheet's Stability Counter row lays out on one line
+//   again (shown with display:flex, not '', which dropped the inline flex).
+//   Touches js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v312';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
