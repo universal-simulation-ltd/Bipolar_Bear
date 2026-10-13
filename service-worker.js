@@ -1530,7 +1530,9 @@
 //   (SafetyLockWidget.swift) and the Android lock-screen card
 //   (SafetyLockNotifier.java); re-sent whenever the app is put away.
 //   Touches js/shared/safety-plan.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v323';
+// v324: the locked dock (during the tutorial) hides the 🆘 Crisis Support FAB
+//   too, like every other dock button (James). Touches fab.js, js/index.js.
+const CACHE_NAME = 'bipolarbear-v324';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

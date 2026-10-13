@@ -5,7 +5,7 @@
  * anonymous.html (that page uses its own yellow-themed FAB layout).
  *
  * Self-contained IIFE that on load:
- *   1. Marks the first run (default dock: 🆘 · + · 🕹️ · 📣).
+ *   1. Marks the first run (default dock: 🆘 · + · 🕹️ · 📣, once unlocked).
  *   2. Injects all FAB markup, CSS and modals into the document.
  *   3. Wires global handlers exposed on `window.*` for inline `onclick=` use.
  *
@@ -737,8 +737,8 @@
    * resize, and after any state change (picker action, hide-permanently).
    *
    * Behaviour summary:
-   *   - Pre-tutorial (`bbFabsUnlocked !== '1'`): only the 🆘 Crisis Support FAB
- *     (slot 1) and the centre auth FAB show, then it returns early.
+   *   - Pre-tutorial (`bbFabsUnlocked !== '1'`): only the centre auth FAB
+   *     shows, then it returns early.
    *   - Default FABs render in their assigned slot (or `slotNum` fallback).
    *   - Hidden defaults free their slot for an extra FAB or placeholder.
    *   - Truly empty slots show the dotted `+` placeholder which opens the picker.
@@ -789,13 +789,11 @@
       4: Math.round(_shellW * 0.90 - 22) + 'px',
     };
 
-    // Locked dock (before the first journal entry): only the 🆘 Crisis Support
-    // FAB shows, in its slot 1, beside the centre auth FAB — so someone arriving
-    // unwell can reach a crisis line from the very first screen. It is shown
-    // even if bbWaFabHidden is set, and its sheet drops "Hide this button"
-    // while locked (openChatModal), so it can't be hidden before it's earned.
-    // (James, 2026-10-09: replaced the "🆘 Need help now?" text pill that
-    // index.html showed under "Get started" until the dock unlocked.)
+    // Locked dock (during the tutorial): only the centre auth FAB shows. The
+    // 🆘 Crisis Support FAB is hidden with the rest (James, 2026-10-13; from
+    // 2026-10-09 it was the one exception, in slot 1). Its sheet still drops
+    // "Hide this button" while locked (openChatModal), and the PIN screens keep
+    // their own "Need help now?" button.
     // Lets the home version chip (#bbHomeVersion) switch to white text while
     // it sits on the page instead of the white dock bar.
     document.documentElement.classList.toggle('bb-dock-locked', !_fabsUnlocked);
@@ -807,8 +805,8 @@
       Object.values(_extraMap).forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
       for (let s = 1; s <= 4; s++) { const ph = document.getElementById('fabPh' + s); if (ph) ph.style.display = 'none'; }
       const _chat = document.getElementById('chatFab');
-      if (_chat) { _chat.style.display = 'flex'; _chat.style.left = _slotPos[1]; }
-      _placedDefaults = new Set(['chat']);
+      if (_chat) _chat.style.display = 'none';
+      _placedDefaults = new Set();
       return;
     }
 

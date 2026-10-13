@@ -932,8 +932,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       }
       const _fabsUnlocked = BB.storage.get('FabsUnlocked') === '1';
 
-      // Before the dock unlocks, fab.js still shows its 🆘 Crisis Support FAB
-      // (slot 1), so home always has a way to a crisis line.
+      // Before the dock unlocks, fab.js hides every dock button, 🆘 included
+      // (James, 2026-10-13).
 
       // Step 4 was the "save your progress" sign-in blocking step. Auth FAB and
       // Anonymous button are now hidden until tutorial completes, so step 4 is
