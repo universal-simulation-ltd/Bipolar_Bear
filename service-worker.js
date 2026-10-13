@@ -1509,7 +1509,7 @@
 //   go through the adminAnonPost Cloud Function, which writes them with no
 //   owner stamp, so they can't be tied to the admin's moniker. Touches
 //   js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v318';
+const CACHE_NAME = 'bipolarbear-v319';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
