@@ -1407,9 +1407,11 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   runtime service account
   to hold **Service Account Token Creator** (`roles/iam.serviceAccountTokenCreator`)
   on itself. Without it, `uidSignIn` answers `INTERNAL` at that step.
-- **Not yet:** Google / Apple sign-in (needs the origins and native deep links),
-  Universal ID on the Bipolar Anonymous page and app, and a "Change journal
-  password" setting.
+- **Not yet:** Google / Apple sign-in (needs the origins and native deep links)
+  and a "Change journal password" setting.
+- **Never on Bipolar Anonymous** (James, 2026-10-13): no Universal ID on the
+  board's page or app, so it stays anonymous for people who download it on
+  its own. The board's existing email-code link (`verifyAnonCode`) is unchanged.
 
 ### 2.18 Standard and Private journals
 
