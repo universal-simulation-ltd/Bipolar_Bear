@@ -264,6 +264,7 @@ html.theme-dark .msc-label { color: var(--dk-text-2); }
 html.theme-dark .label-btn { background: var(--dk-surface-2); color: var(--dk-text); border-color: var(--dk-line); }
 html.theme-dark .label-btn.label-btn-inactive:active { background: var(--dk-surface-2); color: var(--dk-text); }
 html.theme-dark .medication-item { background: var(--dk-surface-2); }
+html.theme-dark .medication-name { color: var(--dk-text); }
 html.theme-dark .medication-dose { color: var(--dk-muted); }
 html.theme-dark input[type="date"] { background-color: var(--dk-surface-2) !important; color: var(--dk-text) !important; }
 
