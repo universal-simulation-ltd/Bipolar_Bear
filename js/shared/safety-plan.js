@@ -69,6 +69,7 @@
   var PLAN_KEY = 'bbSafetyPlan';
   var SYNCED_KEY = 'bbSafetyPlanSyncedAt';
   var LOCK_KEY = 'bbSafetyPlanOnLock';
+  var MEDS_KEY = 'bbSafetyPlanMeds';     // '1' → the plan lists My Medications (unticked by default)
   var LOW_OFF_KEY = 'bbLowMoodSupportOff';
   var LOW_DUE_KEY = 'bbLowMoodDue';
   var LOW_SHOWN_KEY = 'bbLowMoodShown';
@@ -99,8 +100,11 @@
       emptyAll: "You haven't written a safety plan yet.",
       write: 'Write my plan', edit: 'Edit', done: 'Done', close: 'Close', add: 'Add',
       remove: 'Remove {item}', name: 'Name', phone: 'Phone number', call: 'Call {name}',
-      onLock: 'Show my safety plan on the lock screen',
-      onLockDesc: 'Lets you read it without your PIN. Anyone holding your phone could read it too.',
+      onLock: 'Show my safety plan on the app\'s PIN screen',
+      onLockDesc: 'A 🛟 button on Bipolar Bear\'s PIN screen opens it without your PIN. This isn\'t your phone\'s lock screen. Anyone holding your phone could read it too.',
+      meds: '💊 Include my medications',
+      medsDesc: 'Adds the medicines from My Medications to the plan, so someone helping you knows what you take.',
+      medsHeading: 'My medications',
       onWidget: 'Call from the home-screen widget',
       widgetHelp: 'Add the “Call for support” widget to your home screen to call this person in one tap.',
       savedSignedIn: 'Saved on this phone and, encrypted, to your account.',
@@ -241,12 +245,30 @@
     return p;
   }
   function clearLocal() {
-    [PLAN_KEY, SYNCED_KEY, LOCK_KEY].forEach(lsDel);
+    [PLAN_KEY, SYNCED_KEY, LOCK_KEY, MEDS_KEY].forEach(lsDel);
     refreshLockButtons();
     syncWidget();
     refreshBanner();
   }
   function lockEnabled() { return lsGet(LOCK_KEY) === '1'; }
+  // My Medications (localStorage currentMedList, [{name, dosage}], kept by the
+  // Survival Kit / journal), listed in the plan only when opted in, so someone
+  // helping knows what the person takes. Read, never written, here.
+  function medsEnabled() { return lsGet(MEDS_KEY) === '1'; }
+  function setMedsEnabled(on) {
+    if (on) lsSet(MEDS_KEY, '1'); else lsDel(MEDS_KEY);
+    refreshLockButtons();
+    syncWidget();
+  }
+  function meds() {
+    var list = [];
+    try { list = JSON.parse(lsGet('currentMedList') || '[]'); } catch (_) {}
+    if (!Array.isArray(list)) return [];
+    return list.filter(function (m) { return m && clip(m.name); }).slice(0, MAX_ITEMS)
+      .map(function (m) { return { name: clip(m.name), dosage: clip(m.dosage || '') }; });
+  }
+  /** What the plan shows: its own sections, plus the medications when opted in. */
+  function showsSomething(p) { return hasContent(p) || (medsEnabled() && meds().length > 0); }
   function setLockEnabled(on) {
     if (on) lsSet(LOCK_KEY, '1'); else lsDel(LOCK_KEY);
     refreshLockButtons();
@@ -507,8 +529,8 @@
     _css();
     _fromLock = !!opts.fromLock;
     // From the lock screen the plan can only be read, and only if opted in.
-    if (_fromLock && !(lockEnabled() && hasContent())) return;
-    _mode = (!_fromLock && (opts.edit || !hasContent())) ? 'edit' : 'view';
+    if (_fromLock && !(lockEnabled() && showsSomething())) return;
+    _mode = (!_fromLock && (opts.edit || !showsSomething())) ? 'edit' : 'view';
     _opener = document.activeElement;
     if (_sheet) _sheet.remove();
     _sheet = h('div', { class: 'bbsp-sheet', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'bbspTitle',
@@ -528,7 +550,7 @@
     var toggle = _fromLock ? null : h('button', { type: 'button', class: 'bbsp-btn' + (_mode === 'edit' ? ' primary' : ''),
       text: _mode === 'edit' ? tr('plan.done') : tr('plan.edit'),
       onclick: function () {
-        if (_mode === 'edit' && !hasContent()) { _close(); return; }
+        if (_mode === 'edit' && !showsSomething()) { _close(); return; }
         _mode = _mode === 'edit' ? 'view' : 'edit'; _render();
         var tt = _sheet && _sheet.querySelector('#bbspTitle'); if (tt) try { tt.focus(); } catch (_) {}
       } });
@@ -546,7 +568,7 @@
   }
 
   function _renderView(panel, p) {
-    if (!hasContent(p)) {
+    if (!showsSomething(p)) {
       panel.appendChild(h('p', { class: 'bbsp-intro', text: tr('plan.emptyAll') }));
       if (!_fromLock) panel.appendChild(h('button', { type: 'button', class: 'bbsp-btn primary', text: tr('plan.write'),
         onclick: function () { _mode = 'edit'; _render(); } }));
@@ -569,6 +591,17 @@
         }
         panel.appendChild(sec);
       });
+    }
+    // My medications (opt-in), after the plan's own sections.
+    var ml = medsEnabled() ? meds() : [];
+    if (ml.length) {
+      var ms = h('section', { class: 'bbsp-sec', 'aria-labelledby': 'bbspMeds' }, [
+        h('h3', { id: 'bbspMeds' }, [h('span', { 'aria-hidden': 'true', text: '💊' }), h('span', { text: tr('plan.medsHeading') })]),
+      ]);
+      var mul = h('ul', { class: 'bbsp-list' });
+      ml.forEach(function (m) { mul.appendChild(h('li', null, [h('span', { text: m.name + (m.dosage ? ' · ' + m.dosage : '') })])); });
+      ms.appendChild(mul);
+      panel.appendChild(ms);
     }
     // The country's crisis lines are always at the foot of the plan.
     var cs = h('section', { class: 'bbsp-sec', 'aria-labelledby': 'bbspCrisis' }, [
@@ -661,10 +694,18 @@
     var lockCb = h('input', { type: 'checkbox', id: 'bbspLock', 'aria-describedby': 'bbspLockDesc' });
     lockCb.checked = lockEnabled();
     lockCb.addEventListener('change', function () { setLockEnabled(lockCb.checked); });
+    // Medications opt-in (unticked by default).
+    var medsCb = h('input', { type: 'checkbox', id: 'bbspMedsCb', 'aria-describedby': 'bbspMedsDesc' });
+    medsCb.checked = medsEnabled();
+    medsCb.addEventListener('change', function () { setMedsEnabled(medsCb.checked); });
     panel.appendChild(h('div', { class: 'bbsp-sec' }, [
       h('div', { class: 'bbsp-opt' }, [lockCb, h('div', null, [
         h('label', { for: 'bbspLock', style: 'font-weight:700', text: tr('plan.onLock') }),
         h('div', { class: 'bbsp-hint', id: 'bbspLockDesc', style: 'margin:2px 0 0', text: tr('plan.onLockDesc') }),
+      ])]),
+      h('div', { class: 'bbsp-opt', style: 'margin-top:12px' }, [medsCb, h('div', null, [
+        h('label', { for: 'bbspMedsCb', style: 'font-weight:700', text: tr('plan.meds') }),
+        h('div', { class: 'bbsp-hint', id: 'bbspMedsDesc', style: 'margin:2px 0 0', text: tr('plan.medsDesc') }),
       ])]),
     ]));
     panel.appendChild(h('p', { class: 'bbsp-small', text: '🔒 ' + tr(_signedIn() ? 'plan.savedSignedIn' : 'plan.savedGuest') }));
@@ -673,6 +714,7 @@
         if (!confirm(tr('plan.deleteConfirm'))) return;
         save(blankPlan());
         setLockEnabled(false);
+        setMedsEnabled(false);
         _render();
       } }));
     }
@@ -682,7 +724,7 @@
   // ── PIN-screen buttons + Survival Kit banner ──────────────────────────────
   function refreshLockButtons() {
     if (typeof document === 'undefined') return;
-    var show = lockEnabled() && hasContent();
+    var show = lockEnabled() && showsSomething();
     var btns = document.querySelectorAll('.bbsp-lockbtn');
     for (var i = 0; i < btns.length; i++) {
       if (show) btns[i].removeAttribute('hidden'); else btns[i].setAttribute('hidden', '');

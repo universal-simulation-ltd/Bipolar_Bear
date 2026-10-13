@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 💊 **Your medications in your safety plan.** A new tick box under My safety plan, **Include my medications**, adds the medicines from My Medications to the plan, so someone helping you knows what you take. The lock-screen option now says what it does: it puts a 🛟 button on the app's PIN screen, which isn't your phone's lock screen. Both start off. In every language. (`CACHE_NAME` v322)
 - 🎡 **The tutorial uses the wheel, and the switches start off.** The first-run tutorial now always runs one question at a time on the wheel; resetting from the home screen used to leave it on the plain list. In Settings → Focus Mode the switches are now **Classic form** (every question on one page) and **Plain list** (tap an answer instead of spinning the wheel), both off to begin with; your choice stays as it was. (`CACHE_NAME` v321)
 - 📥 **"Moving from another app?"** After the tutorial, the first time you close Settings, the app asks whether you have history in Daylio, Bipolar UK's Mood Tracker or a spreadsheet, and "Show me where" opens Settings with the Import button lit up. (`CACHE_NAME` v321)
 - ⚙️ **Tidier Settings.** Customise form and Appearance are closed sections you open with a tap, and Achievements, Import and Advanced sit under the sign-in button. The home screen's Settings → More has **📋 Customise your journal**, which opens the journal with its settings showing. The Apple Health "enable the toggle above" line now says where the switch is on pages that don't have it. In every language. (`CACHE_NAME` v321)

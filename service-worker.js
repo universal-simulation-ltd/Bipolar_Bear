@@ -1520,7 +1520,11 @@
 //   journal" (journal.html?openSettings=1); the Apple Health "toggle above" line
 //   only says "above" where the switch is. Touches journal.html, index.html,
 //   css/journal.css, js/journal.js, js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v321';
+// v322: safety plan — the lock option says it's the app's PIN screen, not the
+//   phone's lock screen; new opt-in "Include my medications" lists My
+//   Medications in the plan (and so on the PIN screen) for someone helping.
+//   Touches js/shared/safety-plan.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v322';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
