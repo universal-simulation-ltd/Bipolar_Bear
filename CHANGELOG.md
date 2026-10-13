@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🔐 **Signing in with two-step no longer loses your place.** If you have a PIN, leaving the app for more than a minute to get your authenticator code used to bring up the lock screen and close the sign-in, so you had to start again. While you're signing in the lock now waits, and it comes on as soon as you finish or close the sign-in. (`CACHE_NAME` v326)
 - 📊 **A clearer Track Data list.** Each field now has the ✏️ to rename it on the left, a line under its name saying what it means ("A “no” counts as a good day", "Anxiety, stress and irritability", "Set up when logging"), and a switch on the right, lined up down the list. Deleting one of your own fields is in its ✏️ edit row. The import format buttons are easier to read in dark mode. In every language. (`CACHE_NAME` v325)
 - 🆘 **During the tutorial the 🆘 button is hidden too**, like the rest of the buttons along the bottom; they all appear once the tutorial unlocks them. (`CACHE_NAME` v324)
 - 📱 **Your safety plan on your phone's lock screen.** In the app, My safety plan has a new tick box, **Show on my phone's lock screen** (off to begin with). On iPhone, add the new **Safety plan** widget to your lock screen; on Android it's a quiet card in your notifications that shows on the lock screen. Either way it shows your medications (if you include them) and your support number, so someone helping you can see them without unlocking your phone. Nothing else from your plan goes there. In every language. (`CACHE_NAME` v323; needs the next app build)

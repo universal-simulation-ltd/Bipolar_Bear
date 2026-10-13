@@ -1537,7 +1537,11 @@
 //   "Reverse" / "3 questions" / "configurable" spelt out. Import format buttons
 //   readable in dark mode (--imp-* colours). Touches js/journal.js,
 //   js/shared/i18n.js, journal.html, css/journal.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v325';
+// v326: the background PIN re-lock waits while the sign-in sheet is open
+//   (fetching a two-step code took you to the lock and lost the sign-in), and
+//   locks as soon as it closes if the PIN still applies. Touches
+//   js/shared/pin-guard.js.
+const CACHE_NAME = 'bipolarbear-v326';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -28,6 +28,8 @@
  *    calls `relock()` when the page (or, in the native shell, the app — via
  *    @capacitor/app's appStateChange where it's installed) comes back after
  *    more than a minute away, if `applies()` says a PIN is on and unlocked.
+ *    Not while the sign-in sheet is open (#bbAuthModal): then it locks as soon
+ *    as that sheet closes, so fetching a two-step code keeps the sign-in.
  */
 (function () {
   'use strict';
@@ -172,6 +174,27 @@
    * opts.applies() → true when a PIN is on and currently unlocked.
    * opts.relock()  → lock it again (show the keypad / go to the lock screen).
    */
+  function _applies(opts) {
+    try { return typeof opts.applies === 'function' ? !!opts.applies() : true; } catch (_) { return true; }
+  }
+  function _authModal() { return document.getElementById('bbAuthModal'); }
+  function _signingIn() { var m = _authModal(); return !!(m && m.classList.contains('active')); }
+  var _waitingForSignIn = false;
+  function _lockWhenSignInCloses(opts) {
+    var m = _authModal();
+    if (!m || !window.MutationObserver) { opts.relock(); return; }
+    if (_waitingForSignIn) return;
+    _waitingForSignIn = true;
+    var mo = new MutationObserver(function () {
+      if (m.classList.contains('active')) return;
+      mo.disconnect();
+      _waitingForSignIn = false;
+      // Let a successful sign-in land (auth state, cached user) first.
+      setTimeout(function () { if (_applies(opts)) opts.relock(); }, 600);
+    });
+    mo.observe(m, { attributes: true, attributeFilter: ['class'] });
+  }
+
   function watchBackground(opts) {
     if (!opts || typeof opts.relock !== 'function') return;
     var hiddenAt = 0;
@@ -181,9 +204,14 @@
       var gone = Date.now() - hiddenAt;
       hiddenAt = 0;
       if (gone < BACKGROUND_RELOCK_MS) return;
-      var applies = true;
-      try { applies = typeof opts.applies === 'function' ? !!opts.applies() : true; } catch (_) {}
-      if (applies) opts.relock();
+      if (!_applies(opts)) return;
+      // Mid-sign-in (fab.js #bbAuthModal open): the person most likely left to
+      // fetch a two-step or email code. Locking now sent journal / survival-kit
+      // to index.html and threw the half-done sign-in away (James, 2026-10-13).
+      // So wait, and lock the moment the sign-in sheet closes, if the PIN
+      // still applies then (signing in can make the guest PIN moot).
+      if (_signingIn()) { _lockWhenSignInCloses(opts); return; }
+      opts.relock();
     }
     document.addEventListener('visibilitychange', function () {
       if (document.hidden) away(); else back();
