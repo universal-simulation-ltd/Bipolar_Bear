@@ -1622,11 +1622,12 @@
         <div style="border: 1.5px solid #e9ecef; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
             <div>
-              <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.classicForm">📋 Classic form</div>
-              <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.classicFormDesc">Every question on one page</div>
+              <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.focusMode">🎯 Focus mode</div>
+              <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.focusModeDesc">Only one question at a time</div>
             </div>
-            <!-- Ticked = focus mode OFF (switches start unticked; focus mode is the default). -->
-            <label class="bb-switch"><input type="checkbox" id="classicFormToggle" onchange="_toggleFocusedMode()"><span class="bb-slider"></span></label>
+            <!-- Ticked by default on purpose: it's the parent of the switches below,
+                 which only show while it's on (the one exception to unticked-by-default). -->
+            <label class="bb-switch"><input type="checkbox" id="focusModeToggle" onchange="_toggleFocusedMode()"><span class="bb-slider"></span></label>
           </div>
 
           <div id="focusModeSubOptions" style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef;">

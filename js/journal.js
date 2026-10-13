@@ -5415,10 +5415,9 @@ window.addEventListener('pageshow', () => {
     }
     window._offerHealthSettingsRecovery = _offerHealthSettingsRecovery;
 
-    // The switch is "Classic form", so it starts unticked: ticked = focus mode off.
     function _toggleFocusedMode() {
-      const chk = document.getElementById('classicFormToggle');
-      _fmEnabled = chk ? !chk.checked : !_fmEnabled;
+      const chk = document.getElementById('focusModeToggle');
+      _fmEnabled = chk ? chk.checked : !_fmEnabled;
       localStorage.setItem('focusedModeEnabled', _fmEnabled ? '1' : '0');
       BB.storage.set('TutorialWheel', '1');
       if (window.db && window.currentUser) {
@@ -5436,15 +5435,15 @@ window.addEventListener('pageshow', () => {
         localStorage.setItem('intentionEnabled', 'false');
         const _erChk = document.getElementById('elaborateResponsesToggle');
         if (_erChk) _erChk.checked = false;
-        // Wheel mode is a focus-mode sub-option too — it has no meaning in the
-        // full form, so it goes off with the rest rather than lying dormant and
-        // surprising the user the next time focus mode is switched back on.
-        localStorage.setItem('wheelModeEnabled', '0');
+        // Plain list is a focus-mode sub-option too: like the two above it goes
+        // back to its default (unticked, i.e. the wheel), so switching focus
+        // mode back on never shows a box the user didn't tick.
+        localStorage.setItem('wheelModeEnabled', '1');
         const _wmChk = document.getElementById('plainListToggle');
-        if (_wmChk) _wmChk.checked = true;
+        if (_wmChk) _wmChk.checked = false;
         if (window.db && window.currentUser) {
           window.db.collection('userSettings').doc(window.currentUser.uid)
-            .set({ wheelModeEnabled: false }, { merge: true }).catch(() => {});
+            .set({ wheelModeEnabled: true }, { merge: true }).catch(() => {});
         }
         if (_fmSub) _fmSub.style.display = 'none';
         _exitFocusedMode();
@@ -5796,8 +5795,8 @@ window.addEventListener('pageshow', () => {
     }
 
     function _updateFocusModeBtn() {
-      const chk = document.getElementById('classicFormToggle');
-      if (chk) chk.checked = !_fmEnabled;
+      const chk = document.getElementById('focusModeToggle');
+      if (chk) chk.checked = _fmEnabled;
     }
 
     function _fmSyncFormVisuals() {
@@ -13910,7 +13909,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (_wmToggle) _wmToggle.checked = !_wheelMode();
       document.getElementById('moodSuggestionToggle').checked = localStorage.getItem('showMoodSuggestion') === '1';
       if (window.BBInsights) window.BBInsights.syncSettingUI();
-      document.getElementById('classicFormToggle').checked = !_fmEnabled;
+      document.getElementById('focusModeToggle').checked = _fmEnabled;
       document.getElementById('focusModeSubOptions').style.display = _fmEnabled ? '' : 'none';
       document.getElementById('fmConfirmStepToggle').checked = localStorage.getItem('fmConfirmStep') === 'true';
       document.getElementById('elaborateResponsesToggle').checked = localStorage.getItem('elaborateResponsesEnabled') === 'true';

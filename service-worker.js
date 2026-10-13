@@ -1541,7 +1541,11 @@
 //   (fetching a two-step code took you to the lock and lost the sign-in), and
 //   locks as soon as it closes if the PIN still applies. Touches
 //   js/shared/pin-guard.js.
-const CACHE_NAME = 'bipolarbear-v326';
+// v327: Settings → Focus Mode: the parent switch is "🎯 Focus mode" again, ticked
+//   by default (it shows the nested switches; v321 had flipped it to "Classic
+//   form", James); turning it off resets Plain list to unticked (the wheel).
+//   Touches journal.html, js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v327';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
