@@ -14336,10 +14336,24 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     function renderFieldPickerList() {
       const list = document.getElementById('fieldPickerList');
       if (!list) return;
-      const pill = active =>
-        active
-          ? `<span style="background:var(--brand-btn);color:white;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;">On</span>`
-          : `<span style="background:#e9ecef;color:#adb5bd;border-radius:20px;padding:3px 10px;font-size:0.78em;font-weight:600;">Off</span>`;
+      // Every row: [✏ / × slot] [name, with what it means underneath] [switch].
+      // The left slot is always there (empty when there's nothing to do), so
+      // names and switches line up down the list (James, 2026-10-13).
+      const _sw = (key, active, name) => `<label class="bb-switch" style="flex-shrink:0;" onclick="event.stopPropagation()"><input type="checkbox"${active ? ' checked' : ''} onchange="toggleField('${key}')" aria-label="${String(name).replace(/"/g, '&quot;')}"><span class="bb-slider"></span></label>`;
+      const _iconBtn = (onclick, glyph, label, size) => `<button onclick="event.stopPropagation();${onclick}" aria-label="${label}" title="${label}" style="background:none;border:none;color:#adb5bd;font-size:${size || '1em'};cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;">${glyph}</button>`;
+      const _row = (key, active, leadHtml, name, sub) => `<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
+          <div style="width:36px;flex-shrink:0;display:flex;justify-content:center;">${leadHtml || ''}</div>
+          <div onclick="toggleField('${key}')" style="flex:1;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+            <div style="font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${name}</div>
+            ${sub ? `<div style="font-size:0.74em;color:#868e96;margin-top:1px;line-height:1.3;">${sub}</div>` : ''}
+          </div>
+          ${_sw(key, active, name)}
+        </div>`;
+      const _subFor = f => f.synced ? BB.t('journal.ui.fieldSetUp')
+        : f.sublabel === 'Reverse' ? BB.t('journal.ui.fieldReverse')
+        : f.sublabel === '3 questions' ? BB.t('journal.ui.fieldThreeQs')
+        : (f.sublabel || '');
+      const _renameLbl = BB.t('journal.ui.renameField');
 
       const _deletedBuiltin = JSON.parse(localStorage.getItem('deletedBuiltinFields') || '[]');
       const builtIn = FIELD_PICKER_FIELDS.filter(f => !f.deletable || !_deletedBuiltin.includes(f.key)).map(f => {
@@ -14350,52 +14364,26 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               : (f.legacy ? localStorage.getItem(f.legacy) === 'true' : f.key === 'trackBudget'));
         const _storedLabel = f.renameable ? (localStorage.getItem('_labelOverride_' + f.key) || null) : null;
         const _displayLabel = _storedLabel || f.label;
-        const labelHtml = f.synced
-          ? `<span style="font-size:0.92em;color:#495057;">${_displayLabel}</span><span style="font-size:0.72em;color:#adb5bd;margin-left:5px;font-weight:500;letter-spacing:0.01em;">${BB.t('journal.ui.configurable')}</span>`
-          : f.sublabel
-          ? `<span style="font-size:0.92em;color:#495057;">${_displayLabel}</span><span style="font-size:0.72em;color:#adb5bd;margin-left:5px;font-weight:500;letter-spacing:0.01em;">⚙ ${f.sublabel}</span>`
-          : `<span style="font-size:0.92em;color:#495057;">${_displayLabel}</span>`;
-        if (f.renameable) {
-          if (_editingBuiltinKey === f.key) {
-            const _bEmojiGrid = EMOJI_LIST.map(e =>
-              `<button onclick="selectEditPickerEmoji('${e}')" style="font-size:1.25em;background:none;border:none;padding:4px 3px;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1;">${e}</button>`
-            ).join('');
-            return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-                <button id="editEmojiPickerBtn" onclick="toggleEditEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_editingFieldEmoji || f.label.split(' ')[0]}</button>
-                <input id="builtinFieldEditInput" type="text" value="${_storedLabel ? _storedLabel.replace(/^\S+\s*/, '') : f.label.replace(/^\S+\s*/, '')}" maxlength="20"
-                  style="flex:1;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
-                  onkeydown="if(event.key==='Enter')saveBuiltinFieldLabel('${f.key}')">
-                <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Save</button>
-                <button onclick="cancelBuiltinFieldEdit()" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
-              </div>
-              <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:120px;overflow-y:auto;">${_bEmojiGrid}</div>
-            </div>`;
-          }
-          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #f0f0f0;-webkit-tap-highlight-color:transparent;">
-            <span onclick="toggleField('${f.key}')" style="display:flex;align-items:baseline;gap:0;flex:1;cursor:pointer;">${labelHtml}</span>
-            <div style="display:flex;align-items:center;gap:2px;">
-              ${pill(active)}
-              <button onclick="event.stopPropagation();startEditBuiltinField('${f.key}');" style="background:none;border:none;color:#adb5bd;font-size:1.0em;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">✏</button>
+        if (f.renameable && _editingBuiltinKey === f.key) {
+          const _bEmojiGrid = EMOJI_LIST.map(e =>
+            `<button onclick="selectEditPickerEmoji('${e}')" style="font-size:1.25em;background:none;border:none;padding:4px 3px;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1;">${e}</button>`
+          ).join('');
+          return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <button id="editEmojiPickerBtn" onclick="toggleEditEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_editingFieldEmoji || f.label.split(' ')[0]}</button>
+              <input id="builtinFieldEditInput" type="text" value="${_storedLabel ? _storedLabel.replace(/^\S+\s*/, '') : f.label.replace(/^\S+\s*/, '')}" maxlength="20"
+                style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
+                onkeydown="if(event.key==='Enter')saveBuiltinFieldLabel('${f.key}')">
+              <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.save')}</button>
+              <button onclick="cancelBuiltinFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
+            <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:120px;overflow-y:auto;">${_bEmojiGrid}</div>
           </div>`;
         }
-        if (f.deletable) {
-          const deletableLabelHtml = f.sublabel
-            ? `<span style="font-size:0.92em;color:#495057;">${f.label}</span><span style="font-size:0.72em;color:#adb5bd;margin-left:5px;font-weight:500;letter-spacing:0.01em;">⚙ ${f.sublabel}</span>`
-            : `<span style="font-size:0.92em;color:#495057;">${f.label}</span>`;
-          return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #f0f0f0;-webkit-tap-highlight-color:transparent;">
-            <span onclick="toggleField('${f.key}')" style="display:flex;align-items:baseline;gap:0;flex:1;cursor:pointer;">${deletableLabelHtml}</span>
-            <div style="display:flex;align-items:center;gap:2px;">
-              ${pill(active)}
-              <button onclick="deleteBuiltinField('${f.key}')" style="background:none;border:none;color:#adb5bd;font-size:1.2em;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">×</button>
-            </div>
-          </div>`;
-        }
-        return `<div onclick="toggleField('${f.key}')" style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #f0f0f0;cursor:pointer;-webkit-tap-highlight-color:transparent;">
-          <span style="display:flex;align-items:baseline;gap:0;">${labelHtml}</span>
-          ${pill(active)}
-        </div>`;
+        const lead = f.renameable ? _iconBtn(`startEditBuiltinField('${f.key}')`, '✏', _renameLbl)
+          : f.deletable ? _iconBtn(`deleteBuiltinField('${f.key}')`, '×', BB.t('journal.ui.deleteField'), '1.2em')
+          : '';
+        return _row(f.key, active, lead, _displayLabel, _subFor(f));
       }).join('');
 
       const editEmojiGrid = EMOJI_LIST.map(e =>
@@ -14408,29 +14396,25 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           : localStorage.getItem(`trackCustom_${f.id}`) === 'true';
 
         if (_editingFieldId === f.id) {
+          // Delete lives in here, so the list itself only has ✏ and the switch.
           return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <button id="editEmojiPickerBtn" onclick="toggleEditEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_editingFieldEmoji || '🏷️'}</button>
               <input id="customFieldEditInput" type="text" value="${f.label}" maxlength="15"
-                style="flex:1;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
+                style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
                 onkeydown="if(event.key==='Enter')saveCustomFieldEdit()">
-              <button onclick="saveCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Save</button>
-              <button onclick="cancelCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
+              <button onclick="saveCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.save')}</button>
+              <button onclick="cancelCustomFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f0f0f0;border-radius:8px;">
               ${editEmojiGrid}
             </div>
+            <button onclick="deleteCustomField('${f.id}')" style="background:none;border:none;color:#c92a2a;font-size:0.82em;font-weight:600;padding:6px 2px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;">🗑️ ${BB.t('journal.ui.deleteField')}</button>
           </div>`;
         }
 
-        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 4px;border-bottom:1px solid #f0f0f0;-webkit-tap-highlight-color:transparent;">
-          <span onclick="toggleField('trackCustom_${f.id}')" style="font-size:0.92em;color:#495057;flex:1;cursor:pointer;">${f.emoji ? f.emoji + ' ' : ''}${f.label}</span>
-          <div style="display:flex;align-items:center;gap:2px;">
-            ${pill(active)}
-            <button onclick="editCustomField('${f.id}')" style="background:none;border:none;color:#adb5bd;font-size:1.0em;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">✏</button>
-            <button onclick="deleteCustomField('${f.id}')" style="background:none;border:none;color:#adb5bd;font-size:1.2em;cursor:pointer;min-width:36px;min-height:36px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;">×</button>
-          </div>
-        </div>`;
+        return _row(`trackCustom_${f.id}`, active, _iconBtn(`editCustomField('${f.id}')`, '✏', _renameLbl),
+          `${f.emoji ? f.emoji + ' ' : ''}${f.label}`, f.positive === 'no' ? BB.t('journal.ui.fieldReverse') : '');
       }).join('');
 
       const emojiPickerGrid = EMOJI_LIST.map(e =>
@@ -14439,8 +14423,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const addForm = `<div id="customFieldAddRow" style="padding:10px 4px 6px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <button id="emojiPickerBtn" onclick="toggleEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fafafa;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_pickerEmoji || '🏷️'}</button>
-          <input id="customFieldInput" type="text" placeholder="${BB.t('journal.ui.fieldNameMax')}" maxlength="15"
-            style="flex:1;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
+          <input id="customFieldInput" type="text" placeholder="${BB.t('journal.ui.newFieldName')}" maxlength="15"
+            style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
             onkeydown="if(event.key==='Enter')addCustomField()">
           <button onclick="addCustomField()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Add</button>
         </div>
@@ -14643,6 +14627,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const id = _pendingDeleteFieldId;
       if (!id) return;
       closeDeleteCustomFieldModal();
+      if (_editingFieldId === id) _editingFieldId = null;
       if (DEFAULT_CUSTOM_FIELDS.some(d => d.id === id)) {
         const deleted = JSON.parse(localStorage.getItem('deletedDefaultCustomFields') || '[]');
         if (!deleted.includes(id)) { deleted.push(id); localStorage.setItem('deletedDefaultCustomFields', JSON.stringify(deleted)); }

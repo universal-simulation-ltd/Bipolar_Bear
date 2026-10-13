@@ -483,3 +483,6 @@ html.theme-dark .fb-ranges { border-color: var(--dk-line); }
 html.theme-dark .fb-range { background: var(--dk-surface); color: var(--dk-muted); }
 html.theme-dark .fb-range + .fb-range { border-left-color: var(--dk-line); }
 html.theme-dark .fb-range.on { background: var(--dk-surface-2); color: var(--dk-text); box-shadow: inset 0 0 0 2px rgba(255, 149, 0, 0.55); }
+
+/* Import format buttons — the light-theme blue / indigo / green are too dark on the dark card. */
+html.theme-dark { --imp-daylio: #74c0fc; --imp-bpuk: #a5b4fc; --imp-sheet: #69db7c; }

@@ -1532,7 +1532,12 @@
 //   Touches js/shared/safety-plan.js, js/shared/i18n.js.
 // v324: the locked dock (during the tutorial) hides the 🆘 Crisis Support FAB
 //   too, like every other dock button (James). Touches fab.js, js/index.js.
-const CACHE_NAME = 'bipolarbear-v324';
+// v325: Track Data popup — every row is [✏ slot] [name + what it means]
+//   [switch], so switches line up; Delete moved into a custom field's edit row;
+//   "Reverse" / "3 questions" / "configurable" spelt out. Import format buttons
+//   readable in dark mode (--imp-* colours). Touches js/journal.js,
+//   js/shared/i18n.js, journal.html, css/journal.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v325';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

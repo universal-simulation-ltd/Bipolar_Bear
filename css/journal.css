@@ -2700,3 +2700,7 @@ html.theme-dark .pf-link { color: #ffb347; }
 @media (prefers-reduced-motion: reduce) {
   #settingsImportBtn.bb-import-glow, .bb-import-label { animation: none; }
 }
+
+/* Import format buttons (journal.html #importModal): one colour per source,
+   readable on white here and on the dark card in css/dark.css. */
+:root { --imp-daylio: #1c7ed6; --imp-bpuk: #3b3fa8; --imp-sheet: #2b8a3e; }
