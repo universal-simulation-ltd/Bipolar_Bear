@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 📊 **Stats show on the home screen from the start.** The home Settings switch is now **Hide stats** (off to begin with), so new users see their streaks and progress under each button. If you already use the app, what you see stays as it was. In every language. (`CACHE_NAME` v328)
 - 🎯 **Focus mode is back as it was.** The switch is "Focus mode" again and starts on, with Confirm each step, Elaborate Responses and Plain list under it; turning it off puts those back to how they start. (`CACHE_NAME` v327)
 - 🔐 **Signing in with two-step no longer loses your place.** If you have a PIN, leaving the app for more than a minute to get your authenticator code used to bring up the lock screen and close the sign-in, so you had to start again. While you're signing in the lock now waits, and it comes on as soon as you finish or close the sign-in. (`CACHE_NAME` v326)
 - 📊 **A clearer Track Data list.** Each field now has the ✏️ to rename it on the left, a line under its name saying what it means ("A “no” counts as a good day", "Anxiety, stress and irritability", "Set up when logging"), and a switch on the right, lined up down the list. Deleting one of your own fields is in its ✏️ edit row. The import format buttons are easier to read in dark mode. In every language. (`CACHE_NAME` v325)

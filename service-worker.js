@@ -1545,7 +1545,11 @@
 //   by default (it shows the nested switches; v321 had flipped it to "Classic
 //   form", James); turning it off resets Plain list to unticked (the wheel).
 //   Touches journal.html, js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v327';
+// v328: home Settings "📊 Show stats" (off) → "📊 Hide stats" (off): stats show
+//   unless HomeStatsEnabled is '0'. Existing users (past step 1, flag unset)
+//   get an explicit '0' once (bbDefaults20261013) so nothing changes for
+//   them. Touches index.html, js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v328';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

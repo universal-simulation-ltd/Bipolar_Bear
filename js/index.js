@@ -950,7 +950,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const _showSurvival = BB.storage.get('SurvivalBtnEnabled') === '1';
       const _showAnon     = BB.storage.get('AnonBtnEnabled') === '1';
       const _btnsWrap = document.querySelector('.buttons');
-      if (_btnsWrap) _btnsWrap.classList.toggle('bb-hide-stats', BB.storage.get('HomeStatsEnabled') !== '1');
+      if (_btnsWrap) _btnsWrap.classList.toggle('bb-hide-stats', BB.storage.get('HomeStatsEnabled') === '0');
 
       // Anonymous button: hidden until tutorial complete. (The auth FAB is the
       // dock's #bbAuthFab, owned entirely by fab.js — it stays visible in every
@@ -1495,7 +1495,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       db.collection('userSettings').doc(currentUser.uid).set({
         homeSurvivalEnabled: BB.storage.get('SurvivalBtnEnabled') === '1',
         homeAnonEnabled:     BB.storage.get('AnonBtnEnabled') === '1',
-        homeStatsEnabled:    BB.storage.get('HomeStatsEnabled') === '1',
+        homeStatsEnabled:    BB.storage.get('HomeStatsEnabled') !== '0',
         homeQuickCheckinEnabled: BB.storage.get('HomeQuickCheckin') !== '0',
       }, { merge: true }).catch(() => {});
     }
@@ -1518,11 +1518,12 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     }
     window._toggleHomeBtn = _toggleHomeBtn;
 
-    /** Paint the "Show stats" pill toggle to match the current flag. */
+    /** Paint the "Hide stats" pill toggle: on = stats hidden (HomeStatsEnabled '0').
+     *  Stats show by default, so the switch starts off (James, 2026-10-13). */
     function _paintShowStatsToggle() {
       const btn = document.getElementById('idxShowStatsToggle');
       if (!btn) return;
-      const on = BB.storage.get('HomeStatsEnabled') === '1';
+      const on = BB.storage.get('HomeStatsEnabled') === '0';
       btn.style.background = on ? 'var(--brand-primary)' : '#ccc';
       const thumb = btn.querySelector('span');
       if (thumb) thumb.style.left = on ? '23px' : '3px';
@@ -1530,8 +1531,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
     /** Toggle the stat badges (streaks / progress) under the home buttons. */
     function _toggleHomeStats() {
-      const nowEnabled = BB.storage.get('HomeStatsEnabled') !== '1';
-      BB.storage.set('HomeStatsEnabled', nowEnabled ? '1' : '0');
+      const nowShown = BB.storage.get('HomeStatsEnabled') === '0';
+      BB.storage.set('HomeStatsEnabled', nowShown ? '1' : '0');
       _paintShowStatsToggle();
       if (typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
       _syncHomeCustomise();
@@ -1936,7 +1937,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,
               personalHintDone: false,
-              homeSurvivalEnabled: false, homeAnonEnabled: false, homeStatsEnabled: false,
+              homeSurvivalEnabled: false, homeAnonEnabled: false, homeStatsEnabled: true,
             }, { merge: true }).catch(() => {});
             db.collection('personalDetails').doc(currentUser.uid).delete().catch(() => {});
           }

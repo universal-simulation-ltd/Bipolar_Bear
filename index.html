@@ -286,6 +286,14 @@
           try {
             var S = window.BB && window.BB.storage;
             if (!S) return;
+            // Stats are now shown unless "Hide stats" is ticked (James,
+            // 2026-10-13); before, they showed only when "Show stats" was on.
+            // Anyone already past the first step keeps them hidden: once per
+            // device, an unset flag becomes an explicit '0' (hidden).
+            if (S.get('Defaults20261013') === null) {
+              if (parseInt(S.get('OnboardingStep') || '0', 10) >= 1 && S.get('HomeStatsEnabled') === null) S.set('HomeStatsEnabled', '0');
+              S.set('Defaults20261013', '1');
+            }
             // Only paint for a plausible signed-in session or a real guest —
             // otherwise we'd flash a previous account's stats before the auth
             // listener resolves and hides them.
@@ -319,13 +327,13 @@
               }
             } catch (_) {}
 
-            // Respect the "Show stats" preference — mirror the bb-hide-stats
-            // gate in js/index.js (stats are shown only when explicitly on).
-            // Stats off → apply the gate class synchronously too, so the
+            // Respect the "Hide stats" preference — mirror the bb-hide-stats
+            // gate in js/index.js (stats show unless HomeStatsEnabled is '0').
+            // Hidden → apply the gate class synchronously too, so the
             // skeleton placeholders don't blur-flash for ~1s before
             // _applyOnboardingGating() (gated behind the Firebase SDK
             // downloads) hides them.
-            if (S.get('HomeStatsEnabled') !== '1') {
+            if (S.get('HomeStatsEnabled') === '0') {
               var wrap = document.querySelector('.buttons');
               if (wrap) wrap.classList.add('bb-hide-stats');
               return;
@@ -511,7 +519,7 @@
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:10px 12px;border:1.5px solid #e9ecef;border-radius:12px;">
           <div>
-            <div style="font-weight:600;color:#495057;font-size:0.92em;" data-i18n="home.showStats">📊 Show stats</div>
+            <div style="font-weight:600;color:#495057;font-size:0.92em;" data-i18n="home.hideStats">📊 Hide stats</div>
             <div style="color:#6c757d;font-size:0.8em;margin-top:2px;" data-i18n="home.showStatsSub">Streaks &amp; progress under each button</div>
           </div>
           <button id="idxShowStatsToggle" onclick="_toggleHomeStats()" style="position:relative;display:inline-block;width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;transition:background 0.2s;">
