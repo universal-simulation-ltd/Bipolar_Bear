@@ -1286,10 +1286,30 @@ account's copy if it has content (the `guest-data.js` "never overwrite the
 account" rule); after that the newer `updatedAt` wins. Cleared on logout and
 reset with the other Survival Kit data; `safetyPlanEnc: null` on reset.
 
-**Lock screen (opt-in, unticked by default).** "Show my safety plan on the
-lock screen" (`bbSafetyPlanOnLock`) un-hides a `.bbsp-lockbtn` beside "Need
-help now?" on `#guestPinOverlay` and `#pinOverlay`; it opens the plan
-read-only (no Edit) above the lock (z-index 10005).
+**The app's PIN screen (opt-in, unticked by default).** "Show my safety plan
+on the app's PIN screen" (`bbSafetyPlanOnLock`) un-hides a `.bbsp-lockbtn`
+beside "Need help now?" on `#guestPinOverlay` and `#pinOverlay`; it opens the
+plan read-only (no Edit) above the lock (z-index 10005). This is the app's own
+lock, not the phone's: with no app PIN it does nothing.
+
+**My medications (opt-in, unticked).** "Include my medications"
+(`bbSafetyPlanMeds`) lists `currentMedList` (`{name, dosage}`, read-only here)
+as a 💊 section after the plan's own sections, in the plan and behind the PIN
+screen button. With it on, a plan with no sections of its own still counts as
+something to show (`showsSomething()`).
+
+**The phone's lock screen (native, opt-in, unticked).** "Show on my phone's
+lock screen" (`bbSafetyPlanPhoneLock`) makes `syncWidget()` also send
+`safetyLock: JSON` — `{on, title, meds, call, empty}`: the medications (only if
+included) and the support number (the widget contact, else the crisis line).
+Never the plan's sections, because anyone can read it there. iOS: the
+"Safety plan" lock-screen widget (`SafetyLockWidget.swift`, accessory
+rectangular / inline / circular, deliberately not `privacySensitive`); the
+user adds it to the lock screen. Android: an ongoing PUBLIC, silent
+notification on channel `safety_plan_lock` (`SafetyLockNotifier.java`, id
+7001, re-posted on boot); ticking it asks for the notification permission.
+Medications are saved from many pages, so `syncWidget()` also runs whenever
+the app is put away (`visibilitychange` → hidden).
 
 **Widget.** On native, each contact with a number gets a "Call from the
 home-screen widget" tick (one at most). `BB.safetyPlan.syncWidget()` sends
