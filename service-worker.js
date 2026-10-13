@@ -1524,7 +1524,13 @@
 //   phone's lock screen; new opt-in "Include my medications" lists My
 //   Medications in the plan (and so on the PIN screen) for someone helping.
 //   Touches js/shared/safety-plan.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v322';
+// v323: safety plan — "📱 Show on my phone's lock screen" (native only,
+//   unticked): BB.safetyPlan.syncWidget also sends "safetyLock" (medications if
+//   included + the support number) for the iOS lock-screen widget
+//   (SafetyLockWidget.swift) and the Android lock-screen card
+//   (SafetyLockNotifier.java); re-sent whenever the app is put away.
+//   Touches js/shared/safety-plan.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v323';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

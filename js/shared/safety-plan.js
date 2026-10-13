@@ -70,6 +70,7 @@
   var SYNCED_KEY = 'bbSafetyPlanSyncedAt';
   var LOCK_KEY = 'bbSafetyPlanOnLock';
   var MEDS_KEY = 'bbSafetyPlanMeds';     // '1' → the plan lists My Medications (unticked by default)
+  var PHONE_LOCK_KEY = 'bbSafetyPlanPhoneLock'; // '1' → the phone's own lock screen (native, unticked by default)
   var LOW_OFF_KEY = 'bbLowMoodSupportOff';
   var LOW_DUE_KEY = 'bbLowMoodDue';
   var LOW_SHOWN_KEY = 'bbLowMoodShown';
@@ -105,6 +106,11 @@
       meds: '💊 Include my medications',
       medsDesc: 'Adds the medicines from My Medications to the plan, so someone helping you knows what you take.',
       medsHeading: 'My medications',
+      phoneLock: '📱 Show on my phone\'s lock screen',
+      phoneLockDescIos: 'Then add the “Safety plan” widget to your lock screen: touch and hold the lock screen, then Customise. It shows your medications, if you include them above, and your support number, so someone helping you can see them without unlocking your phone. Anyone can see it.',
+      phoneLockDescAndroid: 'Keeps a quiet card in your notifications that shows on the lock screen, with your medications, if you include them above, and your support number, so someone helping you can see them without unlocking your phone. Anyone can see it.',
+      lockTitle: '🛟 Safety plan',
+      lockEmpty: 'Turn on “Show on my phone\'s lock screen” in My safety plan',
       onWidget: 'Call from the home-screen widget',
       widgetHelp: 'Add the “Call for support” widget to your home screen to call this person in one tap.',
       savedSignedIn: 'Saved on this phone and, encrypted, to your account.',
@@ -245,7 +251,7 @@
     return p;
   }
   function clearLocal() {
-    [PLAN_KEY, SYNCED_KEY, LOCK_KEY, MEDS_KEY].forEach(lsDel);
+    [PLAN_KEY, SYNCED_KEY, LOCK_KEY, MEDS_KEY, PHONE_LOCK_KEY].forEach(lsDel);
     refreshLockButtons();
     syncWidget();
     refreshBanner();
@@ -268,6 +274,21 @@
       .map(function (m) { return { name: clip(m.name), dosage: clip(m.dosage || '') }; });
   }
   /** What the plan shows: its own sections, plus the medications when opted in. */
+  function phoneLockEnabled() { return lsGet(PHONE_LOCK_KEY) === '1'; }
+  function setPhoneLockEnabled(on) {
+    if (on) lsSet(PHONE_LOCK_KEY, '1'); else lsDel(PHONE_LOCK_KEY);
+    // Android shows it as a notification, which needs the permission (13+).
+    if (on && _isAndroid()) {
+      try {
+        var ln = root.Capacitor && Capacitor.Plugins && Capacitor.Plugins.LocalNotifications;
+        if (ln && ln.requestPermissions) ln.requestPermissions().then(syncWidget, syncWidget);
+      } catch (_) {}
+    }
+    syncWidget();
+  }
+  function _isAndroid() {
+    try { return !!(root.BB && BB.platform && BB.platform.isAndroid && BB.platform.isAndroid()); } catch (_) { return false; }
+  }
   function showsSomething(p) { return hasContent(p) || (medsEnabled() && meds().length > 0); }
   function setLockEnabled(on) {
     if (on) lsSet(LOCK_KEY, '1'); else lsDel(LOCK_KEY);
@@ -387,9 +408,27 @@
     }
     return { kind: 'none', title: tr('plan.widgetTitle'), name: '', sub: '', tel: '', empty: tr('plan.widgetEmpty') };
   }
+  /**
+   * The phone's lock screen (opt-in): the iOS "Safety plan" lock-screen widget
+   * (LockSafetyWidget.swift) and, on Android, a quiet ongoing notification
+   * shown on the lock screen (SafetyLockNotifier.java). Anyone can read it
+   * there, so it carries only what someone helping needs: the medications (if
+   * those are included too) and the support number. Never the plan's sections.
+   */
+  function lockPayload() {
+    var off = { on: false, title: tr('plan.lockTitle'), empty: tr('plan.lockEmpty') };
+    if (!phoneLockEnabled()) return off;
+    var ml = medsEnabled() ? meds() : [];
+    var w = widgetPayload();
+    return {
+      on: true, title: tr('plan.lockTitle'), empty: tr('plan.lockEmpty'),
+      meds: ml.map(function (m) { return m.name + (m.dosage ? ' ' + m.dosage : ''); }).join(' · '),
+      call: w.tel ? (w.name + (w.sub ? ' · ' + w.sub : '')) : '',
+    };
+  }
   function syncWidget() {
     if (!isNative()) return;
-    var payload = { safetyCall: JSON.stringify(widgetPayload()) };
+    var payload = { safetyCall: JSON.stringify(widgetPayload()), safetyLock: JSON.stringify(lockPayload()) };
     try {
       var wk = root.webkit && root.webkit.messageHandlers && root.webkit.messageHandlers.setSharedData;
       if (wk) { wk.postMessage(payload); return; }
@@ -694,6 +733,10 @@
     var lockCb = h('input', { type: 'checkbox', id: 'bbspLock', 'aria-describedby': 'bbspLockDesc' });
     lockCb.checked = lockEnabled();
     lockCb.addEventListener('change', function () { setLockEnabled(lockCb.checked); });
+    // The phone's own lock screen (native only, unticked by default).
+    var phoneCb = h('input', { type: 'checkbox', id: 'bbspPhoneLock', 'aria-describedby': 'bbspPhoneLockDesc' });
+    phoneCb.checked = phoneLockEnabled();
+    phoneCb.addEventListener('change', function () { setPhoneLockEnabled(phoneCb.checked); });
     // Medications opt-in (unticked by default).
     var medsCb = h('input', { type: 'checkbox', id: 'bbspMedsCb', 'aria-describedby': 'bbspMedsDesc' });
     medsCb.checked = medsEnabled();
@@ -707,6 +750,10 @@
         h('label', { for: 'bbspMedsCb', style: 'font-weight:700', text: tr('plan.meds') }),
         h('div', { class: 'bbsp-hint', id: 'bbspMedsDesc', style: 'margin:2px 0 0', text: tr('plan.medsDesc') }),
       ])]),
+      isNative() ? h('div', { class: 'bbsp-opt', style: 'margin-top:12px' }, [phoneCb, h('div', null, [
+        h('label', { for: 'bbspPhoneLock', style: 'font-weight:700', text: tr('plan.phoneLock') }),
+        h('div', { class: 'bbsp-hint', id: 'bbspPhoneLockDesc', style: 'margin:2px 0 0', text: tr(_isAndroid() ? 'plan.phoneLockDescAndroid' : 'plan.phoneLockDescIos') }),
+      ])]) : null,
     ]));
     panel.appendChild(h('p', { class: 'bbsp-small', text: '🔒 ' + tr(_signedIn() ? 'plan.savedSignedIn' : 'plan.savedGuest') }));
     if (hasContent(p)) {
@@ -715,6 +762,7 @@
         save(blankPlan());
         setLockEnabled(false);
         setMedsEnabled(false);
+        setPhoneLockEnabled(false);
         _render();
       } }));
     }
@@ -918,6 +966,9 @@
     renderSettingRow();
     render();
     syncWidget();
+    // My Medications is saved from many places; the phone's lock screen only
+    // matters once the app is put away, so refresh it whenever it is.
+    document.addEventListener('visibilitychange', function () { if (document.hidden) syncWidget(); });
     // Re-check the card when a PIN overlay opens or closes.
     ['guestPinOverlay', 'pinOverlay'].forEach(function (id) {
       var el = document.getElementById(id);
