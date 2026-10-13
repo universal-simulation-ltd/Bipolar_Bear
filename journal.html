@@ -591,6 +591,18 @@
     </div>
   </div>
 
+  <!-- After the tutorial: "Moving from another app?" — js/journal.js _maybeAskImport -->
+  <div class="confirm-modal" id="importAskModal" style="z-index:1200;" onclick="if(event.target===this)_importAskAnswer(false)">
+    <div class="confirm-content">
+      <h3 data-i18n="journal.importAsk.title">📥 Moving from another app?</h3>
+      <p data-i18n="journal.importAsk.body">If you've tracked your mood in Daylio, Bipolar UK's Mood Tracker or a spreadsheet, you can bring that history into your journal.</p>
+      <div class="confirm-buttons">
+        <button class="confirm-btn confirm-btn-no" onclick="_importAskAnswer(false)" data-i18n="journal.importAsk.no">Not now</button>
+        <button class="confirm-btn" onclick="_importAskAnswer(true)" style="background:var(--brand-btn);color:white;border:none;" data-i18n="journal.importAsk.yes">Show me where</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Hide Mood Suggestion Modal -->
   <div class="confirm-modal" id="hideSuggestionModal" style="z-index:1200;" onclick="if(event.target===this)document.getElementById('hideSuggestionModal').classList.remove('active')">
     <div class="confirm-content">
@@ -1485,7 +1497,7 @@
             <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="13" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,8 8,13 13,8" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
           </div>
-          <details id="customiseFormDetails" ontoggle="if(this.open){_onCustomiseDetailsOpen();localStorage.removeItem('bbCustomiseFormCollapsed');}else{localStorage.setItem('bbCustomiseFormCollapsed','1');}">
+          <details id="customiseFormDetails" ontoggle="if(this.open)_onCustomiseDetailsOpen()">
             <summary style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;padding:2px 0;">
               <div>
                 <div style="font-weight:600;color:#495057;font-size:0.95em;" data-i18n="journal.settings.customise">📋 Customise form</div>
@@ -1501,17 +1513,29 @@
              (localStorage.bbTheme via BB.theme in fab.js), never synced. The
              value is filled in by showSettingsModal(). -->
         <div id="appearanceRow" style="margin-bottom:16px;text-align:left;">
-          <label for="appearanceSelect" style="display:block;font-weight:600;color:#495057;font-size:0.95em;margin-bottom:6px;">🌗 <span data-i18n="anon.ux.theme">Appearance</span></label>
-          <select id="appearanceSelect" onchange="window.BB&&BB.theme&&BB.theme.set(this.value)" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;font-family:inherit;color:#495057;background:white;cursor:pointer;">
-            <option value="auto" data-i18n="anon.ux.themeAuto">Automatic (follows your phone)</option>
-            <option value="light" data-i18n="anon.ux.themeLight">Light</option>
-            <option value="dark" data-i18n="anon.ux.themeDark">Dark</option>
-          </select>
+          <details id="appearanceDetails">
+            <summary style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;padding:2px 0;">
+              <div>
+                <div style="font-weight:600;color:#495057;font-size:0.95em;">🌗 <span data-i18n="anon.ux.theme">Appearance</span></div>
+                <div id="appearanceCurrent" style="color:#6c757d;font-size:0.82em;margin-top:2px;"></div>
+              </div>
+              <span style="color:#6c757d;font-size:1em;line-height:1;">▸</span>
+            </summary>
+            <select id="appearanceSelect" aria-label="Appearance" onchange="window.BB&&BB.theme&&BB.theme.set(this.value);_syncAppearanceCurrent()" style="width:100%;margin-top:12px;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;font-family:inherit;color:#495057;background:white;cursor:pointer;">
+              <option value="auto" data-i18n="anon.ux.themeAuto">Automatic (follows your phone)</option>
+              <option value="light" data-i18n="anon.ux.themeLight">Light</option>
+              <option value="dark" data-i18n="anon.ux.themeDark">Dark</option>
+            </select>
+          </details>
         </div>
+
+        <!-- Guest-only: signing in is optional and only backs up data (hidden once signed in) -->
+        <button id="settingsGuestSignIn" onclick="closeSettingsModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
+        <div id="settingsGuestSignInNote" style="display:none;color:#6c757d;font-size:0.78em;text-align:center;margin-bottom:14px;" data-i18n="journal.settings.guestSignInNote">Optional — everything works without an account. Sign in to sync across devices.</div>
 
         <div style="text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 0 12px; margin-bottom: 14px;">
           <button onclick="showAchievementsPanel()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;" data-i18n="journal.settings.achievements">🏅 Achievements</button>
-          <button onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
+          <button id="settingsImportBtn" onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
           <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
             <div id="advancedSettingsBadgeHint" style="display:none;flex-direction:row;align-items:center;gap:3px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-bottom:2px;">
               <span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
@@ -1520,10 +1544,6 @@
             <button id="advancedSettingsBtn" onclick="openAdvancedSettings()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;" data-i18n="journal.settings.advanced">🛠️ Advanced ▸</button>
           </div>
         </div>
-
-        <!-- Guest-only: signing in is optional and only backs up data (hidden once signed in) -->
-        <button id="settingsGuestSignIn" onclick="closeSettingsModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
-        <div id="settingsGuestSignInNote" style="display:none;color:#6c757d;font-size:0.78em;text-align:center;margin-bottom:14px;" data-i18n="journal.settings.guestSignInNote">Optional — everything works without an account. Sign in to sync across devices.</div>
 
         <div style="margin-top:4px;text-align:center;">
           <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
@@ -1602,10 +1622,11 @@
         <div style="border: 1.5px solid #e9ecef; border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
             <div>
-              <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.focusMode">🎯 Focus mode</div>
-              <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.focusModeDesc">Only one question at a time</div>
+              <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.classicForm">📋 Classic form</div>
+              <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.classicFormDesc">Every question on one page</div>
             </div>
-            <label class="bb-switch"><input type="checkbox" id="focusModeToggle" onchange="_toggleFocusedMode()"><span class="bb-slider"></span></label>
+            <!-- Ticked = focus mode OFF (switches start unticked; focus mode is the default). -->
+            <label class="bb-switch"><input type="checkbox" id="classicFormToggle" onchange="_toggleFocusedMode()"><span class="bb-slider"></span></label>
           </div>
 
           <div id="focusModeSubOptions" style="display:none; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e9ecef;">
@@ -1623,15 +1644,16 @@
               </div>
               <label class="bb-switch"><input type="checkbox" id="elaborateResponsesToggle" onchange="_toggleElaborateResponses()"><span class="bb-slider"></span></label>
             </div>
-            <!-- Wheel mode lives here, not in Journal Options: it only changes how
-                 focus mode renders each step, so it's meaningless with focus mode
-                 off — same as Confirm each step above. -->
+            <!-- Plain list lives here, not in Journal Options: it only changes how
+                 focus mode renders each step, so it's meaningless in the classic
+                 form — same as Confirm each step above. -->
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
               <div>
-                <div style="font-weight: 600; color: #495057; font-size: 0.95em;">🎡 Wheel mode <span style="color:var(--brand-primary);font-weight:700;">(BETA)</span></div>
-                <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;">Spin each step on a slider wheel instead of a plain tap-to-answer list</div>
+                <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.plainList">📃 Plain list</div>
+                <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.plainListDesc">Tap an answer from a list instead of spinning the wheel</div>
               </div>
-              <label class="bb-switch"><input type="checkbox" id="wheelModeToggle" onchange="_toggleWheelMode()"><span class="bb-slider"></span></label>
+              <!-- Ticked = wheel OFF (localStorage.wheelModeEnabled '0'); the wheel is the default. -->
+              <label class="bb-switch"><input type="checkbox" id="plainListToggle" onchange="_toggleWheelMode()"><span class="bb-slider"></span></label>
             </div>
           </div>
         </div>

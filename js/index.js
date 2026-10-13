@@ -1871,7 +1871,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
-          'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled',
+          'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
@@ -1893,7 +1893,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         ['PersonalHintDone','MedHintDone','SettingsHintDone','CustomiseFormHintDone',
          'CustomiseAdditionalHintDone','CloseSettingsHintDone','CustomiseFormCollapsed',
          'AdvancedTutorialToastShown','SurvivalKitVisited','MoodDefHintDone',
-         'PrivacyNoteDismissed','TutorialToastShown','WelcomeShown','AccountHintShown'].forEach(k => BB.storage.remove(k));
+         'PrivacyNoteDismissed','TutorialToastShown','TutorialWheel','ImportAskDue','WelcomeShown','AccountHintShown'].forEach(k => BB.storage.remove(k));
 
         // Firestore cleanup.
         if (currentUser && db) {
@@ -1931,6 +1931,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false, earlyWarnEnabled: false,
+              moodSpectrumEnabled: false, wheelModeEnabled: true,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
               safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,

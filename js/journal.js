@@ -85,6 +85,19 @@ window.addEventListener('pageshow', () => {
         localStorage.setItem('bbDefaults20261012', '1');
       }
     } catch (_) {}
+    // ── The tutorial runs in focus mode on the wheel (James, 2026-10-13) ──
+    // Once per run of the tutorial (a full reset starts a new one), whatever was
+    // saved before: a reset from the home page used to leave the wheel off, so
+    // the tutorial came up as the plain list. 'pending' until a signed-in load
+    // writes it to the account too, so the account's old value can't switch it
+    // back off (see the userSettings sync). Changing either switch settles it.
+    try {
+      if (_getOnboardingStep() < 12 && BB.storage.get('TutorialWheel') === null) {
+        localStorage.setItem('focusedModeEnabled', '1');
+        localStorage.setItem('wheelModeEnabled', '1');
+        BB.storage.set('TutorialWheel', 'pending');
+      }
+    } catch (_) {}
     /**
      * Advance the user's onboarding step. No-op if `to` is not strictly
      * greater than the current step. Persists to localStorage and to
@@ -266,6 +279,23 @@ window.addEventListener('pageshow', () => {
           await showSettingsModal();
           if (typeof showAchievementsPanel === 'function') showAchievementsPanel();
         }
+      }, 600);
+    }
+
+    // Home Settings → More → "Customise your journal": open Settings with
+    // Customise form expanded. Stripped from the URL so a reload doesn't replay it.
+    if (new URLSearchParams(window.location.search).get('openSettings') === '1') {
+      try {
+        const _p = new URLSearchParams(window.location.search);
+        _p.delete('openSettings');
+        const _qs = _p.toString();
+        history.replaceState(history.state, '', location.pathname + (_qs ? '?' + _qs : '') + location.hash);
+      } catch (_) {}
+      setTimeout(async () => {
+        if (typeof showSettingsModal !== 'function') return;
+        await showSettingsModal();
+        const _cf = document.getElementById('customiseFormDetails');
+        if (_cf) _cf.open = true;
       }, 600);
     }
 
@@ -550,8 +580,18 @@ window.addEventListener('pageshow', () => {
               const _pinOv = document.getElementById('pinOverlay');
               if (_pinOv) _pinOv.style.display = 'none';
               _updatePinSettingsBtn();
+              // A tutorial run that has just put focus mode + the wheel on (top of
+              // this file) wins over the account's old values, unless the account
+              // has finished the tutorial already (a returning user on a new device).
+              let _tutWheel = BB.storage.get('TutorialWheel') === 'pending';
+              if (_tutWheel && (d.onboardingStep || 0) >= 12) { _tutWheel = false; BB.storage.set('TutorialWheel', '1'); }
+              if (_tutWheel) {
+                BB.storage.set('TutorialWheel', '1');
+                db.collection('userSettings').doc(user.uid).set({ focusedModeEnabled: true, wheelModeEnabled: true }, { merge: true }).catch(() => {});
+              }
               // Sync settings from Firestore; only clear local value if Firestore explicitly has it as falsy
-              if (d.focusedModeEnabled !== undefined) localStorage.setItem('focusedModeEnabled', d.focusedModeEnabled ? '1' : '0');
+              if (_tutWheel) { /* keep focus mode on (above) */ }
+              else if (d.focusedModeEnabled !== undefined) localStorage.setItem('focusedModeEnabled', d.focusedModeEnabled ? '1' : '0');
               else localStorage.removeItem('focusedModeEnabled');
               if (d.moreDataOpenByDefault !== undefined) localStorage.setItem('moreDataOpenByDefault', d.moreDataOpenByDefault ? 'true' : 'false');
               else localStorage.removeItem('moreDataOpenByDefault');
@@ -582,7 +622,9 @@ window.addEventListener('pageshow', () => {
                 localStorage.setItem('moodSpectrumEnabled', d.moodSpectrumEnabled ? '1' : '0');
                 if (typeof _applyMoodSpectrumMode === 'function') _applyMoodSpectrumMode();
               }
-              if (d.wheelModeEnabled !== undefined) {
+              if (_tutWheel) {
+                // keep the wheel on (above)
+              } else if (d.wheelModeEnabled !== undefined) {
                 localStorage.setItem('wheelModeEnabled', d.wheelModeEnabled ? '1' : '0');
               } else if ((d.onboardingStep || 0) >= 1 && localStorage.getItem('wheelModeEnabled') === null) {
                 // Account from before wheel mode became the default: keep it off.
@@ -862,6 +904,8 @@ window.addEventListener('pageshow', () => {
     }
 
     BB.storage.set('SettingsFabHintShown', '1');
+    // ...and the first time Settings closes after this, ask about importing.
+    BB.storage.set('ImportAskDue', '1');
 
     // Label (above the centred FAB) + downward arrow, mirroring index's signinHint.
     var _label = (window.BB && BB.t) ? BB.t('journal.hint.settingsFab') : 'journal.hint.settingsFab';
@@ -1889,9 +1933,9 @@ window.addEventListener('pageshow', () => {
       10: 'Manic',
     };
     function _spectrumEnabled() { return localStorage.getItem('moodSpectrumEnabled') === '1'; }
-    // Focus mode's spinner-wheel experience (BETA). On by default for new users
-    // (James, 2026-10-12); '0' → focus mode renders each step as a plain
-    // tappable list (see _fmRenderContent).
+    // Focus mode's spinner-wheel experience. On by default for new users
+    // (James, 2026-10-12) and for every tutorial run (2026-10-13); '0' → focus
+    // mode renders each step as a plain tappable list (see _fmRenderContent).
     function _wheelMode() { return localStorage.getItem('wheelModeEnabled') !== '0'; }
     // True only for a raw spectrum number (0–10); legacy category strings return false.
     function _isNumericMood(m) {
@@ -4905,12 +4949,14 @@ window.addEventListener('pageshow', () => {
     }
     window._toggleMoodSpectrum = _toggleMoodSpectrum;
 
-    // BETA: switch focus mode between the plain step-by-step list (off, default)
-    // and the full spinner-wheel experience (on).
+    // Switch focus mode between the spinner wheel (default) and the plain
+    // step-by-step list. The switch is "Plain list", so it starts unticked:
+    // ticked = wheel off.
     function _toggleWheelMode() {
-      const chk = document.getElementById('wheelModeToggle');
-      const on = !!(chk && chk.checked);
+      const chk = document.getElementById('plainListToggle');
+      const on = !(chk && chk.checked);
       localStorage.setItem('wheelModeEnabled', on ? '1' : '0');
+      BB.storage.set('TutorialWheel', '1');
       // Live-swap the current step if focus mode is open.
       if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
       if (window.db && window.currentUser) {
@@ -5369,10 +5415,12 @@ window.addEventListener('pageshow', () => {
     }
     window._offerHealthSettingsRecovery = _offerHealthSettingsRecovery;
 
+    // The switch is "Classic form", so it starts unticked: ticked = focus mode off.
     function _toggleFocusedMode() {
-      const chk = document.getElementById('focusModeToggle');
-      _fmEnabled = chk ? chk.checked : !_fmEnabled;
+      const chk = document.getElementById('classicFormToggle');
+      _fmEnabled = chk ? !chk.checked : !_fmEnabled;
       localStorage.setItem('focusedModeEnabled', _fmEnabled ? '1' : '0');
+      BB.storage.set('TutorialWheel', '1');
       if (window.db && window.currentUser) {
         window.db.collection('userSettings').doc(window.currentUser.uid)
           .set({ focusedModeEnabled: _fmEnabled }, { merge: true }).catch(() => {});
@@ -5392,8 +5440,8 @@ window.addEventListener('pageshow', () => {
         // full form, so it goes off with the rest rather than lying dormant and
         // surprising the user the next time focus mode is switched back on.
         localStorage.setItem('wheelModeEnabled', '0');
-        const _wmChk = document.getElementById('wheelModeToggle');
-        if (_wmChk) _wmChk.checked = false;
+        const _wmChk = document.getElementById('plainListToggle');
+        if (_wmChk) _wmChk.checked = true;
         if (window.db && window.currentUser) {
           window.db.collection('userSettings').doc(window.currentUser.uid)
             .set({ wheelModeEnabled: false }, { merge: true }).catch(() => {});
@@ -5748,8 +5796,8 @@ window.addEventListener('pageshow', () => {
     }
 
     function _updateFocusModeBtn() {
-      const chk = document.getElementById('focusModeToggle');
-      if (chk) chk.checked = _fmEnabled;
+      const chk = document.getElementById('classicFormToggle');
+      if (chk) chk.checked = !_fmEnabled;
     }
 
     function _fmSyncFormVisuals() {
@@ -11739,7 +11787,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
           achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
           customTrackingFields: [], trackingFields: {}, labelOverrides: {},
-          earlyWarnEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
+          earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
         }, { merge: true }).catch(() => {});
       }
       closeSettingsModal();
@@ -11947,6 +11995,9 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         BB.storage.remove('MoodDefHintDone');
         BB.storage.remove('PrivacyNoteDismissed');
         BB.storage.remove('TutorialToastShown');
+        BB.storage.remove('TutorialWheel');
+        BB.storage.remove('ImportAskDue');
+        BB.storage.remove('SettingsFabHintShown');
         BB.storage.remove('WelcomeShown');
         BB.storage.remove('AccountHintShown');
 
@@ -12004,7 +12055,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {},
-              earlyWarnEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
+              earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
               safetyPlanEnc: null,
               onboardingStep: 0,
               helpedVoted: false,
@@ -13712,7 +13763,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     // SETTINGS MODAL
     // ────────────────────────────────────────────
     async function _refreshHealthAuthDisplay() {
-      const _setHealthInfo = t => document.querySelectorAll('.settings-health-info').forEach(el => el.textContent = t);
+      // `away` is the text for the lines on pages without the Sync health data
+      // switch (only Mobile Settings has it, so only there is it "above").
+      const _setHealthInfo = (t, away) => document.querySelectorAll('.settings-health-info').forEach(el => {
+        el.textContent = (away && !el.closest('#settingsMobilePanel')) ? away : t;
+      });
       const Health = getPlugin('HealthPlugin');
       if (Health) {
         try {
@@ -13734,7 +13789,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               // query returns data: if recent steps/sleep come back, read access is
               // genuinely working, so we can honestly say "Connected".
               if (!asked) {
-                _setHealthInfo('Health data: ⚠️ Not yet authorised — enable the toggle above');
+                _setHealthInfo('Health data: ⚠️ Not yet authorised — enable the toggle above',
+                  'Health data: ⚠️ Not yet authorised — turn on Apple Health sync in Advanced');
               } else {
                 let _connected = false;
                 try {
@@ -13773,6 +13829,14 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         _setHealthInfo('Health data: ❌ Unavailable');
       }
     }
+
+    /** The closed Appearance row says what it's set to (the chosen option's text). */
+    function _syncAppearanceCurrent() {
+      const sel = document.getElementById('appearanceSelect');
+      const out = document.getElementById('appearanceCurrent');
+      if (sel && out) out.textContent = sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex].textContent : '';
+    }
+    window._syncAppearanceCurrent = _syncAppearanceCurrent;
 
     async function showSettingsModal() {
       // Clear advanced badge when settings is opened; show in-modal hint pointing to Advanced
@@ -13813,6 +13877,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         try { _pref = (window.BB && BB.theme) ? BB.theme.pref() : (localStorage.getItem('bbTheme') || 'auto'); } catch (_) {}
         _appearanceSel.value = _pref;
       }
+      _syncAppearanceCurrent();
 
       // Always open showing main panel
       document.getElementById('settingsMainPanel').style.display = '';
@@ -13841,17 +13906,20 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // Mood Linking switch removed 2026-10-12: holding a bear adds other moods for everyone.
       const _msToggle = document.getElementById('moodSpectrumToggle');
       if (_msToggle) _msToggle.checked = _spectrumEnabled();
-      const _wmToggle = document.getElementById('wheelModeToggle');
-      if (_wmToggle) _wmToggle.checked = _wheelMode();
+      const _wmToggle = document.getElementById('plainListToggle');
+      if (_wmToggle) _wmToggle.checked = !_wheelMode();
       document.getElementById('moodSuggestionToggle').checked = localStorage.getItem('showMoodSuggestion') === '1';
       if (window.BBInsights) window.BBInsights.syncSettingUI();
-      document.getElementById('focusModeToggle').checked = _fmEnabled;
+      document.getElementById('classicFormToggle').checked = !_fmEnabled;
       document.getElementById('focusModeSubOptions').style.display = _fmEnabled ? '' : 'none';
       document.getElementById('fmConfirmStepToggle').checked = localStorage.getItem('fmConfirmStep') === 'true';
       document.getElementById('elaborateResponsesToggle').checked = localStorage.getItem('elaborateResponsesEnabled') === 'true';
       _renderStepToggles();
+      // Customise form and Appearance are collapsibles, closed each time Settings opens.
       const _cfDetails = document.getElementById('customiseFormDetails');
-      if (_cfDetails) _cfDetails.open = BB.storage.get('CustomiseFormCollapsed') !== '1';
+      if (_cfDetails) _cfDetails.open = false;
+      const _apDetails = document.getElementById('appearanceDetails');
+      if (_apDetails) _apDetails.open = false;
 
       // Version label — driven by the canonical window._APP_VERSION (set in
       // js/shared/brand-config.js) so it can never drift from the home page.
@@ -13958,6 +14026,47 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       document.getElementById('settingsAdvancedMorePanel').style.display = 'none';
       document.getElementById('settingsAdvancedMore2Panel').style.display = 'none';
       document.getElementById('settingsAchievementsPanel').style.display = 'none';
+      _clearImportPointer();
+      setTimeout(_maybeAskImport, 350);
+    }
+
+    // ── After the tutorial: "Moving from another app?" (James, 2026-10-13) ──
+    // Once, the first time Settings closes after the end-of-tutorial "Tap
+    // Settings" hint (ImportAskDue, set in _showSettingsFabHint). "Show me
+    // where" reopens Settings and makes the Import button pulse with a label.
+    function _maybeAskImport() {
+      if (BB.storage.get('ImportAskDue') !== '1' || _getOnboardingStep() < 12) return;
+      // Not over another popup — the next time Settings closes will do.
+      if (document.querySelector('.confirm-modal.active, .overlay-modal.active, .modal.active, .bb-auth-overlay.active')) return;
+      BB.storage.remove('ImportAskDue');
+      document.getElementById('importAskModal').classList.add('active');
+    }
+    async function _importAskAnswer(yes) {
+      document.getElementById('importAskModal').classList.remove('active');
+      if (!yes) return;
+      await showSettingsModal();
+      _pointAtImport();
+    }
+    window._importAskAnswer = _importAskAnswer;
+    function _pointAtImport() {
+      const btn = document.getElementById('settingsImportBtn');
+      if (!btn) return;
+      btn.classList.add('bb-import-glow');
+      // The label is a centred line above the row (on the button it ran off the card).
+      const row = btn.parentElement;
+      if (row && !document.querySelector('.bb-import-label')) {
+        const lab = document.createElement('div');
+        lab.className = 'bb-import-label';
+        lab.textContent = BB.t('journal.importAsk.here') + ' ↓';
+        row.parentElement.insertBefore(lab, row);
+      }
+      setTimeout(() => { try { btn.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {} }, 150);
+    }
+    function _clearImportPointer() {
+      const btn = document.getElementById('settingsImportBtn');
+      if (!btn) return;
+      btn.classList.remove('bb-import-glow');
+      document.querySelectorAll('.bb-import-label').forEach(el => el.remove());
     }
 
     function openAdvancedJournal() {

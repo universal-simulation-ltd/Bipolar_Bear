@@ -1511,7 +1511,16 @@
 //   js/anonymous.js.
 // v320: dark mode — the medication names in the journal's My Medications list
 //   were #333 on the dark card; they now take --dk-text. Touches css/dark.css.
-const CACHE_NAME = 'bipolarbear-v320';
+// v321: the tutorial always runs in focus mode on the wheel (a home-page reset
+//   used to leave the wheel off); the Focus Mode switches are reworded to start
+//   unticked ("Classic form", "Plain list"); Settings: Customise form and
+//   Appearance are closed collapsibles, Achievements / Import / Advanced sit
+//   under the sign-in button; after the tutorial a one-time "Moving from another
+//   app?" question points at Import; home Settings → More → "Customise your
+//   journal" (journal.html?openSettings=1); the Apple Health "toggle above" line
+//   only says "above" where the switch is. Touches journal.html, index.html,
+//   css/journal.css, js/journal.js, js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v321';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

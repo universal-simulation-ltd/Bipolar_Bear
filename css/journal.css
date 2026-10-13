@@ -2680,3 +2680,23 @@ html.theme-dark .seg-switch .cv-note { color: var(--dk-muted); }
   -webkit-tap-highlight-color: transparent;
 }
 html.theme-dark .pf-link { color: #ffb347; }
+
+/* After the tutorial, "Show me where" points at Settings → Import (js/journal.js _pointAtImport). */
+@keyframes bbImportGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(255,149,0,0.55); } 50% { box-shadow: 0 0 0 9px rgba(255,149,0,0); } }
+@keyframes bbImportNudge { 0%,100% { transform: scale(1); } 30% { transform: scale(1.14); } 60% { transform: scale(0.97); } }
+#settingsImportBtn.bb-import-glow {
+  position: relative;
+  color: var(--brand-primary) !important;
+  font-weight: 700;
+  background: rgba(255,149,0,0.12) !important;
+  border-radius: 20px;
+  animation: bbImportNudge 0.7s ease 0.2s 2, bbImportGlow 1.5s ease-in-out infinite;
+}
+.bb-import-label {
+  text-align: center; margin: 0 0 2px; pointer-events: none;
+  font-size: 0.85em; font-weight: 700; font-style: italic; font-family: 'Georgia', serif;
+  color: var(--brand-primary); animation: hintFade 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  #settingsImportBtn.bb-import-glow, .bb-import-label { animation: none; }
+}

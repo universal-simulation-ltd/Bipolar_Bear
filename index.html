@@ -602,6 +602,9 @@
           <button onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.signIn">Sign in</button>
         </div>
 
+        <!-- Opens the journal with its Settings up and Customise form expanded (js/journal.js ?openSettings=1). -->
+        <button id="idxCustomiseJournalBtn" onclick="closeProfileModal();location.replace('journal.html?openSettings=1')" style="width:100%;padding:12px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="home.customiseJournal">📋 Customise your journal</button>
+
         <button id="idxPersonalInfoBtn" onclick="window._fabOpenPersonalInfo&&window._fabOpenPersonalInfo()" style="width:100%;padding:12px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="fab.personalInfo">👤 Personal information</button>
 
         <button onclick="_profileShowPanel('danger')" style="width:100%;padding:12px;background:rgba(201,42,42,0.06);color:#c92a2a;border:1.5px solid #c92a2a;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:14px;-webkit-tap-highlight-color:transparent;" data-i18n="home.deleteEllipsis">🗑️ Delete…</button>
