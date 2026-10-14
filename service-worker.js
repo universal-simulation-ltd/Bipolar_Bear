@@ -1549,7 +1549,10 @@
 //   unless HomeStatsEnabled is '0'. Existing users (past step 1, flag unset)
 //   get an explicit '0' once (bbDefaults20261013) so nothing changes for
 //   them. Touches index.html, js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v328';
+// v329: journal Settings "🛠️ Advanced ▸" text link → a full-width "Advanced →"
+//   pill on its own row, styled like the "Focus Mode →" / "Journal →" buttons.
+//   Touches journal.html, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v329';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

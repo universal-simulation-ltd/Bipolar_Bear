@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🛠️ **Advanced settings has a proper button.** In the journal's Settings, **Advanced →** is now a full-width button like **Focus Mode →** and **Journal →**, instead of a small text link next to Achievements and Import. In every language. (`CACHE_NAME` v329)
 - 📊 **Stats show on the home screen from the start.** The home Settings switch is now **Hide stats** (off to begin with), so new users see their streaks and progress under each button. If you already use the app, what you see stays as it was. In every language. (`CACHE_NAME` v328)
 - 🎯 **Focus mode is back as it was.** The switch is "Focus mode" again and starts on, with Confirm each step, Elaborate Responses and Plain list under it; turning it off puts those back to how they start. (`CACHE_NAME` v327)
 - 🔐 **Signing in with two-step no longer loses your place.** If you have a PIN, leaving the app for more than a minute to get your authenticator code used to bring up the lock screen and close the sign-in, so you had to start again. While you're signing in the lock now waits, and it comes on as soon as you finish or close the sign-in. (`CACHE_NAME` v326)
