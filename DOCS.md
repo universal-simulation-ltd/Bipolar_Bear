@@ -1676,6 +1676,11 @@ Every email has an Unsubscribe footer and RFC 8058 `List-Unsubscribe` /
   rule;
 - the script compares every recipient's id with that collection.
 
+The header carries the one-click link only, with no `mailto:` fallback. With a
+mailto, Apple Mail sends an "unsubscribe" email to bipolar@unisim.co.uk instead,
+and nothing records it (it happened on 2026-10-16). If one still arrives, record
+it by POSTing that address's id to `emailOptOut`.
+
 ⚠️ Never rotate `EMAIL_OPTOUT_SECRET`: every recorded opt-out would stop
 matching.
 

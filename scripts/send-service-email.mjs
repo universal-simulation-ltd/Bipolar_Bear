@@ -93,7 +93,9 @@ async function send(list, optSecret) {
       return {
         from: FROM, to: [to], reply_to: REPLY_TO, subject: mail.subject,
         html: html(mail.paras, unsub), text: text(mail.paras, unsub),
-        headers: { 'List-Unsubscribe': `<${unsub}>, <mailto:${REPLY_TO}?subject=unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+        // One-click link only: a mailto: fallback lets mail apps (Apple Mail) send
+        // an "unsubscribe" email to bipolar@ that nothing records (2026-10-16).
+        headers: { 'List-Unsubscribe': `<${unsub}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
       };
     });
     const r = await fetch('https://api.resend.com/emails/batch', { method: 'POST', headers: { Authorization: 'Bearer ' + resendKey, 'Content-Type': 'application/json' }, body: JSON.stringify(batch) });
