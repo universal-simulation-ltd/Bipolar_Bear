@@ -4378,6 +4378,18 @@ window.addEventListener('pageshow', () => {
     window.guestPinSetupKey = guestPinSetupKey;
     window.guestPinSetupDel = guestPinSetupDel;
     window.guestPinSetupCancel = guestPinSetupCancel;
+
+    // Widget deep link (bipolarbear://journal) while the journal is already
+    // open: only the home page listened, so the tap did nothing visible. Here
+    // it brings the journal back to the top (2026-10-16).
+    (function () {
+      const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (!App || typeof App.addListener !== 'function') return;
+      App.addListener('appUrlOpen', function (data) {
+        if (!data || !data.url || !/^bipolarbear:\/\/journal/i.test(data.url)) return;
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { window.scrollTo(0, 0); }
+      });
+    })();
     window._guestPinForgotReset = _guestPinForgotReset;
 
     function _initPinLock() {

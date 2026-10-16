@@ -613,6 +613,16 @@ function _sktMood(moodKey) {
     }
     window._skUpdateTicks = _skUpdateTicks;
 
+    // Widget deep link (bipolarbear://journal) while the kit is open. Only the
+    // home page listened for it, so a widget tap here did nothing (2026-10-16).
+    (function () {
+      const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (!App || typeof App.addListener !== 'function') return;
+      App.addListener('appUrlOpen', function (data) {
+        if (data && data.url && /^bipolarbear:\/\/journal/i.test(data.url)) location.replace('journal.html');
+      });
+    })();
+
 
     // ── FAMOUS PEOPLE WITH BIPOLAR ──
     const BIPOLAR_CELEBS = [
