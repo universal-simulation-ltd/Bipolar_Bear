@@ -1718,6 +1718,64 @@ it by POSTing that address's id to `emailOptOut`.
 ⚠️ Never rotate `EMAIL_OPTOUT_SECRET`: every recorded opt-out would stop
 matching.
 
+### 2.21 Accessibility (2026-10-16)
+
+The pass that lets both apps declare more of Apple's Accessibility Nutrition
+Label (VoiceOver, Voice Control, Larger Text, Sufficient Contrast, Reduced
+Motion, Differentiate Without Colour). Keep new UI inside these rules.
+
+**Colour tokens** (`css/theme.css`, dark values under `html.theme-dark` in the
+same file so Bipolar Anonymous gets them too):
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--brand-ink` | `#a94600` | `#ffa94d` | orange TEXT and links (5.9:1 on white) |
+| `--brand-on` | `#3d1f00` | `#fff` | text on the orange page gradient |
+| `--on-orange` | `#3d1f00` | same | text on an orange fill that stays orange in dark mode |
+| `--text-muted-ink` | `#636b73` | `#bfae98` | small grey hints and captions |
+| `--ok-ink` / `--bad-ink` | `#1f7a33` / `#c92a2a` | `#69db7c` / `#ff8787` | good / bad answers in entry chips |
+| `--focus-ring` | `#1f5fbf` | `#8ab8ff` | the keyboard focus ring |
+
+`#ff9500` stays for fills, borders and big graphics; never use it (or
+`#ff6b00`, `#adb5bd`, `#868e96`) for text. Normal-size text needs 4.5:1 and
+large text (24px, or 18.66px bold) 3:1, in light and dark. Mood colours used
+as text go through `_fmMoodInk()` (journal); mood fills carry dark `#1a1300`
+labels (calendar, day sheet). Board avatars use `_avInk` + `_avBg` (anonymous):
+a light or dark scrim is laid over a member's gradient only when it needs one.
+
+**`js/shared/a11y.js` (`BB.a11y`)**, loaded in `<head>` after `i18n.js` on
+index, journal, survival kit, Bipolar Anonymous and privacy:
+- *Dynamic Type* (iOS app only): reads the `-apple-system-body` font size
+  (17px at the default size) and sets the root font to 16px × size ÷ 17, plus
+  `html.bb-text-large` (≥130%) / `html.bb-text-xlarge` (≥180%) for layouts that
+  must reflow. Text sizes are em/rem off the root — never add px font sizes to
+  text (decorative emoji in fixed boxes may stay px). Form controls get
+  `font-size: 0.8333rem` (theme.css), the browser's 13.33px at the default.
+- *Clickables*: any `[onclick]` div/span gets `role="button"` + `tabindex="0"`
+  and Enter/Space; `data-a11y-skip` opts out. Icon-only buttons with a
+  `title` get it as their `aria-label`. `<img>` without `alt` gets `alt=""`.
+- *Dialogs*: containers in `BB.a11y.dialogSelector` (`.confirm-modal`,
+  `.overlay`, `.bb-fab-modal`, the PIN overlays …) get `role="dialog"`,
+  `aria-modal`, a label from their heading, focus on open (the heading), a Tab
+  trap, Escape (the backdrop click; never on `lockSelector` screens) and focus
+  back to the opener on close. New modal patterns: add them to the selector.
+- *Reduce Motion*: `BB.a11y.reducedMotion()`; smooth `scrollTo` /
+  `scrollIntoView` become instant while it's on. `css/theme.css` stops every
+  CSS animation and transition under `prefers-reduced-motion: reduce`;
+  confetti, the Survival Kit glide and the settings-hint pulse don't start.
+- `BB.a11y.announce(text)` speaks through a polite live region;
+  `BB.a11y.keyboardMode` and `html.bb-kbd` say the last input was a keyboard.
+
+**Labels**: `a11y.*` keys in every language (one line right after each
+`xx: {` in `js/shared/i18n.js`). The focus-mode wheel is a `radiogroup` of
+`radio` pills with a roving tabindex: Tab lands on the centred pill, ← → ↑ ↓
+Home End move, Enter picks. Calendar days say "date: mood" and are buttons.
+
+**Checking**: the Playwright audit used for this pass walks every visible text
+node (scrolling every scroller) and composites the colour down the real paint
+stack; with the accessibility snapshot it counts unnamed controls. Re-run it
+for any colour change.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

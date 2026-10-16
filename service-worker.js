@@ -1599,7 +1599,19 @@
 //   js/shared/i18n.js, js/shared/translate.js.
 // v337: the release-1.43 batch above (translations, Bear fixes, Anonymous
 //   fixes) merged as one cache version.
-const CACHE_NAME = 'bipolarbear-v337';
+// v338-a11y (placeholder name; the release merge sets the real number):
+//   accessibility pass for Apple's Accessibility Nutrition Label, both apps.
+//   Text inks reach WCAG AA in light and dark (--brand-ink / --brand-on /
+//   --text-muted-ink in css/theme.css), keyboard focus ring, Reduce Motion
+//   stops all animation, form controls and Bipolar Anonymous text sized in
+//   rem, and the new js/shared/a11y.js (iOS Dynamic Type, dialog roles and
+//   focus, button roles and names, instant scrolling under Reduce Motion);
+//   a11y.* labels in 10 languages; focus-mode wheel as a keyboard radio
+//   group; calendar days named by date and mood. Touches css/*.css,
+//   index.html, journal.html, survival-kit.html, anonymous.html,
+//   privacy.html, fab.js, js/*.js, js/shared/{a11y,i18n,...}.js,
+//   scripts/build-anonymous.js.
+const CACHE_NAME = 'bipolarbear-v338-a11y';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

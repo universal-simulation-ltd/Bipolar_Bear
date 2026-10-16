@@ -256,7 +256,7 @@
   function onClose(i) {
     var rec = open.splice(i, 1)[0];
     var b = rec.back;
-    if (b && b.isConnected && visible(b) && !open.some(function (o) { return o.el.contains(b); }) ) {
+    if (b && b.isConnected && visible(b)) {
       setTimeout(function () { try { b.focus({ preventScroll: true }); } catch (_) {} }, 30);
     }
   }
