@@ -78,6 +78,23 @@ function _setHomeAuthFab(signedIn) {
   }
 }
 
+// Signed out, the Bipolar Anonymous button is locked and "Sign in to join the
+// community" sits under it. Both open the sign-in dialog: the locked button
+// used to ignore taps (pointer-events: none), so the note pointed at a button
+// that did nothing (support email, 2026-10-16). Signed in, the button is a
+// plain link to anonymous.html again.
+(function () {
+  const btn  = document.getElementById('anonymousBtn');
+  const note = document.getElementById('anonymousSignInNote');
+  function openSignIn(e) {
+    if (!btn || !btn.classList.contains('locked')) return;
+    e.preventDefault();
+    if (typeof window.showAuthModal === 'function') window.showAuthModal();
+  }
+  if (btn) btn.addEventListener('click', openSignIn);
+  if (note) note.addEventListener('click', openSignIn);
+})();
+
 // ── BLOCK 1: feature copy used by other blocks for hover cards ──
 const journalFeatures = [
       { icon: '📈', title: 'Visual Insights', desc: 'See your mood patterns over time with charts' },

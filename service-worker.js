@@ -1562,7 +1562,10 @@
 // v332: privacy policy §8 — a sign-in code's email address goes as soon as
 //   the code is used (an unused code within 25 hours); 10 languages.
 //   Touches js/shared/i18n.js, privacy.html.
-const CACHE_NAME = 'bipolarbear-v332';
+// v333: signed out, the locked Bipolar Anonymous button and "Sign in to join
+//   the community" open the sign-in dialog (the button used to ignore taps).
+//   Touches js/index.js, css/index.css.
+const CACHE_NAME = 'bipolarbear-v333';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

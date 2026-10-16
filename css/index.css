@@ -321,9 +321,10 @@
       text-shadow: none;
       border: 3px dashed rgba(90, 42, 0, 0.45);
       box-shadow: none;
-      cursor: default;
-      pointer-events: none;
+      cursor: pointer;
     }
+    /* Signed out it opens the sign-in dialog, like the locked button (js/index.js). */
+    #anonymousSignInNote { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
     .btn-anonymous.locked .entry-tick {
       border-color: rgba(90, 42, 0, 0.4);
       background: transparent;
