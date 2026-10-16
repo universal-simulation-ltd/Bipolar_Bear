@@ -1223,3 +1223,40 @@
       html.theme-dark.is-native body,
       html.theme-dark.is-native #iphone-frame { background: var(--cream) !important; }
     }
+
+/* ════════════════════════════════════════════════════════════════════════
+   iPad (≥768px, native app) — LAYOUT ONLY (widths, columns, spacing).
+   Phones are untouched by everything below; colours and type sizes stay
+   with the rules above.
+   Gated on html.is-native: on the web the board is drawn inside a device
+   mockup frame (iPhone-sized at 520–919px, 768px iPad at ≥920px) whose
+   "screen" is phone-narrow, so it keeps the phone layout there.
+   - The reading column (the #app-shell, see "Native iPad" above) widens
+     from 620px to 760px, giving a ~720px feed; the sign-up cards stay 560px.
+   - Sheets (comments, about, compose, settings…) open as a centred 560px
+     sheet instead of spanning the column edge to edge.
+   - The wiki lists its cards in two columns; an opened card spans both so
+     the article reads at full width.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  html.is-native #app-shell { max-width: 760px !important; }
+  /* Sign-up / onboarding cards keep a form-like 560px rather than taking
+     the wider column (side padding, so the back buttons line up too). */
+  html.is-native .onboard-bg {
+    padding-left: max(24px, calc((100% - 560px) / 2));
+    padding-right: max(24px, calc((100% - 560px) / 2));
+  }
+  html.is-native #post-list { padding: 16px 20px 120px; }
+  html.is-native .board-offline { margin-left: 20px; margin-right: 20px; }
+  html.is-native .overlay { justify-content: center; }
+  html.is-native .sheet { max-width: 560px; }
+  html.is-native #wiki-section { padding: 16px 20px 120px; }
+  html.is-native .wiki-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 10px;
+    align-items: start;
+  }
+  html.is-native .wiki-body > :not(.wiki-card),
+  html.is-native .wiki-body > .wiki-card[open] { grid-column: 1 / -1; }
+}

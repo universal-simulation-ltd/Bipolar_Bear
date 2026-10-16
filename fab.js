@@ -273,6 +273,9 @@
   // All FAB styling is injected into <head> as a single <style> so pages
   // don't need to copy this CSS. Selectors are namespaced (`fab-*`, `bb-*`)
   // to avoid collisions with the host page's stylesheet.
+  // Widest the dock bar gets on an iPad / wide screen (≥768px). Used by the
+  // .fab-footer rule below and by _applyFabDock()'s slot positions.
+  const _DOCK_MAX_W = 560;
   const _styleEl = document.createElement('style');
   _styleEl.textContent = `
     .fab-footer {
@@ -387,6 +390,19 @@
       background: white; border-radius: 20px; padding: 24px 24px 20px;
       max-width: 300px; width: 100%; box-sizing: border-box;
       box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    }
+    /* ── iPad / wide screens (≥768px) — layout only ──
+       The dock bar stops at _DOCK_MAX_W and sits centred instead of
+       stretching edge to edge; _applyFabDock() spaces the slots across the
+       same width. Bottom corners go square because the bar no longer
+       reaches the screen's rounded corners. Phones are untouched. */
+    @media (min-width: 768px) {
+      .fab-footer {
+        left: 50%; right: auto;
+        width: min(${_DOCK_MAX_W}px, 100%);
+        transform: translateX(-50%);
+        border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+      }
     }
   `;
   document.head.appendChild(_styleEl);
@@ -812,11 +828,16 @@
     const _shellW = (window.innerWidth >= 920 && !_native)
       ? ((_appShell && _appShell.offsetWidth) || window.innerWidth)
       : window.innerWidth;
+    // iPad / wide screens (≥768px): the bar is capped at _DOCK_MAX_W and
+    // centred, so the slots spread across that width rather than the whole
+    // screen. On phones _dockW === _shellW and _dockL === 0 (unchanged).
+    const _dockW = window.innerWidth >= 768 ? Math.min(_shellW, _DOCK_MAX_W) : _shellW;
+    const _dockL = (_shellW - _dockW) / 2;
     const _slotPos = {
-      1: Math.round(_shellW * 0.10 - 22) + 'px',
-      2: Math.round(_shellW * 0.30 - 22) + 'px',
-      3: Math.round(_shellW * 0.70 - 22) + 'px',
-      4: Math.round(_shellW * 0.90 - 22) + 'px',
+      1: Math.round(_dockL + _dockW * 0.10 - 22) + 'px',
+      2: Math.round(_dockL + _dockW * 0.30 - 22) + 'px',
+      3: Math.round(_dockL + _dockW * 0.70 - 22) + 'px',
+      4: Math.round(_dockL + _dockW * 0.90 - 22) + 'px',
     };
 
     // Locked dock (during the tutorial): only the centre auth FAB shows. The

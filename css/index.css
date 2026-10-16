@@ -1016,3 +1016,43 @@
       75%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
       100% { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.96); }
     }
+
+/* ════════════════════════════════════════════════════════════════════════
+   iPad / wide screens (≥768px) — LAYOUT ONLY (widths, spacing, touch
+   targets). Phones (<768px) are untouched by everything below. Colours and
+   type sizes stay with the rules above.
+   The home column grows from the phone's fit-content strip to a calm
+   centred column with roomier buttons; the quick check-in's bears get
+   bigger tap areas. Native iPad (≥920px) still drops the device frame via
+   the html.is-native block above; the web mockup frame renders this same
+   layout inside its 768px "screen".
+   ════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .buttons {
+    width: min(520px, 100%);
+    gap: 16px;
+  }
+  .btn-container { padding: 6px 0; }
+  .btn {
+    padding: 24px 68px 24px 36px;
+    border-radius: 18px;
+  }
+  .entry-tick { right: 20px; width: 32px; height: 32px; }
+  .home-greeting { margin: 0 8px 16px; }
+  .quick-checkin {
+    margin: 2px 0 0;
+    padding: 16px 16px 14px;
+    border-radius: 20px;
+    min-width: 0;
+  }
+  .qc-bears { gap: 8px; }
+  .qc-bear { padding: 10px 2px 8px; gap: 5px; border-radius: 14px; }
+  .qc-bear img { width: 60px; height: 60px; }
+  .wa-modal-box { max-width: 420px; }
+}
+/* Below the ≥920px frame / native blocks, #iphone-frame is a plain flex item
+   of the centred body and shrink-wraps its content, so the 100%-wide
+   .container (and the .buttons column above) could never grow. */
+@media (min-width: 768px) and (max-width: 919px) {
+  #iphone-frame { width: 100%; }
+}

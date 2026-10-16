@@ -1238,3 +1238,30 @@
       .sk-tile, .sk-sos, .sk-back-btn, .sk-progress-fill { transition: none; }
       .crisis-box.sk-pulse { animation: none; }
     }
+
+/* ════════════════════════════════════════════════════════════════════════
+   iPad / wide screens (≥768px) — LAYOUT ONLY (widths, columns, spacing).
+   Phones (<768px) are untouched by everything below; colours and type
+   sizes stay with the rules above.
+   The page column widens from the phone's 480px to ~720px (inside the
+   760px native panel on iPad landscape, see the html.is-native block above)
+   and the section grid goes to four columns once its box is wide enough
+   (#skOverview is the query container).
+   ════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  .header-inner { max-width: 720px; }
+  .container { max-width: 720px; padding: 32px 20px 110px; }
+  .sk-grid { gap: 14px; }
+  .sk-tile { min-height: 116px; padding: 14px 14px 14px 16px; }
+  /* Section tabs: the ≥900px rule above centres them with overflow visible,
+     which assumed the whole window; inside the 760px iPad panel (or the
+     768px web frame) the 14 tabs don't fit, so they spilled out on both
+     sides and the first ones slid under "Home". Keep the row scrollable and
+     centre it with auto margins instead — they drop to 0 when it overflows. */
+  .sticky-nav-row { justify-content: flex-start; overflow-x: auto; }
+  .sticky-nav-row > :first-child { margin-left: auto; }
+  .sticky-nav-row > :last-child { margin-right: auto; }
+}
+@container (min-width: 600px) {
+  .sk-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
