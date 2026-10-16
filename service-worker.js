@@ -1558,7 +1558,8 @@
 //   dropped; 🙋 Support in the feedback popup (+ bipolar@unisim.co.uk), and a
 //   one-off support hint after the tutorial. Touches js/journal.js, fab.js,
 //   js/index.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v330';
+// v331: app version 1.43 (Bipolar Bear 1.43 store build, build 49). Touches js/shared/brand-config.js.
+const CACHE_NAME = 'bipolarbear-v331';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
