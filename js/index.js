@@ -1884,14 +1884,32 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       }
 
       let _accountDeleted = false;
+      let _abort = false;
       let deleted = 0;
 
       try {
         if (currentUser) {
-          const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
-          const batch = db.batch();
-          snapshot.forEach(doc => { batch.delete(doc.ref); deleted++; });
-          await batch.commit();
+          // Firestore takes at most 500 writes a batch, so delete in chunks of
+          // 400. If a chunk fails, stop before touching anything else: still
+          // signed in, the account still there, and the user told how far it got.
+          let _total = 0;
+          try {
+            const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
+            const _docs = snapshot.docs;
+            _total = _docs.length;
+            for (let i = 0; i < _docs.length; i += 400) {
+              const batch = db.batch();
+              const _part = _docs.slice(i, i + 400);
+              _part.forEach(doc => batch.delete(doc.ref));
+              await batch.commit();
+              deleted += _part.length;
+            }
+          } catch (_delErr) {
+            console.error('Deleting entries failed', _delErr);
+            _abort = true;
+            alert(_tr('fix143.deleteEntriesFailed', "Your entries couldn't all be deleted (" + deleted + ' of ' + _total + " removed). Nothing else was changed and you're still signed in. Check your connection and try again.", { n: deleted, total: _total }));
+            return;
+          }
         } else {
           const keysToDelete = [];
           for (let i = 0; i < localStorage.length; i++) {
@@ -2038,6 +2056,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         console.error('Error deleting all entries:', error);
         alert('Some cleanup steps failed: ' + error.message + '\n\nThe page will reload so you can start fresh.');
       } finally {
+        if (_abort) return; // entries delete failed: nothing else touched, stay signed in
         if (!_accountDeleted && auth && currentUser) {
           auth.signOut().catch(() => {});
         }

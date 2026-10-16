@@ -12014,22 +12014,32 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // throw. _accountDeleted is set to true only after currentUser.delete()
       // resolves; deleted accumulates as entries are removed.
       let _accountDeleted = false;
+      let _abort = false;
       let deleted = 0;
 
       try {
         if (currentUser) {
-          // Delete all entries from Firestore
-          const snapshot = await db.collection('entries')
-            .where('userId', '==', currentUser.uid)
-            .get();
-          
-          const batch = db.batch();
-          snapshot.forEach(doc => {
-            batch.delete(doc.ref);
-            deleted++;
-          });
-          
-          await batch.commit();
+          // Firestore takes at most 500 writes a batch, so delete in chunks of
+          // 400. If a chunk fails, stop before touching anything else: still
+          // signed in, the account still there, and the user told how far it got.
+          let _total = 0;
+          try {
+            const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
+            const _docs = snapshot.docs;
+            _total = _docs.length;
+            for (let i = 0; i < _docs.length; i += 400) {
+              const batch = db.batch();
+              const _part = _docs.slice(i, i + 400);
+              _part.forEach(doc => batch.delete(doc.ref));
+              await batch.commit();
+              deleted += _part.length;
+            }
+          } catch (_delErr) {
+            console.error('Deleting entries failed', _delErr);
+            _abort = true;
+            alert(BB.t('fix143.deleteEntriesFailed', { n: deleted, total: _total }));
+            return;
+          }
         } else {
           // Delete all entries from localStorage
           const keysToDelete = [];
@@ -12260,6 +12270,9 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         // manually when the account-delete didn't run or failed AND a
         // session is still active. signOut is best-effort (no await) —
         // the new page will pick up whatever auth state actually persists.
+        // (_abort: the entries delete failed, nothing else was touched, so
+        // stay put and signed in; the user was told.)
+        if (_abort) return;
         if (!_accountDeleted && typeof auth !== 'undefined' && auth && currentUser) {
           auth.signOut().catch(() => {});
         }
