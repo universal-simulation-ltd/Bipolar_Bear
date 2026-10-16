@@ -1574,7 +1574,14 @@
 // v336: signed out, home no longer shows the account's Bipolar Anonymous
 //   stats (👋 moniker · 🔥 · 💬) when the device has a guest PIN. Touches
 //   index.html, js/index.js.
-const CACHE_NAME = 'bipolarbear-v336';
+// v337-i18n (placeholder name; the release merge sets the real number):
+//   release-143 translation sweep. Dates in the app language, entry chips,
+//   calendar, achievements, PDF sheet and report, insights, settings, home
+//   streak badge, Full Reset dialogs, welcome popup on language change,
+//   survival kit quotes and medicine reference; zh range tabs. Touches
+//   js/shared/i18n.js, js/journal.js, journal.html, index.html, js/index.js,
+//   fab.js, survival-kit.html, js/survival-kit.js, js/shared/medications.js.
+const CACHE_NAME = 'bipolarbear-v337-i18n';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
