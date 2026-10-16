@@ -128,6 +128,28 @@ if (!brand.includes(FROM)) {
   );
 }
 brand = brand.replace(FROM, TO);
+
+// ─── 6a. The Anonymous app's own version ────────────────────────────
+// window._APP_VERSION is the shared web version (Bipolar Bear's), not the
+// version the Anonymous app ships as, so About must not show it here. Read
+// MARKETING_VERSION from the native project when it sits beside the repo
+// (or ANON_NATIVE_REPO); without it About shows no version at all.
+const NATIVE = process.env.ANON_NATIVE_REPO
+  || path.resolve(ROOT, '..', 'Bipolar_Bear_Mobile', 'bipolaranonymous-native');
+let anonVersion = null;
+try {
+  const iosDir = path.join(NATIVE, 'ios', 'App');
+  const proj = fs.readdirSync(iosDir).find(n => n.endsWith('.xcodeproj'));
+  const pbx = fs.readFileSync(path.join(iosDir, proj, 'project.pbxproj'), 'utf8');
+  const m = pbx.match(/MARKETING_VERSION = ([0-9.]+);/);
+  if (m) anonVersion = m[1];
+} catch (_) { /* no native project here */ }
+if (anonVersion) {
+  brand += `\n// Added by scripts/build-anonymous.js: the Bipolar Anonymous app's version.\nwindow._ANON_APP_VERSION = '${anonVersion}';\n`;
+  console.log(`Anonymous app version ${anonVersion} (from ${NATIVE})`);
+} else {
+  console.log('No Anonymous native project found: About will show no version.');
+}
 fs.writeFileSync(brandPath, brand);
 
 // ─── 7. Icons ───────────────────────────────────────────────────────

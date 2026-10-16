@@ -90,15 +90,16 @@
         <!-- What to do first, and why the email: said once, above the field
              (the code step has its own "Code sent to …" line). -->
         <div id="verify-how" style="font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 12px;" data-i18n="anon.verify.how">To join, enter your email and we'll send you a 6-digit code. Your email is never shown or shared.</div>
-        <input id="email-input" type="email" class="bb-input" placeholder="your@email.com" autocomplete="email">
+        <input id="email-input" type="email" class="bb-input" placeholder="your@email.com" autocomplete="email" data-i18n-placeholder="anon.misc.emailPlaceholder">
         <!-- App Store guideline 1.2: users must affirmatively agree to terms
              with an explicit zero-tolerance clause before account creation.
              The send button stays disabled until this is ticked. -->
-        <label id="agree-row" style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 14px;cursor:pointer;text-align:left;">
-          <input type="checkbox" id="agree-terms" style="margin-top:1px;width:18px;height:18px;flex-shrink:0;accent-color:var(--yellow-dark);cursor:pointer;">
-          <span style="font-size:12px;color:var(--dark);line-height:1.5;">
+        <label id="agree-row" class="agree-row">
+          <span class="agree-box"><input type="checkbox" id="agree-terms"></span>
+          <span class="agree-text">
             <span data-i18n="anon.agree.line1">I'm 18 or older and agree to the</span>
-            <button type="button" id="open-terms-link" style="background:none;border:none;padding:0;color:var(--yellow-dark);font-weight:700;text-decoration:underline;cursor:pointer;font-family:inherit;font-size:12px;" data-i18n="anon.agree.termsLink">Community Guidelines &amp; Terms</button><span data-i18n="anon.agree.line2">. There is zero tolerance for objectionable content or abusive behaviour.</span>
+            <a href="#" role="button" id="open-terms-link" class="ink-link" data-i18n="anon.agree.termsLink">Community Guidelines &amp; Terms</a><span data-i18n="anon.agree.line2">. There is zero tolerance for objectionable content or abusive behaviour.</span>
+            <a class="ink-link agree-privacy" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacy">Privacy policy</a>
           </span>
         </label>
         <button id="send-code-btn" class="btn-primary" disabled data-i18n="anon.verify.sendCode">Send Verification Code</button>
@@ -116,8 +117,8 @@
         </div>
         <button id="verify-btn" class="btn-primary" disabled data-i18n="anon.verify.verify">Verify →</button>
         <div style="display:flex;justify-content:space-between;margin-top:14px;">
-          <button id="back-to-email-btn" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;" data-i18n="anon.verify.changeEmail">← Change email</button>
-          <button id="resend-btn" style="background:none;border:none;color:var(--yellow-dark);font-size:13px;font-weight:700;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;text-decoration:underline;" data-i18n="anon.verify.resend">Resend code</button>
+          <button id="back-to-email-btn" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent;" data-i18n="anon.verify.changeEmail">← Change email</button>
+          <button id="resend-btn" style="background:none;border:none;color:var(--yellow-ink);font-size:13px;font-weight:700;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent;text-decoration:underline;" data-i18n="anon.verify.resend">Resend code</button>
         </div>
       </div>
       <!-- Crisis help before joining: the board's 🛟 Help sheet (#ov-help) is
@@ -146,11 +147,12 @@
     <div class="card">
       <div class="card-title" data-i18n="anon.agree.title">Before you join 👋</div>
       <div class="card-sub" data-i18n="anon.agree.sub">This is a peer community. To keep it safe for everyone, please confirm you agree to the rules.</div>
-      <label id="agree2-row" style="display:flex;align-items:flex-start;gap:9px;margin:2px 2px 14px;cursor:pointer;text-align:left;">
-        <input type="checkbox" id="agree-terms-bb" style="margin-top:1px;width:18px;height:18px;flex-shrink:0;accent-color:var(--yellow-dark);cursor:pointer;">
-        <span style="font-size:12px;color:var(--dark);line-height:1.5;">
+      <label id="agree2-row" class="agree-row">
+        <span class="agree-box"><input type="checkbox" id="agree-terms-bb"></span>
+        <span class="agree-text">
           <span data-i18n="anon.agree.line1">I'm 18 or older and agree to the</span>
-          <button type="button" id="open-terms-link-bb" style="background:none;border:none;padding:0;color:var(--yellow-dark);font-weight:700;text-decoration:underline;cursor:pointer;font-family:inherit;font-size:12px;" data-i18n="anon.agree.termsLink">Community Guidelines &amp; Terms</button><span data-i18n="anon.agree.line2">. There is zero tolerance for objectionable content or abusive behaviour.</span>
+          <a href="#" role="button" id="open-terms-link-bb" class="ink-link" data-i18n="anon.agree.termsLink">Community Guidelines &amp; Terms</a><span data-i18n="anon.agree.line2">. There is zero tolerance for objectionable content or abusive behaviour.</span>
+            <a class="ink-link agree-privacy" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacy">Privacy policy</a>
         </span>
       </label>
       <button id="agree-continue-btn" class="btn-primary" disabled data-i18n="anon.agree.continue">Continue →</button>
@@ -435,6 +437,7 @@
     <div class="e2ee-row"><span class="e2ee-row-icon">👤</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.identityTitle">No real identity</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.identitySub">No real name, profile or photo. Your email is only ever stored as a one-way hash that can't be reversed.</div></div></div>
     <div class="e2ee-row"><span class="e2ee-row-icon">🚫</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.noSellTitle">Never sold</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.noSellSub">We will never sell, share or monetise your data.</div></div></div>
     <div class="e2ee-row"><span class="e2ee-row-icon">🔒</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.secureTitle">Encrypted in transit & at rest</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.secureSub">Your data travels over encrypted connections and is stored encrypted on secure Google Cloud servers.</div></div></div>
+    <p style="text-align:center;font-size:13px;margin:4px 0 14px;"><a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacyFull">Read the full privacy policy →</a></p>
     <button class="btn-primary" onclick="closeOv('ov-e2ee')" style="margin-top:6px;" data-i18n="anon.e2ee.gotIt">Got it 👍</button>
   </div>
 </div>
@@ -794,20 +797,16 @@
   <div class="sheet" style="text-align:left;">
     <div style="text-align:center;margin-bottom:14px;">
       <div class="sheet-icon" style="margin-bottom:6px;">📜</div>
-      <div style="font-size:18px;font-weight:800;color:var(--dark);">Community Guidelines &amp; Terms</div>
+      <div style="font-size:18px;font-weight:800;color:var(--dark);" data-i18n="anon.terms.title">Community Guidelines &amp; Terms</div>
     </div>
 
     <div style="background:rgba(220,53,69,0.06);border:1.5px solid rgba(220,53,69,0.25);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:13px;color:var(--dark);line-height:1.6;font-weight:700;">
-        ⚠️ Zero tolerance for objectionable content and abusive users.
-      </div>
-      <div style="font-size:12px;color:var(--dark);line-height:1.6;margin-top:6px;">
-        You must be 18 or older to use Bipolar Anonymous. Posting hateful, harassing, threatening, sexually explicit, or otherwise objectionable content — or abusing other members — will result in your content being removed and your access being permanently revoked.
-      </div>
+      <div style="font-size:13px;color:var(--dark);line-height:1.6;font-weight:700;" data-i18n="anon.terms.zeroTitle">⚠️ Zero tolerance for objectionable content and abusive users.</div>
+      <div style="font-size:12px;color:var(--dark);line-height:1.6;margin-top:6px;" data-i18n="anon.terms.zeroBody">You must be 18 or older to use Bipolar Anonymous. Posting hateful, harassing, threatening, sexually explicit or otherwise objectionable content, or abusing other members, gets your content removed and you banned permanently.</div>
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">The rules</div>
-    <div style="font-size:13px;color:var(--dark);line-height:1.8;margin-bottom:16px;">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.rulesTitle">The rules</div>
+    <div style="font-size:13px;color:var(--dark);line-height:1.8;margin-bottom:16px;" data-i18n-html="anon.terms.rulesList">
       💛 &nbsp;Be kind — everyone here is doing their best<br>
       🔒 &nbsp;Respect privacy — never share personal details, yours or others'<br>
       🚫 &nbsp;No objectionable content: hate, harassment, threats, spam, explicit material<br>
@@ -815,20 +814,22 @@
       🙈 &nbsp;Mute anyone you'd rather not hear from
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Moderation</div>
-    <p style="font-size:12px;color:var(--dark);line-height:1.6;margin-bottom:16px;">
-      Reported content is reviewed and acted on within 24 hours. Objectionable posts are removed and the responsible member is ejected. You can remove your own posts at any time, and block any user from your settings.
-    </p>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.modTitle">Moderation</div>
+    <p style="font-size:12px;color:var(--dark);line-height:1.6;margin-bottom:16px;" data-i18n="anon.terms.modBody">Reported content is reviewed and acted on within 24 hours, and anything that breaks the rules is removed. A zero-tolerance breach means a permanent ban; any other breach means a temporary ban. You can remove your own posts at any time, and mute anyone with "Mute this user" in the ⋯ menu on their post (unmute them from the About screen).</p>
 
     <div style="background:var(--yellow-bg);border-radius:12px;padding:12px 14px;margin-bottom:18px;">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Report a problem</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;" data-i18n="anon.terms.reportTitle">Report a problem</div>
       <p style="font-size:13px;color:var(--dark);line-height:1.6;margin:0;">
-        To report inappropriate content or an abusive user, use the 🚨 button on any post, or contact us at
-        <a href="mailto:inbox@unisim.co.uk?subject=Bipolar%20Anonymous%20%E2%80%94%20report" style="color:var(--yellow-dark);font-weight:700;">inbox@unisim.co.uk</a>.
+        <span data-i18n="anon.terms.reportBody">To report inappropriate content or an abusive user, use 🚨 Report in the ⋯ menu on any post, or email us:</span>
+        <a class="ink-link" href="mailto:bipolar@unisim.co.uk?subject=Bipolar%20Anonymous%20%E2%80%94%20report">bipolar@unisim.co.uk</a>
       </p>
     </div>
 
-    <button id="terms-close" class="btn-secondary" style="width:100%;">Close</button>
+    <p style="font-size:12px;color:var(--dark);line-height:1.6;margin:0 0 18px;text-align:center;">
+      <a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacy">Privacy policy</a>
+    </p>
+
+    <button id="terms-close" class="btn-secondary" style="width:100%;" data-i18n="common.close">Close</button>
   </div>
 </div>
 
@@ -855,9 +856,10 @@
         🙈 &nbsp;Mute anyone you'd rather not hear from — their posts disappear for you
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--dark);line-height:1.6;">
-        <button type="button" id="about-terms-link" style="background:none;border:none;padding:0;color:var(--yellow-dark);font-weight:700;text-decoration:underline;cursor:pointer;font-family:inherit;font-size:12px;" data-i18n="anon.about.viewTerms">View full Terms</button>
-        &nbsp;·&nbsp; <span data-i18n="anon.about.reportProblem">Report a problem:</span>
-        <a href="mailto:inbox@unisim.co.uk?subject=Bipolar%20Anonymous%20%E2%80%94%20report" style="color:var(--yellow-dark);font-weight:700;">inbox@unisim.co.uk</a>
+        <button type="button" id="about-terms-link" class="ink-link" data-i18n="anon.about.viewTerms">View full Terms</button>
+        &nbsp;·&nbsp; <a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacy">Privacy policy</a>
+        <br><span data-i18n="anon.about.reportProblem">Report a problem:</span>
+        <a class="ink-link" href="mailto:bipolar@unisim.co.uk?subject=Bipolar%20Anonymous%20%E2%80%94%20report">bipolar@unisim.co.uk</a>
       </div>
     </div>
 

@@ -491,10 +491,15 @@ function renderMutedList() {
 }
 document.getElementById('about-close').addEventListener('click', () => closeOv('ov-about'));
 
-// Stamp the shared web app version (from brand-config.js) into the About footer.
+// The version in the About footer. Inside Bipolar Bear (web or app) that is
+// the shared web version from brand-config.js. The Bipolar Anonymous app ships
+// under its own number, stamped in by scripts/build-anonymous.js, and the
+// bipolaranonymous.app website has none: better no version than Bear's.
 (function () {
   const el = document.getElementById('about-version');
-  if (el && window._APP_VERSION) el.textContent = 'v' + window._APP_VERSION;
+  if (!el) return;
+  const v = _isAnonymousApp ? window._ANON_APP_VERSION : window._APP_VERSION;
+  el.textContent = v ? 'v' + v : '';
 })();
 
 // _goHome() is called from inline onclick attributes on onboarding screens
@@ -559,7 +564,9 @@ document.getElementById('ov-thread').addEventListener('click', e => {
 // own button (backdrop-tap is handled by the array above).
 ['open-terms-link','open-terms-link-bb','about-terms-link'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('click', () => openOv('ov-terms'));
+  // The sign-up links are <a href="#"> inside the checkbox's label: keep the
+  // tap from following the link (or ticking the box).
+  if (el) el.addEventListener('click', e => { e.preventDefault(); openOv('ov-terms'); });
 });
 document.getElementById('terms-close').addEventListener('click', () => closeOv('ov-terms'));
 
@@ -567,6 +574,22 @@ document.getElementById('terms-close').addEventListener('click', () => closeOv('
 // Utilities
 // ─────────────────────────────────────────────────────────────────
 function initials(name) { return (name || '??').slice(0, 2).toUpperCase(); }
+
+// Initials colour for an avatar gradient: dark on the light gold one (white
+// there is under 2:1), white on every other preset, as before.
+function _avInk(g1, g2) {
+  const lum = h => {
+    const m = /^#([0-9a-f]{6})$/i.exec(String(h || '').trim());
+    if (!m) return null;
+    return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
+      .map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      .reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+  };
+  const a = lum(g1), b = lum(g2);
+  if (a == null || b == null) return '#fff';
+  const contrast = 1.05 / ((a + b) / 2 + 0.05);
+  return contrast < 2 ? '#1a1500' : '#fff';
+}
 
 function esc(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -831,7 +854,7 @@ function openSaved() {
       const live = !!_findPost(s.id);
       return `<div class="saved-card" data-sid="${esc(s.id)}">
         <div class="saved-head">
-          <div class="post-av-circle" style="background:linear-gradient(135deg,${safeColor(s.grad1, YELLOW_LT)},${safeColor(s.grad2, YELLOW_DARK)});">${esc(s.initials || '')}</div>
+          <div class="post-av-circle" style="background:linear-gradient(135deg,${safeColor(s.grad1, YELLOW_LT)},${safeColor(s.grad2, YELLOW_DARK)});color:${_avInk(safeColor(s.grad1, YELLOW_LT), safeColor(s.grad2, YELLOW_DARK))};">${esc(s.initials || '')}</div>
           <div class="saved-name">[${esc(s.name)}]</div>
           <div class="saved-when">${esc(timeAgo(new Date(num(s.ts, Date.now()))))}</div>
         </div>
@@ -1457,7 +1480,7 @@ function setupVerify() {
 
   // Ensure email field is editable and wired for validation
   emailIn.readOnly    = false;
-  emailIn.placeholder = 'your@email.com';
+  emailIn.placeholder = _wt('anon.misc.emailPlaceholder');
   emailIn.style.background = '';
   emailIn.style.color      = '';
   emailIn.style.cursor     = '';
@@ -4461,7 +4484,7 @@ function renderSuggestion(x) {
     <div class="sugg-flag">${esc(label)}</div>
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div><div class="post-name">[${esc(x.name || '')}]</div></div>
       </div>
       <span class="post-time">${x.timestamp ? timeAgo(x.timestamp) : _wt('anon.time.now')}</span>
@@ -4761,7 +4784,7 @@ function renderThreadHeader(p) {
     return `<div class="thread-orig-post">
       <div class="post-header">
         <div class="post-avatar">
-          <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});">${esc(a.initials)}</div>
+          <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
           <div>
             <div class="post-name">[${esc(a.name)}]</div>
             ${_chipsHtml({ streak: a.streak, label: '💬 ' + label })}
@@ -4782,7 +4805,7 @@ function renderThreadHeader(p) {
   return `<div class="thread-orig-post">
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div>
           <div class="post-name">${authorLabel(p)}</div>
           ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, med: showMed ? p.med : '' })}
@@ -4853,7 +4876,7 @@ function renderComment(c) {
   return `<div class="comment-card" data-cid="${esc(c.id)}" data-author="${esc(c.name)}">
     ${isMine ? '' : '<span class="swipe-cue">↩️</span>'}
     <div class="comment-header">
-      <div class="post-av-circle" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+      <div class="post-av-circle" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
       <div style="flex:1;min-width:0;">
         <span class="post-name" style="font-size:12px;">${authorLabel(c)}</span>
         <span style="font-size:11px;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
@@ -5274,7 +5297,7 @@ function renderArchivedTopic(p) {
   return `<div class="post-card" data-pid="${esc(p.id)}">
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});">${esc(a.initials)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
         <div>
           <div class="post-name">[${esc(a.name)}]</div>
           ${_chipsHtml({ streak: a.streak, label: '💬 ' + _wt('anon.feed.pastTopic') })}
@@ -5390,7 +5413,7 @@ function renderPost(p) {
     ${pinnedBadge}
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div>
           <div class="post-name">${authorLabel(p)}</div>
           ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, bday: postBday, med: showMed ? p.med : '' })}
@@ -6281,6 +6304,7 @@ function openMonikaSettings() {
     const col  = COLOR_PRESETS.find(c => c.key === key) || COLOR_PRESETS[0];
     msAv.textContent = init;
     msAv.style.background = `linear-gradient(135deg,${col.g1},${col.g2})`;
+    msAv.style.color = _avInk(col.g1, col.g2);
     msAvName.textContent = `[${name}] 🔥 ${profile.streak}d`;
   }
   updatePreview();
