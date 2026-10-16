@@ -893,15 +893,29 @@ function _sktMood(moodKey) {
       }
     }
 
+    /**
+     * Put the medicine sheet's button back to "Add Medication". Editing swaps
+     * it for "Save changes"; leaving the sheet (or deleting) without saving
+     * used to keep that swap, so the next Add replaced the medicine instead.
+     */
+    function _resetMedEditBtn() {
+      const addBtn = document.querySelector('#medInfoModal .modal-btn-primary');
+      if (!addBtn || !addBtn.dataset.editing) return;
+      addBtn.onclick = null;
+      addBtn.setAttribute('onclick', 'addMedication()');
+      addBtn.textContent = _skt('sk.meds.addBtn');
+      delete addBtn.dataset.editing;
+    }
+
     function editMedication(index) {
       const list = getMedList();
       const med = list[index];
+      if (!med) return;
       document.getElementById('medNameInput').value = med.name;
       document.getElementById('medDosageInput').value = med.dosage || '';
       const addBtn = document.querySelector('#medInfoModal .modal-btn-primary');
       if (!addBtn) return;
-      const originalHTML = addBtn.innerHTML;
-      const originalOnclick = addBtn.getAttribute('onclick');
+      addBtn.dataset.editing = '1';
       addBtn.innerHTML = _skt('sk.meds.saveChanges');
       addBtn.onclick = () => {
         const name = document.getElementById('medNameInput').value.trim();
@@ -912,10 +926,7 @@ function _sktMood(moodKey) {
         renderMedList();
         document.getElementById('medNameInput').value = '';
         document.getElementById('medDosageInput').value = '';
-        addBtn.innerHTML = originalHTML;
-        addBtn.setAttribute('onclick', originalOnclick);
-        addBtn.onclick = null;
-        addBtn.setAttribute('onclick', 'addMedication()');
+        _resetMedEditBtn();
       };
     }
     window.editMedication = editMedication;
@@ -935,6 +946,7 @@ function _sktMood(moodKey) {
           }
         } catch(e) {}
       }
+      _resetMedEditBtn();
       renderMedList();
       document.getElementById('medNameInput').value = '';
       document.getElementById('medDosageInput').value = '';
@@ -944,6 +956,7 @@ function _sktMood(moodKey) {
     window.openMedInfoModal = openMedInfoModal;
 
     function closeMedInfoModal() {
+      _resetMedEditBtn();
       document.getElementById('medInfoModal').classList.remove('active');
       _unlockBodyScroll();
     }
@@ -977,6 +990,10 @@ function _sktMood(moodKey) {
     window._fillMedName = _fillMedName;
 
     function deleteMedication(index) {
+      // An edit in progress holds a list index that this delete shifts.
+      _resetMedEditBtn();
+      document.getElementById('medNameInput').value = '';
+      document.getElementById('medDosageInput').value = '';
       const list = getMedList();
       list.splice(index, 1);
       saveMedList(list);
@@ -1406,6 +1423,10 @@ function _sktMood(moodKey) {
     window.editReminder = editReminder;
 
     function openAddReminderModal() {
+      // An edit that was closed without saving left the button in update
+      // mode, so this "Add" would have replaced that reminder.
+      const saveBtn = document.querySelector('#addReminderModal button[onclick="saveReminder()"]');
+      if (saveBtn) { saveBtn.textContent = _skt('sk.faq.save'); saveBtn.onclick = saveReminder; }
       document.getElementById('reminderTitleInput').value = '';
       document.getElementById('reminderMessageInput').value = '';
       _lockBodyScroll();
