@@ -1634,8 +1634,10 @@ the sweep. The 10-minute restore window and the open delete are gone.
 
 **Retention** — `privacySweep`, daily 04:10 London (`RETENTION` in
 privacy.js; keep privacy.html §8 in step): posts 7 days idle (reported 90),
-reports 90, reviewed suggestions 90, translations 7, codes 1 h unused / 25 h
-verified, presence 1 h, feedback + beta sign-ups 12 months, orphaned replies.
+reports 90, reviewed suggestions 90, translations 7, codes 30 min (a
+verified code's address is stripped by `verifyAnonCode` at once, and
+`getBBStats` deletes the record when it reads it; each `sendAnonCode` clears
+old codes, and the daily sweep is the backstop), presence 1 h, feedback + beta sign-ups 12 months, orphaned replies.
 `onAnonPostDeleted` deletes a post's replies whatever deleted it.
 `onAuthUserDeleted` (1st gen auth trigger) removes userSettings,
 personalDetails, entries, bbAnonLinks, uidLinks, translate usage, mood-seen

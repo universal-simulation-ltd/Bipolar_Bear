@@ -143,6 +143,14 @@ exports.sendAnonCode = onCall(
       throw new HttpsError('resource-exhausted', 'Too many code requests. Please wait 10 minutes and try again.');
     }
 
+    // Clear out codes nobody will use again (privacy: a sign-in address is
+    // kept for minutes, not days). The daily privacySweep is the backstop.
+    db.collection('anonVerify')
+      .where('createdAt', '<', admin.firestore.Timestamp.fromMillis(now - P.RETENTION.verifyMinutes * 60000))
+      .limit(100).get()
+      .then((old) => Promise.all(old.docs.map((d) => d.ref.delete())))
+      .catch((e) => console.warn('[sendAnonCode] clearing old codes failed', e));
+
     const code      = generateCode();
     const sessionId = db.collection('anonVerify').doc().id;
 
@@ -236,6 +244,12 @@ exports.verifyAnonCode = onCall(
     let profileId = null;
     if (outcome.kind === 'verified') {
       profileId = await P.recordVerifiedEmail(request, outcome.email, !!(request.data && request.data.v2));
+      // The address has done its job: keep only the Bipolar Bear account it
+      // belongs to (for getBBStats, seconds from now), never the address.
+      let bbUid = null;
+      try { bbUid = (await admin.auth().getUserByEmail(outcome.email)).uid; } catch (e) { /* no account */ }
+      await ref.update({ email: admin.firestore.FieldValue.delete(), bbUid })
+        .catch((e) => console.warn('[verifyAnonCode] stripping the address failed', e));
     }
 
     switch (outcome.kind) {
@@ -280,15 +294,22 @@ exports.getBBStats = onCall(
     if (!session.verified) {
       throw new HttpsError('permission-denied', 'Session not verified.');
     }
-    // Allow up to 24 hours after verification (covers slow onboarding flows)
+    // Asked for seconds after verification; the record goes once it's read.
     const verifiedAt = session.verifiedAt ? session.verifiedAt.toMillis() : 0;
-    if (Date.now() - verifiedAt > 24 * 60 * 60 * 1000) {
+    if (Date.now() - verifiedAt > P.RETENTION.verifyMinutes * 60000) {
+      await snap.ref.delete().catch(() => {});
       throw new HttpsError('deadline-exceeded', 'Session expired.');
     }
 
-    const email = session.email;
+    // One read only: the record (now holding the account id, not the address,
+    // since verifyAnonCode strips it) is deleted here.
+    await snap.ref.delete().catch(() => {});
     try {
-      const userRecord = await admin.auth().getUserByEmail(email);
+      // Records from before 2026-10-16 still carry the address instead.
+      const userRecord = 'bbUid' in session
+        ? (session.bbUid ? await admin.auth().getUser(session.bbUid) : null)
+        : await admin.auth().getUserByEmail(session.email);
+      if (!userRecord) return { bbLinked: false };
       const uid = userRecord.uid;
       const accountCreatedAt = userRecord.metadata.creationTime || null;
 

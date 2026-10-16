@@ -1559,7 +1559,10 @@
 //   one-off support hint after the tutorial. Touches js/journal.js, fab.js,
 //   js/index.js, js/shared/i18n.js.
 // v331: app version 1.43 (Bipolar Bear 1.43 store build, build 49). Touches js/shared/brand-config.js.
-const CACHE_NAME = 'bipolarbear-v331';
+// v332: privacy policy §8 — a sign-in code's email address goes as soon as
+//   the code is used (an unused code within 25 hours); 10 languages.
+//   Touches js/shared/i18n.js, privacy.html.
+const CACHE_NAME = 'bipolarbear-v332';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

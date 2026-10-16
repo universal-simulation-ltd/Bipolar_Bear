@@ -56,8 +56,8 @@ const RETENTION = {
   reportDays: 90,              // bbAnonReports
   reviewedSuggestionDays: 90,  // published or refused announcement suggestions
   translationDays: 7,          // bbAnonTranslations cache (posts only live a week)
-  verifyHours: 25,             // anonVerify: getBBStats reads a verified one for 24 h
-  verifyUnusedHours: 1,        // ... an unverified code is dead after 10 minutes
+  verifyMinutes: 30,           // anonVerify: a code is dead after 10 minutes; a verified one
+                               // holds no address and getBBStats reads (then deletes) it at once
   feedbackDays: 365,           // feedback
   betaSignupDays: 365,         // betaSignups
   presenceHours: 1,            // bbPresence / bbAnonPresence heartbeats
@@ -548,12 +548,12 @@ async function runPrivacySweep({ apply = true, secret } = {}) {
   const now = Date.now();
   r.ownerStamps = await sweepUids(apply);
   r.pushEmailHash = await sweepPushHashes(apply);
-  // anonVerify: dead codes after an hour, verified ones after getBBStats' 24 h.
+  // anonVerify: every code older than 30 minutes, used or not (each new code
+  // request also clears these; this is the backstop).
   {
     const snap = await db.collection('anonVerify')
-      .where('createdAt', '<', TS.fromMillis(now - RETENTION.verifyUnusedHours * 3600000)).get();
-    const refs = snap.docs.filter((d) => !d.get('verified')
-      || millis(d.get('createdAt')) < now - RETENTION.verifyHours * 3600000).map((d) => d.ref);
+      .where('createdAt', '<', TS.fromMillis(now - RETENTION.verifyMinutes * 60000)).get();
+    const refs = snap.docs.map((d) => d.ref);
     r.anonVerify = refs.length;
     if (apply) await deleteRefs(refs);
   }
