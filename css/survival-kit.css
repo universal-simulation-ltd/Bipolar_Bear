@@ -7,7 +7,7 @@
       --orange: var(--brand-primary);
       --orange-dark: var(--brand-primary-dark);
       --text: #2d2d2d;
-      --text-light: #6c757d;
+      --text-light: #636b73;
       --bg: var(--brand-tint);
       --card-bg: #ffffff;
       --border: #ffe0b2;
@@ -27,7 +27,9 @@
     /* ── HEADER ── */
     .header {
       background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dark) 100%);
-      color: white;
+      /* Dark ink on the orange header (white was 2.2:1); white in dark mode,
+         where the header is the dark page gradient. */
+      color: var(--brand-on);
       text-align: center;
       padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 24px;
       position: relative;
@@ -86,7 +88,6 @@
     .header h1 {
       font-size: 2.5em;
       margin-bottom: 8px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.15);
     }
 
     .header .subtitle {
@@ -229,7 +230,7 @@
       white-space: nowrap;
     }
     @media (hover: hover) and (pointer: fine) {
-      .sticky-nav-home a:hover, .sticky-nav-help a:hover { color: var(--orange); }
+      .sticky-nav-home a:hover, .sticky-nav-help a:hover { color: var(--brand-ink); }
     }
 
     .sticky-nav a {
@@ -250,13 +251,13 @@
 
     @media (hover: hover) and (pointer: fine) {
       .sticky-nav a:hover {
-        color: var(--orange);
+        color: var(--brand-ink);
         border-bottom-color: var(--orange);
       }
     }
 
     .sticky-nav a.active {
-      color: var(--orange);
+      color: var(--brand-ink);
       border-bottom-color: var(--orange);
       background: var(--brand-tint);
     }
@@ -294,11 +295,14 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       flex: 1;
+      min-width: 0; overflow-wrap: anywhere; /* long words wrap under Larger Text */
     }
+    html.bb-text-large .section-header h2 { font-size: 1.2em; hyphens: auto; }
+    html.bb-text-xlarge .section-header h2 { font-size: 1em; }
 
     .section-chevron {
       font-size: 0.9em;
-      color: var(--orange);
+      color: var(--brand-ink);
       transition: transform 0.3s;
     }
 
@@ -385,7 +389,7 @@
     .accordion-header .chevron {
       font-size: 0.8em;
       transition: transform 0.3s;
-      color: var(--orange);
+      color: var(--brand-ink);
     }
 
     .accordion-header.open .chevron { transform: rotate(180deg); }
@@ -419,7 +423,7 @@
 
     .link-btn.secondary {
       background: white;
-      color: var(--orange);
+      color: var(--brand-ink);
       border: 2px solid var(--orange);
     }
 
@@ -445,7 +449,7 @@
       font-size: 1em;
       font-weight: 700;
       margin-bottom: 10px;
-      color: var(--orange);
+      color: var(--brand-ink);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -468,7 +472,7 @@
 
     /* ── CRISIS BOX (RED) ── */
     .crisis-box {
-      background: linear-gradient(135deg, #e53935, #c62828);
+      background: linear-gradient(135deg, #d32f2f, #b71c1c);
       color: white;
       border-radius: 16px;
       padding: 28px;
@@ -477,7 +481,7 @@
     }
 
     .crisis-box h3 { font-size: 1.4em; margin-bottom: 12px; }
-    .crisis-box p  { opacity: 0.95; margin-bottom: 16px; }
+    .crisis-box p  { margin-bottom: 16px; }
 
     .crisis-btn {
       display: inline-block;
@@ -523,7 +527,9 @@
     @media (max-width: 600px) {
       .two-col   { grid-template-columns: 1fr; }
       .four-col  { grid-template-columns: 1fr 1fr; }
-      .header h1 { font-size: 1.4em; white-space: nowrap; }
+      /* Wraps instead of running off the edge with a long first name or
+         Larger Text (one line at the default size, as before). */
+      .header h1 { font-size: 1.4em; overflow-wrap: anywhere; }
     }
 
     /* Goals layout: mobile = stacked, desktop = wall-tracker left, goals+budget stacked right */
@@ -591,7 +597,7 @@
     .steps-tile .tile-num {
       font-size: 1.6em;
       font-weight: 800;
-      color: var(--orange);
+      color: var(--brand-ink);
     }
 
     .steps-tile .tile-label {
@@ -759,7 +765,7 @@
       margin-top: 20px;
     }
 
-    .footer a { color: var(--orange); text-decoration: none; }
+    .footer a { color: var(--brand-ink); text-decoration: none; }
 
     /* ── MEDIA PILL ── */
     .pill {
@@ -770,7 +776,7 @@
       padding: 6px 14px;
       font-size: 0.85em;
       font-weight: 600;
-      color: var(--orange-dark);
+      color: var(--brand-ink);
       margin: 4px;
     }
 
@@ -788,7 +794,7 @@
     }
     * { touch-action: manipulation; }
     /* Prevent iOS Safari auto-zoom on input focus (triggered when font-size < 16px) */
-    input, select, textarea { font-size: 16px; }
+    input, select, textarea { font-size: max(16px, 1rem); }
 /* Force light mode — prevent OS dark mode from affecting colours */
     :root { color-scheme: light; }
     html { background-color: var(--brand-primary-dark); }
@@ -857,7 +863,7 @@
     .med-chip {
       padding: 6px 12px;
       background: var(--brand-tint);
-      color: var(--brand-primary-dark);
+      color: var(--brand-ink);
       border: 1.5px solid var(--brand-primary);
       border-radius: 16px;
       font-size: 0.82em;
@@ -871,10 +877,10 @@
     @media (hover: hover) and (pointer: fine) {
       .med-chip:hover { background: var(--brand-btn); color: white; }
     }
-    .modal-toggle { text-align: center; font-size: 0.9em; color: #6c757d; margin-top: 4px; }
-    .modal-toggle span { color: var(--brand-primary); cursor: pointer; font-weight: 600; }
+    .modal-toggle { text-align: center; font-size: 0.9em; color: var(--text-muted-ink); margin-top: 4px; }
+    .modal-toggle span { color: var(--brand-ink); cursor: pointer; font-weight: 600; }
     .modal-error { color: #ff6b6b; font-size: 0.9em; margin-bottom: 10px; display: none; }
-    @keyframes hintFade { 0%,100%{opacity:0.55;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} }
+    @keyframes hintFade { 0%,100%{opacity:0.92;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} } /* faintest point still 4.5:1 */
     @keyframes bbHintNudge { 0%,100%{transform:scale(1)} 25%{transform:scale(1.18) rotate(-4deg)} 75%{transform:scale(1.12) rotate(3deg)} }
 
     /* ─── iPad simulator (≥ 920px) ─── */
@@ -1048,7 +1054,7 @@
     .sk-tab-ico { font-size: 1.6em; line-height: 1; }
     .sk-tab-lbl {
       font-weight: 700;
-      max-width: 76px;
+      max-width: 6.8em; /* 76px at the default size; grows with Larger Text */
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -1069,7 +1075,7 @@
       margin-bottom: 20px;
       border: none;
       border-radius: 16px;
-      background: linear-gradient(135deg, #e53935, #c62828);
+      background: linear-gradient(135deg, #d32f2f, #b71c1c);
       color: white;
       font-family: inherit;
       text-align: left;
@@ -1089,7 +1095,7 @@
     }
     .sk-sos-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
     .sk-sos-title { font-weight: 800; font-size: 1.05em; line-height: 1.3; }
-    .sk-sos-sub { font-size: 0.84em; opacity: 0.92; line-height: 1.35; }
+    .sk-sos-sub { font-size: 0.84em; line-height: 1.35; }
     .sk-sos-arrow { flex-shrink: 0; font-size: 1.9em; line-height: 1; opacity: 0.85; margin-top: -3px; }
 
     /* "My safety plan" — sits under the SOS banner; calm, not alarming */
@@ -1218,7 +1224,7 @@
       border: 1.5px solid var(--border);
       border-radius: 20px;
       box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-      color: var(--orange);
+      color: var(--brand-ink);
       font-family: inherit;
       font-weight: 700;
       font-size: 0.9em;
