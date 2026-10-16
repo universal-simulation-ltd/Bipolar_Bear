@@ -706,12 +706,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           // streak/anon badges otherwise display stale values from the
           // last-signed-in account. Guests with their own guest-PIN
           // localStorage data keep their badges — those are real local
-          // stats, not residue from a sync.
+          // stats, not residue from a sync. That covers the journal only:
+          // the Bipolar Anonymous stats are the account's, so they always go.
           if (!BB.storage.get('GuestPinSalt')) {
             _revealBadge(document.getElementById('journalStreakBadge'), 'none');
-            _revealBadge(document.getElementById('anonStreakBadge'),    'none');
-            _revealBadge(document.getElementById('anonMessagesBadge'),  'none');
           }
+          _revealBadge(document.getElementById('anonStreakBadge'),    'none');
+          _revealBadge(document.getElementById('anonMessagesBadge'),  'none');
           if (typeof window._applyFabDock === 'function') window._applyFabDock();
         }
       });
@@ -1199,7 +1200,11 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // against the last visit date (see BB.anonLiveStreak). Returns 0 once
       // the streak has broken, which falls through to the monika-only branch.
       const anon   = BB.anonLiveStreak();
-      const hasAnon = !!BB.storage.get('Anon_monika');
+      // Signed in only: the 👋 · 🔥 · 💬 stats belong to the account, and a
+      // guest (even with a guest PIN) can't use Bipolar Anonymous. A lapsed
+      // session showed the account's moniker beside "Sign in to join the
+      // community" (support screenshot, 2026-10-16).
+      const hasAnon = !!BB.storage.get('Anon_monika') && !!(window.currentUser || _hasCachedFbUser());
 
       // Journal badge: 🔥 + 🧘
       const badge = document.getElementById('journalStreakBadge');

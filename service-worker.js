@@ -1571,7 +1571,10 @@
 // v335: the first-run language picker takes the page's colours (Bipolar
 //   Anonymous: yellow with dark text, not Bear orange), and its title follows
 //   the language tapped. Touches js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v335';
+// v336: signed out, home no longer shows the account's Bipolar Anonymous
+//   stats (👋 moniker · 🔥 · 💬) when the device has a guest PIN. Touches
+//   index.html, js/index.js.
+const CACHE_NAME = 'bipolarbear-v336';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

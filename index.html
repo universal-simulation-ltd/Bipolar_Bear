@@ -369,7 +369,9 @@
             var anon = (window.BB.anonLiveStreak ? window.BB.anonLiveStreak() : parseInt(S.get('Anon_streak') || '0', 10));
             var monika = S.get('Anon_monika') || '';
             var aBadge = document.getElementById('anonStreakBadge');
-            if (aBadge && monika) {
+            // Signed in only: these stats belong to the account, and a guest
+            // can't use Bipolar Anonymous, so a guest PIN doesn't count.
+            if (aBadge && monika && hasUser) {
               var posts = window.BB.anonPostCount ? window.BB.anonPostCount.get() : null;
               var sep = ' &nbsp;·&nbsp; ';
               show(aBadge, '👋 ' + esc(monika) + sep + '🔥 ' + anon + (posts !== null ? sep + '💬 ' + posts : ''));
