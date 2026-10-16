@@ -1565,7 +1565,10 @@
 // v333: signed out, the locked Bipolar Anonymous button and "Sign in to join
 //   the community" open the sign-in dialog (the button used to ignore taps).
 //   Touches js/index.js, css/index.css.
-const CACHE_NAME = 'bipolarbear-v333';
+// v334: privacy policy §2 "At a glance" tables (what we keep, why, who can
+//   read it; both apps; same as the store labels); 10 languages. Touches
+//   privacy.html, js/shared/i18n.js (committed in 08e30f6 just after v333).
+const CACHE_NAME = 'bipolarbear-v334';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
