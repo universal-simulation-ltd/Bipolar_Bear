@@ -155,6 +155,10 @@ function _sktMood(moodKey) {
       container.classList.add('sk-focused');
       _skOpenId = id;
       _skMarkVisited(id);
+      if (id === 'media' && !window._skCelebPhotos) {
+        window._skCelebPhotos = true; // the famous-person photo loads from Wikipedia now
+        try { showCeleb(); } catch (_) {}
+      }
       if (opts.hash !== false) _skSetHash(id);
       updateActiveNav();
       if (opts.scroll !== false) _skScrollTo(document.getElementById('skBackBar'), false);
@@ -696,6 +700,10 @@ function _sktMood(moodKey) {
       imgEl.style.display = 'none';
       fallbackEl.style.display = '';
 
+      // The photo comes from Wikipedia, so it's only asked for once the Media
+      // section is opened (skOpenSection sets the flag): opening the Survival
+      // Kit no longer contacts Wikipedia (privacy review 2026-10-16).
+      if (!window._skCelebPhotos) return;
       if (!_celebImgCache.hasOwnProperty(c.wiki)) {
         try {
           const title = c.wiki.replace(/_/g, ' ');
