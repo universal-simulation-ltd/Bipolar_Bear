@@ -4067,7 +4067,7 @@ window.addEventListener('pageshow', () => {
         const el = (tag, css, text) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (text != null) n.textContent = text; return n; };
         const inputCss = 'width:100%;padding:12px;border:2px solid #e9ecef;border-radius:10px;font-size:1em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;';
         const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', t(unlock ? 'unlockTitle' : 'privateTitle'));
-        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', t(unlock ? 'unlockBody' : 'privateBody'));
+        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', unlock ? BB.t('fix143.unlockBody') : t('privateBody')); // not "end-to-end": Standard accounts see it too
         const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:#6c757d;', t(unlock ? 'unlockHint' : 'createWarning'));
         const pw = el('input', inputCss); pw.type = 'password'; pw.autocomplete = unlock ? 'current-password' : 'new-password';
         pw.placeholder = t(unlock ? 'passwordPlaceholder' : 'newPasswordPlaceholder');
