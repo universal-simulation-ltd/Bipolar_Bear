@@ -350,14 +350,21 @@
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             };
+            // BB.t (js/shared/i18n.js, loaded in <head>), or the English text
+            // when it isn't there or has no string for the key.
+            var tr = function (key, fallback, vars) {
+              var s = null;
+              try { s = (window.BB && window.BB.t) ? window.BB.t(key, vars) : null; } catch (_) {}
+              return (s && s !== key) ? s : fallback;
+            };
 
             // Journal streak (🔥) + stability (🧘)
             var streak = parseInt(S.get('CurrentStreak') || '0', 10);
             var stable = parseInt(S.get('StableStreak') || '0', 10);
             var jBadge = document.getElementById('journalStreakBadge');
             if (jBadge && streak > 0) {
-              var stablePart = stable > 0 ? ' &nbsp;🧘 ' + stable + 'd' : '';
-              show(jBadge, '🔥 ' + streak + ' day' + (streak === 1 ? '' : 's') + stablePart);
+              var stablePart = stable > 0 ? ' &nbsp;' + tr('t143.home.stableShort', '🧘 ' + stable + 'd', { n: stable }) : '';
+              show(jBadge, tr('t143.home.streakDays', '🔥 ' + streak + ' day' + (streak === 1 ? '' : 's'), { count: streak, n: streak }) + stablePart);
               jBadge.style.cursor = 'pointer';
             }
 
@@ -391,7 +398,7 @@
               if (obj('moodMemories')) c++;
               if (arr('myCommitments')) c++;
               if (arr('customReminders')) c++;
-              show(prog, c >= 12 ? '✓ All sections completed' : c + ' / 12 sections complete');
+              show(prog, c >= 12 ? tr('home.survivalAllDone', '✓ All sections completed') : tr('home.survivalProgress', c + ' / 12 sections complete', { c: c }));
             }
           } catch (_) {}
         })();

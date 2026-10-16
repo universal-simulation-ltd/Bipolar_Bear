@@ -213,6 +213,12 @@
     { name: 'Syd Barrett',         field: 'Musician — Pink Floyd',          wiki: 'Syd_Barrett' },
     { name: 'Axl Rose',            field: "Musician — Guns N' Roses",       wiki: 'Axl_Rose' },
   ];
+  /** A celebrity's `field` in the reader's language (English when there's no string for it). */
+  function _celebFieldText(c) {
+    const key = 't143.home.fab.celebField.' + String(c.wiki || '').replace(/[^A-Za-z]/g, '');
+    const s = _bbT(key, c.field);
+    return (s && s !== key) ? s : c.field;
+  }
   /** Map from extra FAB id → DOM id of the injected button. */
   const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab' };
 
@@ -548,19 +554,19 @@
       <button class="bb-extra-fab game-fab" id="gameFab" onclick="openArcade()" title="Bear Arcade" aria-label="Bear Arcade" data-i18n-title="arcade.title" data-i18n-aria-label="arcade.title" style="display:none;">🕹️</button>
 
       <!-- Center auth FAB (always at 50%, not part of slot system) -->
-      <button id="bbAuthFab" class="bb-auth-fab" onclick="(window._fabOpenAuth||function(){})()" title="Profile / Sign in">👤</button>
+      <button id="bbAuthFab" class="bb-auth-fab" onclick="(window._fabOpenAuth||function(){})()" title="${_bbT('fab.profileTip', 'Profile / Sign in')}">👤</button>
 
       <!-- Placeholder dots -->
-      <button class="fab-dot-placeholder" id="fabPh1" onclick="window._openFabPicker(1)" title="Add to dock">+</button>
-      <button class="fab-dot-placeholder" id="fabPh2" onclick="window._openFabPicker(2)" title="Add to dock">+</button>
-      <button class="fab-dot-placeholder" id="fabPh3" onclick="window._openFabPicker(3)" title="Add to dock">+</button>
-      <button class="fab-dot-placeholder" id="fabPh4" onclick="window._openFabPicker(4)" title="Add to dock">+</button>
+      <button class="fab-dot-placeholder" id="fabPh1" onclick="window._openFabPicker(1)" title="Add to dock" data-i18n-title="fabPicker.addToDock">+</button>
+      <button class="fab-dot-placeholder" id="fabPh2" onclick="window._openFabPicker(2)" title="Add to dock" data-i18n-title="fabPicker.addToDock">+</button>
+      <button class="fab-dot-placeholder" id="fabPh3" onclick="window._openFabPicker(3)" title="Add to dock" data-i18n-title="fabPicker.addToDock">+</button>
+      <button class="fab-dot-placeholder" id="fabPh4" onclick="window._openFabPicker(4)" title="Add to dock" data-i18n-title="fabPicker.addToDock">+</button>
 
       <!-- Extra assignable FABs (hidden until assigned) -->
-      <button class="bb-extra-fab" id="statsExtraFab" onclick="openStatsModal()" title="Statistics" style="display:none;">📊</button>
-      <button class="bb-extra-fab" id="celebExtraFab" onclick="openCelebModal()" title="Famous people with bipolar" style="display:none;">⭐</button>
-      <button class="bb-extra-fab" id="goalsExtraFab" onclick="openGoalsModal()" title="My goals" style="display:none;">🎯</button>
-      <button class="bb-extra-fab" id="quicknoteExtraFab" onclick="openQuickNoteModal()" title="Quick note" style="display:none;">📝</button>
+      <button class="bb-extra-fab" id="statsExtraFab" onclick="openStatsModal()" title="Statistics" data-i18n-title="fab.picker.statsLabel" style="display:none;">📊</button>
+      <button class="bb-extra-fab" id="celebExtraFab" onclick="openCelebModal()" title="Famous people with bipolar" data-i18n-title="fab.celeb.tooltip" style="display:none;">⭐</button>
+      <button class="bb-extra-fab" id="goalsExtraFab" onclick="openGoalsModal()" title="My goals" data-i18n-title="fab.goals.title" style="display:none;">🎯</button>
+      <button class="bb-extra-fab" id="quicknoteExtraFab" onclick="openQuickNoteModal()" title="Quick note" data-i18n-title="quickNote.title" style="display:none;">📝</button>
 
       <!-- FAB picker sheet -->
       <div id="bbFabPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFabPicker();">
@@ -1408,7 +1414,7 @@
     const _wikiEl  = document.getElementById('bbCelebWiki');
     const _photoWrap = document.getElementById('bbCelebPhotoWrap');
     if (_nameEl)  _nameEl.textContent  = c.name;
-    if (_fieldEl) _fieldEl.textContent = c.field;
+    if (_fieldEl) _fieldEl.textContent = _celebFieldText(c);
     if (_wikiEl)  _wikiEl.href = 'https://en.wikipedia.org/wiki/' + c.wiki;
     if (_photoWrap) {
       _photoWrap.textContent = '⭐';
