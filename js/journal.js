@@ -2993,13 +2993,13 @@ window.addEventListener('pageshow', () => {
                 const _sqLabel = entry.sleepQuality === 'good' ? ' 😊' : entry.sleepQuality === 'bad' ? ' 😴' : entry.sleepQuality === 'unsure' ? ' 😐' : '';
                 return `<span style="white-space:nowrap">${_eLabel}</span><span style="white-space:nowrap">&nbsp;| 🛌 ${_sLabel}${_sqLabel}</span>${entry.steps != null ? `<span style="white-space:nowrap">&nbsp;| 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps / 1000) + 'k' : entry.steps}</span>` : ''}${_achStr}`;
               })()}</div>
-              ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+              ${entry.notes ? `<div class="entry-notes">${_esc(entry.notes)}</div>` : ''}
               ${entry.intention && entry.intention.trim() ? (() => {
                 const _intParts = entry.intention.trim().split(/\n?_{3,}\n/);
                 const _intMain = _intParts[0].trim();
                 const _intNotes = _intParts[1] ? _intParts[1].trim() : '';
-                return (_intMain ? `<div class="entry-notes" style="font-style:italic;color:#adb5bd;">🌅 ${_intMain}</div>` : '')
-                     + (_intNotes ? `<div class="entry-notes" style="font-size:0.82em;color:#adb5bd;white-space:pre-line;">${_intNotes}</div>` : '');
+                return (_intMain ? `<div class="entry-notes" style="font-style:italic;color:#adb5bd;">🌅 ${_esc(_intMain)}</div>` : '')
+                     + (_intNotes ? `<div class="entry-notes" style="font-size:0.82em;color:#adb5bd;white-space:pre-line;">${_esc(_intNotes)}</div>` : '');
               })() : ''}
             </div>
           `;
@@ -3489,7 +3489,7 @@ window.addEventListener('pageshow', () => {
           const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
-            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.notes}</div>`
+            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
             : '';
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${color};">
@@ -3546,7 +3546,7 @@ window.addEventListener('pageshow', () => {
           if (v) rows.push(`<div style="margin-bottom:6px;"><b>${k}:</b> ${v}</div>`);
         });
       }
-      if (entry.notes) rows.push(`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:0.9em;line-height:1.5;color:#495057;">${entry.notes}</div>`);
+      if (entry.notes) rows.push(`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:0.9em;line-height:1.5;color:#495057;">${_esc(entry.notes)}</div>`);
       return rows.join('');
     }
 
@@ -3595,7 +3595,7 @@ window.addEventListener('pageshow', () => {
           const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
-            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.notes}</div>`
+            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
             : '';
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${color};">
@@ -9645,7 +9645,7 @@ window.addEventListener('pageshow', () => {
         }
         html += `</div>`;
         if (entry.notes && entry.notes.trim()) {
-          html += `<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:10px;font-size:0.85em;color:#495057;font-style:italic;line-height:1.4;">"${entry.notes.trim()}"</div>`;
+          html += `<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:10px;font-size:0.85em;color:#495057;font-style:italic;line-height:1.4;">"${_esc(entry.notes.trim())}"</div>`;
         }
         {
           // Show only the clean intention (strip elaborate step notes encoded after ___\n)
