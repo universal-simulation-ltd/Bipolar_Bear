@@ -10354,6 +10354,16 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        // Unicode font (Helvetica garbled Polish and Chinese): Chinese when the app
+        // is in zh or anything printed has CJK in it.
+        {
+          let _pdfText = '';
+          try {
+            _pdfText = JSON.stringify(entries) + ['personalName','personalAddress','personalDiagnosis','personalEmergencyContact','personalNotes','currentMedList','customTrackingFields']
+              .map(k => localStorage.getItem(k) || '').join(' ');
+          } catch (_) {}
+          await BB.loadPdfFont(doc, _pdfText);
+        }
         const pageW = doc.internal.pageSize.width;
         const pageH = doc.internal.pageSize.height;
         const margin = 15;

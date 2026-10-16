@@ -1123,6 +1123,8 @@ function _sktMood(moodKey) {
       try { await BB.loadJsPdf(); } catch (e) { console.warn('jsPDF unavailable', e); return; }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      // Unicode font: Helvetica garbled Polish and Chinese goals and headings.
+      const _pdfFam = await BB.loadPdfFont(doc, goals.join(' '));
       const pageW = 297, pageH = 210;
       const margin = 14;
 
@@ -1132,7 +1134,7 @@ function _sktMood(moodKey) {
 
       // Logo text (no image available in PDF context)
       doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(_pdfFam, 'bold');
       doc.setFontSize(18);
       doc.text(_skt('sk.goals.pdfHeader'), pageW / 2, 18, { align: 'center' });
 
@@ -1148,7 +1150,7 @@ function _sktMood(moodKey) {
       doc.setFillColor(255, 240, 210);
       doc.rect(margin + labelColW, tableTop, tableWidth - labelColW, 10, 'F');
       doc.setTextColor(50, 50, 50);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(_pdfFam, 'bold');
       doc.setFontSize(9);
       goals.forEach((g, i) => {
         const x = margin + labelColW + i * dataColW + dataColW / 2;
@@ -1172,7 +1174,7 @@ function _sktMood(moodKey) {
         }
 
         // Month label
-        doc.setFont('helvetica', 'bold');
+        doc.setFont(_pdfFam, 'bold');
         doc.setFontSize(8);
         doc.setTextColor(80, 80, 80);
         doc.text(monthLabel, margin + 2, rowY + 8);
@@ -1207,7 +1209,7 @@ function _sktMood(moodKey) {
 
       // Motivational quote at bottom
       const quoteY = tableTop + 10 + 12 * rowH + 10;
-      doc.setFont('helvetica', 'italic');
+      doc.setFont(_pdfFam, 'italic');
       doc.setFontSize(8);
       doc.setTextColor(150, 100, 30);
       doc.text('"' + quote + '"', pageW / 2, quoteY, { align: 'center', maxWidth: tableWidth });
