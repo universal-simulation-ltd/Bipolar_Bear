@@ -61,7 +61,16 @@
     return (window.BB && window.BB.i18n && window.BB.i18n.getLang) ? window.BB.i18n.getLang() : 'en';
   }
 
+  // The source language named in the READER's language ("Englisch" for a
+  // German reader), so the label reads as one sentence. Falls back to the
+  // language's own name where Intl.DisplayNames is missing.
   function _langName(code) {
+    try {
+      var reader = _target() === 'zh' ? 'zh-Hans' : _target();
+      var dn = new Intl.DisplayNames([reader], { type: 'language' });
+      var n = dn.of(String(code || '').split('-')[0].toLowerCase());
+      if (n && n.toLowerCase() !== String(code || '').toLowerCase()) return n;
+    } catch (_) {}
     if (window.BB && window.BB.i18n && window.BB.i18n.languageName) {
       return window.BB.i18n.languageName(code);
     }

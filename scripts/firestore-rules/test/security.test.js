@@ -221,6 +221,70 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
         await assertFails(who.bb('u', 'kim@example.com').doc('bbAnonBanned/troll').delete());
         await assertSucceeds(admin.unban(who.admin(), 'Troll'));
       });
+
+      // 2026-10-16: bans are enforced by the rules, keyed on the moniker and
+      // (copied by the member's own app) on the board profile id, so a new
+      // moniker doesn't escape them. A ban with `until` is temporary.
+      const email = 'troll@example.com';
+      const pid = profileId(email);
+
+      it('a banned moniker cannot post or comment', async () => {
+        await seedVerified(env, { uid: 't1', email });
+        await assertSucceeds(admin.ban(who.admin(), 'Troll'));
+        await seed(env, { 'bbAnonPosts/p1': postDoc({ name: 'Sam' }) });
+        await assertFails(board.createPost(who.anon('t1'), { flavour: 'next', uid: 't1', name: 'Troll' }));
+        await assertFails(board.comment(who.anon('t1'), 'p1', { flavour: 'next', uid: 't1', name: 'Troll' }));
+        // Someone else is unaffected.
+        await assertSucceeds(board.createPost(who.anon('s1'), { flavour: 'next', uid: 's1', name: 'Sam' }));
+      });
+
+      it('a member can copy their own moniker ban onto their own profile only', async () => {
+        await seedVerified(env, { uid: 't1', email });
+        await seedVerified(env, { uid: 's1', email: 'sam@example.com' });
+        // Not while the moniker isn't banned.
+        await assertFails(board.copyBanToProfile(who.anon('t1'), pid, 'Troll'));
+        await assertSucceeds(admin.ban(who.admin(), 'Troll'));
+        // Not onto somebody else's profile.
+        await assertFails(board.copyBanToProfile(who.anon('s1'), pid, 'Troll'));
+        await assertFails(board.copyBanToProfile(who.anon('t1'), profileId('sam@example.com'), 'Troll'));
+        await assertSucceeds(board.copyBanToProfile(who.anon('t1'), pid, 'Troll'));
+        // And they can't take it down again.
+        await assertFails(who.anon('t1').doc(`bbAnonBanned/${pid}`).delete());
+      });
+
+      it('a profile ban survives a new moniker: no posts, replies, renames or new names', async () => {
+        await seedVerified(env, { uid: 't1', email });
+        await seed(env, {
+          [`bbAnonBanned/${pid}`]: { monika: 'Troll' },
+          'bbAnonPosts/p1': postDoc({ name: 'Sam' }),
+          'bbAnonPosts/mine': postDoc({ name: 'Troll', owner: ownerStamp('t1', 'bbAnonPosts/mine') }),
+        });
+        await assertFails(board.reserveMonika(who.anon('t1'), 'Fresh', { flavour: 'next', uid: 't1' }));
+        await assertFails(board.createPost(who.anon('t1'), { flavour: 'next', uid: 't1', name: 'Fresh' }));
+        await assertFails(board.comment(who.anon('t1'), 'p1', { flavour: 'next', uid: 't1', name: 'Fresh' }));
+        await assertFails(who.anon('t1').doc('bbAnonPosts/mine').update({ name: 'Fresh', initials: 'FR', grad1: '#64b5f6', grad2: '#1565c0' }));
+        // Another session with no link to that profile is unaffected.
+        await assertSucceeds(board.reserveMonika(who.anon('s1'), 'Other', { flavour: 'next', uid: 's1' }));
+      });
+
+      it('a temporary ban blocks until it ends, then anyone may take it down', async () => {
+        await seedVerified(env, { uid: 't1', email });
+        await assertSucceeds(admin.banFor(who.admin(), 'Troll', 7));
+        await assertFails(board.createPost(who.anon('t1'), { flavour: 'next', uid: 't1', name: 'Troll' }));
+        await assertFails(board.dropExpiredBan(who.anon('s1'), 'troll'));
+        // The copy may not be shorter than the profile ban already there.
+        await seed(env, { [`bbAnonBanned/${pid}`]: { monika: 'Troll', until: TS.fromMillis(Date.now() + 9 * DAY) } });
+        await assertFails(board.copyBanToProfile(who.anon('t1'), pid, 'Troll', TS.fromMillis(Date.now() + 2 * DAY)));
+        await assertSucceeds(board.copyBanToProfile(who.anon('t1'), pid, 'Troll'));
+        // Run out: posting works again and the documents can be cleared.
+        await seed(env, {
+          'bbAnonBanned/troll': { monika: 'Troll', until: TS.fromMillis(Date.now() - DAY) },
+          [`bbAnonBanned/${pid}`]: { monika: 'Troll', until: TS.fromMillis(Date.now() - DAY) },
+        });
+        await assertSucceeds(board.createPost(who.anon('t1'), { flavour: 'next', uid: 't1', name: 'Troll' }));
+        await assertSucceeds(board.dropExpiredBan(who.anon('s1'), 'troll'));
+        await assertSucceeds(board.dropExpiredBan(who.guest(), pid));
+      });
     });
 
     describe('posts', () => {

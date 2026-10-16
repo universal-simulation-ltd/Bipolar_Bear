@@ -943,6 +943,62 @@ exports.onAnonSuggestionCreated = onDocumentCreated(
   }
 );
 
+// ── Reports and SOS flags → email the team ───────────────────────────────────
+// The 🚨 Report and 🆘 SOS buttons write to bbAnonReports, which no client can
+// read. Until 2026-10-16 nothing else read it either, so a report or an SOS
+// reached nobody. This emails the team the way the crisis bear does: what kind
+// of flag, the reason a member picked, and the post (and comment) id with a
+// link that opens the thread. Never the post text or anyone's moniker: email
+// is not where a member's words should end up (privacy.html §6, Resend).
+const REPORT_REASONS = ['Unkind or rude', 'Misinformation', 'Spam', 'Other'];
+const BOARD_ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
+
+exports.onAnonReportCreated = onDocumentCreated(
+  { document: 'bbAnonReports/{reportId}', region: REGION, secrets: [RESEND_API_KEY] },
+  async (event) => {
+    const r = event.data && event.data.data();
+    if (!r) return;
+    const isSos   = r.type === 'sos';
+    const postId  = BOARD_ID_RE.test(String(r.postId || '')) ? String(r.postId) : '';
+    const comment = BOARD_ID_RE.test(String(r.commentId || '')) ? String(r.commentId) : '';
+    // Only the fixed reasons the sheet offers; anything else reads as Other.
+    const reason  = isSos ? '' : (REPORT_REASONS.includes(r.reason) ? r.reason : 'Other');
+    const what    = comment ? 'comment' : (postId ? 'post' : 'member');
+    const link    = postId
+      ? `https://bipolaranonymous.app/anonymous.html?post=${encodeURIComponent(postId)}`
+      : '';
+
+    const subject = isSos
+      ? `[Bipolar Anonymous] 🆘 SOS flag${postId ? ` (post ${postId})` : ''}`
+      : `[Bipolar Anonymous] 🚨 ${what === 'comment' ? 'Comment' : 'Post'} reported: ${reason}${postId ? ` (post ${postId})` : ''}`;
+    const lines = [
+      isSos
+        ? `A member is worried about someone on the board and sent an SOS flag. Please check in on them.`
+        : `A member reported a ${what} on the board. Please review it within 24 hours.`,
+      '',
+      `Type: ${isSos ? 'SOS' : 'Report'}`,
+    ];
+    if (reason)  lines.push(`Reason: ${reason}`);
+    lines.push(`Post: ${postId || 'not given (sent from an older app build)'}`);
+    if (comment) lines.push(`Comment: ${comment}`);
+    if (link)    lines.push(`Moderate: ${link}`);
+    lines.push(`Report id: ${event.params.reportId}`);
+
+    const resend = new Resend(RESEND_API_KEY.value());
+    const { error } = await resend.emails.send({
+      from:    FROM_ADDRESS,
+      to:      FEEDBACK_TO,
+      subject,
+      text:    lines.join('\n') + '\n',
+    });
+    if (error) {
+      console.error('[onAnonReportCreated] Resend error:', JSON.stringify(error));
+      return;
+    }
+    console.log(`[onAnonReportCreated] emailed ${isSos ? 'sos' : 'report'} (${event.params.reportId})`);
+  }
+);
+
 // ── backfillUserCounts ───────────────────────────────────────────────────────
 // One-shot (but safely repeatable) reconciliation of the two community
 // counters with the accounts that already exist.

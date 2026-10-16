@@ -31,9 +31,8 @@
 const YELLOW      = 'var(--brand-secondary)';
 const YELLOW_DARK = '#c49e00';
 const YELLOW_LT   = '#ffe566';
-// How long a post/reply lives before cleanOldPosts() removes it. Also the cadence
-// the example (seed) posts rotate on, and the number surfaced in the feed footer,
-// so all three stay in lockstep.
+// How long a post/reply lives before cleanOldPosts() removes it, and the number
+// surfaced in the feed footer, so the two stay in lockstep.
 const POST_RETENTION_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ADMIN_EMAIL = 'inbox@jamesmarkey.co.uk';
@@ -77,6 +76,8 @@ const THREAD_SEEN_KEY = 'Anon_threadSeen';
 let threadSeen = _loadThreadSeen();
 let localPosts      = [];
 let sosTargetName   = '';
+let sosTargetPost    = ''; // post id the SOS is about (the team's email links to it)
+let sosTargetComment = ''; // comment id, when the SOS came from a reply
 let reportTargetId  = '';
 let muteTargetName  = '';
 let adminDeleteId    = '';
@@ -166,7 +167,8 @@ const _BLOCKED_WORDS = [
   'nigger', 'nigga', 'faggot', 'tranny', 'chink', 'spic', 'kike',
   'wetback', 'coon', 'gook', 'paki', 'retard', 'retarded',
   // Explicit sexual / harassment
-  'cunt', 'whore', 'slut', 'rape', 'rapist', 'cum', 'blowjob', 'dildo',
+  // Not "rape" or "rapist": survivors need to be able to say what happened.
+  'cunt', 'whore', 'slut', 'cum', 'blowjob', 'dildo',
   'porn', 'porno', 'pedo', 'pedophile', 'paedophile', 'molest',
 ];
 const _BLOCKED_SET = new Set(_BLOCKED_WORDS);
@@ -204,17 +206,84 @@ function findBlockedTerm(text) {
   return null;
 }
 
+// A moniker is refused when it carries a blocked word (also inside a
+// CamelCase name: "SlutQueen") or passes for the team: Admin, Moderator,
+// Bipolar Bear, Support, Staff, in any spelling that reads the same
+// (leetspeak, accents, Cyrillic or Greek lookalikes, separators).
+const _LOOKALIKE = { 'а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x','і':'i','ӏ':'l','ԁ':'d','м':'m','т':'t','в':'b','н':'h','к':'k',
+  'α':'a','ε':'e','ο':'o','ρ':'p','ι':'i','ν':'v','β':'b','μ':'m','τ':'t','κ':'k' };
+function _foldName(s, oneIs) {
+  return String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/./g, ch => _LOOKALIKE[ch] || ch)
+    .replace(/[@4]/g, 'a').replace(/0/g, 'o').replace(/[1!|]/g, oneIs).replace(/3/g, 'e')
+    .replace(/[5$]/g, 's').replace(/7/g, 't')
+    .replace(/[^a-z]/g, '');
+}
+// Anywhere in the name / at its start or end ("BBAdmin", not "Madmind") /
+// the whole name.
+const _TEAM_PARTS = ['moderat', 'bipolarbe', 'bipolarbr'];
+const _TEAM_EDGES = ['admin', 'official'];
+const _TEAM_EXACT = ['mod', 'mods', 'themod', 'themods', 'bbmod', 'team', 'bbteam', 'theteam', 'staff', 'bbstaff',
+  'support', 'bbsupport', 'bbadmn', 'bipolarb', 'bpbear', 'helpdesk'];
+function monikaRefused(name) {
+  const spaced = String(name || '').replace(/([a-z])([A-Z])/g, '$1 $2');
+  if (findBlockedTerm(spaced) || findBlockedTerm(name)) return true;
+  for (const oneIs of ['i', 'l']) {
+    const f = _foldName(name, oneIs);
+    if (!f) continue;
+    if (_TEAM_EXACT.includes(f) || _TEAM_PARTS.some(w => f.includes(w))
+        || _TEAM_EDGES.some(w => f.startsWith(w) || f.endsWith(w))) return true;
+    if (_BLOCKED_WORDS.some(w => w.length >= 5 && f.includes(w))) return true;
+  }
+  return false;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Banned users (Apple UGC guideline 1.2 — "eject the user")
 // ─────────────────────────────────────────────────────────────────
 // Populated from the bbAnonBanned collection via a live listener so an admin
 // ban takes effect on every device: banned monikas' posts and comments are
-// hidden everywhere, and the banned user is blocked from composing. Monikas
-// are stored lowercased (doc id) for case-insensitive matching.
-const bannedUsers = new Set();
+// hidden everywhere, and the banned user is blocked from composing.
+//
+// Two kinds of document, both with an optional `until` (a temporary ban; no
+// `until` is permanent — a zero-tolerance breach):
+//   bbAnonBanned/{lower-case moniker}  written by the admin's Ban button
+//   bbAnonBanned/{p2_ profile id}      the same ban, keyed on the member's
+//       board profile (_syncMyBan): the banned member's own app copies its
+//       moniker ban there, so renaming doesn't escape it. The Firestore rules
+//       check both on every post, comment and rename.
+const bannedUsers    = new Map(); // lower-case moniker → { until: ms | null }
+const bannedProfiles = new Map(); // p2_ profile id    → { until: ms | null }
 let unsubBanned = null;
+let _myPid = null; // this member's board profile id, once known
+function _banActive(b) { return !!b && (!b.until || b.until > Date.now()); }
 function isBanned(name) {
-  return !!name && bannedUsers.has(String(name).toLowerCase());
+  return !!name && _banActive(bannedUsers.get(String(name).toLowerCase()));
+}
+// The ban on this member (by moniker or by profile), or null. A permanent ban
+// wins over a temporary one; of two temporary ones, the later end.
+function _myBan() {
+  const bans = [profile.monika && bannedUsers.get(profile.monika.toLowerCase()),
+                _myPid && bannedProfiles.get(_myPid)].filter(_banActive);
+  if (!bans.length) return null;
+  if (bans.some(b => !b.until)) return { until: null };
+  return { until: Math.max(...bans.map(b => b.until)) };
+}
+function isMeBanned() { return !!_myBan(); }
+function _bannedMessage() {
+  const b = _myBan();
+  return b && b.until ? _wt('anon.mod.bannedUntil', { date: _fmtDate(b.until) }) : _wt('anon.toast.accessRevoked');
+}
+// A date in the app's language ("16 October 2026" / "16. Oktober 2026").
+function _uiLocale() {
+  const l = (window.BB && BB.i18n) ? BB.i18n.getLang() : 'en';
+  return l === 'zh' ? 'zh-Hans' : (l === 'en' ? 'en-GB' : l);
+}
+function _fmtDate(ms, opts) {
+  const d = new Date(ms);
+  if (isNaN(d.getTime())) return '';
+  try { return d.toLocaleDateString(_uiLocale(), opts || { day: 'numeric', month: 'long', year: 'numeric' }); }
+  catch (_) { return d.toISOString().slice(0, 10); }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -489,10 +558,15 @@ function renderMutedList() {
 }
 document.getElementById('about-close').addEventListener('click', () => closeOv('ov-about'));
 
-// Stamp the shared web app version (from brand-config.js) into the About footer.
+// The version in the About footer. Inside Bipolar Bear (web or app) that is
+// the shared web version from brand-config.js. The Bipolar Anonymous app ships
+// under its own number, stamped in by scripts/build-anonymous.js, and the
+// bipolaranonymous.app website has none: better no version than Bear's.
 (function () {
   const el = document.getElementById('about-version');
-  if (el && window._APP_VERSION) el.textContent = 'v' + window._APP_VERSION;
+  if (!el) return;
+  const v = _isAnonymousApp ? window._ANON_APP_VERSION : window._APP_VERSION;
+  el.textContent = v ? 'v' + v : '';
 })();
 
 // _goHome() is called from inline onclick attributes on onboarding screens
@@ -541,10 +615,16 @@ function _updateBoardLogo() {
   _fitBoardLogo();
 }
 
-// Close on backdrop tap
-['ov-compose','ov-firstpost','ov-sos','ov-report','ov-mute','ov-e2ee','ov-monika','ov-self-delete','ov-admin-delete','ov-admin-ban','ov-anon-delete','ov-terms','ov-med','ov-stable','ov-about'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => {
-    if (e.target === document.getElementById(id)) closeOv(id);
+// Close on backdrop tap — every sheet. A few close through their own
+// dismiss button, so what that button does (record a "Not now", clear a
+// report target) happens too. The thread is handled below.
+const _BACKDROP_VIA = { 'ov-notif-ask': 'notif-ask-no', 'ov-report': 'report-cancel', 'ov-notifs': 'notif-close', 'ov-translate': 'xlate-close' };
+document.querySelectorAll('.overlay').forEach(ov => {
+  if (ov.id === 'ov-thread') return;
+  ov.addEventListener('click', e => {
+    if (e.target !== ov) return;
+    const via = _BACKDROP_VIA[ov.id] && document.getElementById(_BACKDROP_VIA[ov.id]);
+    if (via) via.click(); else closeOv(ov.id);
   });
 });
 // Thread overlay needs special handling to also unsubscribe the comments listener
@@ -557,7 +637,9 @@ document.getElementById('ov-thread').addEventListener('click', e => {
 // own button (backdrop-tap is handled by the array above).
 ['open-terms-link','open-terms-link-bb','about-terms-link'].forEach(id => {
   const el = document.getElementById(id);
-  if (el) el.addEventListener('click', () => openOv('ov-terms'));
+  // The sign-up links are <a href="#"> inside the checkbox's label: keep the
+  // tap from following the link (or ticking the box).
+  if (el) el.addEventListener('click', e => { e.preventDefault(); openOv('ov-terms'); });
 });
 document.getElementById('terms-close').addEventListener('click', () => closeOv('ov-terms'));
 
@@ -565,6 +647,22 @@ document.getElementById('terms-close').addEventListener('click', () => closeOv('
 // Utilities
 // ─────────────────────────────────────────────────────────────────
 function initials(name) { return (name || '??').slice(0, 2).toUpperCase(); }
+
+// Initials colour for an avatar gradient: dark on the light gold one (white
+// there is under 2:1), white on every other preset, as before.
+function _avInk(g1, g2) {
+  const lum = h => {
+    const m = /^#([0-9a-f]{6})$/i.exec(String(h || '').trim());
+    if (!m) return null;
+    return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
+      .map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+      .reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+  };
+  const a = lum(g1), b = lum(g2);
+  if (a == null || b == null) return '#fff';
+  const contrast = 1.05 / ((a + b) / 2 + 0.05);
+  return contrast < 2 ? '#1a1500' : '#fff';
+}
 
 function esc(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -634,7 +732,8 @@ function _birthdayCompact(iso) {
   return years > 0 ? `${years}y ${rem}d` : `${days}d`;
 }
 
-// Verbose "1 year, 23 days old" used in the Monika overlay.
+// Verbose "1 year, 23 days old" used in the Monika overlay, in the app's
+// language (Intl's own unit names: "1 Jahr, 23 Tage alt", "1年23天").
 function _birthdayVerbose(iso) {
   if (!iso) return '';
   const ms = Date.now() - new Date(iso).getTime();
@@ -642,9 +741,16 @@ function _birthdayVerbose(iso) {
   const days = Math.floor(ms / 86400000);
   const years = Math.floor(days / 365);
   const rem = days - years * 365;
-  const yPart = years === 1 ? '1 year' : `${years} years`;
-  const dPart = rem === 1 ? '1 day'   : `${rem} days`;
-  return years > 0 ? `${yPart}, ${dPart} old` : `${dPart} old`;
+  const unit = (n, u) => {
+    try { return new Intl.NumberFormat(_uiLocale(), { style: 'unit', unit: u, unitDisplay: 'long' }).format(n); }
+    catch (_) { return `${n} ${u}${n === 1 ? '' : 's'}`; }
+  };
+  let age = unit(rem, 'day');
+  if (years > 0) {
+    try { age = new Intl.ListFormat(_uiLocale(), { style: 'short', type: 'unit' }).format([unit(years, 'year'), age]); }
+    catch (_) { age = unit(years, 'year') + ', ' + age; }
+  }
+  return _wt('anon.misc.ageOld', { age });
 }
 
 // Localised "10 May 2026" for the Monika overlay row.
@@ -653,7 +759,7 @@ function _birthdayDateLabel(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
   try {
-    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+    return d.toLocaleDateString(_uiLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   } catch (_) {
     return d.toISOString().slice(0, 10);
   }
@@ -829,7 +935,7 @@ function openSaved() {
       const live = !!_findPost(s.id);
       return `<div class="saved-card" data-sid="${esc(s.id)}">
         <div class="saved-head">
-          <div class="post-av-circle" style="background:linear-gradient(135deg,${safeColor(s.grad1, YELLOW_LT)},${safeColor(s.grad2, YELLOW_DARK)});">${esc(s.initials || '')}</div>
+          <div class="post-av-circle" style="background:linear-gradient(135deg,${safeColor(s.grad1, YELLOW_LT)},${safeColor(s.grad2, YELLOW_DARK)});color:${_avInk(safeColor(s.grad1, YELLOW_LT), safeColor(s.grad2, YELLOW_DARK))};">${esc(s.initials || '')}</div>
           <div class="saved-name">[${esc(s.name)}]</div>
           <div class="saved-when">${esc(timeAgo(new Date(num(s.ts, Date.now()))))}</div>
         </div>
@@ -1426,6 +1532,19 @@ function setupAgree() {
 // ─────────────────────────────────────────────────────────────────
 // SCREEN: Verify
 // ─────────────────────────────────────────────────────────────────
+// The message for a send-code / verify failure that has no specific case:
+// one of ours (bbKey), the network, or the fallback. Raw Firebase messages
+// ("internal", "Failed to fetch") are never shown.
+function _codeErrorKey(err, fallbackKey) {
+  if (err && err.bbKey) return err.bbKey;
+  const code = (err && err.code) || '';
+  if (navigator.onLine === false || code === 'functions/unavailable'
+      || code === 'functions/deadline-exceeded' || /network|fetch/i.test((err && err.message) || '')) {
+    return 'anon.authErr.offline';
+  }
+  return fallbackKey;
+}
+
 function setupVerify() {
   const emailIn   = document.getElementById('email-input');
   const sendBtn   = document.getElementById('send-code-btn');
@@ -1455,7 +1574,7 @@ function setupVerify() {
 
   // Ensure email field is editable and wired for validation
   emailIn.readOnly    = false;
-  emailIn.placeholder = 'your@email.com';
+  emailIn.placeholder = _wt('anon.misc.emailPlaceholder');
   emailIn.style.background = '';
   emailIn.style.color      = '';
   emailIn.style.cursor     = '';
@@ -1516,7 +1635,7 @@ function setupVerify() {
         return;
       }
       if (!window._anonSendCode) {
-        throw new Error(_wt('anon.verifyMsg.serviceUnavailable'));
+        throw Object.assign(new Error('no functions'), { bbKey: 'anon.verifyMsg.serviceUnavailable' });
       }
       // Sign in first: verifyAnonCode links the verified address to this
       // session, which is what lets it read and save the profile below.
@@ -1539,7 +1658,8 @@ function setupVerify() {
       } else if (errCode === 'functions/invalid-argument') {
         showError(_wt('anon.verifyMsg.invalidEmail'));
       } else {
-        showError(err.message || _wt('anon.verifyMsg.couldNotSend'));
+        // Never Firebase's own text ("internal"): it's English and says nothing.
+        showError(_wt(_codeErrorKey(err, 'anon.verifyMsg.couldNotSend')));
       }
     }
   }
@@ -1591,7 +1711,7 @@ function setupVerify() {
       if (_pendingEmail.toLowerCase() === REVIEW_EMAIL) {
         // Reviewer bypass: validate the fixed demo code locally, then make sure
         // an anonymous auth session exists so the reviewer can post and comment.
-        if (code !== REVIEW_CODE) throw new Error(_wt('anon.verifyMsg.incorrectDemo'));
+        if (code !== REVIEW_CODE) throw Object.assign(new Error('demo code'), { bbKey: 'anon.verifyMsg.incorrectDemo' });
         await _ensureAuthSession();
       } else {
         await _ensureAuthSession();
@@ -1609,14 +1729,15 @@ function setupVerify() {
       BB.storage.set('Anon_agreedTerms', 'true');
       BB.storage.set('Anon_agreedTermsAt', new Date().toISOString());
 
-      // If the user is signed in via the BipolarBear app, link the verified
-      // anon email to their user account so it can be used for future
-      // recovery / cross-device restore, then pull any existing anon profile
-      // they've already set up against this account (uid lookup beats
-      // email-hash lookup).
+      // If the user is signed in via the BipolarBear app, pull any existing
+      // anon profile they've already set up against this account (uid lookup
+      // beats the profile-id lookup).
       if (_bbUser && db) {
+        // Nothing reads userSettings.anonEmail, and it was the address in
+        // plaintext: stop writing it, and take any old one away. The board
+        // profile is found by its p2_ id (_anonProfileId) instead.
         db.collection('userSettings').doc(_bbUser.uid)
-          .set({ anonEmail: _pendingEmail }, { merge: true }).catch(() => {});
+          .set({ anonEmail: firebase.firestore.FieldValue.delete() }, { merge: true }).catch(() => {});
         await _bbRestoreProfile(_bbUser.uid);
       }
       // Standalone path: email-hash lookup. _anonRestoreProfile no-ops when
@@ -1663,8 +1784,10 @@ function setupVerify() {
       verifyBtn.textContent = origText;
       const errCode = err.code || '';
       if (errCode === 'functions/unauthenticated') {
-        // Wrong code — message already includes "X attempts remaining"
-        showError(err.message || _wt('anon.verifyMsg.incorrectCode'));
+        // Wrong code. The server's (English) message carries "N attempts
+        // remaining"; say it in the app's language.
+        const left = /(\d+)\s+attempts?\s+remaining/i.exec(err.message || '');
+        showError(left ? _wt('anon.authErr.wrongCodeLeft', { n: left[1] }) : _wt('anon.verifyMsg.incorrectCode'));
         resetBoxes();
         boxes[0].focus();
       } else if (errCode === 'functions/deadline-exceeded') {
@@ -1678,7 +1801,7 @@ function setupVerify() {
         showError(_wt('anon.verifyMsg.sessionNotFound'));
         goToEmailStep();
       } else {
-        showError(err.message || _wt('anon.verifyMsg.verifyFailed'));
+        showError(_wt(_codeErrorKey(err, 'anon.verifyMsg.verifyFailed')));
         resetBoxes();
         boxes[0].focus();
       }
@@ -1736,6 +1859,11 @@ function setupMonika() {
     const monika = input.value.trim();
     if (monika.length < 2) return;
     const errEl = document.getElementById('monika-error');
+    if (monikaRefused(monika)) {
+      errEl.textContent   = _wt('anon.mod.monikaRefused');
+      errEl.style.display = 'block';
+      return;
+    }
     btn.disabled = true;
     btn.textContent = _wt('anon.ui.checking');
     try {
@@ -2370,13 +2498,21 @@ function _fitBoardLogo() {
   logo.classList.remove('logo-iconly', 'logo-backonly');
   // Board not laid out yet (screen hidden) — nothing to measure.
   if (!nameEl.clientWidth && !nameEl.scrollWidth) return;
-  // Wordmark fits — nothing to drop.
-  if (nameEl.scrollWidth <= nameEl.clientWidth + 1) return;
+  // Wordmark fits — nothing to drop. Measured to the sub-pixel: scrollWidth
+  // rounds, and a word 0.3px too wide still gets its ellipsis ("Anonymo…"
+  // in Polish, where the Help pill is wider).
+  const overflows = el => {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    return r.getBoundingClientRect().width > el.getBoundingClientRect().width + 0.01
+      || el.scrollWidth > el.clientWidth;
+  };
+  if (!overflows(nameEl)) return;
   // Back-to-BipolarBear mode: the "← Go back" line is the point of the logo,
   // so drop the wordmark first and only go icon-only if that truncates too.
   if (logo.classList.contains('logo-back') && subEl) {
     logo.classList.add('logo-backonly');
-    if (subEl.scrollWidth <= subEl.clientWidth + 1) return;
+    if (!overflows(subEl)) return;
     logo.classList.remove('logo-backonly');
   }
   logo.classList.add('logo-iconly');
@@ -2441,13 +2577,50 @@ function listenBanned() {
   unsubBanned = db.collection(BB_BRAND.collections.banned)
     .onSnapshot(snap => {
       bannedUsers.clear();
+      bannedProfiles.clear();
       snap.docs.forEach(d => {
-        const m = (d.data().monika || d.id || '').toLowerCase();
-        if (m) bannedUsers.add(m);
+        const data = d.data() || {};
+        const until = data.until && data.until.toMillis ? data.until.toMillis() : null;
+        // A temporary ban that ran out a while ago: take it down, so older
+        // builds (which don't read `until`) stop treating it as a ban too.
+        if (until && until < Date.now() - 60 * 1000) { d.ref.delete().catch(() => {}); return; }
+        if (/^p2_[0-9a-f]{64}$/.test(d.id)) { bannedProfiles.set(d.id, { until }); return; }
+        const m = (data.monika || d.id || '').toLowerCase();
+        if (m) bannedUsers.set(m, { until });
       });
       _rerenderCurrentTab();
       _applyComposeBanGate();
+      _syncMyBan();
     }, err => console.warn('[Anonymous] banned listener error', err));
+  // The profile id keys the ban that survives a rename.
+  const email = (_bbUser && _bbUser.email) || BB.storage.get('Anon_email') || '';
+  if (email && !_myPid) {
+    _anonProfileId(email).then(id => {
+      if (!id) return;
+      _myPid = id;
+      _applyComposeBanGate();
+      _syncMyBan();
+    }).catch(() => {});
+  }
+}
+
+// A ban on this member's moniker is copied onto their board profile id, so a
+// new moniker is still banned. The rules let a member write only their own
+// profile's ban, and only while their moniker is banned.
+let _banSyncing = false;
+function _syncMyBan() {
+  if (!db || !_myPid || _banSyncing || !profile.monika) return;
+  const byName = bannedUsers.get(profile.monika.toLowerCase());
+  if (!_banActive(byName)) return;
+  const byPid = bannedProfiles.get(_myPid);
+  if (_banActive(byPid) && (!byPid.until || (byName.until && byPid.until >= byName.until))) return;
+  _banSyncing = true;
+  const doc = { monika: profile.monika, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+  if (byName.until) doc.until = firebase.firestore.Timestamp.fromMillis(byName.until);
+  _ensureAuthSession()
+    .then(() => db.collection(BB_BRAND.collections.banned).doc(_myPid).set(doc))
+    .catch(e => console.warn('[Anonymous] ban copy refused', e && e.code))
+    .finally(() => { _banSyncing = false; });
 }
 
 // Visually disable compose for a banned user. The hard gate lives in the
@@ -2456,7 +2629,7 @@ function listenBanned() {
 function _applyComposeBanGate() {
   const fab = document.getElementById('fab-compose');
   if (!fab) return;
-  const banned = isBanned(profile.monika);
+  const banned = isMeBanned();
   fab.style.filter  = banned ? 'grayscale(1)' : '';
   fab.style.opacity = banned ? '0.45' : '';
   fab.title = banned ? _wt('anon.modbtn.postingDisabled') : _wt('anon.tips.compose');
@@ -2481,7 +2654,7 @@ function unseenPostCount() {
 function _postIsUnseen(p, tab) {
   const seen = lastSeenMs[tab];
   const mine = profile.monika;
-  if (p.isSystem || p.isSeed || p.isAnnouncement || p.deleted || p.isTopic) return false;
+  if (p.isSystem || p.isAnnouncement || p.deleted || p.isTopic) return false;
   // Unread replies count on any post, your own included — that's how you
   // hear that somebody answered you.
   if (threadSeen[p.id]) {
@@ -2559,7 +2732,7 @@ function _saveThreadSeen() {
 // (marked read against the real id once the write lands).
 function _isThreadable(p) {
   return !!(p && p.id && !String(p.id).startsWith('local-')
-    && !p.isSeed && !p.isSystem && !p.isAnnouncement && !p.isFooter && !p.deleted);
+    && !p.isSystem && !p.isAnnouncement && !p.isFooter && !p.deleted);
 }
 
 function threadHasUnread(p) {
@@ -3929,35 +4102,6 @@ function todaySystemPost() {
   return { id: 'sys_daily', isSystem: true, icon, text };
 }
 
-// Example posts shown at the foot of the General feed so the board never looks
-// empty. Purely local demo content (isSeed: no likes/comments/reports persist).
-// Two are shown at a time and the pair rotates every POST_RETENTION_DAYS so the
-// examples stay fresh — the same cadence real posts age out on. Keep entries
-// warm, supportive and non-clinical.
-const SEED_POOL = [
-  { name: 'SunnyDaze',  streak: 42, likes: 5, med: 'Lithium',     grad1: YELLOW_LT, grad2: YELLOW_DARK, initials: 'SD', textKey: 'anon.seed.s1' },
-  { name: 'NightOwl',   streak: 7,  likes: 3, med: '',            grad1: '#64b5f6', grad2: '#1565c0',   initials: 'NO', textKey: 'anon.seed.s2' },
-  { name: 'QuietTide',  streak: 15, likes: 4, med: '',            grad1: '#81c784', grad2: '#2e7d32',   initials: 'QT', textKey: 'anon.seed.s3' },
-  { name: 'PaperMoon',  streak: 63, likes: 8, med: 'Lamotrigine', grad1: '#ba68c8', grad2: '#6a1b9a',   initials: 'PM', textKey: 'anon.seed.s4' },
-  { name: 'RiverStone', streak: 21, likes: 6, med: '',            grad1: '#4dd0e1', grad2: '#00838f',   initials: 'RS', textKey: 'anon.seed.s5' },
-  { name: 'EmberGlow',  streak: 3,  likes: 2, med: 'Quetiapine',  grad1: '#ff8a65', grad2: '#d84315',   initials: 'EG', textKey: 'anon.seed.s6' },
-  { name: 'MapleHush',  streak: 30, likes: 7, med: '',            grad1: '#f06292', grad2: '#ad1457',   initials: 'MH', textKey: 'anon.seed.s7' },
-  { name: 'DriftWood',  streak: 9,  likes: 5, med: '',            grad1: '#9575cd', grad2: '#4527a0',   initials: 'DW', textKey: 'anon.seed.s8' },
-];
-
-function seedPosts() {
-  // Deterministic per-device from the clock — every POST_RETENTION_DAYS the
-  // window advances and the next consecutive pair shows. SEED_POOL has an even
-  // length so pairs never straddle the wrap. `text` is resolved from textKey at
-  // render time so the sample posts follow the active UI language.
-  const period = Math.floor(Date.now() / (POST_RETENTION_DAYS * DAY_MS));
-  const pick = i => SEED_POOL[(period * 2 + i) % SEED_POOL.length];
-  return [0, 1].map(i => {
-    const s = pick(i);
-    return { id: 'seed_' + (i + 1), isSeed: true, tab: 'general', timestamp: null, ...s, text: _wt(s.textKey) };
-  });
-}
-
 // A quiet note at the very bottom of the General feed telling users their posts
 // aren't permanent. isFooter is rendered by renderFeedFooter (see renderPosts).
 function feedFooter() {
@@ -3965,7 +4109,7 @@ function feedFooter() {
 }
 
 function assembleGeneralPosts(realPosts) {
-  return [todaySystemPost(), ...sortPosts(dedupeTopics(realPosts)), ...seedPosts(), feedFooter()];
+  return [todaySystemPost(), ...sortPosts(dedupeTopics(realPosts)), feedFooter()];
 }
 
 // Defensive: only ever surface ONE "Today's topic". Firestore can transiently
@@ -4275,8 +4419,58 @@ async function maybePostDailyTopic() {
   }
 }
 
+// ── Can we reach the board? ──
+// The feed listeners report whether a snapshot came from the server or only
+// from the device's cache; an error kills a listener. Cache-only for more than
+// a few seconds, the phone saying it's offline, or a dead listener shows
+// "Can't reach the board right now" with a retry, and writing is paused:
+// a post or reply written then would sit in a queue while the sheet said it
+// had gone.
+let _boardOffline = false;
+let _cacheOnlyTimer = null;
+function _setBoardOffline(off) {
+  if (off) { clearTimeout(_cacheOnlyTimer); _cacheOnlyTimer = null; }
+  if (_boardOffline === off) return;
+  _boardOffline = off;
+  const bar = document.getElementById('board-offline');
+  if (bar) bar.style.display = off ? '' : 'none';
+  const fab = document.getElementById('fab-compose');
+  if (fab) fab.classList.toggle('is-offline', off);
+}
+function _noteSnapshotSource(fromCache) {
+  if (!fromCache) {
+    clearTimeout(_cacheOnlyTimer); _cacheOnlyTimer = null;
+    _setBoardOffline(false);
+    return;
+  }
+  if (navigator.onLine === false) { _setBoardOffline(true); return; }
+  if (!_boardOffline && !_cacheOnlyTimer) {
+    _cacheOnlyTimer = setTimeout(() => { _cacheOnlyTimer = null; _setBoardOffline(true); }, 5000);
+  }
+}
+// Start the board's listeners again (the Try again button, coming back online).
+function _reconnectBoard() {
+  if (!db) return;
+  listenPosts({ keep: true });
+  listenBanned();
+  listenSuggestions();
+}
+window.addEventListener('offline', () => { if (_boardSetupDone) _setBoardOffline(true); });
+window.addEventListener('online',  () => { if (_boardSetupDone) _reconnectBoard(); });
+// True (and says so) when a write shouldn't be attempted right now.
+function _writeBlockedOffline() {
+  if (!_boardOffline) return false;
+  showHint(_wt('anon.net.composeOffline'));
+  return true;
+}
+
 // opts.keep (pull-to-refresh): leave the current feed on screen until the new
 // snapshot replaces it, rather than blanking it to skeletons.
+document.getElementById('board-retry').addEventListener('click', () => {
+  _haptic();
+  _reconnectBoard();
+});
+
 function listenPosts(opts) {
   const keep = !!(opts && opts.keep);
   stopAllListeners();
@@ -4295,11 +4489,20 @@ function listenPosts(opts) {
 
   // Run one listener per tab simultaneously so badge counts stay live
   // even when the user is looking at the other tab.
+  const rendered = {};
   ['announcements', 'general'].forEach(tab => {
     unsubTabListeners[tab] = db.collection(BB_BRAND.collections.posts)
       .where('tab', '==', tab)
       .limit(60)
-      .onSnapshot(snap => {
+      .onSnapshot({ includeMetadataChanges: true }, snap => {
+        if (tab === currentTab) _noteSnapshotSource(snap.metadata.fromCache);
+        // A snapshot that only says the data is now confirmed by the server
+        // (or only cached) changes nothing on screen.
+        if (snap.docChanges().length === 0 && rendered[tab]) {
+          if (tab === currentTab && _ptrDone) _ptrDone();
+          return;
+        }
+        rendered[tab] = true;
         postsByTab[tab] = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }));
         if (tab === 'general') maybePostDailyTopic(); // rotate the daily topic if due
         if (tab === currentTab) {
@@ -4312,6 +4515,7 @@ function listenPosts(opts) {
         renderTabBadges();
       }, err => {
         console.error('[Anonymous] posts error', tab, err);
+        _setBoardOffline(true);
         if (tab === currentTab) {
           renderPosts(currentTab === 'general'
             ? assembleGeneralPosts(localPosts)
@@ -4459,7 +4663,7 @@ function renderSuggestion(x) {
     <div class="sugg-flag">${esc(label)}</div>
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div><div class="post-name">[${esc(x.name || '')}]</div></div>
       </div>
       <span class="post-time">${x.timestamp ? timeAgo(x.timestamp) : _wt('anon.time.now')}</span>
@@ -4597,7 +4801,7 @@ function _scrollThreadToEnd() {
 
 async function openThread(postId) {
   const post = localPosts.find(p => p.id === postId);
-  if (!post || post.isSeed) return;
+  if (!post) return;
   commentTargetId = postId;
   lastCommentAuthor = ''; // reset until the listener reports the thread's newest comment
   _threadStickToBottom = true; // open on the newest comment, not the top of the thread
@@ -4682,7 +4886,7 @@ function deleteComment(parentId, commentId, opts) {
       commentCount: firebase.firestore.FieldValue.increment(-1),
     }).catch(() => {}))
     .catch(err => console.error('[Thread] comment delete failed', err));
-  showHint(admin ? 'Comment deleted 🛡️' : 'Comment removed ✓');
+  showHint(_wt(admin ? 'anon.misc.commentDeleted' : 'anon.misc.commentRemoved'));
 }
 
 // The self-delete / admin-delete overlays are shared between feed posts and
@@ -4759,7 +4963,7 @@ function renderThreadHeader(p) {
     return `<div class="thread-orig-post">
       <div class="post-header">
         <div class="post-avatar">
-          <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});">${esc(a.initials)}</div>
+          <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
           <div>
             <div class="post-name">[${esc(a.name)}]</div>
             ${_chipsHtml({ streak: a.streak, label: '💬 ' + label })}
@@ -4780,7 +4984,7 @@ function renderThreadHeader(p) {
   return `<div class="thread-orig-post">
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div>
           <div class="post-name">${authorLabel(p)}</div>
           ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, med: showMed ? p.med : '' })}
@@ -4851,7 +5055,7 @@ function renderComment(c) {
   return `<div class="comment-card" data-cid="${esc(c.id)}" data-author="${esc(c.name)}">
     ${isMine ? '' : '<span class="swipe-cue">↩️</span>'}
     <div class="comment-header">
-      <div class="post-av-circle" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+      <div class="post-av-circle" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
       <div style="flex:1;min-width:0;">
         <span class="post-name" style="font-size:12px;">${authorLabel(c)}</span>
         <span style="font-size:11px;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
@@ -4900,8 +5104,10 @@ function setupThread() {
       openOv('ov-mute');
     } else if ('csos' in d) {
       sosTargetName = author;
+      sosTargetPost = commentTargetId;
+      sosTargetComment = cid;
       document.getElementById('sos-body').innerHTML =
-        `Are you worried about <strong>[${esc(author)}]</strong>? A moderator will be notified to check in. Only use this if genuinely concerned.`;
+        _wt('anon.sos.bodyNamed', { name: `<strong>[${esc(author)}]</strong>` });
       openOv('ov-sos');
     } else if ('cban' in d) {
       adminBanName = author;
@@ -4932,9 +5138,10 @@ function setupThread() {
     if (_sending) return;
     const text = ta.value.trim();
     if (!text || !commentTargetId) return;
+    if (_writeBlockedOffline()) return;
     // Banned users can't comment (Apple UGC 1.2).
-    if (isBanned(profile.monika)) {
-      showHint(_wt('anon.toast.accessRevoked'));
+    if (isMeBanned()) {
+      showHint(_bannedMessage());
       return;
     }
     // Content filter (Apple UGC 1.2).
@@ -5137,6 +5344,9 @@ function renderPosts(posts) {
   list.querySelectorAll('[data-sos]').forEach(btn => {
     btn.addEventListener('click', () => {
       sosTargetName = btn.dataset.sos;
+      const card = btn.closest('.post-card');
+      sosTargetPost = (card && card.dataset.pid) || '';
+      sosTargetComment = '';
       document.getElementById('sos-body').innerHTML =
         _wt('anon.sos.bodyNamed', { name: `<strong>[${esc(sosTargetName)}]</strong>` });
       openOv('ov-sos');
@@ -5267,7 +5477,7 @@ function renderArchivedTopic(p) {
   return `<div class="post-card" data-pid="${esc(p.id)}">
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});">${esc(a.initials)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
         <div>
           <div class="post-name">[${esc(a.name)}]</div>
           ${_chipsHtml({ streak: a.streak, label: '💬 ' + _wt('anon.feed.pastTopic') })}
@@ -5368,22 +5578,22 @@ function renderPost(p) {
   const g1           = safeColor(p.grad1, YELLOW_LT);
   const g2           = safeColor(p.grad2, YELLOW_DARK);
   const av           = p.initials || initials(p.name);
-  const deleteBtn    = profile.isAdmin && !p.isSeed
+  const deleteBtn    = profile.isAdmin
     ? `<button class="icon-btn" data-delete="${esc(p.id)}" title="${esc(_wt('anon.modbtn.deletePost'))}">🗑️</button>` : '';
-  const banBtn       = profile.isAdmin && !p.isSeed && !p.isAdmin && p.name !== profile.monika
+  const banBtn       = profile.isAdmin && !p.isAdmin && p.name !== profile.monika
     ? `<button class="icon-btn" data-ban="${esc(p.name)}" title="${esc(_wt('anon.modbtn.banUser'))}">🚫</button>` : '';
-  const pinBtn       = profile.isAdmin && !p.isSeed
+  const pinBtn       = profile.isAdmin
     ? `<button class="icon-btn${p.pinned ? ' pin-active' : ''}" data-pin="${esc(p.id)}" data-tab="${esc(p.tab || currentTab)}" title="${esc(p.pinned ? _wt('anon.modbtn.unpinPost') : _wt('anon.modbtn.pinPost'))}">📌</button>` : '';
-  const selfDeleteBtn = !p.isSeed && !profile.isAdmin && p.name === profile.monika && isSelfDeleteEligible(p)
+  const selfDeleteBtn = !profile.isAdmin && p.name === profile.monika && isSelfDeleteEligible(p)
     ? `<button class="icon-btn" data-selfdelete="${esc(p.id)}" title="${esc(_wt('anon.modbtn.selfDeletePost'))}" style="opacity:0.4;">🗑️</button>` : '';
-  const commentBtn   = !p.isSeed ? commentBtnHtml(p, commentCount) : '';
+  const commentBtn   = commentBtnHtml(p, commentCount);
   const pinnedBadge  = p.pinned ? `<div class="pinned-badge">📌 ${esc(_wt('anon.modbtn.pinnedBadge'))}</div>` : '';
   const postBday     = _birthdayCompact(p.joinedAt || '');
   return `<div class="post-card${p.pinned ? ' post-pinned' : ''}" data-pid="${esc(p.id)}">
     ${pinnedBadge}
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});">${esc(av)}</div>
+        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div>
           <div class="post-name">${authorLabel(p)}</div>
           ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, bday: postBday, med: showMed ? p.med : '' })}
@@ -5392,14 +5602,14 @@ function renderPost(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
-    ${p.isSeed ? '' : pollHtml(p)}
+    ${pollHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}"${p.name === profile.monika ? ` data-self="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
         💛 <span>${likes}</span>
       </button>
       ${commentBtn}
       <div style="flex:1"></div>
-      ${p.isSeed ? '' : moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
+      ${moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
         + (p.name !== profile.monika ? `<button class="icon-btn" data-sos="${esc(p.name)}" title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>`
           + `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>`
           + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''))}
@@ -5466,8 +5676,9 @@ function setupFAB() {
     setTab('general');
   });
   document.getElementById('fab-compose').addEventListener('click', () => {
-    if (isBanned(profile.monika)) {
-      showHint(_wt('anon.toast.accessRevoked'));
+    if (_writeBlockedOffline()) return;
+    if (isMeBanned()) {
+      showHint(_bannedMessage());
       return;
     }
     // The "wait for a reaction before posting again" gate is about the feed,
@@ -5567,9 +5778,10 @@ function setupCompose() {
     if (_posting) return; // guard against double-tap / re-entrant clicks
     const text = ta.value.trim();
     if (!text) return;
+    if (_writeBlockedOffline()) return;
     // Banned users can't post (Apple UGC 1.2 — ejected users stay out).
-    if (isBanned(profile.monika)) {
-      showHint(_wt('anon.toast.accessRevoked'));
+    if (isMeBanned()) {
+      showHint(_bannedMessage());
       return;
     }
     // Content filter (Apple UGC 1.2). Keep the overlay open so the user can edit.
@@ -5620,7 +5832,7 @@ function setupCompose() {
 
     // Show post immediately (optimistic update). Route through assembleGeneralPosts
     // on the general tab so the optimistic render keeps the system greeting, the
-    // deduped daily topic, and the seed posts instead of dropping them until the
+    // deduped daily topic and the footer instead of dropping them until the
     // next snapshot fires.
     localPosts.unshift({ id: optimisticId, ...entry });
     renderPosts(currentTab === 'general'
@@ -5662,23 +5874,27 @@ function setupCompose() {
         _haptic('success');
         // Replace optimistic entry with the real one from the snapshot (happens automatically)
       } catch (e) {
+        // Refused (the rules, a ban, the network): nothing is on the board, so
+        // take the optimistic card back down and give the text back. Never
+        // "Your post is now live".
         console.error('[Anonymous] post failed', e);
-        if (pollOpts) {
-          // No snapshot will replace the optimistic card, so take it back down.
-          localPosts = localPosts.filter(p => p.id !== optimisticId);
-          renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
-          showHint(_wt('anon.ux.pollFailed'));
-          _posting = false;
-          return;
-        }
+        localPosts = localPosts.filter(p => p.id !== optimisticId);
+        renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
+        showHint(_wt(pollOpts ? 'anon.ux.pollFailed' : 'anon.net.postFailed'));
+        ta.value = text;
+        post.disabled = false;
+        openOv('ov-compose');
+        _posting = false;
+        return;
       }
     }
+    if (!docId) { _posting = false; return; } // no Firestore on this page: nothing was posted
 
     if (!profile.hasPosted) {
-      if (docId) BB.storage.set('Anon_firstPostId', docId);
+      BB.storage.set('Anon_firstPostId', docId);
       BB.storage.set('Anon_hasPosted', 'true');
       openOv('ov-firstpost');   // its close offers notifications
-    } else if (docId) {
+    } else {
       maybeAskNotifications();  // no-op unless they've never seen the posts offer
     }
     _posting = false;
@@ -5928,6 +6144,29 @@ function openStableSettings() {
   openOv('ov-stable');
 }
 
+// A report or SOS flag. It is written to bbAnonReports, which only the server
+// reads (onAnonReportCreated emails the team), so the member is told it was
+// sent only once Firestore has it, and told it failed otherwise. A write that
+// is still queued after 12 s (offline) counts as failed: they can try again.
+async function _sendModerationFlag(doc, okKey) {
+  let ok = false;
+  if (db) {
+    try {
+      await _ensureAuthSession();
+      await Promise.race([
+        db.collection(BB_BRAND.collections.reports).add(doc),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000)),
+      ]);
+      ok = true;
+    } catch (e) {
+      console.warn('[Anonymous] report / SOS not sent', e && (e.code || e.message));
+    }
+  }
+  showHint(_wt(ok ? okKey : 'anon.net.flagFailed'));
+  if (ok) _haptic('success');
+  return ok;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Overlay button wiring
 // ─────────────────────────────────────────────────────────────────
@@ -5946,48 +6185,57 @@ function setupOverlayActions() {
   document.getElementById('sos-cancel').addEventListener('click',  () => closeOv('ov-sos'));
   document.getElementById('sos-confirm').addEventListener('click', () => {
     closeOv('ov-sos');
-    // Production: write SOS report to Firestore for moderator review
-    if (db && sosTargetName) {
-      db.collection(BB_BRAND.collections.reports).add({
-        type: 'sos', targetName: sosTargetName,
-        reportedBy: profile.monika, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      }).catch(() => {});
-    }
-    showHint(_wt('anon.toast.sosSent'));
+    if (!sosTargetName) return;
+    // onAnonReportCreated (functions/index.js) emails the team the post id and
+    // a link to the thread. Only say it was sent once Firestore has it.
+    const doc = {
+      type: 'sos', targetName: sosTargetName,
+      reportedBy: profile.monika, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if (sosTargetPost) doc.postId = sosTargetPost;
+    if (sosTargetComment) doc.commentId = sosTargetComment;
+    _sendModerationFlag(doc, 'anon.toast.sosSent');
+    sosTargetPost = ''; sosTargetComment = '';
   });
 
   // Report
+  document.getElementById('report-cancel').addEventListener('click', () => {
+    closeOv('ov-report');
+    reportCommentMeta = null;
+    reportTargetId = '';
+  });
   document.querySelectorAll('.report-opt').forEach(btn => {
     btn.addEventListener('click', () => {
       closeOv('ov-report');
-      if (db && reportCommentMeta) {
+      if (reportCommentMeta) {
         // Comment report — target the comment in its parent thread.
         const m = reportCommentMeta;
-        db.collection(BB_BRAND.collections.reports).add({
+        _sendModerationFlag({
           type: 'report', kind: 'comment',
           postId: m.parentId, commentId: m.id, reason: btn.dataset.reason,
           postText: m.text, postName: m.name,
           reportedBy: profile.monika,
           adminEmail: ADMIN_EMAIL,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        }).catch(() => {});
-      } else if (db && reportTargetId) {
-        const post = localPosts.find(p => p.id === reportTargetId);
-        db.collection(BB_BRAND.collections.reports).add({
-          type: 'report', postId: reportTargetId, reason: btn.dataset.reason,
+        }, 'anon.toast.reportSubmitted');
+      } else if (reportTargetId) {
+        const id = reportTargetId;
+        const post = localPosts.find(p => p.id === id);
+        _sendModerationFlag({
+          type: 'report', postId: id, reason: btn.dataset.reason,
           postText: post ? post.text : '',
           postName: post ? post.name : '',
           reportedBy: profile.monika,
           adminEmail: ADMIN_EMAIL,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        }).catch(() => {});
-        // Flag post so 7-day auto-delete skips it
-        db.collection(BB_BRAND.collections.posts).doc(reportTargetId)
-          .update({ reported: true }).catch(() => {});
+        }, 'anon.toast.reportSubmitted').then(ok => {
+          // Flag post so 7-day auto-delete skips it
+          if (ok) db.collection(BB_BRAND.collections.posts).doc(id)
+            .update({ reported: true }).catch(() => {});
+        });
       }
       reportCommentMeta = null;
       reportTargetId = '';
-      showHint(_wt('anon.toast.reportSubmitted'));
     });
   });
 
@@ -6036,9 +6284,14 @@ function setupOverlayActions() {
 
   // Admin ban
   document.getElementById('aban-cancel').addEventListener('click', () => closeOv('ov-admin-ban'));
+  // Permanent for a zero-tolerance breach, 7 days for anything else.
   document.getElementById('aban-confirm').addEventListener('click', () => {
     closeOv('ov-admin-ban');
-    adminBanUser(adminBanName);
+    adminBanUser(adminBanName, null);
+  });
+  document.getElementById('aban-temp').addEventListener('click', () => {
+    closeOv('ov-admin-ban');
+    adminBanUser(adminBanName, TEMP_BAN_DAYS);
   });
 }
 
@@ -6062,14 +6315,18 @@ function adminDeletePost(id) {
 // live ban listener, and blocks them from posting/commenting) AND tombstones
 // their existing posts so the content is removed server-side, independent of
 // any client having the ban list loaded.
-function adminBanUser(name) {
+// `days` null = permanent (a zero-tolerance breach); otherwise the ban lifts
+// itself after that many days. The banned member's own app copies the ban
+// onto their profile id (_syncMyBan), so a new moniker doesn't escape it.
+// No bannedBy: the document is public, and the admin's moniker must not be.
+const TEMP_BAN_DAYS = 7;
+function adminBanUser(name, days) {
   if (!db || !name) return;
   const key = String(name).toLowerCase();
-  db.collection(BB_BRAND.collections.banned).doc(key).set({
-    monika: name,
-    bannedBy: profile.monika,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-  }).catch(err => console.error('[Admin] ban failed', err));
+  const doc = { monika: name, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+  if (days) doc.until = firebase.firestore.Timestamp.fromMillis(Date.now() + days * DAY_MS);
+  db.collection(BB_BRAND.collections.banned).doc(key).set(doc)
+    .catch(err => console.error('[Admin] ban failed', err));
   // Remove their existing posts so offending content disappears immediately.
   db.collection(BB_BRAND.collections.posts).where('name', '==', name).get()
     .then(snap => snap.forEach(doc => doc.ref.update({
@@ -6145,6 +6402,9 @@ function _paintTranslateNote() {
 // drawn again. js/shared/translate.js listens for the same event and puts the
 // posts back into the language they were written in before re-translating.
 document.addEventListener('bb:languagechange', () => {
+  // Before sign-up the board isn't running: re-rendering its hidden feed
+  // would only send the topic text off to be translated for nobody.
+  if (!_boardSetupDone) return;
   try {
     renderUserPill();
     _rerenderCurrentTab();
@@ -6219,6 +6479,9 @@ function openMonikaSettings() {
     const dateLabel = _birthdayDateLabel(joinedISO);
     const ageLabel  = _birthdayVerbose(joinedISO);
     if (dateLabel) {
+      // Inside the Bipolar Anonymous app, its own name; inside Bipolar Bear, Bear's.
+      document.getElementById('ms-birthday-label').textContent =
+        _wt(_isAnonymousApp ? 'anon.misc.birthdayAnon' : 'anon.misc.birthdayBB');
       document.getElementById('ms-birthday-date').textContent = dateLabel;
       document.getElementById('ms-birthday-age').textContent  = ageLabel;
       msBday.style.display = '';
@@ -6242,6 +6505,7 @@ function openMonikaSettings() {
     const col  = COLOR_PRESETS.find(c => c.key === key) || COLOR_PRESETS[0];
     msAv.textContent = init;
     msAv.style.background = `linear-gradient(135deg,${col.g1},${col.g2})`;
+    msAv.style.color = _avInk(col.g1, col.g2);
     msAvName.textContent = `[${name}] 🔥 ${profile.streak}d`;
   }
   updatePreview();
@@ -6380,7 +6644,7 @@ document.getElementById('adel-acc-confirm').addEventListener('click', deleteAnon
  */
 async function deleteAnonAccount() {
   const btn = document.getElementById('adel-acc-confirm');
-  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+  if (btn) { btn.disabled = true; btn.textContent = _wt('anon.misc.deleting'); }
 
   const monika = profile.monika;
   const email  = BB.storage.get('Anon_email');
@@ -6448,7 +6712,7 @@ async function deleteAnonAccount() {
       .filter(k => k === 'bbAnonLastVisit' || k === 'bbAnonVisitDate' || k.startsWith('bbAnon_'))
       .forEach(k => localStorage.removeItem(k));
     stopAllListeners();
-    if (btn) { btn.disabled = false; btn.textContent = 'Delete forever'; }
+    if (btn) { btn.disabled = false; btn.textContent = _wt('anon.deleteAccount.confirm'); }
     closeOv('ov-anon-delete');
     boot(null);
     showHint(_wt('anon.toast.accountDeleted'));
@@ -6475,6 +6739,12 @@ document.getElementById('ms-save').addEventListener('click', async () => {
   if (newMonika.length < 2) { showHint(_wt('anon.toast.monikaTooShort')); return; }
 
   const oldMonika = profile.monika;
+  if (newMonika.toLowerCase() !== oldMonika.toLowerCase()) {
+    if (monikaRefused(newMonika)) { showHint(_wt('anon.mod.monikaRefused')); return; }
+    // A banned member keeps the name they were banned under (the ban is on
+    // their profile too, and the rules refuse the rename either way).
+    if (isMeBanned()) { showHint(_bannedMessage()); return; }
+  }
   try {
     if (await isMonikaInUse(newMonika, oldMonika)) {
       showHint(_wt('anon.toast.nameTaken'));
