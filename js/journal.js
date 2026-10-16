@@ -184,6 +184,10 @@ window.addEventListener('pageshow', () => {
       // Hint 2b (close journal): step 2 only
       const _h2b = document.getElementById('journalHintClose');
       if (_h2b) _h2b.style.display = step === 2 ? 'flex' : 'none';
+      // …and the "Add your details here" pointer waits until then, so the two
+      // don't show at once (the entries list renders it on open).
+      const _pdHint = document.getElementById('personalDetailsJournalHint');
+      if (_pdHint) _pdHint.style.display = step === 2 ? 'none' : 'flex';
       // Hint 3 (go back here): step 3 only
       const _h3 = document.getElementById('journalHint3');
       if (_h3) _h3.style.display = step === 3 ? 'flex' : 'none';
@@ -213,7 +217,10 @@ window.addEventListener('pageshow', () => {
       // switch the dimmer off underneath it, leaving the hint stranded on a
       // fully interactive page with nothing pointing anywhere.
       const _showFabHint = document.body.classList.contains('bb-settings-fab-hint');
-      const _isBlocking = _blockingSteps.has(step) || _showSettings || _showMedHint || _showFabHint;
+      // The medication hint ("Manage medications") no longer blocks the page:
+      // the dimmer stopped Taken / Not taken / Unsure from working until the
+      // link was tapped (2026-10-16). The pointer still shows.
+      const _isBlocking = _blockingSteps.has(step) || _showSettings || _showFabHint;
       const _overlay = document.getElementById('bbHintOverlay');
       if (_overlay) _overlay.style.display = _isBlocking ? '' : 'none';
 
@@ -3043,7 +3050,7 @@ window.addEventListener('pageshow', () => {
                 <span style="font-size:0.82em;color:#6c757d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${currentUser.email || ''}</span>
                 <button onclick="logout()" class="logout-btn-list" style="flex-shrink:0;padding:7px 14px;background:white;color:#adb5bd;border:1.5px solid #dee2e6;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.logout')}</button>
               ` : `
-                <span style="font-size:0.82em;color:#adb5bd;font-style:italic;">${BB.t('journal.ui.loginToBackup')}</span>
+                <span style="font-size:0.82em;color:#adb5bd;font-style:italic;">${BB.t('fix143.loginToBackup')}</span>
                 <button onclick="window.showAuthModal()" style="flex-shrink:0;padding:7px 14px;background:var(--brand-btn);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.signInUp')}</button>
               `}
             </div>
@@ -6123,10 +6130,14 @@ window.addEventListener('pageshow', () => {
       const _stepCounter = document.getElementById('fmStepCounter');
       // Top bar is uniform across every step, including mood (step 0)
       _dotsEl.style.display = 'flex';
-      _dotsEl.innerHTML = _fmSteps.map((_,i) => `<div class="fm-dot ${i<_fmStepIndex?'done':i===_fmStepIndex?'cur':''}"></div>`).join('');
+      // The sleep-quality step is only visited after a long press on a sleep
+      // range; otherwise it's skipped, so it isn't counted or dotted either
+      // (the counter used to jump "Step 2 of 7" → "Step 4 of 7").
+      const _fmShown = _fmSteps.map((s, i) => i).filter(i => _fmSteps[i].id !== 'sleepQuality' || _fmWantsSleepQuality || i === _fmStepIndex);
+      _dotsEl.innerHTML = _fmShown.map(i => `<div class="fm-dot ${i<_fmStepIndex?'done':i===_fmStepIndex?'cur':''}"></div>`).join('');
       if (_topBar) _topBar.style.display = 'flex';
       if (_stepCounter) _stepCounter.style.display = '';
-      document.getElementById('fmStepCounter').textContent = BB.t('journal.fm.stepCounter', { n: _fmStepIndex+1, total: _fmSteps.length });
+      document.getElementById('fmStepCounter').textContent = BB.t('journal.fm.stepCounter', { n: _fmShown.indexOf(_fmStepIndex) + 1, total: _fmShown.length });
       // Summary bar: every step's chip, on every page including the first
       // (30 Sep 2026 — it used to be hidden until a step was answered).
       _fmChipPreview = null;
@@ -7158,8 +7169,8 @@ window.addEventListener('pageshow', () => {
           // user's med list directly above the "Manage medications" link.
           const _manageRow = `<div class="fm-meds-manage">
               ${medListHtml}
-              <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:${_medHintDone ? 'var(--brand-primary)' : 'rgba(255,255,255,0.9)'};font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
-              ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,255,255,0.9);font-family:'Georgia',serif;letter-spacing:0.01em;text-shadow:0 1px 4px rgba(0,0,0,0.5);">${BB.t('journal.hint.logMed')}</span></div>`}
+              <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
+              ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
               ${_mrPill}
             </div>`;
           // Built as a real 5-pill wheel — Not taken, Not taken, Unsure,
@@ -10599,8 +10610,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
             }
           } else {
             doc.setFont(undefined, 'italic'); setColor(grey);
-            doc.text(BB.t('journal.pdf.addDetailsLine1'), margin + 4, contentY);
-            doc.text(BB.t('journal.pdf.addDetailsLine2'), margin + 4, contentY + lineHeight);
+            doc.text(BB.t('fix143.pdfAddDetails1'), margin + 4, contentY);
+            doc.text(BB.t('fix143.pdfAddDetails2'), margin + 4, contentY + lineHeight);
           }
 
           // Right column: medications
@@ -15468,7 +15479,10 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       }, true);
     })();
 
-    // ── Med hint page lock (independent of onboarding step) ──
+    // ── Med hint nudge (independent of onboarding step) ──
+    // It used to be a page lock: Taken / Not taken / Unsure, Skip and Exit did
+    // nothing until "Manage medications" was tapped (2026-10-16). Now every
+    // control works; a tap on anything that isn't a control nudges the hint.
     (function() {
       document.addEventListener('click', function(e) {
         if (BB.storage.get('MedHintDone') === '1') return;
@@ -15477,7 +15491,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const btn = document.getElementById('manageMedsBtn');
         if (!btn || btn === e.target || btn.contains(e.target)) return;
         if (document.querySelector('.confirm-modal.active, .overlay-modal.active')) return;
-        e.stopPropagation(); e.preventDefault();
+        if (e.target.closest && e.target.closest('button, a, input, select, textarea, label, [onclick], [role=button], .fm-wheel, .fm-wheel-btn')) return;
         [hint, btn].forEach(el => {
           const prev = el.style.animation;
           el.style.animation = 'none'; el.offsetHeight;
