@@ -129,6 +129,30 @@ service cloud.firestore {
       return incoming().get('isAdmin', false) == false || (isAdmin() && legacyAdminClients());
     }
 
+    // ── Bans (bbAnonBanned) ──────────────────────────────────────────────
+    // A ban document is keyed on a lower-case moniker (the admin's Ban
+    // button) or on a 'p2_' board profile id (the banned member's own app
+    // copies its moniker ban there, so renaming doesn't escape it). No
+    // `until` = permanent; otherwise it lifts at `until`.
+    function banLive(id) {
+      return exists(/databases/$(database)/documents/bbAnonBanned/$(id))
+        && (!(get(/databases/$(database)/documents/bbAnonBanned/$(id)).data.get('until', null) is timestamp)
+            || get(/databases/$(database)/documents/bbAnonBanned/$(id)).data.until > request.time);
+    }
+    // Only names that can be document ids are looked up (a name that can't
+    // be one can't have been banned or reserved).
+    function nameBanned(n) {
+      return n is string && n.size() > 0 && n.size() <= 64
+        && !n.matches('.*/.*') && n != '.' && n != '..' && !n.matches('__.*__')
+        && banLive(n.lower());
+    }
+    function profileBanned() {
+      return hasLink() && link().get('profileIds', []).size() > 0
+        && (banLive(link().profileIds[0])
+            || banLive(link().profileIds[link().profileIds.size() - 1]));
+    }
+    function authorBanned(n) { return nameBanned(n) || profileBanned(); }
+
     // ── Cloud Functions only (Admin SDK bypasses rules) ──
     match /anonVerify/{docId}      { allow read, write: if false; }
     match /verifyRateLimit/{docId} { allow read, write: if false; }
@@ -171,7 +195,9 @@ service cloud.firestore {
       function postPath() { return 'bbAnonPosts/' + postId; }
 
       allow create: if createShapeOk()
-        && (incoming().get('isTopic', false) == true ? topicCreateOk() : ownerOnCreate(postPath()));
+        && (incoming().get('isTopic', false) == true
+            ? topicCreateOk()
+            : ownerOnCreate(postPath()) && !authorBanned(incoming().get('name', '')));
 
       // Updates any member may make to any post.
       function likeOk()   { return changedKeys().hasOnly(['likes']) && stepped('likes'); }
@@ -193,7 +219,8 @@ service cloud.firestore {
       function renameOk() {
         return changedKeys().hasOnly(['name', 'initials', 'grad1', 'grad2'])
           && !isTopicDoc()
-          && ownsExisting(postPath());
+          && ownsExisting(postPath())
+          && (!changedKeys().hasAny(['name']) || !authorBanned(resource.data.get('name', '')));
       }
 
       allow update: if likeOk() || replyOk() || reportOk() || topicRetireOk() || renameOk() || isAdmin();
@@ -220,7 +247,8 @@ service cloud.firestore {
         allow create: if signedIn()
           && adminFlagOk()
           && incoming().get('timestamp', null) == request.time
-          && ownerOnCreate(commentPath());
+          && ownerOnCreate(commentPath())
+          && !authorBanned(incoming().get('name', ''));
         allow update: if isAdmin();
         allow delete: if signedIn() && (ownsExisting(commentPath()) || isAdmin());
       }
@@ -241,7 +269,8 @@ service cloud.firestore {
       allow create: if incoming().get('monika', '') is string
         && incoming().get('monika', '').lower() == id
         && incoming().keys().hasOnly(['monika', 'createdAt', 'uid', 'owner'])
-        && ownerOnCreate('bbAnonMonikas/' + id);
+        && ownerOnCreate('bbAnonMonikas/' + id)
+        && !profileBanned();
       allow delete: if ownsExisting('bbAnonMonikas/' + id) || isAdmin();
     }
 
@@ -269,6 +298,31 @@ service cloud.firestore {
     match /bbAnonBanned/{docId} {
       allow read: if true;
       allow write: if isAdmin();
+      // The banned member's own app copies a live moniker ban onto their
+      // profile id: only their own profile, only while that moniker is
+      // banned, and never shorter than what is there already.
+      function untilOk() {
+        return !('until' in incoming()) || incoming().until is timestamp;
+      }
+      function notShorter() {
+        return !('until' in resource.data)
+          ? !('until' in incoming())
+          : (!('until' in incoming()) || incoming().until >= resource.data.until);
+      }
+      allow create: if docId.matches('^p2_[0-9a-f]{64}$')
+        && linkedProfileIs(docId)
+        && incoming().keys().hasOnly(['monika', 'until', 'timestamp'])
+        && incoming().get('monika', '') is string
+        && nameBanned(incoming().get('monika', ''))
+        && untilOk();
+      allow update: if docId.matches('^p2_[0-9a-f]{64}$')
+        && linkedProfileIs(docId)
+        && incoming().keys().hasOnly(['monika', 'until', 'timestamp'])
+        && nameBanned(incoming().get('monika', ''))
+        && untilOk() && notShorter();
+      // A temporary ban that has run out may be taken down by anyone.
+      allow delete: if resource.data.get('until', null) is timestamp
+        && resource.data.until < request.time;
     }
 
     // Member-suggested announcements awaiting the admin.

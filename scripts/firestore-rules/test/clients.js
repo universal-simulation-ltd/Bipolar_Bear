@@ -271,6 +271,14 @@ const board = {
   // listenBanned()
   listenBanned: (db) => db.collection('bbAnonBanned').get(),
 
+  // _syncMyBan(): the banned member's app copies its moniker ban onto its profile id
+  copyBanToProfile: (db, pid, monika, until) => db.collection('bbAnonBanned').doc(pid).set(Object.assign({
+    monika, timestamp: FV.serverTimestamp(),
+  }, until ? { until } : {})),
+
+  // listenBanned(): take down a temporary ban that has run out
+  dropExpiredBan: (db, id) => db.collection('bbAnonBanned').doc(id).delete(),
+
   // submitSuggestion()
   submitSuggestion: (db) => db.collection('bbAnonAnnSuggestions').add({
     name: 'Robin', initials: 'RO', grad1: '#ffd54f', grad2: '#f9a825', streak: 3,
@@ -336,6 +344,11 @@ const admin = {
     })));
   },
   unban: (db, name) => db.collection('bbAnonBanned').doc(name.toLowerCase()).delete(),
+
+  // adminBanUser(name, TEMP_BAN_DAYS): the 7-day ban (no bannedBy since 2026-10-16)
+  banFor: (db, name, days) => db.collection('bbAnonBanned').doc(name.toLowerCase()).set({
+    monika: name, until: TS.fromMillis(Date.now() + days * 86400000), timestamp: FV.serverTimestamp(),
+  }),
 
   // approveSuggestion() / rejectSuggestion()
   async approve(db, id, { flavour, uid } = {}) {

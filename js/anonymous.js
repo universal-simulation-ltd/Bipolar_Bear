@@ -168,7 +168,8 @@ const _BLOCKED_WORDS = [
   'nigger', 'nigga', 'faggot', 'tranny', 'chink', 'spic', 'kike',
   'wetback', 'coon', 'gook', 'paki', 'retard', 'retarded',
   // Explicit sexual / harassment
-  'cunt', 'whore', 'slut', 'rape', 'rapist', 'cum', 'blowjob', 'dildo',
+  // Not "rape" or "rapist": survivors need to be able to say what happened.
+  'cunt', 'whore', 'slut', 'cum', 'blowjob', 'dildo',
   'porn', 'porno', 'pedo', 'pedophile', 'paedophile', 'molest',
 ];
 const _BLOCKED_SET = new Set(_BLOCKED_WORDS);
@@ -206,17 +207,84 @@ function findBlockedTerm(text) {
   return null;
 }
 
+// A moniker is refused when it carries a blocked word (also inside a
+// CamelCase name: "SlutQueen") or passes for the team: Admin, Moderator,
+// Bipolar Bear, Support, Staff, in any spelling that reads the same
+// (leetspeak, accents, Cyrillic or Greek lookalikes, separators).
+const _LOOKALIKE = { 'а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x','і':'i','ӏ':'l','ԁ':'d','м':'m','т':'t','в':'b','н':'h','к':'k',
+  'α':'a','ε':'e','ο':'o','ρ':'p','ι':'i','ν':'v','β':'b','μ':'m','τ':'t','κ':'k' };
+function _foldName(s, oneIs) {
+  return String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/./g, ch => _LOOKALIKE[ch] || ch)
+    .replace(/[@4]/g, 'a').replace(/0/g, 'o').replace(/[1!|]/g, oneIs).replace(/3/g, 'e')
+    .replace(/[5$]/g, 's').replace(/7/g, 't')
+    .replace(/[^a-z]/g, '');
+}
+// Anywhere in the name / at its start or end ("BBAdmin", not "Madmind") /
+// the whole name.
+const _TEAM_PARTS = ['moderat', 'bipolarbe', 'bipolarbr'];
+const _TEAM_EDGES = ['admin', 'official'];
+const _TEAM_EXACT = ['mod', 'mods', 'themod', 'themods', 'bbmod', 'team', 'bbteam', 'theteam', 'staff', 'bbstaff',
+  'support', 'bbsupport', 'bbadmn', 'bipolarb', 'bpbear', 'helpdesk'];
+function monikaRefused(name) {
+  const spaced = String(name || '').replace(/([a-z])([A-Z])/g, '$1 $2');
+  if (findBlockedTerm(spaced) || findBlockedTerm(name)) return true;
+  for (const oneIs of ['i', 'l']) {
+    const f = _foldName(name, oneIs);
+    if (!f) continue;
+    if (_TEAM_EXACT.includes(f) || _TEAM_PARTS.some(w => f.includes(w))
+        || _TEAM_EDGES.some(w => f.startsWith(w) || f.endsWith(w))) return true;
+    if (_BLOCKED_WORDS.some(w => w.length >= 5 && f.includes(w))) return true;
+  }
+  return false;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Banned users (Apple UGC guideline 1.2 — "eject the user")
 // ─────────────────────────────────────────────────────────────────
 // Populated from the bbAnonBanned collection via a live listener so an admin
 // ban takes effect on every device: banned monikas' posts and comments are
-// hidden everywhere, and the banned user is blocked from composing. Monikas
-// are stored lowercased (doc id) for case-insensitive matching.
-const bannedUsers = new Set();
+// hidden everywhere, and the banned user is blocked from composing.
+//
+// Two kinds of document, both with an optional `until` (a temporary ban; no
+// `until` is permanent — a zero-tolerance breach):
+//   bbAnonBanned/{lower-case moniker}  written by the admin's Ban button
+//   bbAnonBanned/{p2_ profile id}      the same ban, keyed on the member's
+//       board profile (_syncMyBan): the banned member's own app copies its
+//       moniker ban there, so renaming doesn't escape it. The Firestore rules
+//       check both on every post, comment and rename.
+const bannedUsers    = new Map(); // lower-case moniker → { until: ms | null }
+const bannedProfiles = new Map(); // p2_ profile id    → { until: ms | null }
 let unsubBanned = null;
+let _myPid = null; // this member's board profile id, once known
+function _banActive(b) { return !!b && (!b.until || b.until > Date.now()); }
 function isBanned(name) {
-  return !!name && bannedUsers.has(String(name).toLowerCase());
+  return !!name && _banActive(bannedUsers.get(String(name).toLowerCase()));
+}
+// The ban on this member (by moniker or by profile), or null. A permanent ban
+// wins over a temporary one; of two temporary ones, the later end.
+function _myBan() {
+  const bans = [profile.monika && bannedUsers.get(profile.monika.toLowerCase()),
+                _myPid && bannedProfiles.get(_myPid)].filter(_banActive);
+  if (!bans.length) return null;
+  if (bans.some(b => !b.until)) return { until: null };
+  return { until: Math.max(...bans.map(b => b.until)) };
+}
+function isMeBanned() { return !!_myBan(); }
+function _bannedMessage() {
+  const b = _myBan();
+  return b && b.until ? _wt('anon.mod.bannedUntil', { date: _fmtDate(b.until) }) : _wt('anon.toast.accessRevoked');
+}
+// A date in the app's language ("16 October 2026" / "16. Oktober 2026").
+function _uiLocale() {
+  const l = (window.BB && BB.i18n) ? BB.i18n.getLang() : 'en';
+  return l === 'zh' ? 'zh-Hans' : (l === 'en' ? 'en-GB' : l);
+}
+function _fmtDate(ms, opts) {
+  const d = new Date(ms);
+  if (isNaN(d.getTime())) return '';
+  try { return d.toLocaleDateString(_uiLocale(), opts || { day: 'numeric', month: 'long', year: 'numeric' }); }
+  catch (_) { return d.toISOString().slice(0, 10); }
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1761,6 +1829,11 @@ function setupMonika() {
     const monika = input.value.trim();
     if (monika.length < 2) return;
     const errEl = document.getElementById('monika-error');
+    if (monikaRefused(monika)) {
+      errEl.textContent   = _wt('anon.mod.monikaRefused');
+      errEl.style.display = 'block';
+      return;
+    }
     btn.disabled = true;
     btn.textContent = _wt('anon.ui.checking');
     try {
@@ -2466,13 +2539,50 @@ function listenBanned() {
   unsubBanned = db.collection(BB_BRAND.collections.banned)
     .onSnapshot(snap => {
       bannedUsers.clear();
+      bannedProfiles.clear();
       snap.docs.forEach(d => {
-        const m = (d.data().monika || d.id || '').toLowerCase();
-        if (m) bannedUsers.add(m);
+        const data = d.data() || {};
+        const until = data.until && data.until.toMillis ? data.until.toMillis() : null;
+        // A temporary ban that ran out a while ago: take it down, so older
+        // builds (which don't read `until`) stop treating it as a ban too.
+        if (until && until < Date.now() - 60 * 1000) { d.ref.delete().catch(() => {}); return; }
+        if (/^p2_[0-9a-f]{64}$/.test(d.id)) { bannedProfiles.set(d.id, { until }); return; }
+        const m = (data.monika || d.id || '').toLowerCase();
+        if (m) bannedUsers.set(m, { until });
       });
       _rerenderCurrentTab();
       _applyComposeBanGate();
+      _syncMyBan();
     }, err => console.warn('[Anonymous] banned listener error', err));
+  // The profile id keys the ban that survives a rename.
+  const email = (_bbUser && _bbUser.email) || BB.storage.get('Anon_email') || '';
+  if (email && !_myPid) {
+    _anonProfileId(email).then(id => {
+      if (!id) return;
+      _myPid = id;
+      _applyComposeBanGate();
+      _syncMyBan();
+    }).catch(() => {});
+  }
+}
+
+// A ban on this member's moniker is copied onto their board profile id, so a
+// new moniker is still banned. The rules let a member write only their own
+// profile's ban, and only while their moniker is banned.
+let _banSyncing = false;
+function _syncMyBan() {
+  if (!db || !_myPid || _banSyncing || !profile.monika) return;
+  const byName = bannedUsers.get(profile.monika.toLowerCase());
+  if (!_banActive(byName)) return;
+  const byPid = bannedProfiles.get(_myPid);
+  if (_banActive(byPid) && (!byPid.until || (byName.until && byPid.until >= byName.until))) return;
+  _banSyncing = true;
+  const doc = { monika: profile.monika, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+  if (byName.until) doc.until = firebase.firestore.Timestamp.fromMillis(byName.until);
+  _ensureAuthSession()
+    .then(() => db.collection(BB_BRAND.collections.banned).doc(_myPid).set(doc))
+    .catch(e => console.warn('[Anonymous] ban copy refused', e && e.code))
+    .finally(() => { _banSyncing = false; });
 }
 
 // Visually disable compose for a banned user. The hard gate lives in the
@@ -2481,7 +2591,7 @@ function listenBanned() {
 function _applyComposeBanGate() {
   const fab = document.getElementById('fab-compose');
   if (!fab) return;
-  const banned = isBanned(profile.monika);
+  const banned = isMeBanned();
   fab.style.filter  = banned ? 'grayscale(1)' : '';
   fab.style.opacity = banned ? '0.45' : '';
   fab.title = banned ? _wt('anon.modbtn.postingDisabled') : _wt('anon.tips.compose');
@@ -4960,8 +5070,8 @@ function setupThread() {
     const text = ta.value.trim();
     if (!text || !commentTargetId) return;
     // Banned users can't comment (Apple UGC 1.2).
-    if (isBanned(profile.monika)) {
-      showHint(_wt('anon.toast.accessRevoked'));
+    if (isMeBanned()) {
+      showHint(_bannedMessage());
       return;
     }
     // Content filter (Apple UGC 1.2).
@@ -5496,8 +5606,8 @@ function setupFAB() {
     setTab('general');
   });
   document.getElementById('fab-compose').addEventListener('click', () => {
-    if (isBanned(profile.monika)) {
-      showHint(_wt('anon.toast.accessRevoked'));
+    if (isMeBanned()) {
+      showHint(_bannedMessage());
       return;
     }
     // The "wait for a reaction before posting again" gate is about the feed,
@@ -5598,8 +5708,8 @@ function setupCompose() {
     const text = ta.value.trim();
     if (!text) return;
     // Banned users can't post (Apple UGC 1.2 — ejected users stay out).
-    if (isBanned(profile.monika)) {
-      showHint(_wt('anon.toast.accessRevoked'));
+    if (isMeBanned()) {
+      showHint(_bannedMessage());
       return;
     }
     // Content filter (Apple UGC 1.2). Keep the overlay open so the user can edit.
@@ -6098,9 +6208,14 @@ function setupOverlayActions() {
 
   // Admin ban
   document.getElementById('aban-cancel').addEventListener('click', () => closeOv('ov-admin-ban'));
+  // Permanent for a zero-tolerance breach, 7 days for anything else.
   document.getElementById('aban-confirm').addEventListener('click', () => {
     closeOv('ov-admin-ban');
-    adminBanUser(adminBanName);
+    adminBanUser(adminBanName, null);
+  });
+  document.getElementById('aban-temp').addEventListener('click', () => {
+    closeOv('ov-admin-ban');
+    adminBanUser(adminBanName, TEMP_BAN_DAYS);
   });
 }
 
@@ -6124,14 +6239,18 @@ function adminDeletePost(id) {
 // live ban listener, and blocks them from posting/commenting) AND tombstones
 // their existing posts so the content is removed server-side, independent of
 // any client having the ban list loaded.
-function adminBanUser(name) {
+// `days` null = permanent (a zero-tolerance breach); otherwise the ban lifts
+// itself after that many days. The banned member's own app copies the ban
+// onto their profile id (_syncMyBan), so a new moniker doesn't escape it.
+// No bannedBy: the document is public, and the admin's moniker must not be.
+const TEMP_BAN_DAYS = 7;
+function adminBanUser(name, days) {
   if (!db || !name) return;
   const key = String(name).toLowerCase();
-  db.collection(BB_BRAND.collections.banned).doc(key).set({
-    monika: name,
-    bannedBy: profile.monika,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-  }).catch(err => console.error('[Admin] ban failed', err));
+  const doc = { monika: name, timestamp: firebase.firestore.FieldValue.serverTimestamp() };
+  if (days) doc.until = firebase.firestore.Timestamp.fromMillis(Date.now() + days * DAY_MS);
+  db.collection(BB_BRAND.collections.banned).doc(key).set(doc)
+    .catch(err => console.error('[Admin] ban failed', err));
   // Remove their existing posts so offending content disappears immediately.
   db.collection(BB_BRAND.collections.posts).where('name', '==', name).get()
     .then(snap => snap.forEach(doc => doc.ref.update({
@@ -6538,6 +6657,12 @@ document.getElementById('ms-save').addEventListener('click', async () => {
   if (newMonika.length < 2) { showHint(_wt('anon.toast.monikaTooShort')); return; }
 
   const oldMonika = profile.monika;
+  if (newMonika.toLowerCase() !== oldMonika.toLowerCase()) {
+    if (monikaRefused(newMonika)) { showHint(_wt('anon.mod.monikaRefused')); return; }
+    // A banned member keeps the name they were banned under (the ban is on
+    // their profile too, and the rules refuse the rename either way).
+    if (isMeBanned()) { showHint(_bannedMessage()); return; }
+  }
   try {
     if (await isMonikaInUse(newMonika, oldMonika)) {
       showHint(_wt('anon.toast.nameTaken'));

@@ -352,7 +352,7 @@
     <button class="report-opt" data-reason="Misinformation" data-i18n="anon.report.misinfo">Misinformation</button>
     <button class="report-opt" data-reason="Spam" data-i18n="anon.report.spam">Spam</button>
     <button class="report-opt" data-reason="Other" data-i18n="anon.report.other">Other concern</button>
-    <div class="sheet-note" data-i18n="anon.report.note">Bans are temporary — everyone deserves another chance 💛</div>
+    <div class="sheet-note" data-i18n="anon.report.note">A zero-tolerance breach means a permanent ban. Anything else means a temporary one 💛</div>
     <button class="btn-secondary" id="report-cancel" style="width:100%;margin-top:12px;" data-i18n="common.cancel">Cancel</button>
   </div>
 </div>
@@ -759,11 +759,12 @@
   <div class="sheet">
     <div class="sheet-icon">🚫</div>
     <div class="sheet-title" data-i18n="anon.ban.title">Ban this user?</div>
-    <div class="sheet-sub" id="aban-body" data-i18n="anon.ban.body">Their existing posts will be removed and they won't be able to post or comment again.</div>
+    <div class="sheet-sub" id="aban-body" data-i18n="anon.ban.body">Their posts will be removed and they won't be able to post or comment. Ban permanently for a zero-tolerance breach, for 7 days for anything else.</div>
     <div class="btn-row">
-      <button class="btn-secondary" id="aban-cancel" style="flex:1;" data-i18n="common.cancel">Cancel</button>
-      <button class="btn-danger"    id="aban-confirm" data-i18n="anon.ban.confirm">Ban 🚫</button>
+      <button class="btn-secondary" id="aban-temp" style="flex:1;" data-i18n="anon.mod.banTemp">Ban for 7 days ⏳</button>
+      <button class="btn-danger"    id="aban-confirm" style="flex:1;" data-i18n="anon.ban.confirm">Ban permanently 🚫</button>
     </div>
+    <button class="btn-secondary" id="aban-cancel" style="width:100%;margin-top:8px;" data-i18n="common.cancel">Cancel</button>
   </div>
 </div>
 
@@ -879,7 +880,7 @@
         <div style="font-size:13px;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.moderatorsList">
           📌 &nbsp;<strong>Pin</strong> — pin a post to the top of the tab (tap again to unpin)<br>
           🗑️ &nbsp;<strong>Delete</strong> — remove any post from the board<br>
-          🚫 &nbsp;<strong>Ban</strong> — temporarily ban a user from posting
+          🚫 &nbsp;<strong>Ban</strong> — stop a user posting: permanently for a zero-tolerance breach, for 7 days for anything else
         </div>
       </div>
     </div>
