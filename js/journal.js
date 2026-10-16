@@ -10495,10 +10495,14 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const medsTakenRecent = recent.filter(e=>e.medication==='taken').length;
         const missedAll = allEntries.filter(e=>e.medication!=='taken').length;
         const missedRecent = recent.filter(e=>e.medication!=='taken').length;
+        // The goals step stores 'some' for Yes / On track and 'none' for No
+        // ('completed' and 'not-100' only in old entries). Counting 'completed'
+        // alone made "Goals completed" read 0% for everyone (2026-10-16).
+        const _goalMet = g => g === 'some' || g === 'completed';
         const goalsAllTotal = allEntries.filter(e=>e.goals).length;
-        const goalsAllDone = allEntries.filter(e=>e.goals==='completed').length;
+        const goalsAllDone = allEntries.filter(e=>_goalMet(e.goals)).length;
         const goalsRecentTotal = recent.filter(e=>e.goals).length;
-        const goalsRecentDone = recent.filter(e=>e.goals==='completed').length;
+        const goalsRecentDone = recent.filter(e=>_goalMet(e.goals)).length;
         const allWithSteps = allEntries.filter(e => e.steps != null && e.steps > 0);
         const recentWithSteps = recent.filter(e => e.steps != null && e.steps > 0);
         const avgStepsAll = allWithSteps.length ? Math.round(allWithSteps.reduce((s,e) => s + e.steps, 0) / allWithSteps.length).toLocaleString() : null;
