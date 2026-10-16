@@ -1568,7 +1568,10 @@
 // v334: privacy policy §2 "At a glance" tables (what we keep, why, who can
 //   read it; both apps; same as the store labels); 10 languages. Touches
 //   privacy.html, js/shared/i18n.js (committed in 08e30f6 just after v333).
-const CACHE_NAME = 'bipolarbear-v334';
+// v335: the first-run language picker takes the page's colours (Bipolar
+//   Anonymous: yellow with dark text, not Bear orange), and its title follows
+//   the language tapped. Touches js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v335';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

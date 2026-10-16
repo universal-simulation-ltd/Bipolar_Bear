@@ -20973,12 +20973,20 @@
   function showPicker(onComplete) {
     if (document.getElementById('bbLangPicker')) return;
 
+    // The page's own colours: Bear orange, or Bipolar Anonymous yellow with
+    // the board's dark text on it (white on yellow is unreadable).
+    var anon = false;
+    try { anon = (window.BB && BB.isAnonymousApp && BB.isAnonymousApp()) || /anonymous\.html$/.test(location.pathname); } catch (_) {}
+    var pal = anon
+      ? { bg: 'linear-gradient(135deg,#ffe566 0%,#f5c800 100%)', on: '#f5c800', onText: '#1a1500' }
+      : { bg: 'linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)', on: 'var(--brand-primary,#ff9500)', onText: 'white' };
+
     var overlay = document.createElement('div');
     overlay.id = 'bbLangPicker';
     overlay.style.cssText = [
       'position:fixed;inset:0;z-index:99999',
       'display:flex;flex-direction:column;align-items:center;justify-content:center',
-      'background:linear-gradient(135deg,#ffaa33 0%,#ff8833 100%)',
+      'background:' + pal.bg,
       'padding:24px;box-sizing:border-box',
     ].join(';');
 
@@ -20988,15 +20996,15 @@
     var html = '<div style="background:white;border-radius:20px;padding:24px;width:100%;max-width:340px;box-shadow:0 10px 40px rgba(0,0,0,0.2);">';
     html += '<div style="text-align:center;margin-bottom:20px;">';
     html += '<div style="font-size:2.2em;margin-bottom:8px;">🐻</div>';
-    html += '<div style="font-size:1em;font-weight:700;color:#212529;">' + label + '</div>';
+    html += '<div id="bbLangTitle" style="font-size:1em;font-weight:700;color:#212529;">' + label + '</div>';
     html += '</div>';
     html += '<div id="bbLangList" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">';
     _languages.forEach(function (lg) {
-      var sel = lg.code === _lang ? 'background:var(--brand-primary,#ff9500);color:white;border-color:var(--brand-primary,#ff9500);' : 'background:#f8f9fa;color:#212529;border-color:#e9ecef;';
+      var sel = lg.code === _lang ? 'background:' + pal.on + ';color:' + pal.onText + ';border-color:' + pal.on + ';' : 'background:#f8f9fa;color:#212529;border-color:#e9ecef;';
       html += '<button data-lang="' + lg.code + '" style="padding:10px 8px;border:2px solid;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;transition:all 0.15s;' + sel + '">' + lg.name + '</button>';
     });
     html += '</div>';
-    html += '<button id="bbLangContinue" style="width:100%;padding:13px;background:var(--brand-primary,#ff9500);color:white;border:none;border-radius:12px;font-size:1em;font-weight:700;cursor:pointer;font-family:inherit;">' + btnLabel + '</button>';
+    html += '<button id="bbLangContinue" style="width:100%;padding:13px;background:' + pal.on + ';color:' + pal.onText + ';border:none;border-radius:12px;font-size:1em;font-weight:700;cursor:pointer;font-family:inherit;">' + btnLabel + '</button>';
     html += '</div>';
 
     overlay.innerHTML = html;
@@ -21009,13 +21017,15 @@
         setLanguage(code);
         overlay.querySelectorAll('[data-lang]').forEach(function (b) {
           var active = b.getAttribute('data-lang') === code;
-          b.style.background = active ? 'var(--brand-primary,#ff9500)' : '#f8f9fa';
-          b.style.color = active ? 'white' : '#212529';
-          b.style.borderColor = active ? 'var(--brand-primary,#ff9500)' : '#e9ecef';
+          b.style.background = active ? pal.on : '#f8f9fa';
+          b.style.color = active ? pal.onText : '#212529';
+          b.style.borderColor = active ? pal.on : '#e9ecef';
         });
         // Update continue button label in new language
         var cont = overlay.querySelector('#bbLangContinue');
         if (cont) cont.textContent = t('i18n.continue');
+        var title = overlay.querySelector('#bbLangTitle');
+        if (title) title.textContent = t('i18n.chooseLang');
       }
       if (e.target.id === 'bbLangContinue') {
         overlay.remove();
