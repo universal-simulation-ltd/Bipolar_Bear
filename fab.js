@@ -502,6 +502,7 @@
           <textarea id="bbFbMessage" placeholder="Tell us what's on your mind…" data-i18n-placeholder="feedback.messagePlaceholder" rows="4"
             style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;resize:none;font-family:inherit;margin-bottom:12px;"></textarea>
           <div id="bbFbNameRow" style="margin-bottom:12px;display:none;">
+            <label for="bbFbName" style="display:block;font-size:0.8em;color:#6c757d;margin:0 0 4px 2px;text-align:left;" data-i18n="fix143.fbNameLabel">Your name, sent with your feedback (optional)</label>
             <input type="text" id="bbFbName" placeholder="Your name" data-i18n-placeholder="feedback.namePlaceholder" autocomplete="given-name" maxlength="80"
               style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;font-family:inherit;">
           </div>
@@ -524,9 +525,9 @@
             <span data-i18n="feedback.notifyLabel">Keep me informed about my submission</span>
             <span style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;"
               onclick="var cb=document.getElementById('bbFbNotify');cb.checked=!cb.checked;document.getElementById('bbFbNotifyTrack').style.background=cb.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=cb.checked?'translateX(20px)':'translateX(0)';">
-              <input type="checkbox" id="bbFbNotify" checked style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
-              <span id="bbFbNotifyTrack" style="position:absolute;inset:0;border-radius:24px;background:var(--brand-primary);transition:background 0.2s;"></span>
-              <span id="bbFbNotifyThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;transform:translateX(20px);"></span>
+              <input type="checkbox" id="bbFbNotify" style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
+              <span id="bbFbNotifyTrack" style="position:absolute;inset:0;border-radius:24px;background:#ccc;transition:background 0.2s;"></span>
+              <span id="bbFbNotifyThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;transform:translateX(0);"></span>
             </span>
           </label>
           <div id="bbFbError" style="color:#dc3545;font-size:0.85em;margin-bottom:10px;display:none;"></div>
@@ -1235,8 +1236,8 @@
 
   /**
    * Open the feedback modal, resetting type selection and message field,
-   * filling in the page/version metadata line, and asking for a name only
-   * when we don't already have one.
+   * filling in the page/version metadata line, and showing the name field
+   * pre-filled with any name we already have.
    */
   window.openFabFeedback = function () {
     _fbType = null;
@@ -1252,8 +1253,13 @@
       const _ver = window._APP_VERSION ? ' · v' + window._APP_VERSION : '';
       _meta.textContent = _page + _ver;
     }
+    // The name field is always shown, filled with the name we already have, so
+    // the name that goes with the feedback is one the user can see and change
+    // (it used to be sent from a hidden field).
     const _nameRow = document.getElementById('bbFbNameRow');
-    if (_nameRow) _nameRow.style.display = _fbKnownName() ? 'none' : '';
+    if (_nameRow) _nameRow.style.display = '';
+    const _nameIn = document.getElementById('bbFbName');
+    if (_nameIn) _nameIn.value = _fbKnownName();
     window._clearFbScreenshot();
     if (_modal) _modal.classList.add('open');
   };
@@ -1309,7 +1315,7 @@
     const _typed    = (_nameRow && _nameRow.style.display !== 'none' && _nameEl) ? _nameEl.value.trim().slice(0, 80) : '';
     const payload = {
       type: _fbType, message: _msg, page: window.location.pathname,
-      name: _typed || _fbKnownName() || null,
+      name: _typed || null, // only what's in the visible name field
       version: window._APP_VERSION || null,
       platform: _getFbPlatform(),
       notify: _notifyEl ? _notifyEl.checked : false,
