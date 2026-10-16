@@ -65,6 +65,29 @@ function _sktMood(moodKey) {
   return map[moodKey] ? _skt(map[moodKey]) : moodKey;
 }
 
+/**
+ * Like _skt, but returns `fallback` (the English text kept in this file)
+ * when the key has no translation yet or i18n hasn't loaded.
+ *
+ * @param {string} k
+ * @param {string} fallback
+ * @param {Object} [v]
+ * @returns {string}
+ */
+function _sktOr(k, fallback, v) {
+  const s = _skt(k, v);
+  return (typeof s === 'string' && s && s !== k) ? s : fallback;
+}
+
+/**
+ * BCP-47 tag for the app language, for toLocale*() formatting.
+ * @returns {string}
+ */
+function _skLocale() {
+  const l = (window.BB && BB.i18n && BB.i18n.getLang) ? BB.i18n.getLang() : 'en';
+  return l === 'en' ? 'en-GB' : l === 'zh' ? 'zh-Hans' : l;
+}
+
 // ── BLOCK 1: section/accordion toggling, page-load init ──
 // ── SECTION COLLAPSE ──
     function toggleSection(headerEl) {
@@ -453,61 +476,85 @@ function _sktMood(moodKey) {
     // ── SPIRIT QUOTES ──
     const SPIRIT_QUOTES = [
       // ── Benjamin Franklin (Poor Richard's Almanack unless noted) ──
-      { group: 'franklin', emoji: '🪬', text: 'Well done is better than well said.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'Early to bed and early to rise makes a man healthy, wealthy, and wise.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'Lost time is never found again.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'Dost thou love life? Then do not squander time, for that\'s the stuff life is made of.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'The doors of wisdom are never shut.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'Be at war with your vices, at peace with your neighbours, and let every new year find you a better man.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'Diligence is the mother of good luck.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'Three may keep a secret, if two of them are dead.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
-      { group: 'franklin', emoji: '🪬', text: 'In this world nothing can be said to be certain, except death and taxes.', source: 'Benjamin Franklin — Letter to Jean-Baptiste Leroy, 1789' },
-      { group: 'franklin', emoji: '🪬', text: 'An investment in knowledge pays the best interest.', source: 'Attributed to Benjamin Franklin' },
+      { group: 'franklin', k: 'franklin1', emoji: '🪬', text: 'Well done is better than well said.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin2', emoji: '🪬', text: 'Early to bed and early to rise makes a man healthy, wealthy, and wise.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin3', emoji: '🪬', text: 'Lost time is never found again.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin4', emoji: '🪬', text: 'Dost thou love life? Then do not squander time, for that\'s the stuff life is made of.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin5', emoji: '🪬', text: 'The doors of wisdom are never shut.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin6', emoji: '🪬', text: 'Be at war with your vices, at peace with your neighbours, and let every new year find you a better man.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin7', emoji: '🪬', text: 'Diligence is the mother of good luck.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin8', emoji: '🪬', text: 'Three may keep a secret, if two of them are dead.', source: 'Benjamin Franklin — Poor Richard\'s Almanack' },
+      { group: 'franklin', k: 'franklin9', emoji: '🪬', text: 'In this world nothing can be said to be certain, except death and taxes.', source: 'Benjamin Franklin — Letter to Jean-Baptiste Leroy, 1789' },
+      { group: 'franklin', k: 'franklin10', emoji: '🪬', text: 'An investment in knowledge pays the best interest.', source: 'Attributed to Benjamin Franklin' },
       // ── Bible (NIV) ──
-      { group: 'bible', emoji: '🕊️', text: 'For I know the plans I have for you — plans to prosper you and not to harm you, plans to give you hope and a future.', source: 'Jeremiah 29:11' },
-      { group: 'bible', emoji: '🕊️', text: 'I can do all things through Christ who strengthens me.', source: 'Philippians 4:13' },
-      { group: 'bible', emoji: '🕊️', text: 'Cast all your anxiety on him because he cares for you.', source: '1 Peter 5:7' },
-      { group: 'bible', emoji: '🕊️', text: 'Be still, and know that I am God.', source: 'Psalm 46:10' },
-      { group: 'bible', emoji: '🕊️', text: 'Love is patient, love is kind. It does not envy, it does not boast, it is not proud.', source: '1 Corinthians 13:4' },
-      { group: 'bible', emoji: '🕊️', text: 'The Lord is my shepherd; I shall not want.', source: 'Psalm 23:1' },
-      { group: 'bible', emoji: '🕊️', text: 'Do not be anxious about anything, but in every situation, with thanksgiving, present your requests to God.', source: 'Philippians 4:6' },
-      { group: 'bible', emoji: '🕊️', text: 'Come to me, all you who are weary and burdened, and I will give you rest.', source: 'Matthew 11:28' },
-      { group: 'bible', emoji: '🕊️', text: 'For God has not given us a spirit of fear, but of power and of love and of a sound mind.', source: '2 Timothy 1:7' },
-      { group: 'bible', emoji: '🕊️', text: 'The Lord is close to the brokenhearted and saves those who are crushed in spirit.', source: 'Psalm 34:18' },
+      { group: 'bible', k: 'bible1', emoji: '🕊️', text: 'For I know the plans I have for you — plans to prosper you and not to harm you, plans to give you hope and a future.', source: 'Jeremiah 29:11' },
+      { group: 'bible', k: 'bible2', emoji: '🕊️', text: 'I can do all things through Christ who strengthens me.', source: 'Philippians 4:13' },
+      { group: 'bible', k: 'bible3', emoji: '🕊️', text: 'Cast all your anxiety on him because he cares for you.', source: '1 Peter 5:7' },
+      { group: 'bible', k: 'bible4', emoji: '🕊️', text: 'Be still, and know that I am God.', source: 'Psalm 46:10' },
+      { group: 'bible', k: 'bible5', emoji: '🕊️', text: 'Love is patient, love is kind. It does not envy, it does not boast, it is not proud.', source: '1 Corinthians 13:4' },
+      { group: 'bible', k: 'bible6', emoji: '🕊️', text: 'The Lord is my shepherd; I shall not want.', source: 'Psalm 23:1' },
+      { group: 'bible', k: 'bible7', emoji: '🕊️', text: 'Do not be anxious about anything, but in every situation, with thanksgiving, present your requests to God.', source: 'Philippians 4:6' },
+      { group: 'bible', k: 'bible8', emoji: '🕊️', text: 'Come to me, all you who are weary and burdened, and I will give you rest.', source: 'Matthew 11:28' },
+      { group: 'bible', k: 'bible9', emoji: '🕊️', text: 'For God has not given us a spirit of fear, but of power and of love and of a sound mind.', source: '2 Timothy 1:7' },
+      { group: 'bible', k: 'bible10', emoji: '🕊️', text: 'The Lord is close to the brokenhearted and saves those who are crushed in spirit.', source: 'Psalm 34:18' },
       // ── Quran ──
-      { group: 'quran', emoji: '🕋', text: 'Verily, with hardship comes ease.', source: 'Quran 94:5' },
-      { group: 'quran', emoji: '🕋', text: 'Allah does not burden a soul beyond that it can bear.', source: 'Quran 2:286' },
-      { group: 'quran', emoji: '🕋', text: 'And whoever relies upon Allah — then He is sufficient for him.', source: 'Quran 65:3' },
-      { group: 'quran', emoji: '🕋', text: 'And He found you lost and guided you.', source: 'Quran 93:7' },
-      { group: 'quran', emoji: '🕋', text: 'So remember Me; I will remember you.', source: 'Quran 2:152' },
-      { group: 'quran', emoji: '🕋', text: 'Do not despair of the mercy of Allah. Indeed, Allah forgives all sins.', source: 'Quran 39:53' },
-      { group: 'quran', emoji: '🕋', text: 'And when My servants ask you about Me — indeed I am near.', source: 'Quran 2:186' },
-      { group: 'quran', emoji: '🕋', text: 'Whoever saves one life, it is as if he has saved all mankind.', source: 'Quran 5:32' },
-      { group: 'quran', emoji: '🕋', text: 'Verily, in the remembrance of Allah do hearts find rest.', source: 'Quran 13:28' },
-      { group: 'quran', emoji: '🕋', text: 'Allah intends for you ease and does not intend for you hardship.', source: 'Quran 2:185' },
+      { group: 'quran', k: 'quran1', emoji: '🕋', text: 'Verily, with hardship comes ease.', source: 'Quran 94:5' },
+      { group: 'quran', k: 'quran2', emoji: '🕋', text: 'Allah does not burden a soul beyond that it can bear.', source: 'Quran 2:286' },
+      { group: 'quran', k: 'quran3', emoji: '🕋', text: 'And whoever relies upon Allah — then He is sufficient for him.', source: 'Quran 65:3' },
+      { group: 'quran', k: 'quran4', emoji: '🕋', text: 'And He found you lost and guided you.', source: 'Quran 93:7' },
+      { group: 'quran', k: 'quran5', emoji: '🕋', text: 'So remember Me; I will remember you.', source: 'Quran 2:152' },
+      { group: 'quran', k: 'quran6', emoji: '🕋', text: 'Do not despair of the mercy of Allah. Indeed, Allah forgives all sins.', source: 'Quran 39:53' },
+      { group: 'quran', k: 'quran7', emoji: '🕋', text: 'And when My servants ask you about Me — indeed I am near.', source: 'Quran 2:186' },
+      { group: 'quran', k: 'quran8', emoji: '🕋', text: 'Whoever saves one life, it is as if he has saved all mankind.', source: 'Quran 5:32' },
+      { group: 'quran', k: 'quran9', emoji: '🕋', text: 'Verily, in the remembrance of Allah do hearts find rest.', source: 'Quran 13:28' },
+      { group: 'quran', k: 'quran10', emoji: '🕋', text: 'Allah intends for you ease and does not intend for you hardship.', source: 'Quran 2:185' },
       // ── Buddhist (Dhammapada references confirmed from Pali Canon; others attributed) ──
-      { group: 'buddhist', emoji: '☸️', text: 'Mind is the forerunner of all actions. All deeds are led by mind, created by mind.', source: 'Dhammapada 1:1' },
-      { group: 'buddhist', emoji: '☸️', text: 'Better than a thousand hollow words is one word that brings peace.', source: 'Dhammapada 8:100' },
-      { group: 'buddhist', emoji: '☸️', text: 'Hatred is never appeased by hatred in this world; it is appeased by love. This is an eternal law.', source: 'Dhammapada 1:5' },
-      { group: 'buddhist', emoji: '☸️', text: 'Conquer anger with non-anger, conquer evil with good, conquer the miser with generosity, conquer the liar with truth.', source: 'Dhammapada 17:223' },
-      { group: 'buddhist', emoji: '☸️', text: 'A good friend who points out our mistakes is to be respected as a revealer of hidden treasure.', source: 'Dhammapada 6:76' },
-      { group: 'buddhist', emoji: '☸️', text: 'Three things cannot be long hidden: the sun, the moon, and the truth.', source: 'Attributed to the Buddha' },
-      { group: 'buddhist', emoji: '☸️', text: 'Peace comes from within. Do not seek it without.', source: 'Attributed to the Buddha' },
-      { group: 'buddhist', emoji: '☸️', text: 'The mind is everything. What you think, you become.', source: 'Attributed to the Buddha' },
-      { group: 'buddhist', emoji: '☸️', text: 'Thousands of candles can be lit from a single candle — happiness never decreases by being shared.', source: 'Attributed to the Buddha' },
-      { group: 'buddhist', emoji: '☸️', text: 'In separateness lies the world\'s greatest misery; in compassion lies the world\'s true strength.', source: 'Attributed to the Buddha' },
+      { group: 'buddhist', k: 'buddhist1', emoji: '☸️', text: 'Mind is the forerunner of all actions. All deeds are led by mind, created by mind.', source: 'Dhammapada 1:1' },
+      { group: 'buddhist', k: 'buddhist2', emoji: '☸️', text: 'Better than a thousand hollow words is one word that brings peace.', source: 'Dhammapada 8:100' },
+      { group: 'buddhist', k: 'buddhist3', emoji: '☸️', text: 'Hatred is never appeased by hatred in this world; it is appeased by love. This is an eternal law.', source: 'Dhammapada 1:5' },
+      { group: 'buddhist', k: 'buddhist4', emoji: '☸️', text: 'Conquer anger with non-anger, conquer evil with good, conquer the miser with generosity, conquer the liar with truth.', source: 'Dhammapada 17:223' },
+      { group: 'buddhist', k: 'buddhist5', emoji: '☸️', text: 'A good friend who points out our mistakes is to be respected as a revealer of hidden treasure.', source: 'Dhammapada 6:76' },
+      { group: 'buddhist', k: 'buddhist6', emoji: '☸️', text: 'Three things cannot be long hidden: the sun, the moon, and the truth.', source: 'Attributed to the Buddha' },
+      { group: 'buddhist', k: 'buddhist7', emoji: '☸️', text: 'Peace comes from within. Do not seek it without.', source: 'Attributed to the Buddha' },
+      { group: 'buddhist', k: 'buddhist8', emoji: '☸️', text: 'The mind is everything. What you think, you become.', source: 'Attributed to the Buddha' },
+      { group: 'buddhist', k: 'buddhist9', emoji: '☸️', text: 'Thousands of candles can be lit from a single candle — happiness never decreases by being shared.', source: 'Attributed to the Buddha' },
+      { group: 'buddhist', k: 'buddhist10', emoji: '☸️', text: 'In separateness lies the world\'s greatest misery; in compassion lies the world\'s true strength.', source: 'Attributed to the Buddha' },
       // ── Stoic / Philosophy ──
-      { group: 'stoic', emoji: '✨', text: 'You have power over your mind, not outside events. Realise this and you will find strength.', source: 'Marcus Aurelius — Meditations' },
-      { group: 'stoic', emoji: '✨', text: 'The happiness of your life depends upon the quality of your thoughts.', source: 'Marcus Aurelius — Meditations' },
-      { group: 'stoic', emoji: '✨', text: 'Very little is needed to make a happy life; it is all within yourself, in your way of thinking.', source: 'Marcus Aurelius — Meditations' },
-      { group: 'stoic', emoji: '✨', text: 'Waste no more time arguing about what a good man should be. Be one.', source: 'Marcus Aurelius — Meditations' },
-      { group: 'stoic', emoji: '✨', text: 'If it is not right, do not do it; if it is not true, do not say it.', source: 'Marcus Aurelius — Meditations' },
-      { group: 'stoic', emoji: '✨', text: 'The best revenge is to be unlike him who performed the injury.', source: 'Marcus Aurelius — Meditations' },
-      { group: 'stoic', emoji: '✨', text: 'Make the best use of what is in your power, and take the rest as it happens.', source: 'Epictetus — Enchiridion' },
-      { group: 'stoic', emoji: '✨', text: 'Men are disturbed not by things, but by their opinions about things.', source: 'Epictetus — Enchiridion' },
-      { group: 'stoic', emoji: '✨', text: 'We suffer more often in imagination than in reality.', source: 'Seneca — Letters to Lucilius' },
-      { group: 'stoic', emoji: '✨', text: 'He who has a why to live for can bear almost any how.', source: 'Friedrich Nietzsche — Twilight of the Idols' },
+      { group: 'stoic', k: 'stoic1', emoji: '✨', text: 'You have power over your mind, not outside events. Realise this and you will find strength.', source: 'Marcus Aurelius — Meditations' },
+      { group: 'stoic', k: 'stoic2', emoji: '✨', text: 'The happiness of your life depends upon the quality of your thoughts.', source: 'Marcus Aurelius — Meditations' },
+      { group: 'stoic', k: 'stoic3', emoji: '✨', text: 'Very little is needed to make a happy life; it is all within yourself, in your way of thinking.', source: 'Marcus Aurelius — Meditations' },
+      { group: 'stoic', k: 'stoic4', emoji: '✨', text: 'Waste no more time arguing about what a good man should be. Be one.', source: 'Marcus Aurelius — Meditations' },
+      { group: 'stoic', k: 'stoic5', emoji: '✨', text: 'If it is not right, do not do it; if it is not true, do not say it.', source: 'Marcus Aurelius — Meditations' },
+      { group: 'stoic', k: 'stoic6', emoji: '✨', text: 'The best revenge is to be unlike him who performed the injury.', source: 'Marcus Aurelius — Meditations' },
+      { group: 'stoic', k: 'stoic7', emoji: '✨', text: 'Make the best use of what is in your power, and take the rest as it happens.', source: 'Epictetus — Enchiridion' },
+      { group: 'stoic', k: 'stoic8', emoji: '✨', text: 'Men are disturbed not by things, but by their opinions about things.', source: 'Epictetus — Enchiridion' },
+      { group: 'stoic', k: 'stoic9', emoji: '✨', text: 'We suffer more often in imagination than in reality.', source: 'Seneca — Letters to Lucilius' },
+      { group: 'stoic', k: 'stoic10', emoji: '✨', text: 'He who has a why to live for can bear almost any how.', source: 'Friedrich Nietzsche — Twilight of the Idols' },
     ];
+
+    // Quote sources in the app language: whole sources by name, scripture
+    // references as "<book> <chapter:verse>" with only the book translated.
+    const _SPIRIT_SRC_KEYS = {
+      'Benjamin Franklin — Poor Richard\'s Almanack': 'franklinAlmanack',
+      'Benjamin Franklin — Letter to Jean-Baptiste Leroy, 1789': 'franklinLetter',
+      'Attributed to Benjamin Franklin': 'attrFranklin',
+      'Attributed to the Buddha': 'attrBuddha',
+      'Marcus Aurelius — Meditations': 'aureliusMeditations',
+      'Epictetus — Enchiridion': 'epictetusEnchiridion',
+      'Seneca — Letters to Lucilius': 'senecaLetters',
+      'Friedrich Nietzsche — Twilight of the Idols': 'nietzscheTwilight',
+    };
+    const _SPIRIT_BOOK_KEYS = {
+      'Jeremiah': 'jeremiah', 'Philippians': 'philippians', '1 Peter': 'peter1', 'Psalm': 'psalm',
+      '1 Corinthians': 'corinthians1', 'Matthew': 'matthew', '2 Timothy': 'timothy2',
+      'Quran': 'quran', 'Dhammapada': 'dhammapada',
+    };
+    function _skSpiritSource(src) {
+      if (_SPIRIT_SRC_KEYS[src]) return _sktOr('t143.sk.spiritSrc.' + _SPIRIT_SRC_KEYS[src], src);
+      const m = /^(.+?) (\d+:\d+)$/.exec(src || '');
+      if (m && _SPIRIT_BOOK_KEYS[m[1]]) return _sktOr('t143.sk.spiritBook.' + _SPIRIT_BOOK_KEYS[m[1]], m[1]) + ' ' + m[2];
+      return src;
+    }
 
     let _spiritIdx = Math.floor(Math.random() * SPIRIT_QUOTES.length);
     let _spiritHistory = [];
@@ -515,8 +562,8 @@ function _sktMood(moodKey) {
     function showSpiritQuote() {
       const q = SPIRIT_QUOTES[_spiritIdx];
       document.getElementById('spiritQuoteEmoji').textContent  = q.emoji;
-      document.getElementById('spiritQuoteText').textContent   = '\u201C' + q.text + '\u201D';
-      document.getElementById('spiritQuoteSource').textContent = '\u2014 ' + q.source;
+      document.getElementById('spiritQuoteText').textContent   = '\u201C' + _sktOr('t143.sk.spirit.' + q.k, q.text) + '\u201D';
+      document.getElementById('spiritQuoteSource').textContent = '\u2014 ' + _skSpiritSource(q.source);
       const backBtn = document.getElementById('spiritBackBtn');
       if (backBtn) {
         const hasHistory = _spiritHistory.length > 0;
@@ -645,6 +692,12 @@ function _sktMood(moodKey) {
       { name: 'Maria Bello',           field: 'Actress & Producer',           wiki: 'Maria_Bello' },
     ];
 
+    // What each person is known for, in the app language (one key per person
+    // so gendered languages get the right form). Names stay as written.
+    function _skCelebField(c) {
+      return _sktOr('t143.sk.celeb.' + String(c.wiki).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, ''), c.field);
+    }
+
     const _celebImgCache = {};
 
     function _getCelebQueue() {
@@ -673,7 +726,7 @@ function _sktMood(moodKey) {
     async function showCeleb() {
       const c = BIPOLAR_CELEBS[_celebIdx];
       document.getElementById('celebName').textContent = c.name;
-      document.getElementById('celebField').textContent = c.field;
+      document.getElementById('celebField').textContent = _skCelebField(c);
       document.getElementById('celebWikiLink').href = 'https://en.wikipedia.org/wiki/' + c.wiki;
 
       const imgEl = document.getElementById('celebPhoto');
@@ -765,11 +818,17 @@ function _sktMood(moodKey) {
     // the anonymous-board Wiki tab). Falls back to [] defensively.
     const KNOWN_MEDS = (window.BB && window.BB.medications && window.BB.medications.list) || [];
 
+    // Title + body in the app language (BB.medications.text), English if not.
+    function _skMedText(med, field) {
+      const M = window.BB && window.BB.medications;
+      return (M && typeof M.text === 'function') ? M.text(med, field) : med[field];
+    }
+
     function buildAccordionHTML(med) {
       return `<div class="accordion">
-        <button class="accordion-header" onclick="toggleAccordion(this)">${med.title}<span class="chevron">▼</span></button>
+        <button class="accordion-header" onclick="toggleAccordion(this)">${_skMedText(med, 'title')}<span class="chevron">▼</span></button>
         <div class="accordion-body">
-          <p>${med.body}</p>
+          <p>${_skMedText(med, 'body')}</p>
           <a href="${med.nhs}" target="_blank" class="link-btn secondary" style="font-size:0.82em; padding:6px 12px; margin-top:8px;">${_skt('anon.wiki.nhsInfo')}</a>
         </div>
       </div>`;
@@ -807,7 +866,7 @@ function _sktMood(moodKey) {
           } else {
             // Unknown med: show simple accordion with just the name/dosage
             primaryHTML += `<div class="accordion">
-              <button class="accordion-header" onclick="toggleAccordion(this)">${med.name}${med.dosage ? ' (' + med.dosage + ')' : ''}<span class="chevron">▼</span></button>
+              <button class="accordion-header" onclick="toggleAccordion(this)">${_esc(med.name)}${med.dosage ? ' (' + _esc(med.dosage) + ')' : ''}<span class="chevron">▼</span></button>
               <div class="accordion-body"><p>${_skt('sk.meds.unknownBody')}</p></div>
             </div>`;
           }
@@ -1118,7 +1177,13 @@ function _sktMood(moodKey) {
         "Every day is a chance to be better than yesterday.",
         "The future belongs to those who believe in the beauty of their dreams. — Eleanor Roosevelt"
       ];
-      const quote = MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)];
+      // The PDF uses jsPDF's built-in Helvetica, which only draws WinAnsi
+      // (Latin-1 plus a few) characters, so a translation it can't draw
+      // (Chinese, Polish ą/ł/ś…) falls back to English rather than garbage.
+      const _pdfSafe = (t) => !/[^\x00-\xFF‘’“”–—…€•™ŠšŽžŒœŸ]/.test(t);
+      const _pdfText = (t, en) => (t && _pdfSafe(t)) ? t : en;
+      const _quoteIdx = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+      const quote = _pdfText(_sktOr('t143.sk.wallQuote.q' + (_quoteIdx + 1), MOTIVATIONAL_QUOTES[_quoteIdx]), MOTIVATIONAL_QUOTES[_quoteIdx]);
 
       try { await BB.loadJsPdf(); } catch (e) { console.warn('jsPDF unavailable', e); return; }
       const { jsPDF } = window.jspdf;
@@ -1163,7 +1228,7 @@ function _sktMood(moodKey) {
         const rowY = tableTop + 10 + r * rowH;
         const monthIdx = (now.getMonth() + r) % 12;
         const year = now.getFullYear() + Math.floor((now.getMonth() + r) / 12);
-        const monthLabel = monthNames[monthIdx] + ' ' + year;
+        const monthLabel = _pdfText((() => { try { return new Date(year, monthIdx, 1).toLocaleDateString(_skLocale(), { month: 'long', year: 'numeric' }); } catch (_) { return ''; } })(), monthNames[monthIdx] + ' ' + year);
 
         // Alternating row background
         if (r % 2 === 0) {
@@ -1752,7 +1817,7 @@ function _sktMood(moodKey) {
                 <button onclick="deleteMoodDefinition('${mood}')" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:#ff6b6b;font-weight:600;padding:0;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.moodDef.remove'))}</button>
               </div>
             </div>
-            <div style="font-size:0.9em;color:#495057;line-height:1.5;font-style:italic;">"${text}"</div>
+            <div style="font-size:0.9em;color:#495057;line-height:1.5;font-style:italic;">"${_esc(text)}"</div>
           </div>
           <button onclick="_toggleBipolarDef('${mood}',this)" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:#adb5bd;font-weight:600;padding:4px 0;margin-top:4px;-webkit-tap-highlight-color:transparent;" id="bipolarDefToggle-${mood}">${_esc(_skt('sk.moodDef.bipolarUkClosed'))}</button>`;
         // Collapse the bipolar def
@@ -2089,6 +2154,48 @@ function _sktMood(moodKey) {
     window.closeStepsModal = closeStepsModal;
     window.closeStepsModalOutside = closeStepsModalOutside;
 
+    // ── LANGUAGE CHANGE ──
+    // Everything above that is drawn from data (not from data-i18n markup)
+    // redraws itself in the new language.
+    function _skApplyLanguage() {
+      const run = (f) => { try { f(); } catch (e) { console.warn('survival-kit language redraw:', e); } };
+      run(_skApplyDocTitle);
+      run(() => _applyGuideTitle(localStorage.getItem('personalName') || ''));
+      run(updateMedicationAccordions);
+      run(() => {
+        const sec = document.getElementById('moreMedicationsSection');
+        const btn = document.getElementById('moreMedicationsBtn');
+        if (sec && btn) btn.textContent = sec.style.display !== 'none' ? _skt('sk.meds.less') : _skt('sk.meds.more');
+      });
+      run(loadMedInfo);
+      run(showSpiritQuote);
+      run(() => { document.getElementById('celebField').textContent = _skCelebField(BIPOLAR_CELEBS[_celebIdx]); });
+      run(renderGratitude);
+      run(loadSurvivalGoals);
+      run(loadSurvivalBudget);
+      run(renderCustomReminders);
+      run(renderAllMoodDefinitions);
+      run(() => {
+        if (_memoryMood) { document.getElementById('memoriesMoodLabel').textContent = _sktMood(_memoryMood) || _memoryMood; renderMemoryList(); }
+        if (_copingMood) { document.getElementById('copingMoodLabel').textContent = _sktMood(_copingMood) || _copingMood; renderCopingList(); }
+      });
+      run(_renderStep);
+      run(renderCommitments);
+      run(renderEmergencyContact);
+      run(() => {
+        const el = document.getElementById('helpedCount');
+        const n = el ? parseInt(el.textContent.replace(/[^0-9]/g, ''), 10) : NaN;
+        if (!isNaN(n)) el.textContent = n.toLocaleString(_skLocale());
+      });
+    }
+    document.addEventListener('bb:languagechange', _skApplyLanguage);
+    // The browser-tab title (survival-kit.html's <title> is English).
+    function _skApplyDocTitle() {
+      const t = _sktOr('sk.pageTitle', '');
+      if (t) document.title = t + ' – Bipolar Bear';
+    }
+    try { _skApplyDocTitle(); } catch (_) {}
+
 // ── BLOCK 2 ──
 // Register service worker for offline functionality
     if ('serviceWorker' in navigator) {
@@ -2168,7 +2275,7 @@ function _sktMood(moodKey) {
       }
 
       // Format count consistently regardless of device locale
-      function fmtCount(n) { return Number(n).toLocaleString('en-US'); }
+      function fmtCount(n) { return Number(n).toLocaleString(_skLocale()); }
 
       // Load real people-helped count from Firestore and restore vote button state
       async function loadHelpedCount() {

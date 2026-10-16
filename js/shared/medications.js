@@ -74,6 +74,21 @@
     return null;
   }
 
+  // What people read (title + body) in the current language. The
+  // translations are the Wiki tab's (anon.wiki.a.<slug>_<field> in
+  // js/shared/i18n.js, same slug as _wikiSlug() in js/anonymous.js); drug and
+  // brand names inside them stay as written. Falls back to the English above
+  // when there is no translation or i18n hasn't loaded.
+  function slug(t) {
+    return String(t).toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40);
+  }
+  function text(m, field) {
+    if (!m || !m[field]) return (m && m[field]) || '';
+    var k = 'anon.wiki.a.' + slug(m.title) + '_' + field;
+    var v = (window.BB && typeof window.BB.t === 'function') ? window.BB.t(k) : k;
+    return (typeof v === 'string' && v && v !== k) ? v : m[field];
+  }
+
   window.BB = window.BB || {};
-  window.BB.medications = { list: LIST, match: match };
+  window.BB.medications = { list: LIST, match: match, text: text };
 })();
