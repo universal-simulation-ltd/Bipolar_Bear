@@ -210,6 +210,10 @@ function _tt(k, vars, fallback) {
       // Hint 2b (close journal): step 2 only
       const _h2b = document.getElementById('journalHintClose');
       if (_h2b) _h2b.style.display = step === 2 ? 'flex' : 'none';
+      // …and the "Add your details here" pointer waits until then, so the two
+      // don't show at once (the entries list renders it on open).
+      const _pdHint = document.getElementById('personalDetailsJournalHint');
+      if (_pdHint) _pdHint.style.display = step === 2 ? 'none' : 'flex';
       // Hint 3 (go back here): step 3 only
       const _h3 = document.getElementById('journalHint3');
       if (_h3) _h3.style.display = step === 3 ? 'flex' : 'none';
@@ -239,7 +243,10 @@ function _tt(k, vars, fallback) {
       // switch the dimmer off underneath it, leaving the hint stranded on a
       // fully interactive page with nothing pointing anywhere.
       const _showFabHint = document.body.classList.contains('bb-settings-fab-hint');
-      const _isBlocking = _blockingSteps.has(step) || _showSettings || _showMedHint || _showFabHint;
+      // The medication hint ("Manage medications") no longer blocks the page:
+      // the dimmer stopped Taken / Not taken / Unsure from working until the
+      // link was tapped (2026-10-16). The pointer still shows.
+      const _isBlocking = _blockingSteps.has(step) || _showSettings || _showFabHint;
       const _overlay = document.getElementById('bbHintOverlay');
       if (_overlay) _overlay.style.display = _isBlocking ? '' : 'none';
 
@@ -1558,7 +1565,7 @@ function _tt(k, vars, fallback) {
       if (_ec && _ecEl) {
         document.getElementById('depressedEmergencyText').textContent = _ec;
         const _ecNum = _ec.match(/[\d\s\+\-\(\)]{6,}/)?.[0]?.trim();
-        document.getElementById('depressedEmergencyLink').href = _ecNum ? 'tel:' + _ecNum.replace(/\s/g,'') : '#';
+        document.getElementById('depressedEmergencyLink').href = _ecNum ? ('tel:' + (BB.telNumber(_ecNum) || _ecNum.replace(/\s/g,''))) : '#';
         _ecEl.style.display = '';
       } else if (_ecEl) {
         _ecEl.style.display = 'none';
@@ -1604,7 +1611,7 @@ function _tt(k, vars, fallback) {
         if (_ec && _ecEl) {
           document.getElementById('depressedEmergencyText').textContent = _ec;
           const _ecNum = _ec.match(/[\d\s\+\-\(\)]{6,}/)?.[0]?.trim();
-          document.getElementById('depressedEmergencyLink').href = _ecNum ? 'tel:' + _ecNum.replace(/\s/g,'') : '#';
+          document.getElementById('depressedEmergencyLink').href = _ecNum ? ('tel:' + (BB.telNumber(_ecNum) || _ecNum.replace(/\s/g,''))) : '#';
           _ecEl.style.display = '';
         } else if (_ecEl) {
           _ecEl.style.display = 'none';
@@ -3026,13 +3033,13 @@ function _tt(k, vars, fallback) {
                 const _sqLabel = entry.sleepQuality === 'good' ? ' 😊' : entry.sleepQuality === 'bad' ? ' 😴' : entry.sleepQuality === 'unsure' ? ' 😐' : '';
                 return `<span style="white-space:nowrap">${_eLabel}</span><span style="white-space:nowrap">&nbsp;| 🛌 ${_sLabel}${_sqLabel}</span>${entry.steps != null ? `<span style="white-space:nowrap">&nbsp;| 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps / 1000) + 'k' : entry.steps}</span>` : ''}${_achStr}`;
               })()}</div>
-              ${entry.notes ? `<div class="entry-notes">${entry.notes}</div>` : ''}
+              ${entry.notes ? `<div class="entry-notes">${_esc(entry.notes)}</div>` : ''}
               ${entry.intention && entry.intention.trim() ? (() => {
                 const _intParts = entry.intention.trim().split(/\n?_{3,}\n/);
                 const _intMain = _intParts[0].trim();
                 const _intNotes = _intParts[1] ? _intParts[1].trim() : '';
-                return (_intMain ? `<div class="entry-notes" style="font-style:italic;color:#adb5bd;">🌅 ${_intMain}</div>` : '')
-                     + (_intNotes ? `<div class="entry-notes" style="font-size:0.82em;color:#adb5bd;white-space:pre-line;">${_intNotes}</div>` : '');
+                return (_intMain ? `<div class="entry-notes" style="font-style:italic;color:#adb5bd;">🌅 ${_esc(_intMain)}</div>` : '')
+                     + (_intNotes ? `<div class="entry-notes" style="font-size:0.82em;color:#adb5bd;white-space:pre-line;">${_esc(_intNotes)}</div>` : '');
               })() : ''}
             </div>
           `;
@@ -3076,7 +3083,7 @@ function _tt(k, vars, fallback) {
                 <span style="font-size:0.82em;color:#6c757d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${currentUser.email || ''}</span>
                 <button onclick="logout()" class="logout-btn-list" style="flex-shrink:0;padding:7px 14px;background:white;color:#adb5bd;border:1.5px solid #dee2e6;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.logout')}</button>
               ` : `
-                <span style="font-size:0.82em;color:#adb5bd;font-style:italic;">${BB.t('journal.ui.loginToBackup')}</span>
+                <span style="font-size:0.82em;color:#adb5bd;font-style:italic;">${BB.t('fix143.loginToBackup')}</span>
                 <button onclick="window.showAuthModal()" style="flex-shrink:0;padding:7px 14px;background:var(--brand-btn);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.signInUp')}</button>
               `}
             </div>
@@ -3522,7 +3529,7 @@ function _tt(k, vars, fallback) {
           const label = _bbDate(d, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
-            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.notes}</div>`
+            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
             : '';
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${color};">
@@ -3582,7 +3589,7 @@ function _tt(k, vars, fallback) {
           if (v) rows.push(`<div style="margin-bottom:6px;"><b>${k}:</b> ${v}</div>`);
         });
       }
-      if (entry.notes) rows.push(`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:0.9em;line-height:1.5;color:#495057;">${entry.notes}</div>`);
+      if (entry.notes) rows.push(`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:0.9em;line-height:1.5;color:#495057;">${_esc(entry.notes)}</div>`);
       return rows.join('');
     }
 
@@ -3631,7 +3638,7 @@ function _tt(k, vars, fallback) {
           const label = _bbDate(d, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
-            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.notes}</div>`
+            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
             : '';
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${color};">
@@ -4096,7 +4103,7 @@ function _tt(k, vars, fallback) {
         const el = (tag, css, text) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (text != null) n.textContent = text; return n; };
         const inputCss = 'width:100%;padding:12px;border:2px solid #e9ecef;border-radius:10px;font-size:1em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;';
         const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', t(unlock ? 'unlockTitle' : 'privateTitle'));
-        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', t(unlock ? 'unlockBody' : 'privateBody'));
+        const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', unlock ? BB.t('fix143.unlockBody') : t('privateBody')); // not "end-to-end": Standard accounts see it too
         const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:#6c757d;', t(unlock ? 'unlockHint' : 'createWarning'));
         const pw = el('input', inputCss); pw.type = 'password'; pw.autocomplete = unlock ? 'current-password' : 'new-password';
         pw.placeholder = t(unlock ? 'passwordPlaceholder' : 'newPasswordPlaceholder');
@@ -4388,8 +4395,37 @@ function _tt(k, vars, fallback) {
       await loadEntries();
     }
 
+    /**
+     * "Not now" on the guest PIN screen. Nothing is saved without the PIN (it
+     * is the key the entry is encrypted with), so the save simply doesn't run:
+     * the entry stays open as it was, and saveDraft() keeps a draft where
+     * drafts are allowed. The screen says so before the tap.
+     */
+    function guestPinSetupCancel() {
+      _guestPinSetupCallback = null;
+      _guestPinSetupBuffer = '';
+      _guestPinSetupFirst = '';
+      _guestPinSetupStep = 'set';
+      const overlay = document.getElementById('guestPinSetupOverlay');
+      if (overlay) overlay.style.display = 'none';
+      try { saveDraft(); } catch (_) {}
+    }
+
     window.guestPinSetupKey = guestPinSetupKey;
     window.guestPinSetupDel = guestPinSetupDel;
+    window.guestPinSetupCancel = guestPinSetupCancel;
+
+    // Widget deep link (bipolarbear://journal) while the journal is already
+    // open: only the home page listened, so the tap did nothing visible. Here
+    // it brings the journal back to the top (2026-10-16).
+    (function () {
+      const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (!App || typeof App.addListener !== 'function') return;
+      App.addListener('appUrlOpen', function (data) {
+        if (!data || !data.url || !/^bipolarbear:\/\/journal/i.test(data.url)) return;
+        try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) { window.scrollTo(0, 0); }
+      });
+    })();
     window._guestPinForgotReset = _guestPinForgotReset;
 
     function _initPinLock() {
@@ -6145,10 +6181,14 @@ function _tt(k, vars, fallback) {
       const _stepCounter = document.getElementById('fmStepCounter');
       // Top bar is uniform across every step, including mood (step 0)
       _dotsEl.style.display = 'flex';
-      _dotsEl.innerHTML = _fmSteps.map((_,i) => `<div class="fm-dot ${i<_fmStepIndex?'done':i===_fmStepIndex?'cur':''}"></div>`).join('');
+      // The sleep-quality step is only visited after a long press on a sleep
+      // range; otherwise it's skipped, so it isn't counted or dotted either
+      // (the counter used to jump "Step 2 of 7" → "Step 4 of 7").
+      const _fmShown = _fmSteps.map((s, i) => i).filter(i => _fmSteps[i].id !== 'sleepQuality' || _fmWantsSleepQuality || i === _fmStepIndex);
+      _dotsEl.innerHTML = _fmShown.map(i => `<div class="fm-dot ${i<_fmStepIndex?'done':i===_fmStepIndex?'cur':''}"></div>`).join('');
       if (_topBar) _topBar.style.display = 'flex';
       if (_stepCounter) _stepCounter.style.display = '';
-      document.getElementById('fmStepCounter').textContent = BB.t('journal.fm.stepCounter', { n: _fmStepIndex+1, total: _fmSteps.length });
+      document.getElementById('fmStepCounter').textContent = BB.t('journal.fm.stepCounter', { n: _fmShown.indexOf(_fmStepIndex) + 1, total: _fmShown.length });
       // Summary bar: every step's chip, on every page including the first
       // (30 Sep 2026 — it used to be hidden until a step was answered).
       _fmChipPreview = null;
@@ -7180,8 +7220,8 @@ function _tt(k, vars, fallback) {
           // user's med list directly above the "Manage medications" link.
           const _manageRow = `<div class="fm-meds-manage">
               ${medListHtml}
-              <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:${_medHintDone ? 'var(--brand-primary)' : 'rgba(255,255,255,0.9)'};font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
-              ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,255,255,0.9);font-family:'Georgia',serif;letter-spacing:0.01em;text-shadow:0 1px 4px rgba(0,0,0,0.5);">${BB.t('journal.hint.logMed')}</span></div>`}
+              <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
+              ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
               ${_mrPill}
             </div>`;
           // Built as a real 5-pill wheel — Not taken, Not taken, Unsure,
@@ -9697,7 +9737,7 @@ function _tt(k, vars, fallback) {
         }
         html += `</div>`;
         if (entry.notes && entry.notes.trim()) {
-          html += `<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:10px;font-size:0.85em;color:#495057;font-style:italic;line-height:1.4;">"${entry.notes.trim()}"</div>`;
+          html += `<div style="margin-top:10px;background:#f8f9fa;border-radius:8px;padding:10px;font-size:0.85em;color:#495057;font-style:italic;line-height:1.4;">"${_esc(entry.notes.trim())}"</div>`;
         }
         {
           // Show only the clean intention (strip elaborate step notes encoded after ___\n)
@@ -10406,6 +10446,16 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        // Unicode font (Helvetica garbled Polish and Chinese): Chinese when the app
+        // is in zh or anything printed has CJK in it.
+        {
+          let _pdfText = '';
+          try {
+            _pdfText = JSON.stringify(entries) + ['personalName','personalAddress','personalDiagnosis','personalEmergencyContact','personalNotes','currentMedList','customTrackingFields']
+              .map(k => localStorage.getItem(k) || '').join(' ');
+          } catch (_) {}
+          await BB.loadPdfFont(doc, _pdfText);
+        }
         const pageW = doc.internal.pageSize.width;
         const pageH = doc.internal.pageSize.height;
         const margin = 15;
@@ -10497,10 +10547,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const medsTakenRecent = recent.filter(e=>e.medication==='taken').length;
         const missedAll = allEntries.filter(e=>e.medication!=='taken').length;
         const missedRecent = recent.filter(e=>e.medication!=='taken').length;
+        // The goals step stores 'some' for Yes / On track and 'none' for No
+        // ('completed' and 'not-100' only in old entries). Counting 'completed'
+        // alone made "Goals completed" read 0% for everyone (2026-10-16).
+        const _goalMet = g => g === 'some' || g === 'completed';
         const goalsAllTotal = allEntries.filter(e=>e.goals).length;
-        const goalsAllDone = allEntries.filter(e=>e.goals==='completed').length;
+        const goalsAllDone = allEntries.filter(e=>_goalMet(e.goals)).length;
         const goalsRecentTotal = recent.filter(e=>e.goals).length;
-        const goalsRecentDone = recent.filter(e=>e.goals==='completed').length;
+        const goalsRecentDone = recent.filter(e=>_goalMet(e.goals)).length;
         const allWithSteps = allEntries.filter(e => e.steps != null && e.steps > 0);
         const recentWithSteps = recent.filter(e => e.steps != null && e.steps > 0);
         const avgStepsAll = allWithSteps.length ? _bbNum(Math.round(allWithSteps.reduce((s,e) => s + e.steps, 0) / allWithSteps.length)) : null;
@@ -10624,8 +10678,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             }
           } else {
             doc.setFont(undefined, 'italic'); setColor(grey);
-            doc.text(BB.t('journal.pdf.addDetailsLine1'), margin + 4, contentY);
-            doc.text(BB.t('journal.pdf.addDetailsLine2'), margin + 4, contentY + lineHeight);
+            doc.text(BB.t('fix143.pdfAddDetails1'), margin + 4, contentY);
+            doc.text(BB.t('fix143.pdfAddDetails2'), margin + 4, contentY + lineHeight);
           }
 
           // Right column: medications
@@ -12058,22 +12112,32 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       // throw. _accountDeleted is set to true only after currentUser.delete()
       // resolves; deleted accumulates as entries are removed.
       let _accountDeleted = false;
+      let _abort = false;
       let deleted = 0;
 
       try {
         if (currentUser) {
-          // Delete all entries from Firestore
-          const snapshot = await db.collection('entries')
-            .where('userId', '==', currentUser.uid)
-            .get();
-          
-          const batch = db.batch();
-          snapshot.forEach(doc => {
-            batch.delete(doc.ref);
-            deleted++;
-          });
-          
-          await batch.commit();
+          // Firestore takes at most 500 writes a batch, so delete in chunks of
+          // 400. If a chunk fails, stop before touching anything else: still
+          // signed in, the account still there, and the user told how far it got.
+          let _total = 0;
+          try {
+            const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
+            const _docs = snapshot.docs;
+            _total = _docs.length;
+            for (let i = 0; i < _docs.length; i += 400) {
+              const batch = db.batch();
+              const _part = _docs.slice(i, i + 400);
+              _part.forEach(doc => batch.delete(doc.ref));
+              await batch.commit();
+              deleted += _part.length;
+            }
+          } catch (_delErr) {
+            console.error('Deleting entries failed', _delErr);
+            _abort = true;
+            alert(BB.t('fix143.deleteEntriesFailed', { n: deleted, total: _total }));
+            return;
+          }
         } else {
           // Delete all entries from localStorage
           const keysToDelete = [];
@@ -12107,7 +12171,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
          // so the new install gets the first-run dock layout again.
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',
          'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
-         'bbLogoEasterEggFound','bbCustomFieldHintDone',
+         'bbLogoEasterEggFound','bbCustomFieldHintDone','bbSkVisited',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',
          'personalEmergencyContact','personalNotes',
@@ -12304,6 +12368,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         // manually when the account-delete didn't run or failed AND a
         // session is still active. signOut is best-effort (no await) —
         // the new page will pick up whatever auth state actually persists.
+        // (_abort: the entries delete failed, nothing else was touched, so
+        // stay put and signed in; the user was told.)
+        if (_abort) return;
         if (!_accountDeleted && typeof auth !== 'undefined' && auth && currentUser) {
           auth.signOut().catch(() => {});
         }
@@ -15492,7 +15559,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       }, true);
     })();
 
-    // ── Med hint page lock (independent of onboarding step) ──
+    // ── Med hint nudge (independent of onboarding step) ──
+    // It used to be a page lock: Taken / Not taken / Unsure, Skip and Exit did
+    // nothing until "Manage medications" was tapped (2026-10-16). Now every
+    // control works; a tap on anything that isn't a control nudges the hint.
     (function() {
       document.addEventListener('click', function(e) {
         if (BB.storage.get('MedHintDone') === '1') return;
@@ -15501,7 +15571,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const btn = document.getElementById('manageMedsBtn');
         if (!btn || btn === e.target || btn.contains(e.target)) return;
         if (document.querySelector('.confirm-modal.active, .overlay-modal.active')) return;
-        e.stopPropagation(); e.preventDefault();
+        if (e.target.closest && e.target.closest('button, a, input, select, textarea, label, [onclick], [role=button], .fm-wheel, .fm-wheel-btn')) return;
         [hint, btn].forEach(el => {
           const prev = el.style.animation;
           el.style.animation = 'none'; el.offsetHeight;

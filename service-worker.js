@@ -1581,7 +1581,17 @@
 //   survival kit quotes and medicine reference; zh range tabs. Touches
 //   js/shared/i18n.js, js/journal.js, journal.html, index.html, js/index.js,
 //   fab.js, survival-kit.html, js/survival-kit.js, js/shared/medications.js.
-const CACHE_NAME = 'bipolarbear-v337-i18n';
+// v337-bear (placeholder, renumbered at merge): pre-release review fixes.
+//   Notes, intentions and step notes escaped; PDFs embed Noto Sans / Noto Sans
+//   SC (vendor/fonts, loaded only when a PDF is made); UK crisis sheet adds
+//   Shout, NHS 111 option 2 and 999; account delete in batches of 400; Survival
+//   Kit edit state, phone links, dead media, counter, Wikipedia on demand;
+//   guest PIN Not now; feedback untick + visible name; focus-mode counter;
+//   tutorial med step; unlock wording; privacy policy; widget link on journal /
+//   kit; PDF goals %. Touches fab.js, privacy.html, journal.html,
+//   survival-kit.html, index.html, js/journal.js, js/index.js,
+//   js/survival-kit.js, js/shared/{brand-config,crisis,safety-plan,i18n}.js.
+const CACHE_NAME = 'bipolarbear-v337-rel';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

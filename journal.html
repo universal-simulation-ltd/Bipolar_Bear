@@ -1141,6 +1141,9 @@
       <button class="pin-key" onclick="guestPinSetupKey('0')">0</button>
       <button class="pin-key pin-key-del" onclick="guestPinSetupDel()">⌫</button>
     </div>
+    <!-- Back out of the guest PIN (2026-10-16): the entry stays open, unsaved. -->
+    <button type="button" onclick="guestPinSetupCancel()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.6);color:#fff;border-radius:20px;padding:8px 22px;min-height:44px;font-family:inherit;font-size:0.9em;font-weight:700;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;" data-i18n="fix143.pinNotNow">Not now</button>
+    <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.75em;text-align:center;max-width:260px;line-height:1.5;margin-bottom:8px;" data-i18n="fix143.pinNeededToSave">You need a PIN to save. Not now keeps your entry open, not saved yet.</p>
     <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.75em;text-align:center;max-width:240px;line-height:1.5;" data-i18n="journal.mods.pinEncryptNote">Your PIN encrypts your data on this device. If you forget your PIN, your entries cannot be recovered.</p>
   </div>
 

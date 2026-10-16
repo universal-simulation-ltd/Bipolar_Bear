@@ -177,6 +177,11 @@ function _skLocale() {
       section.classList.remove('collapsed');
       container.classList.add('sk-focused');
       _skOpenId = id;
+      _skMarkVisited(id);
+      if (id === 'media' && !window._skCelebPhotos) {
+        window._skCelebPhotos = true; // the famous-person photo loads from Wikipedia now
+        try { showCeleb(); } catch (_) {}
+      }
       if (opts.hash !== false) _skSetHash(id);
       updateActiveNav();
       if (opts.scroll !== false) _skScrollTo(document.getElementById('skBackBar'), false);
@@ -588,6 +593,18 @@ function _skLocale() {
     window.prevSpiritQuote = prevSpiritQuote;
 
     // ── SECTION COMPLETION TICKS ──
+    // Info-only sections (nothing to fill in) the user has opened on this device.
+    const _SK_INFO_IDS = ['mood-scale', 'books', 'media', 'spiritual'];
+    function _skVisitedList() {
+      try { const v = JSON.parse(localStorage.getItem('bbSkVisited') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+    }
+    function _skVisited(id) { return _skVisitedList().indexOf(id) !== -1; }
+    function _skMarkVisited(id) {
+      if (_SK_INFO_IDS.indexOf(id) === -1 || _skVisited(id)) return;
+      try { localStorage.setItem('bbSkVisited', JSON.stringify(_skVisitedList().concat(id))); } catch (e) {}
+      _skUpdateTicks();
+    }
+
     function _skUpdateTicks() {
       const _check = (key, parse) => {
         try { const v = localStorage.getItem(key); return v && (!parse || parse(v)); } catch(e) { return false; }
@@ -601,11 +618,13 @@ function _skLocale() {
         { id: 'memories',          done: () => { try { const mm = JSON.parse(localStorage.getItem('moodMemories')||'{}'); return Object.values(mm).some(a => Array.isArray(a) && a.length > 0); } catch(e){return false;} } },
         { id: 'steps',             done: () => { try { const sc = JSON.parse(localStorage.getItem('myCommitments')||'[]'); return Array.isArray(sc) && sc.length > 0; } catch(e){return false;} } },
         { id: 'faq',               done: () => { try { const cr = JSON.parse(localStorage.getItem('customReminders')||'[]'); return Array.isArray(cr) && cr.length > 0; } catch(e){return false;} } },
-        // Info-only sections — always complete
-        { id: 'mood-scale', done: () => true },
-        { id: 'books',      done: () => true },
-        { id: 'media',      done: () => true },
-        { id: 'spiritual',  done: () => true },
+        // Info-only sections count once opened (bbSkVisited, set by
+        // skOpenSection). They used to count as done from the start, so a new
+        // kit read 4 / 12. js/index.js and index.html's early paint count the same.
+        { id: 'mood-scale', done: () => _skVisited('mood-scale') },
+        { id: 'books',      done: () => _skVisited('books') },
+        { id: 'media',      done: () => _skVisited('media') },
+        { id: 'spiritual',  done: () => _skVisited('spiritual') },
       ];
       let _doneCount = 0;
       sections.forEach(({ id, done }) => {
@@ -640,6 +659,16 @@ function _skLocale() {
       if (mTip) mTip.style.display = _memoriesFilled ? 'none' : '';
     }
     window._skUpdateTicks = _skUpdateTicks;
+
+    // Widget deep link (bipolarbear://journal) while the kit is open. Only the
+    // home page listened for it, so a widget tap here did nothing (2026-10-16).
+    (function () {
+      const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+      if (!App || typeof App.addListener !== 'function') return;
+      App.addListener('appUrlOpen', function (data) {
+        if (data && data.url && /^bipolarbear:\/\/journal/i.test(data.url)) location.replace('journal.html');
+      });
+    })();
 
 
     // ── FAMOUS PEOPLE WITH BIPOLAR ──
@@ -734,6 +763,10 @@ function _skLocale() {
       imgEl.style.display = 'none';
       fallbackEl.style.display = '';
 
+      // The photo comes from Wikipedia, so it's only asked for once the Media
+      // section is opened (skOpenSection sets the flag): opening the Survival
+      // Kit no longer contacts Wikipedia (privacy review 2026-10-16).
+      if (!window._skCelebPhotos) return;
       if (!_celebImgCache.hasOwnProperty(c.wiki)) {
         try {
           const title = c.wiki.replace(/_/g, ' ');
@@ -952,15 +985,29 @@ function _skLocale() {
       }
     }
 
+    /**
+     * Put the medicine sheet's button back to "Add Medication". Editing swaps
+     * it for "Save changes"; leaving the sheet (or deleting) without saving
+     * used to keep that swap, so the next Add replaced the medicine instead.
+     */
+    function _resetMedEditBtn() {
+      const addBtn = document.querySelector('#medInfoModal .modal-btn-primary');
+      if (!addBtn || !addBtn.dataset.editing) return;
+      addBtn.onclick = null;
+      addBtn.setAttribute('onclick', 'addMedication()');
+      addBtn.textContent = _skt('sk.meds.addBtn');
+      delete addBtn.dataset.editing;
+    }
+
     function editMedication(index) {
       const list = getMedList();
       const med = list[index];
+      if (!med) return;
       document.getElementById('medNameInput').value = med.name;
       document.getElementById('medDosageInput').value = med.dosage || '';
       const addBtn = document.querySelector('#medInfoModal .modal-btn-primary');
       if (!addBtn) return;
-      const originalHTML = addBtn.innerHTML;
-      const originalOnclick = addBtn.getAttribute('onclick');
+      addBtn.dataset.editing = '1';
       addBtn.innerHTML = _skt('sk.meds.saveChanges');
       addBtn.onclick = () => {
         const name = document.getElementById('medNameInput').value.trim();
@@ -971,10 +1018,7 @@ function _skLocale() {
         renderMedList();
         document.getElementById('medNameInput').value = '';
         document.getElementById('medDosageInput').value = '';
-        addBtn.innerHTML = originalHTML;
-        addBtn.setAttribute('onclick', originalOnclick);
-        addBtn.onclick = null;
-        addBtn.setAttribute('onclick', 'addMedication()');
+        _resetMedEditBtn();
       };
     }
     window.editMedication = editMedication;
@@ -994,6 +1038,7 @@ function _skLocale() {
           }
         } catch(e) {}
       }
+      _resetMedEditBtn();
       renderMedList();
       document.getElementById('medNameInput').value = '';
       document.getElementById('medDosageInput').value = '';
@@ -1003,6 +1048,7 @@ function _skLocale() {
     window.openMedInfoModal = openMedInfoModal;
 
     function closeMedInfoModal() {
+      _resetMedEditBtn();
       document.getElementById('medInfoModal').classList.remove('active');
       _unlockBodyScroll();
     }
@@ -1036,6 +1082,10 @@ function _skLocale() {
     window._fillMedName = _fillMedName;
 
     function deleteMedication(index) {
+      // An edit in progress holds a list index that this delete shifts.
+      _resetMedEditBtn();
+      document.getElementById('medNameInput').value = '';
+      document.getElementById('medDosageInput').value = '';
       const list = getMedList();
       list.splice(index, 1);
       saveMedList(list);
@@ -1188,6 +1238,8 @@ function _skLocale() {
       try { await BB.loadJsPdf(); } catch (e) { console.warn('jsPDF unavailable', e); return; }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      // Unicode font: Helvetica garbled Polish and Chinese goals and headings.
+      const _pdfFam = await BB.loadPdfFont(doc, goals.join(' '));
       const pageW = 297, pageH = 210;
       const margin = 14;
 
@@ -1197,7 +1249,7 @@ function _skLocale() {
 
       // Logo text (no image available in PDF context)
       doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(_pdfFam, 'bold');
       doc.setFontSize(18);
       doc.text(_skt('sk.goals.pdfHeader'), pageW / 2, 18, { align: 'center' });
 
@@ -1213,7 +1265,7 @@ function _skLocale() {
       doc.setFillColor(255, 240, 210);
       doc.rect(margin + labelColW, tableTop, tableWidth - labelColW, 10, 'F');
       doc.setTextColor(50, 50, 50);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont(_pdfFam, 'bold');
       doc.setFontSize(9);
       goals.forEach((g, i) => {
         const x = margin + labelColW + i * dataColW + dataColW / 2;
@@ -1237,7 +1289,7 @@ function _skLocale() {
         }
 
         // Month label
-        doc.setFont('helvetica', 'bold');
+        doc.setFont(_pdfFam, 'bold');
         doc.setFontSize(8);
         doc.setTextColor(80, 80, 80);
         doc.text(monthLabel, margin + 2, rowY + 8);
@@ -1272,7 +1324,7 @@ function _skLocale() {
 
       // Motivational quote at bottom
       const quoteY = tableTop + 10 + 12 * rowH + 10;
-      doc.setFont('helvetica', 'italic');
+      doc.setFont(_pdfFam, 'italic');
       doc.setFontSize(8);
       doc.setTextColor(150, 100, 30);
       doc.text('"' + quote + '"', pageW / 2, quoteY, { align: 'center', maxWidth: tableWidth });
@@ -1469,6 +1521,10 @@ function _skLocale() {
     window.editReminder = editReminder;
 
     function openAddReminderModal() {
+      // An edit that was closed without saving left the button in update
+      // mode, so this "Add" would have replaced that reminder.
+      const saveBtn = document.querySelector('#addReminderModal button[onclick="saveReminder()"]');
+      if (saveBtn) { saveBtn.textContent = _skt('sk.faq.save'); saveBtn.onclick = saveReminder; }
       document.getElementById('reminderTitleInput').value = '';
       document.getElementById('reminderMessageInput').value = '';
       _lockBodyScroll();
@@ -1499,6 +1555,7 @@ function _skLocale() {
       list.splice(index, 1);
       saveCustomReminders(list);
       renderCustomReminders();
+      _skUpdateTicks();
     }
 
     window.openAddReminderModal = openAddReminderModal;
@@ -2495,7 +2552,8 @@ function _skLocale() {
       if (contact) {
         // Try to extract a phone number from the contact string
         const phoneMatch = contact.match(/[\d\s\+\-\(\)]{7,}/);
-        const phoneHref = phoneMatch ? `tel:${phoneMatch[0].replace(/\s/g,'')}` : null;
+        const _phoneNum = phoneMatch ? BB.telNumber(phoneMatch[0]) : '';
+        const phoneHref = _phoneNum ? `tel:${_phoneNum}` : null;
         area.innerHTML = `
           <div style="font-size:0.88em;color:rgba(255,255,255,0.85);margin-bottom:8px;font-weight:600;">${_esc(_skt('sk.crisis.ecLabel'))}</div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">

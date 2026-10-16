@@ -289,3 +289,69 @@ window.BB.loadJsPdf = function () {
   });
   return window.BB._jsPdfPromise;
 };
+
+/**
+ * A typed phone number as tel: digits (2026-10-16). "+44 (0)20 7946 0000"
+ * used to become tel:+4402079460000, which doesn't connect: a "(0)" after a
+ * country code is dropped, a leading 00 becomes +, and everything but the
+ * digits and a leading + goes. Returns '' when nothing dialable is left.
+ * Mirrored by telOf() in js/shared/safety-plan.js (kept self-contained).
+ */
+window.BB.telNumber = function (phone) {
+  var s = String(phone || '').trim();
+  if (/^(\+|00)/.test(s)) s = s.replace(/\(\s*0\s*\)/g, '');
+  s = s.replace(/^00/, '+');
+  s = s.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
+  return /\d{3,}/.test(s) ? s : '';
+};
+
+/**
+ * Embed a Unicode font in a jsPDF doc and select it (2026-10-16). jsPDF's
+ * built-in Helvetica is WinAnsi only, so Polish ą ę ł ś ż and every Chinese
+ * character came out garbled. Noto Sans (Latin incl. Extended, ~62 KB a
+ * weight) by default; Noto Sans SC (GB2312 subset, ~2.3 MB) when the app is
+ * in Chinese or `text` has CJK in it. Both self-hosted under vendor/fonts
+ * (SIL OFL 1.1), fetched only when a PDF is made. Registers normal / bold /
+ * italic / bolditalic under one family, so the existing
+ * `doc.setFont(undefined, 'bold')` calls keep working. Resolves the family
+ * name; on failure resolves 'helvetica' so the PDF is still made.
+ */
+window.BB.loadPdfFont = function (doc, text) {
+  var lang = '';
+  try { lang = (window.BB.i18n && window.BB.i18n.getLang && window.BB.i18n.getLang()) || ''; } catch (e) {}
+  var cjk = lang === 'zh' || /[⺀-鿿豈-﫿＀-￯]/.test(String(text || ''));
+  var faces = cjk
+    ? { family: 'NotoSansSC', files: { normal: 'NotoSansSC-Regular.ttf', bold: 'NotoSansSC-Regular.ttf', italic: 'NotoSansSC-Regular.ttf', bolditalic: 'NotoSansSC-Regular.ttf' } }
+    : { family: 'NotoSans', files: { normal: 'NotoSans-Regular.ttf', bold: 'NotoSans-Bold.ttf', italic: 'NotoSans-Italic.ttf', bolditalic: 'NotoSans-Bold.ttf' } };
+  var cache = window.BB._pdfFontFiles = window.BB._pdfFontFiles || {};
+  function load(name) {
+    if (!cache[name]) {
+      cache[name] = fetch('vendor/fonts/' + name).then(function (r) {
+        if (!r.ok) throw new Error('font ' + name + ' ' + r.status);
+        return r.arrayBuffer();
+      }).then(function (buf) {
+        // jsPDF's VFS takes a binary string; build it in chunks.
+        var bytes = new Uint8Array(buf), out = '', step = 0x8000;
+        for (var i = 0; i < bytes.length; i += step) {
+          out += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+        }
+        return out;
+      });
+      cache[name].catch(function () { delete cache[name]; });
+    }
+    return cache[name];
+  }
+  var styles = Object.keys(faces.files);
+  return Promise.all(styles.map(function (s) { return load(faces.files[s]); })).then(function (bins) {
+    styles.forEach(function (s, i) {
+      var file = faces.files[s];
+      if (!doc.existsFileInVFS(file)) doc.addFileToVFS(file, bins[i]);
+      doc.addFont(file, faces.family, s);
+    });
+    doc.setFont(faces.family, 'normal');
+    return faces.family;
+  }).catch(function (e) {
+    console.warn('PDF font unavailable, using Helvetica', e);
+    return 'helvetica';
+  });
+};

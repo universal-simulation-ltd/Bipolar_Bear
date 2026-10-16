@@ -194,7 +194,13 @@
     (kids || []).forEach(function (c) { if (c) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
     return el;
   }
-  function telOf(phone) { return String(phone || '').replace(/[^\d+]/g, '').replace(/(?!^)\+/g, ''); }
+  // "+44 (0)20…" → +4420…: drop a "(0)" after a country code, 00 → +, then
+  // digits and a leading + only (same as BB.telNumber in brand-config.js).
+  function telOf(phone) {
+    var s = String(phone || '').trim();
+    if (/^(\+|00)/.test(s)) s = s.replace(/\(\s*0\s*\)/g, '');
+    return s.replace(/^00/, '+').replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
+  }
   function clip(s) { return String(s == null ? '' : s).trim().slice(0, MAX_LEN); }
 
   // ── plan storage ──────────────────────────────────────────────────────────

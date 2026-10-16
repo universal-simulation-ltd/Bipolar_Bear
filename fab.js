@@ -418,11 +418,32 @@
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:6px;" data-i18n="fab.crisis.title">Crisis Support</div>
           <p style="font-size:0.84em;color:#6c757d;margin-bottom:14px;" data-i18n="fab.crisis.body">If you're struggling and need to talk to someone:</p>
           <div id="chatModalLines">
-          <a href="tel:116123" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:14px;text-align:left;">
+          <a href="tel:116123" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">📞</span>
             <div>
               <div style="font-weight:700;font-size:0.95em;">Samaritans</div>
               <div style="color:#6c757d;font-size:0.82em;margin-top:1px;" data-i18n="fab.crisis.samaritansInfo">116 123 · Free · 24/7</div>
+            </div>
+          </a>
+          <a href="sms:85258?&body=SHOUT" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
+            <span style="font-size:1.6em;line-height:1;">💬</span>
+            <div>
+              <div style="font-weight:700;font-size:0.95em;">Shout</div>
+              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Text SHOUT to 85258 · free, 24/7</div>
+            </div>
+          </a>
+          <a href="tel:111" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
+            <span style="font-size:1.6em;line-height:1;">📞</span>
+            <div>
+              <div style="font-weight:700;font-size:0.95em;">NHS 111 · mental health</div>
+              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Call 111, option 2 · 24/7</div>
+            </div>
+          </a>
+          <a href="tel:999" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:14px;text-align:left;">
+            <span style="font-size:1.6em;line-height:1;">🚑</span>
+            <div>
+              <div style="font-weight:700;font-size:0.95em;">Emergency</div>
+              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Call 999</div>
             </div>
           </a>
           </div>
@@ -487,6 +508,7 @@
           <textarea id="bbFbMessage" placeholder="Tell us what's on your mind…" data-i18n-placeholder="feedback.messagePlaceholder" rows="4"
             style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;resize:none;font-family:inherit;margin-bottom:12px;"></textarea>
           <div id="bbFbNameRow" style="margin-bottom:12px;display:none;">
+            <label for="bbFbName" style="display:block;font-size:0.8em;color:#6c757d;margin:0 0 4px 2px;text-align:left;" data-i18n="fix143.fbNameLabel">Your name, sent with your feedback (optional)</label>
             <input type="text" id="bbFbName" placeholder="Your name" data-i18n-placeholder="feedback.namePlaceholder" autocomplete="given-name" maxlength="80"
               style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;font-family:inherit;">
           </div>
@@ -509,9 +531,9 @@
             <span data-i18n="feedback.notifyLabel">Keep me informed about my submission</span>
             <span style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;"
               onclick="var cb=document.getElementById('bbFbNotify');cb.checked=!cb.checked;document.getElementById('bbFbNotifyTrack').style.background=cb.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=cb.checked?'translateX(20px)':'translateX(0)';">
-              <input type="checkbox" id="bbFbNotify" checked style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
-              <span id="bbFbNotifyTrack" style="position:absolute;inset:0;border-radius:24px;background:var(--brand-primary);transition:background 0.2s;"></span>
-              <span id="bbFbNotifyThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;transform:translateX(20px);"></span>
+              <input type="checkbox" id="bbFbNotify" style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
+              <span id="bbFbNotifyTrack" style="position:absolute;inset:0;border-radius:24px;background:#ccc;transition:background 0.2s;"></span>
+              <span id="bbFbNotifyThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;transform:translateX(0);"></span>
             </span>
           </label>
           <div id="bbFbError" style="color:#dc3545;font-size:0.85em;margin-bottom:10px;display:none;"></div>
@@ -1024,7 +1046,9 @@
     const box = document.getElementById('chatModalLines');
     if (C && box) {
       const g = C.get();
-      if (!g.uk) {
+      // Every country, the UK too: the static markup above is only the
+      // fallback for when crisis.js didn't load (it had Samaritans alone).
+      {
         const cls = {
           rowStyle: 'display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;',
           icoStyle: 'font-size:1.6em;line-height:1;',
@@ -1037,8 +1061,21 @@
         if (g.emergency) {
           box.appendChild(C.row({ name: BB.t('crisis.emergency'), href: 'tel:' + g.emergency, icon: '🚑',
             sub: BB.t('crisis.callN', { n: g.emergency }) }, cls));
+        } else {
+          // Not a listed country: no number to show, so say what to do.
+          const em = document.createElement('div');
+          em.style.cssText = cls.rowStyle;
+          const ico = document.createElement('span');
+          ico.style.cssText = cls.icoStyle; ico.setAttribute('aria-hidden', 'true'); ico.textContent = '🚑';
+          const txt = document.createElement('div');
+          const nm = document.createElement('div');
+          nm.style.cssText = cls.nameStyle; nm.textContent = BB.t('crisis.emergency');
+          const sb = document.createElement('div');
+          sb.style.cssText = cls.subStyle; sb.textContent = BB.t('fix143.localEmergency');
+          txt.appendChild(nm); txt.appendChild(sb); em.appendChild(ico); em.appendChild(txt);
+          box.appendChild(em);
         }
-        if (g.cc) {
+        if (g.cc && !g.uk) {
           const more = document.createElement('a');
           more.href = g.findUrl; more.target = '_blank'; more.rel = 'noopener';
           more.style.cssText = 'display:block;font-size:0.8em;color:#6c757d;margin:2px 0 14px;';
@@ -1205,8 +1242,8 @@
 
   /**
    * Open the feedback modal, resetting type selection and message field,
-   * filling in the page/version metadata line, and asking for a name only
-   * when we don't already have one.
+   * filling in the page/version metadata line, and showing the name field
+   * pre-filled with any name we already have.
    */
   window.openFabFeedback = function () {
     _fbType = null;
@@ -1222,8 +1259,13 @@
       const _ver = window._APP_VERSION ? ' · v' + window._APP_VERSION : '';
       _meta.textContent = _page + _ver;
     }
+    // The name field is always shown, filled with the name we already have, so
+    // the name that goes with the feedback is one the user can see and change
+    // (it used to be sent from a hidden field).
     const _nameRow = document.getElementById('bbFbNameRow');
-    if (_nameRow) _nameRow.style.display = _fbKnownName() ? 'none' : '';
+    if (_nameRow) _nameRow.style.display = '';
+    const _nameIn = document.getElementById('bbFbName');
+    if (_nameIn) _nameIn.value = _fbKnownName();
     window._clearFbScreenshot();
     if (_modal) _modal.classList.add('open');
   };
@@ -1279,7 +1321,7 @@
     const _typed    = (_nameRow && _nameRow.style.display !== 'none' && _nameEl) ? _nameEl.value.trim().slice(0, 80) : '';
     const payload = {
       type: _fbType, message: _msg, page: window.location.pathname,
-      name: _typed || _fbKnownName() || null,
+      name: _typed || null, // only what's in the visible name field
       version: window._APP_VERSION || null,
       platform: _getFbPlatform(),
       notify: _notifyEl ? _notifyEl.checked : false,

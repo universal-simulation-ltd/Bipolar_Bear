@@ -469,6 +469,9 @@ bbTutorialToastShown    "1"           — "tutorial complete" popup shown; synce
 bbFabsUnlocked          "1"           — FAB dock fully unlocked (set at step 12)
 bbWelcomeShown          "1"           — first-ever welcome popup shown
 bbSurvivalKitVisited    "1"           — user has opened the survival kit
+bbSkVisited             JSON array    — info-only kit sections opened on this device (mood-scale,
+                                        books, media, spiritual); they count towards "N / 12"
+                                        only once opened (2026-10-16). Device only, cleared on reset
 bbSurvivalCelebDone     "1"           — "survival kit filled in" celebration toast shown (once)
 bbPersonalHintDone      "1"           — personal info hint dismissed; synced to Firestore
 bbMedHintDone           "1"           — medications hint dismissed

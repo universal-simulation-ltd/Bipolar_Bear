@@ -389,7 +389,7 @@
             if (prog) {
               var arr = function (key) { try { var x = JSON.parse(localStorage.getItem(key) || '[]'); return Array.isArray(x) && x.length > 0; } catch (e) { return false; } };
               var obj = function (key) { try { var x = JSON.parse(localStorage.getItem(key) || '{}'); return Object.values(x).some(function (a) { return Array.isArray(a) && a.length > 0; }); } catch (e) { return false; } };
-              var c = 4; // mood-scale, books, media, spiritual — always complete
+              var c = 0; try { var sv = JSON.parse(localStorage.getItem('bbSkVisited') || '[]'); if (Array.isArray(sv)) ['mood-scale', 'books', 'media', 'spiritual'].forEach(function (id) { if (sv.indexOf(id) !== -1) c++; }); } catch (e) {} // info-only sections count once opened
               if (arr('currentMedList')) c++;
               if (arr('dailyGoals')) c++;
               if (arr('survivalGratitude')) c++;

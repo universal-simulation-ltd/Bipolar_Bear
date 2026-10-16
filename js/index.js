@@ -1899,14 +1899,32 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       }
 
       let _accountDeleted = false;
+      let _abort = false;
       let deleted = 0;
 
       try {
         if (currentUser) {
-          const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
-          const batch = db.batch();
-          snapshot.forEach(doc => { batch.delete(doc.ref); deleted++; });
-          await batch.commit();
+          // Firestore takes at most 500 writes a batch, so delete in chunks of
+          // 400. If a chunk fails, stop before touching anything else: still
+          // signed in, the account still there, and the user told how far it got.
+          let _total = 0;
+          try {
+            const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
+            const _docs = snapshot.docs;
+            _total = _docs.length;
+            for (let i = 0; i < _docs.length; i += 400) {
+              const batch = db.batch();
+              const _part = _docs.slice(i, i + 400);
+              _part.forEach(doc => batch.delete(doc.ref));
+              await batch.commit();
+              deleted += _part.length;
+            }
+          } catch (_delErr) {
+            console.error('Deleting entries failed', _delErr);
+            _abort = true;
+            alert(_tr('fix143.deleteEntriesFailed', "Your entries couldn't all be deleted (" + deleted + ' of ' + _total + " removed). Nothing else was changed and you're still signed in. Check your connection and try again.", { n: deleted, total: _total }));
+            return;
+          }
         } else {
           const keysToDelete = [];
           for (let i = 0; i < localStorage.length; i++) {
@@ -1929,7 +1947,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
          'bbSurvivalBtnEnabled','bbAnonBtnEnabled','bbHomeStatsEnabled','bbHomeQuickCheckin',
-         'bbCustomiseNewPending','bbCustomiseNewSeen',
+         'bbCustomiseNewPending','bbCustomiseNewSeen','bbSkVisited',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',
          'personalEmergencyContact','personalNotes',
@@ -2053,6 +2071,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         console.error('Error deleting all entries:', error);
         alert(_tr('t143.home.reset.cleanupFailed', 'Some cleanup steps failed: ' + error.message + '\n\nThe page will reload so you can start fresh.', { msg: error.message }));
       } finally {
+        if (_abort) return; // entries delete failed: nothing else touched, stay signed in
         if (!_accountDeleted && auth && currentUser) {
           auth.signOut().catch(() => {});
         }
@@ -2532,7 +2551,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         if (!_prog) return;
         const _arr = k => { try { const v = JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v) && v.length > 0; } catch(e){ return false; } };
         const _obj = k => { try { const v = JSON.parse(localStorage.getItem(k)||'{}'); return Object.values(v).some(a => Array.isArray(a) && a.length > 0); } catch(e){ return false; } };
-        let _c = 4; // mood-scale, books, media, spiritual — always complete
+        // Info-only sections count once opened in the kit (bbSkVisited, js/survival-kit.js).
+        let _c = 0;
+        try { const _v = JSON.parse(localStorage.getItem('bbSkVisited') || '[]'); if (Array.isArray(_v)) _c += ['mood-scale','books','media','spiritual'].filter(id => _v.indexOf(id) !== -1).length; } catch (e) {}
         if (_arr('currentMedList')) _c++;
         if (_arr('dailyGoals')) _c++;
         if (_arr('survivalGratitude')) _c++;
