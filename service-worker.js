@@ -1574,7 +1574,13 @@
 // v336: signed out, home no longer shows the account's Bipolar Anonymous
 //   stats (👋 moniker · 🔥 · 💬) when the device has a guest PIN. Touches
 //   index.html, js/index.js.
-const CACHE_NAME = 'bipolarbear-v336';
+// v337-anon (placeholder, renumbered at merge): Bipolar Anonymous pre-release
+//   fixes — reports and SOS reach the team, bans by profile and 7-day /
+//   permanent, translatable Terms + privacy policy links, offline state,
+//   translated errors and strings, legible gold text, no example posts.
+//   Touches anonymous.html, css/anonymous.css, js/anonymous.js,
+//   js/shared/i18n.js, js/shared/translate.js.
+const CACHE_NAME = 'bipolarbear-v337-anon';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

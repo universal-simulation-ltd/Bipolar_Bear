@@ -872,6 +872,37 @@ once it has been refused. The admin is the BipolarBear account
 (`request.auth.token.email`) or a session that entered an email code for the
 admin address (`bbAnonLinks`, written by `verifyAnonCode`).
 
+#### Reports, SOS flags and bans (2026-10-16)
+
+- **Reports and SOS flags reach the team.** Both write to `bbAnonReports`
+  (create-only for clients). `onAnonReportCreated` (functions/index.js,
+  europe-west1) emails `FEEDBACK_TO` through Resend: the type, the reason
+  (one of the sheet's fixed four), the post and comment ids and a `?post=`
+  link that opens the thread. Never the post text or a moniker (privacy.html
+  §6, Resend). The board says "sent" only once Firestore has the write
+  (`_sendModerationFlag`, 12 s timeout).
+- **Bans.** A zero-tolerance breach means a permanent ban, anything else a
+  temporary one: the ban sheet offers **Ban for 7 days** (`until` on the
+  document) and **Ban permanently** (no `until`). `bbAnonBanned/{lower-case
+  moniker}` is the admin's; the banned member's own app copies a live
+  moniker ban to `bbAnonBanned/{p2_ profile id}` (`_syncMyBan`), so a new
+  moniker doesn't escape it. The rules refuse posts, replies, post renames
+  and new moniker reservations from a banned moniker or a banned profile
+  (`authorBanned()`, via `bbAnonLinks.profileIds`), let a member write only
+  their own profile's ban while their moniker is banned (never shorter), and
+  let anyone delete a ban whose `until` has passed (clients do, so builds
+  that don't read `until` stop applying it). Ban documents carry no
+  `bannedBy`. Rules tests: `scripts/firestore-rules` (security, "bans").
+- **Monikers** go through `findBlockedTerm` and `monikaRefused()`: no
+  blocked words (also inside CamelCase), nothing that passes for the team
+  (Admin, Moderator, Bipolar Bear, Support, Staff, in leetspeak, accents or
+  Cyrillic/Greek lookalikes). "rape" / "rapist" are not blocked: survivors
+  need to say what happened.
+- **Offline.** The feed listeners watch `metadata.fromCache` and errors;
+  five seconds on cache only, the phone offline or a dead listener shows
+  "Can't reach the board right now" with Try again, and writing pauses. A
+  refused post takes its card down and gives the text back.
+
 ### 2.12 Home Screen Badges (index.html)
 
 Three sub-labels appear under the navigation buttons:
