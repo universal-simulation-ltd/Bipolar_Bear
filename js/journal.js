@@ -4352,8 +4352,25 @@ window.addEventListener('pageshow', () => {
       await loadEntries();
     }
 
+    /**
+     * "Not now" on the guest PIN screen. Nothing is saved without the PIN (it
+     * is the key the entry is encrypted with), so the save simply doesn't run:
+     * the entry stays open as it was, and saveDraft() keeps a draft where
+     * drafts are allowed. The screen says so before the tap.
+     */
+    function guestPinSetupCancel() {
+      _guestPinSetupCallback = null;
+      _guestPinSetupBuffer = '';
+      _guestPinSetupFirst = '';
+      _guestPinSetupStep = 'set';
+      const overlay = document.getElementById('guestPinSetupOverlay');
+      if (overlay) overlay.style.display = 'none';
+      try { saveDraft(); } catch (_) {}
+    }
+
     window.guestPinSetupKey = guestPinSetupKey;
     window.guestPinSetupDel = guestPinSetupDel;
+    window.guestPinSetupCancel = guestPinSetupCancel;
     window._guestPinForgotReset = _guestPinForgotReset;
 
     function _initPinLock() {
