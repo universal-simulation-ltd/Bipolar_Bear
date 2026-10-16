@@ -1,0 +1,201 @@
+{
+  "_comment": "Captions for the localised Bipolar Anonymous iPad set (build-ipad-localized.mjs): [headline, line below]. <br> breaks a headline; <span class=\"hl\"> is its highlighted line. The words are the iPhone set's (anon_<lang>.json), except the moniker headline, which follows the app (\"Moniker\" in every language, as js/shared/i18n.js has it).",
+  "en": {
+    "02-monika": [
+      "Pick a moniker.<br>Stay anonymous.",
+      "No sign-up trail, no real name"
+    ],
+    "03-ask": [
+      "Ask anything.<br><span class=\"hl\">Get real answers.</span>",
+      "Lived experience, not lectures"
+    ],
+    "04-wiki": [
+      "Common questions,<br><span class=\"hl\">answered</span>",
+      "Plain-English answers you can trust"
+    ],
+    "05-report": [
+      "Report a post.<br>Help arrives fast.",
+      "A moderated, safer space"
+    ]
+  },
+  "es": {
+    "02-monika": [
+      "Elige un moniker.<br>Sigue en el anonimato.",
+      "Sin rastro de registro ni nombre real"
+    ],
+    "03-ask": [
+      "Pregunta lo que sea.<br><span class=\"hl\">Recibe respuestas reales.</span>",
+      "Experiencia vivida, no sermones"
+    ],
+    "04-wiki": [
+      "Preguntas frecuentes,<br><span class=\"hl\">respondidas</span>",
+      "Respuestas claras en las que confiar"
+    ],
+    "05-report": [
+      "Denuncia una publicación.<br>La ayuda llega rápido.",
+      "Un espacio moderado y más seguro"
+    ]
+  },
+  "fr": {
+    "02-monika": [
+      "Choisis un Moniker.<br>Reste anonyme.",
+      "Pas de trace d'inscription, pas de vrai nom"
+    ],
+    "03-ask": [
+      "Pose tes questions.<br><span class=\"hl\">Reçois de vraies réponses.</span>",
+      "Du vécu, pas des leçons"
+    ],
+    "04-wiki": [
+      "Questions fréquentes,<br><span class=\"hl\">et leurs réponses</span>",
+      "Des réponses claires et fiables"
+    ],
+    "05-report": [
+      "Signale un post.<br>L'aide arrive vite.",
+      "Un espace modéré et plus sûr"
+    ]
+  },
+  "de": {
+    "02-monika": [
+      "Wähl einen Moniker.<br>Bleib anonym.",
+      "Keine Anmeldespur, kein echter Name"
+    ],
+    "03-ask": [
+      "Frag, was du willst.<br><span class=\"hl\">Echte Antworten.</span>",
+      "Gelebte Erfahrung statt Belehrungen"
+    ],
+    "04-wiki": [
+      "Häufige Fragen,<br><span class=\"hl\">beantwortet</span>",
+      "Verständliche Antworten, denen du vertrauen kannst"
+    ],
+    "05-report": [
+      "Beitrag melden.<br>Hilfe kommt schnell.",
+      "Ein moderierter, sicherer Ort"
+    ]
+  },
+  "it": {
+    "02-monika": [
+      "Scegli un moniker.<br>Resta anonimo.",
+      "Nessuna traccia di iscrizione, nessun nome reale"
+    ],
+    "03-ask": [
+      "Chiedi qualsiasi cosa.<br><span class=\"hl\">Ricevi risposte vere.</span>",
+      "Esperienza vissuta, non prediche"
+    ],
+    "04-wiki": [
+      "Domande frequenti,<br><span class=\"hl\">con risposta</span>",
+      "Risposte chiare di cui fidarti"
+    ],
+    "05-report": [
+      "Segnala un post.<br>L'aiuto arriva presto.",
+      "Uno spazio moderato e più sicuro"
+    ]
+  },
+  "pt": {
+    "02-monika": [
+      "Escolhe um moniker.<br>Mantém o anonimato.",
+      "Sem rasto de registo, sem nome real"
+    ],
+    "03-ask": [
+      "Pergunta tudo.<br><span class=\"hl\">Recebe respostas reais.</span>",
+      "Experiência vivida, não sermões"
+    ],
+    "04-wiki": [
+      "Perguntas frequentes,<br><span class=\"hl\">respondidas</span>",
+      "Respostas claras em que podes confiar"
+    ],
+    "05-report": [
+      "Denuncia um post.<br>Ajuda rápida.",
+      "Um espaço moderado e mais seguro"
+    ]
+  },
+  "pt-BR": {
+    "02-monika": [
+      "Escolha um moniker.<br>Fique anônimo.",
+      "Cadastro sem rastro, sem nome real"
+    ],
+    "03-ask": [
+      "Pergunte tudo.<br><span class=\"hl\">Receba respostas reais.</span>",
+      "Experiência vivida, não sermões"
+    ],
+    "04-wiki": [
+      "Perguntas frequentes,<br><span class=\"hl\">respondidas</span>",
+      "Respostas claras e confiáveis"
+    ],
+    "05-report": [
+      "Denuncie um post.<br>Ajuda rápida.",
+      "Um espaço moderado e mais seguro"
+    ]
+  },
+  "nl": {
+    "02-monika": [
+      "Kies een moniker.<br>Blijf anoniem.",
+      "Geen aanmeldspoor, geen echte naam"
+    ],
+    "03-ask": [
+      "Vraag wat je wilt.<br><span class=\"hl\">Krijg echte antwoorden.</span>",
+      "Ervaring, geen preken"
+    ],
+    "04-wiki": [
+      "Veelgestelde vragen,<br><span class=\"hl\">beantwoord</span>",
+      "Heldere antwoorden waar je op kunt vertrouwen"
+    ],
+    "05-report": [
+      "Meld een bericht.<br>Hulp is snel daar.",
+      "Een gemodereerde, veiligere plek"
+    ]
+  },
+  "pl": {
+    "02-monika": [
+      "Wybierz Moniker.<br>Pozostań anonimowy.",
+      "Bez śladu rejestracji, bez prawdziwego imienia"
+    ],
+    "03-ask": [
+      "Pytaj o wszystko.<br><span class=\"hl\">Dostań prawdziwe odpowiedzi.</span>",
+      "Doświadczenie, nie pouczanie"
+    ],
+    "04-wiki": [
+      "Częste pytania,<br><span class=\"hl\">z odpowiedziami</span>",
+      "Jasne odpowiedzi, którym możesz ufać"
+    ],
+    "05-report": [
+      "Zgłoś wpis.<br>Pomoc przychodzi szybko.",
+      "Moderowane, bezpieczniejsze miejsce"
+    ]
+  },
+  "sv": {
+    "02-monika": [
+      "Välj en moniker.<br>Förbli anonym.",
+      "Inga registreringsspår, inget riktigt namn"
+    ],
+    "03-ask": [
+      "Fråga vad som helst.<br><span class=\"hl\">Få riktiga svar.</span>",
+      "Levd erfarenhet, inte föreläsningar"
+    ],
+    "04-wiki": [
+      "Vanliga frågor,<br><span class=\"hl\">besvarade</span>",
+      "Tydliga svar du kan lita på"
+    ],
+    "05-report": [
+      "Rapportera ett inlägg.<br>Hjälpen kommer snabbt.",
+      "En modererad, tryggare plats"
+    ]
+  },
+  "zh": {
+    "02-monika": [
+      "选一个 Moniker。<br>保持匿名。",
+      "不留注册痕迹，无需真实姓名"
+    ],
+    "03-ask": [
+      "有问题尽管问。<br><span class=\"hl\">收获真诚回答。</span>",
+      "亲身经历，而非说教"
+    ],
+    "04-wiki": [
+      "常见问题，<br><span class=\"hl\">一一解答</span>",
+      "值得信赖的清晰解答"
+    ],
+    "05-report": [
+      "举报帖子。<br>帮助迅速到达。",
+      "有人管理、更安全的空间"
+    ]
+  }
+}

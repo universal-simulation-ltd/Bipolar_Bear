@@ -240,6 +240,12 @@ function fakeFirebase(seed) {
   // board's mood check-in reads today's totals, then records yours).
   const answer = (name, data) => {
     const c = callables[name]
+    // One seeded as { translate: { English: translation } } answers like
+    // translateAnonTexts: the texts it knows, translated from English; the
+    // rest as already in the reader's language.
+    if (c && c.translate) {
+      return { results: ((data && data.texts) || []).map((t) => (c.translate[t] != null ? { text: c.translate[t], src: 'en' } : { text: t, src: '', same: true })) }
+    }
     if (c && c.idle) return data && Object.keys(data).length ? c.withArg : c.idle
     return c !== undefined ? c : {}
   }
@@ -272,7 +278,8 @@ const DAY = 86400000
 // Five weeks of Bipolar Bear entries: mostly steady, one gentle low patch and
 // one lift, nothing alarming. Index 0 is the day before yesterday: yesterday
 // is the day the journal asks about, and the one the video logs.
-function bearEntries() {
+// `notes` replaces the English day notes (by index), for a localised capture.
+export function bearEntries(notes) {
   const moods = [
     'stable', 'stable', 'elevated', 'stable', 'stable', 'stable', 'low',
     'stable', 'stable', 'stable', 'elevated', 'elevated', 'stable', 'stable',
@@ -280,7 +287,7 @@ function bearEntries() {
     'elevated', 'stable', 'stable', 'stable', 'low', 'stable', 'stable',
     'stable', 'stable', 'elevated', 'stable', 'stable', 'stable',
   ]
-  const notes = {
+  notes ??= {
     0: 'Walked to the park with my sister. Quiet, good day.',
     2: 'Lots of energy, kept an eye on it and went to bed on time.',
     6: 'Slow day. Rested, opened the curtains, called mum.',
@@ -345,7 +352,7 @@ function guestPin(pin = '2580') {
 // and a handful of members' posts. Names, avatars and words are all invented,
 // and none of the names is one of the app's own example posts (SEED_POOL).
 // Times are minutes ago ({ __ago }), turned into Timestamps in the page.
-function boardDocs() {
+export function boardDocs() {
   const day = new Date().toISOString().slice(0, 10)
   const G = { orange: ['#ffb340', '#e07800'], blue: ['#64b5f6', '#1565c0'], purple: ['#ce93d8', '#7b1fa2'],
     green: ['#81c784', '#2e7d32'], pink: ['#f48fb1', '#c2185b'], teal: ['#4dd0e1', '#00838f'] }
@@ -405,7 +412,8 @@ async function serve(ctx, root, seed) {
   const sdk = `(${fakeFirebase})(${JSON.stringify(seed)});`
   await ctx.route('**/*', async (route) => {
     const url = new URL(route.request().url())
-    if (url.hostname === 'www.gstatic.com' && url.pathname.includes('/firebasejs/')) {
+    // The SDK is vendored now (vendor/firebasejs/…); gstatic is the old home.
+    if ((url.hostname === 'www.gstatic.com' || url.origin === ORIGIN) && url.pathname.includes('/firebasejs/')) {
       return route.fulfill({ contentType: 'text/javascript', body: url.pathname.endsWith('firebase-app-compat.js') ? sdk : '' })
     }
     if (url.origin !== ORIGIN) return route.abort()
@@ -427,16 +435,25 @@ function morning() {
   const d = new Date(); d.setHours(9, 41, 0, 0); return d
 }
 
-/** Open an app's page, seeded, ready to record. Also used on its own to look around. */
-export async function open(app, { browser } = {}) {
+/**
+ * Open an app's page, seeded, ready to record. Also used on its own to look
+ * around, and by capture-ipad-localized.mjs for stills: `device` (default the
+ * kit's iPhone), the app's language `lang`, the browser's `locale` and
+ * `timezoneId` (the time zone picks the crisis lines), `storage` laid over
+ * the seed (that capture's translated survival kit and entries), and for
+ * anonymous the board's `docs` in place of boardDocs() and `translations`
+ * (English → the reader's language) for the board's auto-translation.
+ */
+export async function open(app, { browser, device = IPHONE, lang = 'en', locale = 'en-GB', timezoneId = 'Europe/London', storage: extra = {}, docs, translations } = {}) {
   const { chromium } = await playwright()
   browser ??= await chromium.launch()
   const { tmp, root } = await snapshot(app)
-  const ctx = await browser.newContext({ ...IPHONE, locale: 'en-GB', timezoneId: 'Europe/London', serviceWorkers: 'block' })
-  const seed = app === 'anonymous' ? { docs: boardDocs(), callables: BOARD_CALLABLES } : { docs: {} }
+  const ctx = await browser.newContext({ ...device, locale, timezoneId, serviceWorkers: 'block' })
+  const callables = translations ? { ...BOARD_CALLABLES, translateAnonTexts: { translate: translations } } : BOARD_CALLABLES
+  const seed = app === 'anonymous' ? { docs: docs ?? boardDocs(), callables } : { docs: {} }
   await serve(ctx, root, seed)
   const pin = guestPin()
-  const storage = app === 'anonymous' ? ANON_STORAGE : { ...BEAR_STORAGE, ...pin.local, ...bearEntries() }
+  const storage = { ...(app === 'anonymous' ? ANON_STORAGE : { ...BEAR_STORAGE, ...pin.local, ...bearEntries() }), bbLanguage: lang, ...extra }
   const session = app === 'anonymous' ? {} : pin.session
   // The iOS app is this same code in Capacitor's WKWebView: say so, as the
   // shell does, so the web-only bits (install banners, the "web" version tag)

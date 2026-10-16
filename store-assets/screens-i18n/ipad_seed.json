@@ -1,0 +1,183 @@
+{
+  "_comment": "Invented survival-kit content and journal notes typed into the app for the localised iPad captures (capture-ipad-localized.mjs), so no English shows on a translated screen. English is preview.mjs's own seed. pt is pt-PT, pt-BR is Brazilian; the app's Portuguese UI serves both.",
+  "es": {
+    "low": ["Salir a caminar 10 minutos", "Llamar a mi hermana, aunque sea para saludar", "Jugar a algo para cortar la espiral"],
+    "depressed": ["Abrir las cortinas y dejar entrar la luz", "Beber un vaso grande de agua", "Escribir a alguien de confianza"],
+    "manic": ["Aparcar cualquier decisión importante", "Nada de compras nuevas hoy", "Llamar a mi equipo de salud"],
+    "goals": ["Caminar 20 minutos", "Escribir hoy a un amigo", "Apagar la luz antes de las 23:00"],
+    "gratitude": ["Mi café de la mañana", "Un mensaje de mamá para ver cómo estoy", "Haber superado una semana dura"],
+    "remember": "Este sentimiento es pasajero. He superado cada bajón antes y lo volveré a hacer.",
+    "lowDef": "Tranquilo, con poca energía: todo pesa más de lo normal.",
+    "meds": [["Litio", "800 mg"], ["Quetiapina", "200 mg"]],
+    "notes": {
+      "0": "Fui al parque con mi hermana. Un día tranquilo y bueno.",
+      "2": "Mucha energía; estuve atento y me acosté a mi hora.",
+      "6": "Día lento. Descansé, abrí las cortinas y llamé a mamá.",
+      "11": "Terminé la estantería que empecé hace semanas.",
+      "16": "Mañana pesada, más ligera por la tarde. Me acosté pronto.",
+      "21": "Café con un viejo amigo."
+    }
+  },
+  "fr": {
+    "low": ["Sortir marcher 10 minutes", "Appeler ma sœur, juste pour dire bonjour", "Jouer à un jeu pour briser la spirale"],
+    "depressed": ["Ouvrir les rideaux et laisser entrer la lumière", "Boire un grand verre d'eau", "Écrire à quelqu'un de confiance"],
+    "manic": ["Remettre à plus tard les grosses décisions", "Aucun nouvel achat aujourd'hui", "Appeler mon équipe soignante"],
+    "goals": ["Marcher 20 minutes", "Envoyer un message à un ami aujourd'hui", "Éteindre avant 23 h"],
+    "gratitude": ["Mon café du matin", "Un petit message de maman", "Avoir tenu bon pendant une semaine difficile"],
+    "remember": "Ce sentiment est passager. J'ai traversé chaque creux jusqu'ici, et je le referai.",
+    "lowDef": "Calme, peu d'énergie : tout semble plus lourd que d'habitude.",
+    "meds": [["Lithium", "800 mg"], ["Quétiapine", "200 mg"]],
+    "notes": {
+      "0": "Promenade au parc avec ma sœur. Une bonne journée, tranquille.",
+      "2": "Beaucoup d'énergie ; je suis resté attentif et couché à l'heure.",
+      "6": "Journée au ralenti. Repos, rideaux ouverts, appel à maman.",
+      "11": "J'ai fini l'étagère commencée il y a des semaines.",
+      "16": "Matinée lourde, plus légère le soir. Couché tôt.",
+      "21": "Café avec un vieil ami."
+    }
+  },
+  "de": {
+    "low": ["10 Minuten draußen spazieren gehen", "Meine Schwester anrufen, nur um Hallo zu sagen", "Ein Spiel spielen, um die Spirale zu durchbrechen"],
+    "depressed": ["Die Vorhänge öffnen und Licht hereinlassen", "Ein großes Glas Wasser trinken", "Einer Vertrauensperson schreiben"],
+    "manic": ["Große Entscheidungen erst mal liegen lassen", "Heute keine neuen Käufe", "Mein Behandlungsteam anrufen"],
+    "goals": ["20 Minuten spazieren gehen", "Heute einer Freundin schreiben", "Licht aus vor 23 Uhr"],
+    "gratitude": ["Mein Morgenkaffee", "Eine liebe Nachricht von Mama", "Eine schwere Woche geschafft"],
+    "remember": "Dieses Gefühl geht vorbei. Ich habe jedes Tief bisher überstanden – und das schaffe ich wieder.",
+    "lowDef": "Ruhig, wenig Energie: Alles fühlt sich schwerer an als sonst.",
+    "meds": [["Lithium", "800 mg"], ["Quetiapin", "200 mg"]],
+    "notes": {
+      "0": "Mit meiner Schwester im Park spazieren. Ruhiger, guter Tag.",
+      "2": "Viel Energie, gut darauf geachtet und pünktlich ins Bett.",
+      "6": "Langsamer Tag. Ausgeruht, Vorhänge auf, Mama angerufen.",
+      "11": "Das Regal fertig gebaut, das ich vor Wochen angefangen hatte.",
+      "16": "Schwerer Morgen, am Abend leichter. Früh ins Bett.",
+      "21": "Kaffee mit einem alten Freund."
+    }
+  },
+  "it": {
+    "low": ["Uscire per una passeggiata di 10 minuti", "Chiamare mia sorella, anche solo per un saluto", "Fare un gioco per spezzare la spirale"],
+    "depressed": ["Aprire le tende e far entrare la luce", "Bere un bel bicchiere d'acqua", "Scrivere a una persona di fiducia"],
+    "manic": ["Rimandare le decisioni importanti", "Niente nuovi acquisti oggi", "Chiamare il mio team di cura"],
+    "goals": ["Camminare per 20 minuti", "Scrivere a un amico oggi", "Luci spente entro le 23"],
+    "gratitude": ["Il mio caffè del mattino", "Un messaggio della mamma", "Aver superato una settimana difficile"],
+    "remember": "Questa sensazione è passeggera. Ho superato ogni momento buio finora, e lo farò ancora.",
+    "lowDef": "Tranquillo, poca energia: tutto sembra più pesante del solito.",
+    "meds": [["Litio", "800 mg"], ["Quetiapina", "200 mg"]],
+    "notes": {
+      "0": "Al parco con mia sorella. Giornata tranquilla e bella.",
+      "2": "Tanta energia, l'ho tenuta d'occhio e sono andato a letto in orario.",
+      "6": "Giornata lenta. Riposo, tende aperte, chiamata alla mamma.",
+      "11": "Ho finito la mensola iniziata settimane fa.",
+      "16": "Mattina pesante, più leggera la sera. A letto presto.",
+      "21": "Caffè con un vecchio amico."
+    }
+  },
+  "pt": {
+    "low": ["Sair para uma caminhada de 10 minutos", "Ligar à minha irmã, nem que seja só para dizer olá", "Jogar um jogo para quebrar a espiral"],
+    "depressed": ["Abrir as cortinas e deixar entrar a luz", "Beber um copo grande de água", "Mandar mensagem a alguém de confiança"],
+    "manic": ["Adiar qualquer decisão importante", "Nada de compras novas hoje", "Ligar à minha equipa de saúde"],
+    "goals": ["Caminhar 20 minutos", "Mandar mensagem a um amigo hoje", "Luzes apagadas antes das 23h"],
+    "gratitude": ["O meu café da manhã", "Uma mensagem da minha mãe", "Ter aguentado uma semana difícil"],
+    "remember": "Este sentimento é passageiro. Já ultrapassei todas as quedas antes, e vou voltar a fazê-lo.",
+    "lowDef": "Calmo, pouca energia: tudo parece mais pesado do que o normal.",
+    "meds": [["Lítio", "800 mg"], ["Quetiapina", "200 mg"]],
+    "notes": {
+      "0": "Fui ao parque com a minha irmã. Um dia calmo e bom.",
+      "2": "Muita energia; estive atento e deitei-me a horas.",
+      "6": "Dia lento. Descansei, abri as cortinas, liguei à minha mãe.",
+      "11": "Acabei a prateleira que comecei há semanas.",
+      "16": "Manhã pesada, mais leve ao fim do dia. Deitei-me cedo.",
+      "21": "Café com um velho amigo."
+    }
+  },
+  "pt-BR": {
+    "low": ["Sair para caminhar 10 minutos", "Ligar para minha irmã, mesmo que só para dar oi", "Jogar um jogo para quebrar a espiral"],
+    "depressed": ["Abrir as cortinas e deixar a luz entrar", "Beber um copo grande de água", "Mandar mensagem para alguém de confiança"],
+    "manic": ["Adiar qualquer decisão importante", "Nada de compras novas hoje", "Ligar para minha equipe de saúde"],
+    "goals": ["Caminhar 20 minutos", "Mandar mensagem para um amigo hoje", "Luz apagada antes das 23h"],
+    "gratitude": ["Meu café da manhã", "Uma mensagem da minha mãe", "Ter passado por uma semana difícil"],
+    "remember": "Esse sentimento é passageiro. Já superei todas as fases ruins antes, e vou superar de novo.",
+    "lowDef": "Quieto, pouca energia: tudo parece mais pesado do que o normal.",
+    "meds": [["Lítio", "800 mg"], ["Quetiapina", "200 mg"]],
+    "notes": {
+      "0": "Fui ao parque com minha irmã. Um dia tranquilo e bom.",
+      "2": "Muita energia; fiquei de olho e fui dormir no horário.",
+      "6": "Dia lento. Descansei, abri as cortinas, liguei para minha mãe.",
+      "11": "Terminei a prateleira que comecei semanas atrás.",
+      "16": "Manhã pesada, mais leve à noite. Fui dormir cedo.",
+      "21": "Café com um velho amigo."
+    }
+  },
+  "nl": {
+    "low": ["10 minuten buiten wandelen", "Mijn zus bellen, al is het maar om hoi te zeggen", "Een spelletje spelen om de spiraal te doorbreken"],
+    "depressed": ["De gordijnen open en het licht binnenlaten", "Een groot glas water drinken", "Iemand appen die ik vertrouw"],
+    "manic": ["Grote beslissingen even laten liggen", "Vandaag geen nieuwe aankopen", "Mijn behandelteam bellen"],
+    "goals": ["20 minuten wandelen", "Vandaag een vriend een berichtje sturen", "Licht uit voor 23.00 uur"],
+    "gratitude": ["Mijn ochtendkoffie", "Een berichtje van mam", "Een zware week doorgekomen"],
+    "remember": "Dit gevoel gaat voorbij. Ik ben elk dal tot nu toe doorgekomen, en dat lukt weer.",
+    "lowDef": "Rustig, weinig energie: alles voelt zwaarder dan normaal.",
+    "meds": [["Lithium", "800 mg"], ["Quetiapine", "200 mg"]],
+    "notes": {
+      "0": "Met mijn zus naar het park gewandeld. Rustige, fijne dag.",
+      "2": "Veel energie, goed in de gaten gehouden en op tijd naar bed.",
+      "6": "Trage dag. Uitgerust, gordijnen open, mam gebeld.",
+      "11": "Het plankje afgemaakt waar ik weken geleden aan begon.",
+      "16": "Zware ochtend, 's avonds lichter. Vroeg naar bed.",
+      "21": "Koffie met een oude vriend."
+    }
+  },
+  "pl": {
+    "low": ["Wyjść na 10-minutowy spacer", "Zadzwonić do siostry, choćby się przywitać", "Zagrać w grę, żeby przerwać spiralę"],
+    "depressed": ["Odsłonić zasłony i wpuścić światło", "Wypić dużą szklankę wody", "Napisać do zaufanej osoby"],
+    "manic": ["Odłożyć ważne decyzje na później", "Dziś żadnych nowych zakupów", "Zadzwonić do mojego zespołu terapeutycznego"],
+    "goals": ["Spacer przez 20 minut", "Napisać dziś do przyjaciela", "Zgasić światło przed 23:00"],
+    "gratitude": ["Moja poranna kawa", "Wiadomość od mamy", "Przetrwanie trudnego tygodnia"],
+    "remember": "To uczucie minie. Przetrwałem już każdy dołek i przetrwam znowu.",
+    "lowDef": "Spokojnie, mało energii: wszystko wydaje się cięższe niż zwykle.",
+    "meds": [["Lit", "800 mg"], ["Kwetiapina", "200 mg"]],
+    "notes": {
+      "0": "Spacer z siostrą do parku. Spokojny, dobry dzień.",
+      "2": "Dużo energii, pilnowałem się i poszedłem spać o czasie.",
+      "6": "Powolny dzień. Odpoczynek, odsłonięte zasłony, telefon do mamy.",
+      "11": "Skończyłem półkę, którą zacząłem kilka tygodni temu.",
+      "16": "Ciężki poranek, wieczorem lżej. Wcześnie spać.",
+      "21": "Kawa ze starym przyjacielem."
+    }
+  },
+  "sv": {
+    "low": ["Gå ut på en 10-minuterspromenad", "Ringa min syster, bara för att säga hej", "Spela ett spel för att bryta spiralen"],
+    "depressed": ["Dra isär gardinerna och släppa in ljuset", "Dricka ett stort glas vatten", "Skriva till någon jag litar på"],
+    "manic": ["Vänta med alla stora beslut", "Inga nya köp i dag", "Ringa mitt vårdteam"],
+    "goals": ["Promenera i 20 minuter", "Skriva till en vän i dag", "Släcka före kl. 23"],
+    "gratitude": ["Mitt morgonkaffe", "Ett sms från mamma", "Att jag tog mig igenom en tung vecka"],
+    "remember": "Den här känslan går över. Jag har tagit mig igenom varje dipp förut, och det gör jag igen.",
+    "lowDef": "Stilla, lite energi: allt känns tyngre än vanligt.",
+    "meds": [["Litium", "800 mg"], ["Kvetiapin", "200 mg"]],
+    "notes": {
+      "0": "Promenad till parken med min syster. Lugn, fin dag.",
+      "2": "Mycket energi, höll koll på det och gick och lade mig i tid.",
+      "6": "Långsam dag. Vilade, drog isär gardinerna, ringde mamma.",
+      "11": "Gjorde klart hyllan jag började på för flera veckor sedan.",
+      "16": "Tung morgon, lättare på kvällen. Tidigt i säng.",
+      "21": "Fika med en gammal vän."
+    }
+  },
+  "zh": {
+    "low": ["出门散步 10 分钟", "给姐姐打个电话，哪怕只是问声好", "玩个游戏，打破恶性循环"],
+    "depressed": ["拉开窗帘，让阳光进来", "喝一大杯水", "给信任的人发条消息"],
+    "manic": ["暂缓任何重大决定", "今天不买新东西", "给我的医疗团队打电话"],
+    "goals": ["散步 20 分钟", "今天给一位朋友发消息", "晚上 11 点前关灯"],
+    "gratitude": ["早晨的咖啡", "妈妈发来的问候", "熬过了艰难的一周"],
+    "remember": "这种感觉是暂时的。以前每一次低谷我都挺过来了，这次也一样。",
+    "lowDef": "安静、精力不足：一切都比平时更沉重。",
+    "meds": [["碳酸锂", "800 mg"], ["喹硫平", "200 mg"]],
+    "notes": {
+      "0": "和姐姐去公园散步。安静、美好的一天。",
+      "2": "精力很旺盛，留意着自己，按时睡觉了。",
+      "6": "慢节奏的一天。休息、拉开窗帘、给妈妈打了电话。",
+      "11": "做完了几周前开始做的书架。",
+      "16": "早上很沉重，晚上轻松些。早早睡了。",
+      "21": "和老朋友喝咖啡。"
+    }
+  }
+}

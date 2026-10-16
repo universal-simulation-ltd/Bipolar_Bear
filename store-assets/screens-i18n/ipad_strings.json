@@ -1,0 +1,80 @@
+{
+  "_comment": "Captions for the localised Bipolar Bear iPad set (build-ipad-localized.mjs): [headline, line below]. A \n in a headline is a line break. 02-04 translate the en-GB iPad set's own captions (build-ipad.mjs); 05 is the iPhone set's 'Full privacy.' screen (screens_<lang>.json 06-pin), 06 the en-GB 'Built for your doctor'. The heroes' words are hero_strings.json, as on iPhone.",
+  "en": {
+    "02-journal": ["Track every mood", "Capture how the day really felt — depressed to manic — in seconds."],
+    "03-survivalkit": ["Your survival kit", "Coping strategies, meds, goals and gratitude — personalised to you."],
+    "04-tools": ["Ready for\nthe hard days", "The tools that help you cope, all in one calm place."],
+    "05-pin": ["Full privacy.", "Encrypted on your device. Private journal: only you can read it."],
+    "06-details": ["Built for\nyour doctor", "Turn months of tracking into a clean PDF to share with your clinician."]
+  },
+  "es": {
+    "02-journal": ["Registra cada\nestado de ánimo", "Capta cómo fue el día de verdad — de la depresión a la manía — en segundos."],
+    "03-survivalkit": ["Tu kit de\nsupervivencia", "Estrategias, medicación, metas y gratitud — a tu medida."],
+    "04-tools": ["Listo para\nlos días difíciles", "Las herramientas que te ayudan a sobrellevarlo, en un solo lugar tranquilo."],
+    "05-pin": ["Privacidad total.", "Cifrado en tu dispositivo. Diario privado: solo tú puedes leerlo."],
+    "06-details": ["Pensado para\ntu médico", "Convierte meses de registros en un PDF claro para compartir con tu especialista."]
+  },
+  "fr": {
+    "02-journal": ["Note chaque\nhumeur", "Capture ce que la journée a vraiment été — de la dépression à la manie — en quelques secondes."],
+    "03-survivalkit": ["Ta trousse\nde secours", "Stratégies, traitements, objectifs et gratitude — rien que pour toi."],
+    "04-tools": ["Prêt pour\nles jours difficiles", "Les outils qui t'aident à tenir, réunis dans un espace apaisant."],
+    "05-pin": ["Confidentialité\ntotale.", "Chiffré sur ton appareil. Journal privé : toi seul peux le lire."],
+    "06-details": ["Pensé pour\nton médecin", "Transforme des mois de suivi en un PDF clair à partager avec ton soignant."]
+  },
+  "de": {
+    "02-journal": ["Jede Stimmung\nerfassen", "Halt fest, wie der Tag wirklich war — von depressiv bis manisch — in Sekunden."],
+    "03-survivalkit": ["Dein Notfallset", "Bewältigungsstrategien, Medikamente, Ziele und Dankbarkeit — ganz auf dich zugeschnitten."],
+    "04-tools": ["Bereit für\ndie schweren Tage", "Die Werkzeuge, die dir helfen, an einem ruhigen Ort."],
+    "05-pin": ["Volle Privatsphäre.", "Verschlüsselt auf deinem Gerät. Privates Tagebuch: nur du kannst es lesen."],
+    "06-details": ["Gemacht für\ndeinen Arzt", "Mach aus Monaten voller Einträge ein übersichtliches PDF für dein Behandlungsteam."]
+  },
+  "it": {
+    "02-journal": ["Registra ogni\numore", "Cattura com'è andata davvero la giornata — dalla depressione alla mania — in pochi secondi."],
+    "03-survivalkit": ["Il tuo kit di\nsopravvivenza", "Strategie, farmaci, obiettivi e gratitudine — su misura per te."],
+    "04-tools": ["Pronto per\ni giorni difficili", "Gli strumenti che ti aiutano ad affrontarli, in un unico posto tranquillo."],
+    "05-pin": ["Privacy totale.", "Cifrato sul tuo dispositivo. Diario privato: solo tu puoi leggerlo."],
+    "06-details": ["Pensato per\nil tuo medico", "Trasforma mesi di monitoraggio in un PDF chiaro da condividere con chi ti segue."]
+  },
+  "pt": {
+    "02-journal": ["Regista cada\nhumor", "Capta como o dia foi mesmo — da depressão à mania — em segundos."],
+    "03-survivalkit": ["O teu kit de\nsobrevivência", "Estratégias, medicação, objetivos e gratidão — à tua medida."],
+    "04-tools": ["Preparado para\nos dias difíceis", "As ferramentas que te ajudam a aguentar, num só lugar tranquilo."],
+    "05-pin": ["Privacidade total.", "Cifrado no teu dispositivo. Diário privado: só tu o podes ler."],
+    "06-details": ["Feito para\no teu médico", "Transforma meses de registos num PDF claro para partilhares com quem te acompanha."]
+  },
+  "pt-BR": {
+    "02-journal": ["Registre cada\nhumor", "Capte como foi seu dia de verdade — da depressão à mania — em segundos."],
+    "03-survivalkit": ["Seu kit de\nsobrevivência", "Estratégias, remédios, metas e gratidão — do seu jeito."],
+    "04-tools": ["Pronto para\nos dias difíceis", "As ferramentas que ajudam você a enfrentar, num só lugar tranquilo."],
+    "05-pin": ["Privacidade total.", "Criptografado no seu dispositivo. Diário privado: só você pode ler."],
+    "06-details": ["Feito para\nseu médico", "Transforme meses de registros em um PDF claro para compartilhar com quem cuida de você."]
+  },
+  "nl": {
+    "02-journal": ["Leg elke\nstemming vast", "Leg vast hoe de dag echt voelde — van depressief tot manisch — in seconden."],
+    "03-survivalkit": ["Je overlevingskit", "Copingstrategieën, medicatie, doelen en dankbaarheid — helemaal van jou."],
+    "04-tools": ["Klaar voor\nde zware dagen", "De hulpmiddelen die je helpen, op één rustige plek."],
+    "05-pin": ["Volledige privacy.", "Versleuteld op je apparaat. Privé dagboek: alleen jij kunt het lezen."],
+    "06-details": ["Gemaakt voor\nje arts", "Maak van maanden bijhouden een overzichtelijke pdf om met je behandelaar te delen."]
+  },
+  "pl": {
+    "02-journal": ["Zapisuj każdy\nnastrój", "Uchwyć, jaki naprawdę był dzień — od depresji do manii — w kilka sekund."],
+    "03-survivalkit": ["Twój zestaw\nratunkowy", "Strategie radzenia sobie, leki, cele i wdzięczność — dopasowane do Ciebie."],
+    "04-tools": ["Gotowy na\ntrudne dni", "Narzędzia, które pomagają przetrwać, w jednym spokojnym miejscu."],
+    "05-pin": ["Pełna prywatność.", "Szyfrowany na Twoim urządzeniu. Prywatny dziennik: tylko Ty go przeczytasz."],
+    "06-details": ["Stworzony\ndla lekarza", "Zamień miesiące zapisów w przejrzysty PDF dla osoby, która Cię leczy."]
+  },
+  "sv": {
+    "02-journal": ["Fånga varje\nhumör", "Fånga hur dagen verkligen kändes — från deprimerad till manisk — på sekunder."],
+    "03-survivalkit": ["Ditt överlevnadskit", "Strategier, mediciner, mål och tacksamhet — anpassat efter dig."],
+    "04-tools": ["Redo för\nde tunga dagarna", "Verktygen som hjälper dig att klara dig, samlade på en lugn plats."],
+    "05-pin": ["Full integritet.", "Krypterad på din enhet. Privat dagbok: bara du kan läsa den."],
+    "06-details": ["Gjord för\ndin läkare", "Gör månader av loggning till en tydlig PDF att dela med din vårdkontakt."]
+  },
+  "zh": {
+    "02-journal": ["记录每一种心情", "从抑郁到躁狂——几秒钟就能记下这一天真实的感受。"],
+    "03-survivalkit": ["你的自救工具箱", "应对策略、用药、目标和感恩——为你量身定制。"],
+    "04-tools": ["为艰难的日子\n做好准备", "帮助你渡过难关的工具，都在一个平静的地方。"],
+    "05-pin": ["完全私密。", "在你的设备上加密。私密日记：只有你能读取。"],
+    "06-details": ["为你的医生\n而设计", "把几个月的记录变成一份清晰的 PDF，与你的医生分享。"]
+  }
+}

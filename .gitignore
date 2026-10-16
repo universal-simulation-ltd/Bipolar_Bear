@@ -45,3 +45,10 @@ INTERNAL-NOTES.md
 
 # App Store header + search renders (store-assets/build-creative.mjs rebuilds them, ~110 MB)
 store-assets/creative/*/out/
+
+# Localised iPad App Store sets, both apps, en-GB included (~2 MB a shot): rebuilt by
+# store-assets/capture-ipad-localized.mjs + build-ipad-localized.mjs
+store-assets/out/localized-ipad/
+store-assets/out/localized-ipad-anon/
+store-assets/out/localized-ipad-raw/
+store-assets/out/localized-ipad-anon-raw/
