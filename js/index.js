@@ -63,20 +63,26 @@ function _setHomeAuthFab(signedIn) {
   const fab = document.getElementById('bbAuthFab');
   if (!fab) return;
   fab.textContent = '👤';
+  fab.dataset.bbSignedIn = signedIn ? '1' : '0';
   if (signedIn) {
-    fab.title = 'Profile';
+    fab.title = _tr('t143.home.profileTip', 'Profile');
     fab.style.background = 'var(--brand-primary)';
     fab.style.color = 'white';
     fab.style.border = 'none';
     fab.style.boxShadow = '0 2px 10px rgba(255,149,0,0.35)';
   } else {
-    fab.title = 'Profile / Sign in';
+    fab.title = _tr('fab.profileTip', 'Profile / Sign in');
     fab.style.background = 'white';
     fab.style.color = 'var(--brand-primary)';
     fab.style.border = '2px solid var(--brand-primary)';
     fab.style.boxShadow = '0 2px 10px rgba(255,149,0,0.25)';
   }
 }
+// Its tooltip is set from code, so put it in the new language too.
+document.addEventListener('bb:languagechange', () => {
+  const fab = document.getElementById('bbAuthFab');
+  if (fab && fab.dataset.bbSignedIn) _setHomeAuthFab(fab.dataset.bbSignedIn === '1');
+});
 
 // Signed out, the Bipolar Anonymous button is locked and "Sign in to join the
 // community" sits under it. Both open the sign-in dialog: the locked button
@@ -1210,8 +1216,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const badge = document.getElementById('journalStreakBadge');
       if (badge) {
         if (streak > 0) {
-          const stablePart = stable > 0 ? ` &nbsp;🧘 ${stable}d` : '';
-          badge.innerHTML    = `🔥 ${streak} day${streak === 1 ? '' : 's'}` + stablePart;
+          const stablePart = stable > 0 ? ' &nbsp;' + _tr('t143.home.stableShort', `🧘 ${stable}d`, { n: stable }) : '';
+          badge.innerHTML    = _tr('t143.home.streakDays', `🔥 ${streak} day${streak === 1 ? '' : 's'}`, { count: streak, n: streak }) + stablePart;
           badge.style.cursor = 'pointer';
           _revealBadge(badge, 'block');
         } else {
@@ -1277,6 +1283,11 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     if (_hasCachedFbUser() || BB.storage.get('GuestPinSalt')) {
       _updateStreakBadge();
     }
+    // The badges are built from strings, not data-i18n, so redraw them in the
+    // new language (same gate as the first render above).
+    document.addEventListener('bb:languagechange', () => {
+      if (window.currentUser || _hasCachedFbUser() || BB.storage.get('GuestPinSalt')) _updateStreakBadge();
+    });
 
     /**
      * Recompute the journal streak by reading the user's entries collection
@@ -1826,15 +1837,19 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const isSignedIn = !!currentUser;
       const count = _countLocalEntries();
       const countLine = count ? `${count} entries` : 'all entries';
-      const accountLine = isSignedIn ? `Account: ${currentUser.email}\n` : `(Guest mode — browser storage)\n`;
+      const accountLine = isSignedIn ? _tr('journal.dlg.delAccountLine', `Account: ${currentUser.email}`, { email: currentUser.email }) + '\n' : _tr('journal.dlg.delGuestLine', '(Guest mode — browser storage)') + '\n';
       const action = isSignedIn
-        ? `permanently delete your BipolarBear account, ${countLine}, and reset everything`
-        : `permanently delete ${countLine} AND reset all settings to defaults`;
-      const message = `⚠️ ${isSignedIn ? 'DELETE ACCOUNT' : 'FULL RESET'}?\n\n${accountLine}\nThis will ${action}.\n\nThis CANNOT be undone! Make sure to export a backup first.`;
+        ? (count ? _tr('journal.dlg.delActionAccount', `permanently delete your BipolarBear account, ${countLine}, and reset everything`, { count: count }) : _tr('t143.home.reset.actionAccountAll', `permanently delete your BipolarBear account, ${countLine}, and reset everything`))
+        : (count ? _tr('journal.dlg.delActionGuest', `permanently delete ${countLine} AND reset all settings to defaults`, { count: count }) : _tr('t143.home.reset.actionGuestAll', `permanently delete ${countLine} AND reset all settings to defaults`));
+      const message = _tr('journal.dlg.delMessage', `⚠️ ${isSignedIn ? 'DELETE ACCOUNT' : 'FULL RESET'}?\n\n${accountLine}\nThis will ${action}.\n\nThis CANNOT be undone! Make sure to export a backup first.`, {
+        heading: isSignedIn ? _tr('journal.dlg.delHeadingAccount', 'DELETE ACCOUNT') : _tr('journal.dlg.delHeadingGuest', 'FULL RESET'),
+        accountLine: accountLine,
+        action: action,
+      });
       if (!confirm(message)) return;
       const finalLine = isSignedIn
-        ? `FINAL WARNING: Permanently delete account ${currentUser.email}?\n\nThis CANNOT be undone.`
-        : `FINAL WARNING: Delete ${countLine} and reset settings for guest?\n\nThis CANNOT be undone.`;
+        ? (count ? _tr('journal.dlg.delFinalAccount', `FINAL WARNING: Permanently delete account ${currentUser.email}?\n\nThis CANNOT be undone.`, { email: currentUser.email, count: count }) : _tr('t143.home.reset.finalAccount', `FINAL WARNING: Permanently delete account ${currentUser.email}?\n\nThis CANNOT be undone.`, { email: currentUser.email }))
+        : (count ? _tr('journal.dlg.delFinalGuest', `FINAL WARNING: Delete ${countLine} and reset settings for guest?\n\nThis CANNOT be undone.`, { count: count }) : _tr('t143.home.reset.finalGuestAll', `FINAL WARNING: Delete ${countLine} and reset settings for guest?\n\nThis CANNOT be undone.`));
       if (!confirm(finalLine)) return;
       deleteAllEntries({ deleteAccount: isSignedIn });
     }
@@ -1872,13 +1887,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         currentUser = firebase.auth().currentUser;
         window.currentUser = currentUser;
       } else if (deleteAccount && currentUser) {
-        const _pw = prompt('Re-enter your password to confirm account deletion:');
+        const _pw = prompt(_tr('journal.dlg.reauthPrompt', 'Re-enter your password to confirm account deletion:'));
         if (!_pw) return;
         try {
           const _cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, _pw);
           await currentUser.reauthenticateWithCredential(_cred);
         } catch (_e) {
-          alert('Wrong password. Account not deleted.');
+          alert(_tr('journal.dlg.wrongPassword', 'Wrong password. Account not deleted.'));
           return;
         }
       }
@@ -2032,11 +2047,11 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         }
 
         alert(deleteAccount
-          ? (_accountDeleted ? '✅ Account deleted.' : '⚠️ Data deleted but the auth account could not be removed. Please contact support.')
-          : `Successfully deleted ${deleted} entries.`);
+          ? (_accountDeleted ? _tr('journal.dlg.accountDeleted', '✅ Account deleted.') : _tr('journal.dlg.accountDeleteAuthFail', '⚠️ Data deleted but the auth account could not be removed. Please contact support.'))
+          : _tr('journal.dlg.entriesDeleted', `Successfully deleted ${deleted} entries.`, { n: deleted }));
       } catch (error) {
         console.error('Error deleting all entries:', error);
-        alert('Some cleanup steps failed: ' + error.message + '\n\nThe page will reload so you can start fresh.');
+        alert(_tr('t143.home.reset.cleanupFailed', 'Some cleanup steps failed: ' + error.message + '\n\nThe page will reload so you can start fresh.', { msg: error.message }));
       } finally {
         if (!_accountDeleted && auth && currentUser) {
           auth.signOut().catch(() => {});
@@ -2303,7 +2318,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       function weekdayFmt(style) {
         let lang = 'en';
         try { lang = (window.BB && BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en'; } catch (_) {}
-        if (lang === 'zh') lang = 'zh-Hans';
+        if (lang === 'zh') lang = 'zh-Hans'; else if (lang === 'en') lang = 'en-GB';
         try { return new Intl.DateTimeFormat(lang, { weekday: style }); }
         catch (_) { return new Intl.DateTimeFormat('en', { weekday: style }); }
       }
@@ -2320,7 +2335,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         const journal = parseInt(BB.storage.get('CurrentStreak') || '0', 10);
         const stable  = parseInt(BB.storage.get('StableStreak')  || '0', 10);
         return (journal > 0 ? '<span>🔥 ' + journal + '</span>' : '') +
-               (journal > 0 && stable > 0 ? '<span>🧘 ' + stable + 'd</span>' : '');
+               (journal > 0 && stable > 0 ? '<span>' + qt('t143.home.stableShort', '🧘 ' + stable + 'd', { n: stable }) + '</span>' : '');
       }
       window.BB._qcWeekStreaks = qcWeekStreaks;
 
@@ -2532,6 +2547,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         _revealBadge(_prog, 'block');
       };
       window._updateSurvivalProgress();
+      document.addEventListener('bb:languagechange', () => window._updateSurvivalProgress());
     })();
 
 // ── BLOCK 5: celebration confetti + toast ──
@@ -2730,17 +2746,22 @@ function _handleIndexJournalNav() {
       if (document.getElementById('bbWelcomeModal')) return;
       const overlay = document.createElement('div');
       overlay.id = 'bbWelcomeModal';
-      overlay.innerHTML = `<div style="background:linear-gradient(135deg,var(--brand-primary-mid),var(--brand-primary-light));border-radius:20px;padding:28px 28px 24px;text-align:center;max-width:300px;width:calc(100vw - 64px);box-shadow:0 12px 48px rgba(255,107,0,0.55);">
+      // Built while the first-run language picker may still be up, so redraw
+      // it in whatever language gets picked (listener dropped on close).
+      const _renderWelcome = () => { overlay.innerHTML = `<div style="background:linear-gradient(135deg,var(--brand-primary-mid),var(--brand-primary-light));border-radius:20px;padding:28px 28px 24px;text-align:center;max-width:300px;width:calc(100vw - 64px);box-shadow:0 12px 48px rgba(255,107,0,0.55);">
         <div style="font-size:2.4em;margin-bottom:10px;">🐻</div>
         <div style="font-weight:800;font-size:1.05em;color:white;margin-bottom:10px;line-height:1.4;">${_tr('home.welcomeTitle', 'Welcome to your BipolarBear.app!')}</div>
         <div style="font-size:0.88em;color:rgba(255,255,255,0.92);line-height:1.55;margin-bottom:18px;">${_tr('home.welcomeBody', "This will be your mood journal and personalised survival kit going forward. I'm here to help you get started. Let's go!")}</div>
         <div style="font-size:0.78em;color:rgba(255,255,255,0.65);">${_tr('home.tapDismiss', 'Tap to dismiss')}</div>
-      </div>`;
+      </div>`; };
+      _renderWelcome();
+      document.addEventListener('bb:languagechange', _renderWelcome);
       Object.assign(overlay.style, {
         position:'fixed', inset:'0', display:'flex', alignItems:'center', justifyContent:'center',
         background:'rgba(0,0,0,0.6)', zIndex:'9999', cursor:'pointer',
       });
       overlay.addEventListener('click', () => {
+        document.removeEventListener('bb:languagechange', _renderWelcome);
         overlay.remove();
         BB.storage.set('WelcomeShown', '1');
       });
@@ -2822,7 +2843,7 @@ function _handleIndexJournalNav() {
       const vEl = document.getElementById('whatsNewVersion');
       const hEl = document.getElementById('whatsNewHeadline');
       if (!popup) return;
-      if (vEl) vEl.textContent = "What's new · v" + _APP_VERSION;
+      if (vEl) vEl.textContent = _tr('t143.home.whatsNewVersion', "What's new · v" + _APP_VERSION, { v: _APP_VERSION });
       if (hEl) hEl.textContent = headline;
       popup.style.display = 'block';
       // Mark as seen immediately so navigating away doesn't re-show it
