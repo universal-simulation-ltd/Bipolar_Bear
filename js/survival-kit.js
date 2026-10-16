@@ -448,6 +448,8 @@ function _skLocale() {
         const target = title.getBoundingClientRect().top + window.scrollY - navH - 8;
         const start = window.scrollY;
         const distance = target - start;
+        // Reduce Motion: jump straight there instead of the 1.2 s glide.
+        if (window.BB && BB.a11y && BB.a11y.reducedMotion()) { window.scrollTo(0, target); return; }
         const duration = 1200;
         let startTime = null;
         function easeInOutCubic(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2,3)/2; }
@@ -969,16 +971,16 @@ function _skLocale() {
       const el = document.getElementById('medInfoList');
       if (!el) return;
       if (list.length === 0) {
-        el.innerHTML = '<p style="text-align:center; color:#adb5bd; font-style:italic; font-size:0.9em; margin:8px 0 0;">' + _esc(_skt('sk.meds.emptyList')) + '</p>';
+        el.innerHTML = '<p style="text-align:center; color:var(--text-muted-ink); font-style:italic; font-size:0.9em; margin:8px 0 0;">' + _esc(_skt('sk.meds.emptyList')) + '</p>';
       } else {
         el.innerHTML = list.map((m, i) => `
           <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#f8f9fa; border-radius:10px; margin-bottom:8px;">
             <div>
               <div style="font-weight:600; color:#2d2d2d; font-size:0.95em;">${escMed(m.name)}</div>
-              ${m.dosage ? `<div style="font-size:0.82em; color:#6c757d;">${escMed(m.dosage)}</div>` : ''}
+              ${m.dosage ? `<div style="font-size:0.82em; color:var(--text-muted-ink);">${escMed(m.dosage)}</div>` : ''}
             </div>
             <div style="display:flex; gap:4px;">
-              <button onclick="editMedication(${i})" style="background:none; border:none; cursor:pointer; color:#6c757d; font-size:1em; padding:4px 8px; line-height:1;">✏️</button>
+              <button onclick="editMedication(${i})" style="background:none; border:none; cursor:pointer; color:var(--text-muted-ink); font-size:1em; padding:4px 8px; line-height:1;">✏️</button>
               <button onclick="deleteMedication(${i})" style="background:none; border:none; cursor:pointer; color:#ff6b6b; font-size:1em; padding:4px 8px; line-height:1;">✕</button>
             </div>
           </div>`).join('');
@@ -1191,8 +1193,8 @@ function _skLocale() {
       el.innerHTML = goals.map((g, i) => `
         <div style="display:flex; align-items:center; gap:8px; padding:8px; background:#f8f9fa; border-radius:8px; margin-bottom:6px;">
           <span style="flex:1; font-weight:600;">🎯 ${_esc(g)}</span>
-          <button onclick="editSurvivalGoal(${i})" style="background:none; border:none; cursor:pointer; font-size:1em; -webkit-tap-highlight-color:transparent;">✏️</button>
-          <button onclick="deleteSurvivalGoal(${i})" style="background:none; border:none; cursor:pointer; font-size:1em; color:#ff6b6b; -webkit-tap-highlight-color:transparent;">✕</button>
+          <button onclick="editSurvivalGoal(${i})" aria-label="${_esc(_skt('a11y.editGoal'))}" style="background:none; border:none; cursor:pointer; font-size:1em; -webkit-tap-highlight-color:transparent;">✏️</button>
+          <button onclick="deleteSurvivalGoal(${i})" aria-label="${_esc(_skt('a11y.deleteGoal'))}" style="background:none; border:none; cursor:pointer; font-size:1em; color:#ff6b6b; -webkit-tap-highlight-color:transparent;">✕</button>
         </div>
       `).join('');
     }
@@ -1420,7 +1422,7 @@ function _skLocale() {
       const input = document.getElementById('survivalBudgetInput');
       if (el) el.innerHTML = val
         ? _skt('sk.goals.budgetCurrent', { value: _esc(val) })
-        : `<em style="color:#adb5bd;">${_esc(_skt('sk.goals.budgetNone'))}</em>`;
+        : `<em style="color:var(--text-muted-ink);">${_esc(_skt('sk.goals.budgetNone'))}</em>`;
       if (input) input.value = val;
     }
 
@@ -1480,7 +1482,7 @@ function _skLocale() {
               ${_esc(r.title)} <span class="chevron">▼</span>
             </button>
             <div style="display:flex;gap:2px;flex-shrink:0;padding-right:4px;">
-              <button onclick="editReminder(${i})" style="background:none;border:none;cursor:pointer;font-size:1.05em;color:var(--brand-primary);padding:6px 4px;line-height:1;-webkit-tap-highlight-color:transparent;" title="${_esc(_skt('sk.moodDef.edit'))}">✏️</button>
+              <button onclick="editReminder(${i})" style="background:none;border:none;cursor:pointer;font-size:1.05em;color:var(--brand-ink);padding:6px 4px;line-height:1;-webkit-tap-highlight-color:transparent;" title="${_esc(_skt('sk.moodDef.edit'))}">✏️</button>
               <button onclick="deleteReminder(${i})" style="background:none;border:none;cursor:pointer;font-size:1.1em;color:#ff6b6b;padding:6px 4px;line-height:1;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
           </div>
@@ -1639,7 +1641,7 @@ function _skLocale() {
       const el = document.getElementById('memoriesList');
       if (!el) return;
       if (list.length === 0) {
-        el.innerHTML = '<p style="color:#6c757d;font-style:italic;font-size:0.9em;">' + _esc(_skt('sk.memories.empty')) + '</p>';
+        el.innerHTML = '<p style="color:var(--text-muted-ink);font-style:italic;font-size:0.9em;">' + _esc(_skt('sk.memories.empty')) + '</p>';
         return;
       }
       // `text` is user-typed memory content; `date` is also user-set.
@@ -1650,10 +1652,10 @@ function _skLocale() {
         return `
           <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;">
             <div style="flex:1;min-width:0;">
-              ${date ? `<div style="font-size:0.75em;color:#adb5bd;margin-bottom:2px;">${_esc(date)}</div>` : ''}
+              ${date ? `<div style="font-size:0.75em;color:var(--text-muted-ink);margin-bottom:2px;">${_esc(date)}</div>` : ''}
               <span style="font-size:0.92em;line-height:1.45;">${_esc(text)}</span>
             </div>
-            <button onclick="editMemory(${i})" style="background:none;border:none;cursor:pointer;font-size:1em;color:#adb5bd;flex-shrink:0;padding:0 4px;line-height:1;-webkit-tap-highlight-color:transparent;" title="${_esc(_skt('sk.moodDef.edit'))}">✏️</button>
+            <button onclick="editMemory(${i})" style="background:none;border:none;cursor:pointer;font-size:1em;color:var(--text-muted-ink);flex-shrink:0;padding:0 4px;line-height:1;-webkit-tap-highlight-color:transparent;" title="${_esc(_skt('sk.moodDef.edit'))}">✏️</button>
             <button onclick="deleteMemory(${i})" style="background:none;border:none;cursor:pointer;font-size:1.1em;color:#ff6b6b;flex-shrink:0;padding:0 2px;line-height:1;-webkit-tap-highlight-color:transparent;">✕</button>
           </div>`;
       }).join('');
@@ -1764,14 +1766,14 @@ function _skLocale() {
       const el = document.getElementById('copingStrategiesList');
       if (!el) return;
       if (list.length === 0) {
-        el.innerHTML = '<p style="color:#6c757d;font-style:italic;font-size:0.9em;">' + _esc(_skt('sk.strategies.empty')) + '</p>';
+        el.innerHTML = '<p style="color:var(--text-muted-ink);font-style:italic;font-size:0.9em;">' + _esc(_skt('sk.strategies.empty')) + '</p>';
         return;
       }
       // `s` is user-typed coping strategy — escape before splicing into innerHTML.
       el.innerHTML = list.map((s, i) => `
         <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f8f9fa;border-radius:8px;margin-bottom:6px;">
           <span style="flex:1;font-size:0.92em;line-height:1.45;">${_esc(s)}</span>
-          <button onclick="openEditCopingModal(${i})" style="background:none;border:none;cursor:pointer;font-size:1em;color:var(--brand-primary);flex-shrink:0;padding:0 2px;line-height:1;-webkit-tap-highlight-color:transparent;">✏️</button>
+          <button onclick="openEditCopingModal(${i})" style="background:none;border:none;cursor:pointer;font-size:1em;color:var(--brand-ink);flex-shrink:0;padding:0 2px;line-height:1;-webkit-tap-highlight-color:transparent;">✏️</button>
           <button onclick="deleteCopingStrategy(${i})" style="background:none;border:none;cursor:pointer;font-size:1.1em;color:#ff6b6b;flex-shrink:0;padding:0 2px;line-height:1;-webkit-tap-highlight-color:transparent;">✕</button>
         </div>
       `).join('');
@@ -1868,20 +1870,20 @@ function _skLocale() {
         el.innerHTML = `
           <div style="background:rgba(255,149,0,0.08);border:1.5px solid rgba(255,149,0,0.3);border-radius:10px;padding:12px 14px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-              <span style="font-size:0.75em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--brand-primary);">${_esc(_skt('sk.moodDef.myDefinition'))}</span>
+              <span style="font-size:0.75em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--brand-ink);">${_esc(_skt('sk.moodDef.myDefinition'))}</span>
               <div style="display:flex;gap:8px;">
-                <button onclick="openMoodDefModal('${mood}')" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--brand-primary);font-weight:600;padding:0;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.moodDef.edit'))}</button>
+                <button onclick="openMoodDefModal('${mood}')" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--brand-ink);font-weight:600;padding:0;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.moodDef.edit'))}</button>
                 <button onclick="deleteMoodDefinition('${mood}')" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:#ff6b6b;font-weight:600;padding:0;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.moodDef.remove'))}</button>
               </div>
             </div>
             <div style="font-size:0.9em;color:#495057;line-height:1.5;font-style:italic;">"${_esc(text)}"</div>
           </div>
-          <button onclick="_toggleBipolarDef('${mood}',this)" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:#adb5bd;font-weight:600;padding:4px 0;margin-top:4px;-webkit-tap-highlight-color:transparent;" id="bipolarDefToggle-${mood}">${_esc(_skt('sk.moodDef.bipolarUkClosed'))}</button>`;
+          <button onclick="_toggleBipolarDef('${mood}',this)" style="background:none;border:none;cursor:pointer;font-size:0.8em;color:var(--text-muted-ink);font-weight:600;padding:4px 0;margin-top:4px;-webkit-tap-highlight-color:transparent;" id="bipolarDefToggle-${mood}">${_esc(_skt('sk.moodDef.bipolarUkClosed'))}</button>`;
         // Collapse the bipolar def
         if (defWrap) { defWrap.style.display = 'none'; }
       } else {
         el.innerHTML = `
-          <button onclick="openMoodDefModal('${mood}')" style="width:100%;padding:10px;background:none;border:2px dashed var(--brand-primary);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.9em;cursor:pointer;margin-top:4px;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.moodDef.addBtn'))}</button>`;
+          <button onclick="openMoodDefModal('${mood}')" style="width:100%;padding:10px;background:none;border:2px dashed var(--brand-primary);border-radius:10px;color:var(--brand-ink);font-weight:600;font-size:0.9em;cursor:pointer;margin-top:4px;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.moodDef.addBtn'))}</button>`;
         // Show bipolar def expanded when no custom def
         if (defWrap) { defWrap.style.display = ''; }
       }
@@ -2058,6 +2060,7 @@ function _skLocale() {
       document.getElementById('stepLabel').textContent = _skt('sk.steps.labels.s' + n);
       document.getElementById('stepText').innerHTML = _skt('sk.steps.text.s' + n);
       document.getElementById('stepPrevBtn').style.opacity = _stepIndex === 0 ? '0.35' : '1';
+      document.getElementById('stepPrevBtn').disabled = _stepIndex === 0;
       document.getElementById('stepNextBtn').textContent = _stepIndex === ALL_STEPS.length - 1 ? _skt('sk.steps.startOver') : _skt('sk.steps.next');
     }
 
@@ -2555,16 +2558,16 @@ function _skLocale() {
         const _phoneNum = phoneMatch ? BB.telNumber(phoneMatch[0]) : '';
         const phoneHref = _phoneNum ? `tel:${_phoneNum}` : null;
         area.innerHTML = `
-          <div style="font-size:0.88em;color:rgba(255,255,255,0.85);margin-bottom:8px;font-weight:600;">${_esc(_skt('sk.crisis.ecLabel'))}</div>
+          <div style="font-size:0.88em;color:#fff;margin-bottom:8px;font-weight:600;">${_esc(_skt('sk.crisis.ecLabel'))}</div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">
             ${phoneHref
               ? `<a href="${phoneHref}" class="crisis-btn" style="font-size:0.95em;padding:10px 20px;">${_esc(contact)}</a>`
               : `<span style="color:white;font-weight:600;">${_esc(contact)}</span>`}
-            <button type="button" onclick="openEmergencyContactForm()" style="background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.4);border-radius:8px;padding:8px 14px;font-size:0.82em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.crisis.ecEdit'))}</button>
+            <button type="button" onclick="openEmergencyContactForm()" style="background:rgba(0,0,0,0.18);color:white;border:1.5px solid rgba(255,255,255,0.55);border-radius:8px;padding:8px 14px;font-size:0.82em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.crisis.ecEdit'))}</button>
           </div>`;
       } else {
         area.innerHTML = `
-          <button type="button" onclick="openEmergencyContactForm()" style="background:rgba(255,255,255,0.15);color:white;border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;padding:10px 20px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.crisis.ecAdd'))}</button>`;
+          <button type="button" onclick="openEmergencyContactForm()" style="background:rgba(0,0,0,0.18);color:white;border:1.5px solid rgba(255,255,255,0.55);border-radius:10px;padding:10px 20px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_esc(_skt('sk.crisis.ecAdd'))}</button>`;
       }
     }
 

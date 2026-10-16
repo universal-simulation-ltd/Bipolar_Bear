@@ -287,7 +287,7 @@
     .whatsapp-fab, .placeholder-fab, .coffee-fab, .feedback-fab, .review-fab, .bb-extra-fab {
       position: fixed; bottom: 24px;
       width: 44px; height: 44px; border-radius: 50%;
-      background: rgba(255,149,0,0.13); border: none; color: var(--brand-primary); font-size: 1.2em;
+      background: rgba(255,149,0,0.13); border: none; color: var(--brand-ink); font-size: 1.2em;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 8px rgba(0,0,0,0.10); z-index: 50;
       -webkit-tap-highlight-color: transparent;
@@ -312,7 +312,7 @@
     .bb-auth-fab {
       position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
       width: 44px; height: 44px; border-radius: 50%;
-      background: white; border: 2px solid var(--brand-primary); color: var(--brand-primary); font-size: 1.15em;
+      background: white; border: 2px solid var(--brand-primary); color: var(--brand-ink); font-size: 1.15em;
       cursor: pointer; display: none; align-items: center; justify-content: center;
       box-shadow: 0 2px 10px rgba(255,149,0,0.25); z-index: 50;
       -webkit-tap-highlight-color: transparent; transition: transform 0.15s;
@@ -341,6 +341,8 @@
       align-items: center; justify-content: center; padding: 20px;
     }
     .bb-fab-modal.open { display: flex; }
+    /* The feedback switch's real checkbox is invisible; ring its track instead. */
+    #bbFbNotify:focus-visible + #bbFbNotifyTrack { outline: 3px solid var(--focus-ring, #1f5fbf); outline-offset: 2px; }
     .bb-feedback-modal {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.5); z-index: 1000;
@@ -360,7 +362,7 @@
       font-weight: 600; font-size: 0.9em; cursor: pointer;
       transition: all 0.2s ease; -webkit-tap-highlight-color: transparent;
     }
-    .bb-fb-type-btn.selected { border-color: var(--brand-primary); background: rgba(255,149,0,0.08); color: var(--brand-primary); }
+    .bb-fb-type-btn.selected { border-color: var(--brand-primary); background: rgba(255,149,0,0.08); color: var(--brand-ink); }
     /* ── Auth modal ── */
     .bb-auth-overlay {
       display: none; position: fixed; inset: 0;
@@ -432,40 +434,40 @@
         <div style="background:white;border-radius:20px;padding:24px 24px 20px;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);">
           <div style="font-size:2em;margin-bottom:8px;">🆘</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:6px;" data-i18n="fab.crisis.title">Crisis Support</div>
-          <p style="font-size:0.84em;color:#6c757d;margin-bottom:14px;" data-i18n="fab.crisis.body">If you're struggling and need to talk to someone:</p>
+          <p style="font-size:0.84em;color:var(--text-muted-ink);margin-bottom:14px;" data-i18n="fab.crisis.body">If you're struggling and need to talk to someone:</p>
           <div id="chatModalLines">
           <a href="tel:116123" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">📞</span>
             <div>
               <div style="font-weight:700;font-size:0.95em;">Samaritans</div>
-              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;" data-i18n="fab.crisis.samaritansInfo">116 123 · Free · 24/7</div>
+              <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:1px;" data-i18n="fab.crisis.samaritansInfo">116 123 · Free · 24/7</div>
             </div>
           </a>
           <a href="sms:85258?&body=SHOUT" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">💬</span>
             <div>
               <div style="font-weight:700;font-size:0.95em;">Shout</div>
-              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Text SHOUT to 85258 · free, 24/7</div>
+              <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:1px;">Text SHOUT to 85258 · free, 24/7</div>
             </div>
           </a>
           <a href="tel:111" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">📞</span>
             <div>
               <div style="font-weight:700;font-size:0.95em;">NHS 111 · mental health</div>
-              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Call 111, option 2 · 24/7</div>
+              <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:1px;">Call 111, option 2 · 24/7</div>
             </div>
           </a>
           <a href="tel:999" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:14px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">🚑</span>
             <div>
               <div style="font-weight:700;font-size:0.95em;">Emergency</div>
-              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Call 999</div>
+              <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:1px;">Call 999</div>
             </div>
           </a>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <button onclick="closeChatModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
-            <button id="chatModalHide" onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
+            <button id="chatModalHide" onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -483,7 +485,7 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <button onclick="closeSecurityModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.gotIt">Got it</button>
-            <button onclick="closeSecurityModal();window._showHidePermanently('quicknote')" style="padding:10px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
+            <button onclick="closeSecurityModal();window._showHidePermanently('quicknote')" style="padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -493,15 +495,15 @@
         <div style="background:white;border-radius:20px;padding:24px 24px 20px;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);">
           <div style="font-size:2em;margin-bottom:8px;">☕</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:8px;" data-i18n="fab.coffee.title">Keep Bipolar Bear Going</div>
-          <p style="font-size:0.88em;color:#6c757d;line-height:1.55;margin-bottom:6px;" data-i18n-html="fab.coffee.body">Running BipolarBear costs around <strong>£25/month</strong> for servers, hosting and services.</p>
-          <p id="bbCoffeeFundedText" style="font-size:0.82em;color:var(--brand-primary);font-weight:600;margin-bottom:16px;display:none;"></p>
+          <p style="font-size:0.88em;color:var(--text-muted-ink);line-height:1.55;margin-bottom:6px;" data-i18n-html="fab.coffee.body">Running BipolarBear costs around <strong>£25/month</strong> for servers, hosting and services.</p>
+          <p id="bbCoffeeFundedText" style="font-size:0.82em;color:var(--brand-ink);font-weight:600;margin-bottom:16px;display:none;"></p>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <a href="https://buymeacoffee.com/jamesmarkey" target="_blank" rel="noopener noreferrer" onclick="closeCoffeeModal()"
               style="display:block;padding:13px;background:var(--brand-btn);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95em;text-align:center;">
               <span data-i18n="fab.coffee.send">☕ Send me a coffee</span>
             </a>
             <button onclick="window._showHidePermanently('coffee')"
-              style="padding:10px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
+              style="padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
               🙈 Hide this button
             </button>
           </div>
@@ -512,9 +514,9 @@
       <div class="bb-feedback-modal" id="bbFabFeedbackModal" onclick="if(event.target===this)closeFabFeedback()">
         <div class="bb-feedback-content">
           <h3 style="margin-bottom:4px;color:#333;" data-i18n="feedback.title">Share Feedback</h3>
-          <p id="bbFbMeta" style="font-size:0.78em;color:#adb5bd;margin-bottom:4px;"></p>
-          <p style="font-size:0.85em;color:#6c757d;margin-bottom:6px;" data-i18n="feedback.subtitle">Help us make Bipolar Bear better.</p>
-          <p style="font-size:0.85em;color:#6c757d;margin-bottom:16px;"><span data-i18n="feedback.orEmail">Or email us at</span> <a href="mailto:bipolar@unisim.co.uk" style="color:var(--brand-primary);font-weight:600;text-decoration:none;">bipolar@unisim.co.uk</a></p>
+          <p id="bbFbMeta" style="font-size:0.78em;color:var(--text-muted-ink);margin-bottom:4px;"></p>
+          <p style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:6px;" data-i18n="feedback.subtitle">Help us make Bipolar Bear better.</p>
+          <p style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:16px;"><span data-i18n="feedback.orEmail">Or email us at</span> <a href="mailto:bipolar@unisim.co.uk" style="color:var(--brand-ink);font-weight:600;text-decoration:none;">bipolar@unisim.co.uk</a></p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
             <button class="bb-fb-type-btn" id="bbFbTypeSupport" onclick="selectFabFeedbackType('support')">🙋 <span data-i18n="feedback.typeSupport">Support</span></button>
             <button class="bb-fb-type-btn" id="bbFbTypeBug" onclick="selectFabFeedbackType('bug')">🐛 <span data-i18n="feedback.typeBug">Bug</span></button>
@@ -524,7 +526,7 @@
           <textarea id="bbFbMessage" placeholder="Tell us what's on your mind…" data-i18n-placeholder="feedback.messagePlaceholder" rows="4"
             style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;resize:none;font-family:inherit;margin-bottom:12px;"></textarea>
           <div id="bbFbNameRow" style="margin-bottom:12px;display:none;">
-            <label for="bbFbName" style="display:block;font-size:0.8em;color:#6c757d;margin:0 0 4px 2px;text-align:left;" data-i18n="fix143.fbNameLabel">Your name, sent with your feedback (optional)</label>
+            <label for="bbFbName" style="display:block;font-size:0.8em;color:var(--text-muted-ink);margin:0 0 4px 2px;text-align:left;" data-i18n="fix143.fbNameLabel">Your name, sent with your feedback (optional)</label>
             <input type="text" id="bbFbName" placeholder="Your name" data-i18n-placeholder="feedback.namePlaceholder" autocomplete="given-name" maxlength="80"
               style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;font-family:inherit;">
           </div>
@@ -533,21 +535,21 @@
               style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;box-sizing:border-box;font-family:inherit;">
           </div>
           <div style="margin-bottom:12px;">
-            <label id="bbFbScreenshotLabel" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.88em;color:#6c757d;padding:8px 12px;border:2px dashed #e9ecef;border-radius:10px;">
+            <label id="bbFbScreenshotLabel" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.88em;color:var(--text-muted-ink);padding:8px 12px;border:2px dashed #e9ecef;border-radius:10px;">
               <span style="font-size:1.2em;">📎</span>
               <span data-i18n="feedback.screenshotLabel">Attach a screenshot (optional)</span>
               <input type="file" id="bbFbScreenshot" accept="image/*" style="display:none;" onchange="_onFbScreenshotChange(this)">
             </label>
             <div id="bbFbScreenshotPreview" style="display:none;margin-top:8px;position:relative;display:none;">
               <img id="bbFbScreenshotThumb" style="max-width:100%;max-height:120px;border-radius:8px;border:1px solid #e9ecef;object-fit:contain;" alt="">
-              <button onclick="_clearFbScreenshot()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.55);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:0.8em;cursor:pointer;line-height:1;padding:0;">✕</button>
+              <button onclick="_clearFbScreenshot()" aria-label="${_bbT('a11y.removeScreenshot', 'Remove screenshot')}" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.55);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:0.8em;cursor:pointer;line-height:1;padding:0;">✕</button>
             </div>
           </div>
           <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:0.88em;color:#495057;margin-bottom:18px;user-select:none;">
             <span data-i18n="feedback.notifyLabel">Keep me informed about my submission</span>
-            <span style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;"
+            <span data-a11y-skip style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;"
               onclick="var cb=document.getElementById('bbFbNotify');cb.checked=!cb.checked;document.getElementById('bbFbNotifyTrack').style.background=cb.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=cb.checked?'translateX(20px)':'translateX(0)';">
-              <input type="checkbox" id="bbFbNotify" style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
+              <input type="checkbox" id="bbFbNotify" role="switch" onchange="document.getElementById('bbFbNotifyTrack').style.background=this.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=this.checked?'translateX(20px)':'translateX(0)';" style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
               <span id="bbFbNotifyTrack" style="position:absolute;inset:0;border-radius:24px;background:#ccc;transition:background 0.2s;"></span>
               <span id="bbFbNotifyThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;transform:translateX(0);"></span>
             </span>
@@ -558,7 +560,7 @@
             <button onclick="closeFabFeedback()" style="padding:11px 24px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.95em;" data-i18n="common.cancel">Cancel</button>
           </div>
           <button onclick="window._showHidePermanently('feedback')"
-            style="display:block;width:100%;margin-top:12px;padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
+            style="display:block;width:100%;margin-top:12px;padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
             🙈 Hide this button
           </button>
         </div>
@@ -569,7 +571,7 @@
         <div style="background:white;border-radius:20px;padding:24px 24px 20px;text-align:center;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);">
           <div style="font-size:2em;margin-bottom:8px;">⭐⭐⭐</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:8px;" data-i18n="fab.review.title">Enjoying Bipolar Bear?</div>
-          <p style="font-size:0.88em;color:#6c757d;line-height:1.55;margin-bottom:16px;" data-i18n="fab.review.body">A review helps other people going through the same thing find the app. It only takes a moment.</p>
+          <p style="font-size:0.88em;color:var(--text-muted-ink);line-height:1.55;margin-bottom:16px;" data-i18n="fab.review.body">A review helps other people going through the same thing find the app. It only takes a moment.</p>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <a id="bbReviewIosLink" href="#" target="_blank" rel="noopener noreferrer" onclick="closeReviewModal()"
               style="display:none;padding:13px;background:#000;color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95em;text-align:center;">
@@ -579,9 +581,9 @@
               style="display:none;padding:13px;background:#01875f;color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95em;text-align:center;">
               <span data-i18n="fab.review.googlePlay">▶️ Review on Google Play</span>
             </a>
-            <button onclick="closeReviewModal()" style="padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:12px;font-size:0.9em;cursor:pointer;" data-i18n="fab.review.later">Maybe later</button>
+            <button onclick="closeReviewModal()" style="padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-size:0.9em;cursor:pointer;" data-i18n="fab.review.later">Maybe later</button>
             <button onclick="window._showHidePermanently('review')"
-              style="padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
+              style="padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
               🙈 Hide this button
             </button>
           </div>
@@ -611,7 +613,7 @@
         <div style="background:white;border-radius:20px 20px 0 0;padding:24px;max-width:420px;width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18);">
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:16px;text-align:center;" data-i18n="fabPicker.addToDock">Add to dock</div>
           <div id="bbFabPickerOptions" style="display:flex;flex-direction:column;gap:10px;"></div>
-          <button onclick="closeFabPicker()" style="display:block;width:100%;margin-top:14px;padding:12px;background:#f8f9fa;color:#6c757d;border:none;border-radius:12px;font-weight:600;font-size:0.95em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
+          <button onclick="closeFabPicker()" style="display:block;width:100%;margin-top:14px;padding:12px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-weight:600;font-size:0.95em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
         </div>
       </div>
 
@@ -620,30 +622,30 @@
         <div style="background:white;border-radius:20px;padding:24px;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);">
           <div style="font-size:2em;text-align:center;margin-bottom:6px;">📝</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:4px;text-align:center;" data-i18n="quickNote.title">Quick Note</div>
-          <p style="font-size:0.82em;color:#adb5bd;margin-bottom:12px;text-align:center;" data-i18n="quickNote.subtitle">Shows on your next journal entry</p>
+          <p style="font-size:0.82em;color:var(--text-muted-ink);margin-bottom:12px;text-align:center;" data-i18n="quickNote.subtitle">Shows on your next journal entry</p>
           <textarea id="bbQuickNoteInput" placeholder="Something to remember..." data-i18n-placeholder="quickNote.placeholder" style="width:100%;min-height:90px;border:1.5px solid #e9ecef;border-radius:10px;padding:10px 12px;font-size:0.9em;color:#495057;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.5;outline:none;"></textarea>
           <div style="display:flex;gap:10px;margin-top:12px;">
-            <button onclick="closeQuickNoteModal()" style="flex:1;padding:11px;background:white;color:#adb5bd;border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
+            <button onclick="closeQuickNoteModal()" style="flex:1;padding:11px;background:white;color:var(--text-muted-ink);border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
             <button onclick="saveQuickNote()" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9em;cursor:pointer;"><span data-i18n="common.save">Save</span> ✓</button>
           </div>
-          <button onclick="closeQuickNoteModal();window._hideExtraFab('quicknote')" style="display:block;margin:10px auto 0;padding:6px 10px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
+          <button onclick="closeQuickNoteModal();window._hideExtraFab('quicknote')" style="display:block;margin:10px auto 0;padding:6px 10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
 
       <!-- Celebrity modal -->
       <div id="bbCelebModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;padding:20px;" onclick="if(event.target===this)closeCelebModal();">
         <div style="background:white;border-radius:20px;padding:24px;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);text-align:center;">
-          <div style="font-size:0.78em;color:#adb5bd;margin-bottom:12px;font-style:italic;" data-i18n="fab.celeb.subtitle">Famous people with bipolar disorder</div>
+          <div style="font-size:0.78em;color:var(--text-muted-ink);margin-bottom:12px;font-style:italic;" data-i18n="fab.celeb.subtitle">Famous people with bipolar disorder</div>
           <div id="bbCelebPhotoWrap" style="width:80px;height:80px;border-radius:50%;margin:0 auto 12px;overflow:hidden;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:2.2em;">⭐</div>
           <div id="bbCelebName" style="font-weight:700;font-size:1.1em;color:#212529;margin-bottom:4px;"></div>
-          <div id="bbCelebField" style="color:#6c757d;font-size:0.85em;margin-bottom:16px;"></div>
+          <div id="bbCelebField" style="color:var(--text-muted-ink);font-size:0.85em;margin-bottom:16px;"></div>
           <div style="display:flex;gap:8px;margin-bottom:12px;">
             <button onclick="nextCeleb()" style="flex:1;padding:10px;background:#f8f9fa;color:#495057;border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="fab.celeb.next">Next ›</button>
             <a id="bbCelebWiki" href="#" target="_blank" rel="noopener noreferrer" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border-radius:12px;font-weight:700;font-size:0.9em;text-decoration:none;display:flex;align-items:center;justify-content:center;" data-i18n="fab.celeb.wiki">Wikipedia ↗</a>
           </div>
           <div style="display:flex;gap:8px;">
-            <button onclick="closeCelebModal()" style="flex:1;padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:12px;font-size:0.85em;cursor:pointer;" data-i18n="common.close">Close</button>
-            <button onclick="closeCelebModal();window._hideExtraFab('celeb')" style="flex:1;padding:10px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
+            <button onclick="closeCelebModal()" style="flex:1;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-size:0.85em;cursor:pointer;" data-i18n="common.close">Close</button>
+            <button onclick="closeCelebModal();window._hideExtraFab('celeb')" style="flex:1;padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -654,9 +656,9 @@
           <div style="font-size:1.8em;text-align:center;margin-bottom:8px;">🎯</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:16px;text-align:center;" data-i18n="fab.goals.title">My Goals</div>
           <div id="bbGoalsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
-          <a href="survival-kit.html#goals" style="display:block;text-align:center;color:var(--brand-primary);font-size:0.88em;text-decoration:none;margin-bottom:14px;padding:10px;border:1.5px solid #ffe0b2;border-radius:10px;" data-i18n="fab.goals.manage">Manage goals in Survival Kit ↗</a>
+          <a href="survival-kit.html#goals" style="display:block;text-align:center;color:var(--brand-ink);font-size:0.88em;text-decoration:none;margin-bottom:14px;padding:10px;border:1.5px solid #ffe0b2;border-radius:10px;" data-i18n="fab.goals.manage">Manage goals in Survival Kit ↗</a>
           <button onclick="closeGoalsModal()" style="display:block;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="common.close">Close</button>
-          <button onclick="closeGoalsModal();window._hideExtraFab('goals')" style="display:block;width:100%;padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
+          <button onclick="closeGoalsModal();window._hideExtraFab('goals')" style="display:block;width:100%;padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
 
@@ -665,10 +667,10 @@
         <div style="background:white;border-radius:20px;padding:24px;max-width:300px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);text-align:center;">
           <div style="font-size:2em;margin-bottom:8px;">📊</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:8px;" data-i18n="fab.stats.title">Mood Statistics</div>
-          <p style="font-size:0.85em;color:#6c757d;margin-bottom:18px;" data-i18n="fab.stats.body">View your mood patterns, streaks, and trends in the journal.</p>
+          <p style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:18px;" data-i18n="fab.stats.body">View your mood patterns, streaks, and trends in the journal.</p>
           <button onclick="document.getElementById('bbStatsModal').style.display='none';window.location.href='journal.html?openStats=1'" style="display:block;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="fab.stats.open">Open Statistics ↗</button>
-          <button onclick="document.getElementById('bbStatsModal').style.display='none'" style="display:block;width:100%;padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:12px;font-size:0.9em;cursor:pointer;margin-bottom:8px;" data-i18n="common.cancel">Cancel</button>
-          <button onclick="document.getElementById('bbStatsModal').style.display='none';window._hideExtraFab('stats')" style="display:block;width:100%;padding:8px;background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
+          <button onclick="document.getElementById('bbStatsModal').style.display='none'" style="display:block;width:100%;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-size:0.9em;cursor:pointer;margin-bottom:8px;" data-i18n="common.cancel">Cancel</button>
+          <button onclick="document.getElementById('bbStatsModal').style.display='none';window._hideExtraFab('stats')" style="display:block;width:100%;padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
 
@@ -677,7 +679,7 @@
         <div class="bb-auth-box">
           <h3 id="bbAuthTitle" style="margin:0 0 14px;font-size:1.1em;color:#212529;text-align:center;" data-i18n="auth.welcome">Welcome to Bipolar Bear 🐻</h3>
           <!-- What an account adds, at the moment someone is deciding whether to make one. -->
-          <p id="bbAuthWhy" style="margin:-6px 0 14px;font-size:0.82em;line-height:1.45;color:#6c757d;text-align:center;" data-i18n="auth.why">Optional and free. An account backs up your journal, encrypted, so you can use it on your other devices. Anything you&#39;ve logged so far comes with you.</p>
+          <p id="bbAuthWhy" style="margin:-6px 0 14px;font-size:0.82em;line-height:1.45;color:var(--text-muted-ink);text-align:center;" data-i18n="auth.why">Optional and free. An account backs up your journal, encrypted, so you can use it on your other devices. Anything you&#39;ve logged so far comes with you.</p>
           <div id="bbAuthError" style="display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;"></div>
           <!-- Universal ID sign-in (js/shared/universal-id.js). Steps: email → code,
                or password; "link" proves an existing Bipolar Bear account once. -->
@@ -687,13 +689,13 @@
           <input type="password" id="bbAuthPassword" class="bb-auth-input" placeholder="Password" data-i18n-placeholder="auth.passwordPlaceholder" autocomplete="current-password" style="display:none;">
           <button id="bbAuthSubmit" style="width:100%;padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin-bottom:8px;" data-i18n="uid.sendCode">Email me a sign-in code</button>
           <div id="bbAuthLinks" style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px 10px;margin:-2px 0 8px;">
-            <button type="button" id="bbAuthAltA" style="background:none;border:none;color:var(--brand-primary);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
-            <button type="button" id="bbAuthAltB" style="background:none;border:none;color:var(--brand-primary);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
+            <button type="button" id="bbAuthAltA" style="background:none;border:none;color:var(--brand-ink);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
+            <button type="button" id="bbAuthAltB" style="background:none;border:none;color:var(--brand-ink);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
           </div>
-          <p id="bbAuthUidNote" style="margin:0 0 12px;font-size:0.75em;line-height:1.4;color:#868e96;text-align:center;" data-i18n="uid.note">Bipolar Bear signs you in with Universal ID, the UNI·SIM account. New here? The same code makes your account.</p>
-          <button onclick="window.closeAuthModal()" style="width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="auth.continueGuest">Continue as Guest</button>
-          <button onclick="(window._confirmDeleteGuestData||function(){})()" style="display:block;width:100%;margin-top:10px;background:none;border:none;color:#adb5bd;font-size:0.78em;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;text-align:center;" data-i18n="auth.deleteGuestData">🗑 Delete all guest data</button>
-          <div id="bbAuthVersion" style="margin-top:8px;text-align:center;font-size:0.7em;color:#adb5bd;letter-spacing:0.02em;"></div>
+          <p id="bbAuthUidNote" style="margin:0 0 12px;font-size:0.75em;line-height:1.4;color:var(--text-muted-ink);text-align:center;" data-i18n="uid.note">Bipolar Bear signs you in with Universal ID, the UNI·SIM account. New here? The same code makes your account.</p>
+          <button onclick="window.closeAuthModal()" style="width:100%;padding:11px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="auth.continueGuest">Continue as Guest</button>
+          <button onclick="(window._confirmDeleteGuestData||function(){})()" style="display:block;width:100%;margin-top:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.78em;cursor:pointer;padding:4px 8px;-webkit-tap-highlight-color:transparent;text-align:center;" data-i18n="auth.deleteGuestData">🗑 Delete all guest data</button>
+          <div id="bbAuthVersion" style="margin-top:8px;text-align:center;font-size:0.7em;color:var(--text-muted-ink);letter-spacing:0.02em;"></div>
         </div>
       </div>
 
@@ -701,7 +703,7 @@
       <div class="bb-account-overlay" id="bbAccountModal" onclick="if(event.target===this)window.closeAccountModal()">
         <div class="bb-account-box">
           <div style="font-size:1.6em;margin-bottom:4px;text-align:center;">👤</div>
-          <div id="bbAccountEmail" style="font-size:0.85em;color:#6c757d;margin-bottom:16px;word-break:break-all;text-align:center;"></div>
+          <div id="bbAccountEmail" style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:16px;word-break:break-all;text-align:center;"></div>
           <div id="bbAccountMsg" style="font-size:0.85em;margin-bottom:12px;display:none;padding:8px 12px;border-radius:8px;"></div>
           <button onclick="window._bbAccountLogout()" style="width:100%;padding:12px;background:white;color:#dc3545;border:2px solid #dc3545;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="account.signOut">Sign out</button>
           <div id="bbAccountPassSection" style="margin-bottom:10px;">
@@ -710,7 +712,7 @@
               <input type="password" id="bbAccountNewPass" placeholder="New password" data-i18n-placeholder="account.newPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
                 <button onclick="window._bbSubmitPasswordChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
-                <button onclick="document.getElementById('bbAccountPassFields').style.display='none';document.getElementById('bbAccountPassToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
+                <button onclick="document.getElementById('bbAccountPassFields').style.display='none';document.getElementById('bbAccountPassToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
             <button id="bbAccountPassToggleBtn" onclick="document.getElementById('bbAccountPassFields').style.display='';document.getElementById('bbAccountPassToggleBtn').style.display='none';document.getElementById('bbAccountCurrentPass').focus();" style="width:100%;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.changePassword">Change password</button>
@@ -721,13 +723,13 @@
               <input type="password" id="bbAccountEmailPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
                 <button onclick="window._bbSubmitEmailChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
-                <button onclick="document.getElementById('bbAccountEmailFields').style.display='none';document.getElementById('bbAccountEmailToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
+                <button onclick="document.getElementById('bbAccountEmailFields').style.display='none';document.getElementById('bbAccountEmailToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
             <button id="bbAccountEmailToggleBtn" onclick="document.getElementById('bbAccountEmailFields').style.display='';document.getElementById('bbAccountEmailToggleBtn').style.display='none';document.getElementById('bbAccountNewEmail').focus();" style="width:100%;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.changeEmail">Change email</button>
           </div>
           <div style="margin-bottom:10px;">
-            <div style="font-size:0.78em;font-weight:600;color:#6c757d;margin-bottom:6px;" data-i18n="account.language">Language</div>
+            <div style="font-size:0.78em;font-weight:600;color:var(--text-muted-ink);margin-bottom:6px;" data-i18n="account.language">Language</div>
             <select id="bbLangSelect" onchange="window.BB&&window.BB.i18n&&window.BB.i18n.setLanguage(this.value)" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;font-family:inherit;color:#495057;background:white;cursor:pointer;-webkit-appearance:none;appearance:none;">
               <option value="en">🇬🇧 English</option>
               <option value="es">🇪🇸 Español</option>
@@ -752,10 +754,10 @@
             <button onclick="window._bbAccountDelete()" style="width:100%;padding:12px;background:rgba(201,42,42,0.08);color:#c92a2a;border:2px solid #c92a2a;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.deleteAccount">🗑️ Delete account</button>
           </div>
           <div id="bbAccountDeleteLocked" style="display:none;margin-bottom:10px;padding-top:10px;border-top:1px solid #e9ecef;">
-            <div style="color:#6c757d;font-size:0.82em;padding:10px;border:1.5px solid #dee2e6;border-radius:10px;text-align:center;" data-i18n="account.deleteLocked">🔒 Account cannot be deleted</div>
+            <div style="color:var(--text-muted-ink);font-size:0.82em;padding:10px;border:1.5px solid #dee2e6;border-radius:10px;text-align:center;" data-i18n="account.deleteLocked">🔒 Account cannot be deleted</div>
           </div>
-          <button onclick="window.closeAccountModal()" style="width:100%;padding:10px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
-          <div id="bbAccountVersion" style="margin-top:10px;text-align:center;font-size:0.7em;color:#adb5bd;letter-spacing:0.02em;"></div>
+          <button onclick="window.closeAccountModal()" style="width:100%;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
+          <div id="bbAccountVersion" style="margin-top:10px;text-align:center;font-size:0.7em;color:var(--text-muted-ink);letter-spacing:0.02em;"></div>
         </div>
       </div>
     `;
@@ -985,7 +987,7 @@
       if (localStorage.getItem(_def.hiddenKey) === '1' || !_placedDefaults.has(_def.id)) {
         const _btn = document.createElement('button');
         _btn.style.cssText = 'display:flex;align-items:center;gap:14px;width:100%;padding:13px 14px;background:#f8f9fa;border:1.5px solid #e9ecef;border-radius:14px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;';
-        _btn.innerHTML = `<span style="font-size:1.6em;line-height:1;">${_def.icon}</span><div><div style="font-weight:700;font-size:0.95em;color:#212529;">${_bbT('fab.picker.' + _def.id + 'Label', _def.label)}</div><div style="font-size:0.8em;color:#adb5bd;margin-top:2px;">${_bbT('fab.picker.' + _def.id + 'Desc', _def.desc)}</div></div>`;
+        _btn.innerHTML = `<span style="font-size:1.6em;line-height:1;">${_def.icon}</span><div><div style="font-weight:700;font-size:0.95em;color:#212529;">${_bbT('fab.picker.' + _def.id + 'Label', _def.label)}</div><div style="font-size:0.8em;color:var(--text-muted-ink);margin-top:2px;">${_bbT('fab.picker.' + _def.id + 'Desc', _def.desc)}</div></div>`;
         _btn.addEventListener('click', () => {
           localStorage.removeItem(_def.hiddenKey);
           for (let s = 1; s <= 4; s++) {
@@ -1008,7 +1010,7 @@
       if (!_assignedExtras.has(_extra.id)) {
         const _btn = document.createElement('button');
         _btn.style.cssText = 'display:flex;align-items:center;gap:14px;width:100%;padding:13px 14px;background:#f8f9fa;border:1.5px solid #e9ecef;border-radius:14px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;';
-        _btn.innerHTML = `<span style="font-size:1.6em;line-height:1;">${_extra.icon}</span><div><div style="font-weight:700;font-size:0.95em;color:#212529;">${_bbT('fab.picker.' + _extra.id + 'Label', _extra.label)}</div><div style="font-size:0.8em;color:#adb5bd;margin-top:2px;">${_bbT('fab.picker.' + _extra.id + 'Desc', _extra.desc)}</div></div>`;
+        _btn.innerHTML = `<span style="font-size:1.6em;line-height:1;">${_extra.icon}</span><div><div style="font-weight:700;font-size:0.95em;color:#212529;">${_bbT('fab.picker.' + _extra.id + 'Label', _extra.label)}</div><div style="font-size:0.8em;color:var(--text-muted-ink);margin-top:2px;">${_bbT('fab.picker.' + _extra.id + 'Desc', _extra.desc)}</div></div>`;
         _btn.addEventListener('click', () => {
           for (let s = 1; s <= 4; s++) {
             if (BB.storage.get('FabSlot_' + s) === _extra.id) BB.storage.remove('FabSlot_' + s);
@@ -1022,7 +1024,7 @@
       }
     });
     if (!_opts.firstChild) {
-      _opts.innerHTML = '<div style="text-align:center;color:#adb5bd;font-size:0.9em;padding:16px 0;">' + _bbT('fab.pickerEmpty', 'No buttons available to add.') + '</div>';
+      _opts.innerHTML = '<div style="text-align:center;color:var(--text-muted-ink);font-size:0.9em;padding:16px 0;">' + _bbT('fab.pickerEmpty', 'No buttons available to add.') + '</div>';
     }
     const _m = document.getElementById('bbFabPickerModal');
     if (_m) _m.style.display = 'flex';
@@ -1075,7 +1077,7 @@
           icoStyle: 'font-size:1.6em;line-height:1;',
           textTag: 'div',
           nameStyle: 'font-weight:700;font-size:0.95em;',
-          subStyle: 'color:#6c757d;font-size:0.82em;margin-top:1px;',
+          subStyle: 'color:var(--text-muted-ink);font-size:0.82em;margin-top:1px;',
         };
         box.textContent = '';
         g.lines.forEach(l => box.appendChild(C.row(l, cls)));
@@ -1099,7 +1101,7 @@
         if (g.cc && !g.uk) {
           const more = document.createElement('a');
           more.href = g.findUrl; more.target = '_blank'; more.rel = 'noopener';
-          more.style.cssText = 'display:block;font-size:0.8em;color:#6c757d;margin:2px 0 14px;';
+          more.style.cssText = 'display:block;font-size:0.8em;color:var(--text-muted-ink);margin:2px 0 14px;';
           more.textContent = BB.t('crisis.elsewhere');
           box.appendChild(more);
         } else if (box.lastChild) {
@@ -1428,7 +1430,7 @@
       let _goals = [];
       try { _goals = JSON.parse(localStorage.getItem('dailyGoals') || '[]'); } catch (e) {}
       if (_goals.length === 0) {
-        _list.innerHTML = '<div style="text-align:center;color:#adb5bd;font-size:0.9em;padding:16px 0;">' + _bbT('fab.goals.empty', 'No goals added yet.<br>Add goals in the Survival Kit.') + '</div>';
+        _list.innerHTML = '<div style="text-align:center;color:var(--text-muted-ink);font-size:0.9em;padding:16px 0;">' + _bbT('fab.goals.empty', 'No goals added yet.<br>Add goals in the Survival Kit.') + '</div>';
       } else {
         _list.innerHTML = _goals.map(g => `<div style="padding:12px 14px;background:#fff3e0;border-radius:12px;font-size:0.9em;color:#333;border-left:3px solid var(--brand-primary);">${g.text || g.title || String(g)}</div>`).join('');
       }

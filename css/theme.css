@@ -29,6 +29,28 @@
   --brand-btn-hover: linear-gradient(135deg, #a8430a 0%, #8a3708 100%);
   --brand-btn-solid: #b5470b;
 
+  /* Text inks (WCAG AA, 4.5:1 for normal-size text). The brand orange
+     #ff9500 is ~2.2:1 on white, so it stays for fills, borders and big
+     graphics; orange TEXT and links use --brand-ink (#a94600: 5.9:1 on white,
+     5.2:1 on the #ffefdc peach, 5.3:1 on the focus-mode green wash).
+     --brand-on is text sitting ON the orange page gradient / orange fills,
+     where white is only 1.9–2.4:1 (#3d1f00: 6.3:1 on #ff8833, 7.9:1 on
+     #ffaa33). --text-muted-ink is the small grey hint/caption text that used
+     to be #adb5bd / #868e96 (2–3.3:1): #636b73 is 5.4:1 on white and 4.9:1
+     on the green wash. css/dark.css redefines all three for dark mode. */
+  --brand-ink: #a94600;
+  --brand-on: #3d1f00;
+  /* Text on an orange fill that stays orange in dark mode too (the welcome
+     card, celebration banners): the same dark ink, never redefined. */
+  --on-orange: #3d1f00;
+  --text-muted-ink: #636b73;
+  /* Good / bad answer text in entry chips (was #2ecc40 / #ff4136, 2.0 / 3.3:1). */
+  --ok-ink: #1f7a33;
+  --bad-ink: #c92a2a;
+
+  /* Keyboard focus ring (see the :focus-visible rule below). */
+  --focus-ring: #1f5fbf;
+
   /* Secondary brand, used by the anonymous community board (yellow). */
   --brand-secondary: #f5c800;
   --brand-secondary-tint: #fff8e6;
@@ -39,6 +61,79 @@
     var(--brand-primary-light) 0%,
     var(--brand-primary-mid) 100%
   );
+}
+
+/* Dark mode inks (html.theme-dark is set in every page's <head>). Here rather
+   than css/dark.css so the Bipolar Anonymous page, which doesn't load
+   dark.css, gets them too. #ffa94d is 9.4:1 on the #1c1612 page and 6.7:1 on
+   the lightest dark surface (#3b3127). */
+html.theme-dark {
+  --brand-ink: #ffa94d;
+  --brand-on: #ffffff;
+  --text-muted-ink: #bfae98;
+  --ok-ink: #69db7c;
+  --bad-ink: #ff8787;
+  --focus-ring: #8ab8ff;
+}
+
+/* ── Accessibility: keyboard focus, reduced motion ───────────────────────────
+ * A visible ring on whatever has keyboard focus (Tab, a hardware keyboard on
+ * iPad, Switch Control, Full Keyboard Access). :focus-visible only matches
+ * keyboard-style focus, so taps and clicks don't draw it. Two rings — dark
+ * inside, white outside — so it shows on the orange page, white cards, the
+ * yellow board and dark mode alike. !important because several page
+ * stylesheets set outline:none on buttons and inputs.
+ */
+:focus-visible:not(input):not(textarea):not(select),
+html.bb-kbd :is(input, textarea, select):focus-visible,
+:is(input[type="checkbox"], input[type="radio"], input[type="range"]):focus-visible {
+  outline: 3px solid var(--focus-ring) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.85) !important;
+}
+html.theme-dark :focus-visible:not(input):not(textarea):not(select),
+html.theme-dark.bb-kbd :is(input, textarea, select):focus-visible { box-shadow: 0 0 0 5px rgba(0, 0, 0, 0.6) !important; }
+/* Text fields: tapping one shows its caret and the page's own focus style;
+   the ring is added when it was reached with the keyboard (html.bb-kbd, set
+   by js/shared/a11y.js), kept tight to the box. */
+html.bb-kbd :is(input, textarea, select):focus-visible { outline-offset: 0 !important; }
+
+/* Larger Text: form controls don't inherit the page's font size — browsers
+ * give <button>, <input>, <select> and <textarea> a fixed 13.33px — so any
+ * control without its own size stayed small when the text size went up
+ * (js/shared/a11y.js scales the root on iOS). 0.8333rem is that same 13.33px
+ * at the default root size, so nothing changes until the text does. Page
+ * rules and inline sizes still win. */
+button, input, select, textarea { font-size: 0.8333rem; }
+
+/* Headings that receive focus only so VoiceOver starts reading there (dialog
+ * titles, focus-mode questions) aren't controls: no ring on them. */
+:is(h1, h2, h3, h4, h5, h6, p, div, section)[tabindex="-1"]:is(:focus, :focus-visible):not([role="button"]):not([role="radio"]) { outline: none !important; box-shadow: none !important; }
+
+/* Visually hidden, still read by VoiceOver (labels, live announcements). */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}
+
+/* Reduce Motion (iOS Settings → Accessibility → Motion, and the same switch on
+ * Android / desktop): no decorative animation at all — floats, glows, bobs,
+ * sparks, confetti, shimmer, pulses, slides. State changes still happen, just
+ * instantly. Spinners that mean "busy" also stop (their label still says it).
+ * The JS side (wheel momentum, confetti, scroll animation) checks the same
+ * media query through BB.a11y.reducedMotion(). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Auth loading splash ─────────────────────────────────────────────────────
@@ -150,7 +245,7 @@ html.bb-auth-restoring #bbAuthSplash[data-leaving="1"] { opacity: 0; }
   margin: 4px auto 0;
   text-align: center;
   font-size: 0.68em;
-  color: #868e96;
+  color: var(--text-muted-ink);
   text-decoration: none;
   letter-spacing: 0.01em;
 }

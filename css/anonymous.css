@@ -216,7 +216,7 @@
       display: inline-block;
       background: var(--dark);
       color: #fff;
-      font-size: 9px;
+      font-size: 0.5625rem;
       font-weight: 800;
       border-radius: 4px;
       padding: 1px 5px;
@@ -230,7 +230,7 @@
       opacity: 0.5;
       text-align: center;
       padding: 10px;
-      font-size: 13px;
+      font-size: 0.8125rem;
       color: var(--muted);
     }
 
@@ -243,7 +243,7 @@
 
     /* ── Section label in sheet ── */
     .sheet-label {
-      font-size: 11px; font-weight: 700; color: var(--muted);
+      font-size: 0.6875rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block;
     }
 
@@ -261,32 +261,32 @@
     }
     .onboard-logo { text-align: center; margin-bottom: 28px; }
     .onboard-logo img { width: 80px; height: 80px; border-radius: 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto; }
-    .onboard-logo h1 { font-size: 24px; font-weight: 800; color: var(--dark); letter-spacing: -0.5px; }
-    .onboard-logo p  { font-size: 12px; color: var(--dark); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
+    .onboard-logo h1 { font-size: 1.5rem; font-weight: 800; color: var(--dark); letter-spacing: -0.5px; }
+    .onboard-logo p  { font-size: 0.75rem; color: var(--dark); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-top: 3px; }
 
     .card { background: var(--surface); border-radius: 24px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
-    .card-icon  { font-size: 36px; text-align: center; margin-bottom: 10px; }
-    .card-title { font-size: 20px; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
-    .card-sub   { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
+    .card-icon  { font-size: 2.25rem; text-align: center; margin-bottom: 10px; }
+    .card-title { font-size: 1.25rem; font-weight: 700; color: var(--dark); margin-bottom: 6px; }
+    .card-sub   { font-size: 0.875rem; color: var(--muted); line-height: 1.5; margin-bottom: 20px; }
     .card-title.center, .card-sub.center { text-align: center; }
 
     /* ── Inputs ── */
     .bb-input {
       width: 100%; border: 1.5px solid var(--line); border-radius: 12px;
-      padding: 12px 14px; font-size: 15px; outline: none; color: var(--dark);
+      padding: 12px 14px; font-size: 0.9375rem; outline: none; color: var(--dark);
       font-family: inherit; background: var(--surface); transition: border-color 0.2s; margin-bottom: 12px;
     }
     .bb-input:focus, .bb-input.valid { border-color: var(--yellow); }
     .input-wrap { position: relative; margin-bottom: 12px; }
     .input-wrap .bb-input { margin-bottom: 0; padding-right: 48px; }
-    .input-counter { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--muted); pointer-events: none; }
+    .input-counter { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: var(--muted); pointer-events: none; }
 
     /* 6-digit code boxes */
     .code-boxes { display: flex; gap: 6px; margin-bottom: 12px; }
     .code-box {
       flex: 1; min-width: 0; height: 52px; border-radius: 12px;
       background: var(--surface-2); border: 2px solid var(--line);
-      text-align: center; font-size: 20px; font-weight: 800; color: var(--dark);
+      text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--dark);
       outline: none; transition: all 0.15s; font-family: inherit;
       padding: 0;
     }
@@ -296,18 +296,18 @@
     .btn-primary {
       width: 100%; background: var(--yellow); color: var(--on-yellow);
       border: none; border-radius: 12px; padding: 14px;
-      font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
+      font-size: 0.9375rem; font-weight: 700; cursor: pointer; font-family: inherit;
       transition: opacity 0.15s;
     }
     .btn-primary:disabled { background: #d8d8d8; color: #495057; cursor: default; }
     .btn-secondary {
       background: var(--surface-2); color: var(--muted); border: none;
-      border-radius: 10px; padding: 11px; font-size: 14px; cursor: pointer; font-family: inherit;
+      border-radius: 10px; padding: 11px; font-size: 0.875rem; cursor: pointer; font-family: inherit;
     }
     .btn-outline {
       background: transparent; color: var(--dark);
       border: 2px solid var(--yellow); border-radius: 12px;
-      padding: 14px; font-size: 16px; font-weight: 700;
+      padding: 14px; font-size: 1rem; font-weight: 700;
       cursor: pointer; font-family: inherit; min-height: 52px;
       transition: background 0.15s;
     }
@@ -320,7 +320,7 @@
       padding: 12px 14px; margin-bottom: 14px;
     }
     .monika-preview.show { display: flex; }
-    .avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--on-yellow); font-weight: 800; font-size: 14px; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--on-yellow); font-weight: 800; font-size: 0.875rem; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); }
 
     /* Meds options */
     .med-opt {
@@ -330,24 +330,24 @@
       font-family: inherit; transition: border-color 0.15s;
     }
     .med-opt:hover { border-color: var(--yellow); }
-    .med-opt-icon { font-size: 24px; }
-    .med-opt-label { font-size: 14px; font-weight: 700; color: var(--dark); }
-    .med-opt-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .med-opt-icon { font-size: 1.5rem; }
+    .med-opt-label { font-size: 0.875rem; font-weight: 700; color: var(--dark); }
+    .med-opt-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
 
     /* Med entry tags */
     .anon-med-tag {
       display: flex; align-items: center; gap: 6px;
       background: var(--yellow-bg); border: 1.5px solid rgba(245,200,0,0.2);
-      border-radius: 9px; padding: 8px 10px; margin-bottom: 6px; font-size: 13px;
+      border-radius: 9px; padding: 8px 10px; margin-bottom: 6px; font-size: 0.8125rem;
     }
     .anon-med-tag-del {
       background: none; border: none; color: #dc3545; cursor: pointer;
-      font-size: 14px; font-weight: 700; padding: 0 0 0 4px; line-height: 1; flex-shrink: 0;
+      font-size: 0.875rem; font-weight: 700; padding: 0 0 0 4px; line-height: 1; flex-shrink: 0;
     }
     .med-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
     .med-input-row .bb-input { flex: 1; margin: 0; }
     .med-toggle-btn {
-      flex: 1; padding: 9px; border-radius: 10px; font-size: 13px; font-weight: 700;
+      flex: 1; padding: 9px; border-radius: 10px; font-size: 0.8125rem; font-weight: 700;
       border: 2px solid var(--line); background: var(--surface-2); color: var(--muted); cursor: pointer;
       font-family: inherit; transition: border-color 0.15s, background 0.15s, color 0.15s;
     }
@@ -393,11 +393,11 @@
        is the reason the logo is tappable, so it stays as long as it fits. */
     .board-logo.logo-backonly .board-logo-name { display: none; }
     .board-logo.logo-back .board-logo-sub {
-      font-size: 11px; font-weight: 700; letter-spacing: 0;
+      font-size: 0.6875rem; font-weight: 700; letter-spacing: 0;
       text-transform: none; opacity: 0.8;
     }
-    .board-logo-name { font-size: 18px; font-weight: 800; color: var(--dark); letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-    .board-logo-sub  { font-size: 10px; color: var(--dark); letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .board-logo-name { font-size: 1.125rem; font-weight: 800; color: var(--dark); letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .board-logo-sub  { font-size: 0.625rem; color: var(--dark); letter-spacing: 0.6px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     /* The identity pill must be allowed to shrink (and its monika name to
        ellipsis) so the streak/stable/birthday badges never spill past the
        16px gutter on a 375px screen. Avatar + badges stay fixed-size. */
@@ -411,7 +411,7 @@
        the yellow header, so it uses --dark at a low weight to stay quiet. */
     .member-count {
       text-align: center;
-      font-size: 11px;
+      font-size: 0.6875rem;
       font-weight: 700;
       letter-spacing: 0.3px;
       color: var(--dark);
@@ -424,11 +424,13 @@
     .board-tabs { display: flex; gap: 4px; }
     .board-tab {
       flex: 1; padding: 10px 0; border-radius: 12px 12px 0 0; border: none;
-      cursor: pointer; font-weight: 700; font-size: 13px; font-family: inherit;
+      cursor: pointer; font-weight: 700; font-size: 0.8125rem; font-family: inherit;
       background: rgba(0,0,0,0.1); color: var(--dark);
       transition: all 0.15s; position: relative;
     }
     .board-tab.active { background: var(--cream); color: var(--dark); }
+    /* Larger Text: let a long tab name wrap inside its third of the row. */
+    html.bb-text-large .board-tab { min-width: 0; overflow-wrap: anywhere; padding-left: 4px; padding-right: 4px; }
 
     /* Unseen-message badge dot */
     .board-tab.has-badge::after {
@@ -447,7 +449,7 @@
     }
 
     /* Posts */
-    .board-offline { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 12px 0; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--line); font-size: 13px; font-weight: 700; color: var(--dark); }
+    .board-offline { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 12px 0; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1.5px solid var(--line); font-size: 0.8125rem; font-weight: 700; color: var(--dark); }
     .board-offline button { flex-shrink: 0; background: var(--yellow); color: var(--on-yellow); border: none; border-radius: 10px; padding: 8px 12px; min-height: 36px; font: inherit; font-weight: 800; cursor: pointer; }
     .fab-btn-compose.is-offline { filter: grayscale(1); opacity: 0.45; }
     #post-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 12px 110px; }
@@ -459,11 +461,11 @@
        medication list) set the column's minimum width and pushed the whole
        card past the screen edge. */
     .post-avatar > div:last-child { min-width: 0; }
-    .post-av-circle { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); display: flex; align-items: center; justify-content: center; color: var(--on-yellow); font-weight: 700; font-size: 13px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,200,0,0.3); }
-    .post-name { font-size: 13px; font-weight: 700; color: var(--dark); }
-    .post-med  { font-size: 10px; color: var(--muted); background: var(--yellow-bg); border-radius: 4px; padding: 1px 5px; display: inline-block; margin-top: 2px; }
-    .post-time { font-size: 11px; color: var(--muted); white-space: nowrap; }
-    .post-text { font-size: 14px; color: var(--dark); line-height: 1.6; margin-bottom: 12px; }
+    .post-av-circle { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); display: flex; align-items: center; justify-content: center; color: var(--on-yellow); font-weight: 700; font-size: 0.8125rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245,200,0,0.3); }
+    .post-name { font-size: 0.8125rem; font-weight: 700; color: var(--dark); }
+    .post-med  { font-size: 0.625rem; color: var(--muted); background: var(--yellow-bg); border-radius: 4px; padding: 1px 5px; display: inline-block; margin-top: 2px; }
+    .post-time { font-size: 0.6875rem; color: var(--muted); white-space: nowrap; }
+    .post-text { font-size: 0.875rem; color: var(--dark); line-height: 1.6; margin-bottom: 12px; }
     .post-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; row-gap: 6px; }
 
     /* Auto-translation (js/shared/translate.js). Injected after any element
@@ -472,13 +474,13 @@
        the post is the thing being read, not the note about it. */
     .tt-bar {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin: -6px 0 12px; font-size: 11px; color: var(--muted);
+      margin: -6px 0 12px; font-size: 0.6875rem; color: var(--muted);
     }
     .tt-bar .tt-note { display: inline-flex; align-items: center; gap: 4px; }
-    .tt-bar .tt-note::before { content: '🌐'; font-size: 11px; }
+    .tt-bar .tt-note::before { content: '🌐'; font-size: 0.6875rem; }
     .tt-bar .tt-toggle {
       background: none; border: none; padding: 2px 0; font-family: inherit;
-      font-size: 11px; font-weight: 700; color: var(--yellow-dark);
+      font-size: 0.6875rem; font-weight: 700; color: var(--yellow-dark);
       text-decoration: underline; cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
@@ -489,31 +491,31 @@
     .like-btn {
       display: flex; align-items: center; gap: 5px;
       background: var(--surface-2); border: 1px solid transparent; border-radius: 20px;
-      padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--muted);
+      padding: 6px 12px; cursor: pointer; font-size: 0.8125rem; color: var(--muted);
       font-family: inherit; transition: all 0.15s;
     }
     .like-btn.liked { background: var(--yellow-bg); border-color: var(--yellow); color: var(--dark); font-weight: 700; }
-    .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; opacity: 0.5; padding: 4px 2px; line-height: 1; flex-shrink: 0; }
+    .icon-btn { background: none; border: none; cursor: pointer; font-size: 1rem; opacity: 0.5; padding: 4px 2px; line-height: 1; flex-shrink: 0; }
 
     /* System message */
     /* Light top-left → brand yellow, not down to --yellow-dark: the dark
        olive corner left the greeting, the credit line and the check-in's
        emojis hard to read (James, 30 Sep 2026). */
     .sys-card { background: linear-gradient(135deg, var(--yellow-light), var(--yellow)); border-radius: 16px; padding: 16px; margin-bottom: 10px; text-align: center; }
-    .sys-card .sys-emoji { font-size: 22px; margin-bottom: 4px; }
-    .sys-card .sys-text  { font-size: 14px; font-weight: 700; color: var(--on-yellow); margin-bottom: 2px; }
-    .sys-card .sys-meta  { font-size: 11px; color: var(--on-yellow); }
+    .sys-card .sys-emoji { font-size: 1.375rem; margin-bottom: 4px; }
+    .sys-card .sys-text  { font-size: 0.875rem; font-weight: 700; color: var(--on-yellow); margin-bottom: 2px; }
+    .sys-card .sys-meta  { font-size: 0.6875rem; color: var(--on-yellow); }
 
     /* Daily discussion topic — an inline, tappable prompt card */
     .topic-card { background: rgba(245,200,0,0.10); border: 1.5px dashed rgba(245,200,0,0.55); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: background .15s ease, transform .1s ease; }
     .topic-card:hover  { background: rgba(245,200,0,0.16); }
     .topic-card:active { transform: scale(0.99); }
     .topic-card .topic-head  { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-    .topic-card .topic-emoji { font-size: 15px; }
-    .topic-card .topic-label { font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--yellow-ink); }
-    .topic-card .topic-by    { font-size: 11px; font-weight: 700; color: var(--muted, #888); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .topic-card .topic-text  { font-size: 15px; font-weight: 700; color: var(--dark); line-height: 1.35; }
-    .topic-card .topic-cta   { font-size: 12px; color: var(--muted, #888); margin-top: 8px; }
+    .topic-card .topic-emoji { font-size: 0.9375rem; }
+    .topic-card .topic-label { font-size: 0.6875rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--yellow-ink); }
+    .topic-card .topic-by    { font-size: 0.6875rem; font-weight: 700; color: var(--muted, #888); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .topic-card .topic-text  { font-size: 0.9375rem; font-weight: 700; color: var(--dark); line-height: 1.35; }
+    .topic-card .topic-cta   { font-size: 0.75rem; color: var(--muted, #888); margin-top: 8px; }
 
     /* Announcement card */
     .ann-card { background: rgba(245,200,0,0.08); border: 1px solid rgba(245,200,0,0.2); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
@@ -521,7 +523,7 @@
     .ann-wiki-link {
       display: inline-block; margin-top: 10px; cursor: pointer;
       background: var(--yellow-bg); border: 1.5px solid var(--yellow);
-      border-radius: 8px; padding: 7px 13px; font-size: 12.5px; font-weight: 700;
+      border-radius: 8px; padding: 7px 13px; font-size: 0.7812rem; font-weight: 700;
       color: var(--dark); font-family: inherit;
       -webkit-tap-highlight-color: transparent;
     }
@@ -535,7 +537,7 @@
     }
     .sugg-card.sugg-rejected { border-color: rgba(220,53,69,0.35); opacity: 0.5; }
     .sugg-card .sugg-flag {
-      font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;
+      font-size: 0.625rem; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase;
       color: var(--muted); margin-bottom: 8px;
     }
     .sugg-card.sugg-rejected .sugg-flag { color: #b71c1c; }
@@ -549,7 +551,7 @@
     .xlate-lang {
       padding: 10px 8px; border: 1.5px solid rgba(245,200,0,0.25); border-radius: 10px;
       background: var(--yellow-bg); color: var(--dark);
-      font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+      font-family: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
@@ -563,10 +565,10 @@
       font-family: inherit; cursor: pointer; transition: border-color 0.15s, background 0.15s;
     }
     .notif-row.on { border-color: var(--yellow-dark); background: rgba(245,200,0,0.16); }
-    .notif-row .notif-ico  { font-size: 18px; flex-shrink: 0; }
+    .notif-row .notif-ico  { font-size: 1.125rem; flex-shrink: 0; }
     .notif-row .notif-copy { flex: 1; min-width: 0; }
-    .notif-row .notif-name { display: block; font-size: 13px; font-weight: 700; color: var(--dark); }
-    .notif-row .notif-sub  { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .notif-row .notif-name { display: block; font-size: 0.8125rem; font-weight: 700; color: var(--dark); }
+    .notif-row .notif-sub  { display: block; font-size: 0.6875rem; color: var(--muted); margin-top: 1px; }
     .notif-row .notif-sw {
       flex-shrink: 0; width: 40px; height: 24px; border-radius: 12px;
       background: rgba(0,0,0,0.18); position: relative; transition: background 0.15s;
@@ -580,7 +582,7 @@
     .notif-row.on .notif-sw::after { transform: translateX(16px); }
     .sugg-btn {
       flex: 1; padding: 8px 10px; border-radius: 10px; border: 1.5px solid rgba(0,0,0,0.12);
-      background: var(--surface); color: var(--dark); font-size: 12px; font-weight: 700;
+      background: var(--surface); color: var(--dark); font-size: 0.75rem; font-weight: 700;
       font-family: inherit; cursor: pointer;
     }
     .sugg-btn.sugg-yes { background: var(--yellow); border-color: var(--yellow-dark); color: var(--on-yellow); }
@@ -594,15 +596,15 @@
       z-index: 40; pointer-events: none;
     }
     .fab-hint {
-      background: rgba(28,16,4,0.85); color: #fff; font-size: 12px; font-weight: 600;
+      background: rgba(28,16,4,0.85); color: #fff; font-size: 0.75rem; font-weight: 600;
       border-radius: 20px; padding: 7px 16px; margin-bottom: 8px;
       opacity: 0; transition: opacity 0.2s; pointer-events: none;
     }
     .fab-hint.show { opacity: 1; }
     .fab-bar { background: var(--surface); border-radius: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.14); display: flex; align-items: center; gap: 6px; padding: 8px 14px; pointer-events: all; }
-    .fab-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(245,200,0,0.13); transition: all 0.15s; }
+    .fab-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(245,200,0,0.13); transition: all 0.15s; }
     .fab-btn.active { background: var(--yellow); box-shadow: 0 2px 8px rgba(245,200,0,0.4); }
-    .fab-btn-compose { width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; font-size: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); box-shadow: 0 4px 12px rgba(245,200,0,0.5); }
+    .fab-btn-compose { width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.375rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); box-shadow: 0 4px 12px rgba(245,200,0,0.5); }
 
     /* ── Overlays ── */
     .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; z-index: 100; }
@@ -616,14 +618,14 @@
     #ov-actions, #ov-mute, #ov-sos, #ov-report, #ov-self-delete,
     #ov-admin-delete, #ov-admin-ban, #ov-saved, #ov-help { z-index: 105; }
     .sheet { background: var(--surface); color: var(--dark); border-radius: 24px 24px 0 0; padding: 24px 24px calc(40px + env(safe-area-inset-bottom, 0px)); width: 100%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-    .sheet-icon  { font-size: 36px; text-align: center; margin-bottom: 12px; }
-    .sheet-title { font-size: 18px; font-weight: 700; color: var(--dark); text-align: center; margin-bottom: 8px; }
-    .sheet-sub   { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 20px; }
+    .sheet-icon  { font-size: 2.25rem; text-align: center; margin-bottom: 12px; }
+    .sheet-title { font-size: 1.125rem; font-weight: 700; color: var(--dark); text-align: center; margin-bottom: 8px; }
+    .sheet-sub   { font-size: 0.8125rem; color: var(--muted); text-align: center; line-height: 1.6; margin-bottom: 20px; }
     .btn-row { display: flex; gap: 10px; }
-    .btn-danger { flex: 1; background: #e53935; color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-danger { flex: 1; background: #e53935; color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 0.875rem; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-    .report-opt { display: block; width: 100%; background: var(--yellow-bg); border: none; border-radius: 10px; padding: 12px 14px; font-size: 14px; text-align: left; cursor: pointer; margin-bottom: 8px; color: var(--dark); font-family: inherit; }
-    .sheet-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 6px; }
+    .report-opt { display: block; width: 100%; background: var(--yellow-bg); border: none; border-radius: 10px; padding: 12px 14px; font-size: 0.875rem; text-align: left; cursor: pointer; margin-bottom: 8px; color: var(--dark); font-family: inherit; }
+    .sheet-note { font-size: 0.6875rem; color: var(--muted); text-align: center; margin-top: 6px; }
     /* Gold text links: the terms, privacy policy and contact address. A plain
        inline link, so a long label wraps with the sentence around it. */
     .ink-link { color: var(--yellow-ink); font-weight: 700; text-decoration: underline; background: none; border: none; padding: 0; font: inherit; font-weight: 700; cursor: pointer; display: inline; }
@@ -632,32 +634,32 @@
     .agree-row { display: flex; align-items: flex-start; gap: 6px; margin: 2px 2px 14px; cursor: pointer; text-align: left; }
     .agree-box { flex-shrink: 0; width: 44px; height: 44px; margin: -12px -6px -12px -12px; display: flex; align-items: center; justify-content: center; }
     .agree-box input { width: 22px; height: 22px; margin: 0; accent-color: var(--yellow-ink); cursor: pointer; }
-    .agree-text { font-size: 12px; color: var(--dark); line-height: 1.5; padding-top: 0; }
+    .agree-text { font-size: 0.75rem; color: var(--dark); line-height: 1.5; padding-top: 0; }
     .agree-privacy { display: block; margin-top: 4px; }
 
-    .compose-ta { background: var(--surface); color: var(--dark); width: 100%; border: 1.5px solid var(--yellow); border-radius: 14px; padding: 10px 12px; font-size: 14px; resize: none; outline: none; font-family: inherit; min-height: 100px; margin-bottom: 10px; }
+    .compose-ta { background: var(--surface); color: var(--dark); width: 100%; border: 1.5px solid var(--yellow); border-radius: 14px; padding: 10px 12px; font-size: 0.875rem; resize: none; outline: none; font-family: inherit; min-height: 100px; margin-bottom: 10px; }
 
     .notif-box { background: var(--yellow-bg); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-    .notif-box-title { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
-    .notif-box-sub   { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .notif-box-title { font-size: 0.875rem; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+    .notif-box-sub   { font-size: 0.75rem; color: var(--muted); margin-bottom: 12px; }
 
     .e2ee-row { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
-    .e2ee-row-icon  { font-size: 22px; flex-shrink: 0; }
-    .e2ee-row-title { font-size: 13px; font-weight: 700; color: var(--dark); }
-    .e2ee-row-sub   { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .e2ee-row-icon  { font-size: 1.375rem; flex-shrink: 0; }
+    .e2ee-row-title { font-size: 0.8125rem; font-weight: 700; color: var(--dark); }
+    .e2ee-row-sub   { font-size: 0.75rem; color: var(--muted); line-height: 1.5; }
 
-    .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 0.875rem; line-height: 1.7; }
 
     /* ── Pinned posts ── */
     .post-pinned { background: var(--yellow-bg); border: 1.5px solid rgba(245,200,0,0.45); }
-    .pinned-badge { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.2px; }
+    .pinned-badge { font-size: 0.6875rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.2px; }
     .pin-active { opacity: 1 !important; color: var(--yellow-dark); }
 
     /* ── Comment button ── */
     .comment-btn {
       display: flex; align-items: center; gap: 4px;
       background: var(--surface-2); border: 1px solid transparent; border-radius: 20px;
-      padding: 6px 12px; cursor: pointer; font-size: 13px; color: var(--muted);
+      padding: 6px 12px; cursor: pointer; font-size: 0.8125rem; color: var(--muted);
       font-family: inherit; transition: all 0.15s;
     }
     .comment-btn:active { background: var(--yellow-bg); }
@@ -706,7 +708,7 @@
     }
     .thread-close-btn {
       background: var(--surface-2); color: var(--dark); border: none; border-radius: 50%;
-      width: 32px; height: 32px; font-size: 14px; cursor: pointer;
+      width: 32px; height: 32px; font-size: 0.875rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     .thread-scroll {
@@ -728,9 +730,9 @@
     .comment-card { padding: 10px 0; border-bottom: 1px solid var(--line); }
     .comment-card:last-child { border-bottom: none; }
     .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-    .comment-text { font-size: 13px; color: var(--dark); line-height: 1.55; padding-left: 36px; }
+    .comment-text { font-size: 0.8125rem; color: var(--dark); line-height: 1.55; padding-left: 36px; }
     .comment-actions { display: flex; align-items: center; gap: 6px; margin-top: 4px; padding-left: 36px; }
-    .comment-actions .icon-btn { font-size: 14px; }
+    .comment-actions .icon-btn { font-size: 0.875rem; }
 
     /* ── Wiki tab ── */
     #wiki-section { padding: 12px 12px 110px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
@@ -741,7 +743,7 @@
     .wiki-pill {
       flex-shrink: 0;
       background: var(--surface-2); border: 1.5px solid transparent;
-      border-radius: 20px; padding: 7px 14px; font-size: 13px; font-weight: 600;
+      border-radius: 20px; padding: 7px 14px; font-size: 0.8125rem; font-weight: 600;
       color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s;
     }
     .wiki-pill.active { background: var(--yellow); border-color: var(--yellow-dark); color: var(--on-yellow); }
@@ -801,10 +803,10 @@
     .wiki-disclaimer {
       background: var(--yellow-bg); border-left: 3px solid var(--yellow-dark);
       border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;
-      font-size: 12px; color: var(--muted); line-height: 1.5;
+      font-size: 0.75rem; color: var(--muted); line-height: 1.5;
     }
     .wiki-disclaimer-src {
-      display: inline-block; margin-top: 4px; font-size: 11px; opacity: 0.85;
+      display: inline-block; margin-top: 4px; font-size: 0.6875rem; opacity: 0.85;
     }
     .wiki-card {
       background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
@@ -812,14 +814,14 @@
     }
     .wiki-card summary {
       list-style: none;
-      padding: 12px 14px; cursor: pointer; font-size: 14px; font-weight: 600;
+      padding: 12px 14px; cursor: pointer; font-size: 0.875rem; font-weight: 600;
       color: var(--dark); display: flex; align-items: center; justify-content: space-between; gap: 8px;
     }
     .wiki-card summary::-webkit-details-marker { display: none; }
-    .wiki-chev { font-size: 10px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+    .wiki-chev { font-size: 0.625rem; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
     .wiki-card[open] .wiki-chev { transform: rotate(180deg); }
     .wiki-card-body {
-      padding: 0 14px 14px; font-size: 13px; color: var(--dark); line-height: 1.6;
+      padding: 0 14px 14px; font-size: 0.8125rem; color: var(--dark); line-height: 1.6;
     }
     .wiki-card-body p { margin-bottom: 10px; }
     .wiki-card-body p:last-child { margin-bottom: 0; }
@@ -829,7 +831,7 @@
       display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
       margin: 0 0 10px; padding: 7px 10px; border-radius: 8px;
       background: var(--yellow-bg); border: 1px dashed var(--yellow);
-      font-size: 11.5px; line-height: 1.45; color: var(--muted);
+      font-size: 0.7188rem; line-height: 1.45; color: var(--muted);
     }
     .wiki-mt-note { flex: 1 1 180px; }
     .wiki-mt-toggle {
@@ -837,7 +839,7 @@
       font: inherit; font-weight: 700; color: var(--dark); text-decoration: underline;
       -webkit-tap-highlight-color: transparent;
     }
-    .wiki-meta { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    .wiki-meta { font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
     .wiki-meta strong { color: var(--dark); }
     .wiki-meta a { color: var(--yellow-dark); text-decoration: none; }
     .wiki-meta a:hover { text-decoration: underline; }
@@ -849,22 +851,22 @@
     .wiki-link-btn {
       display: inline-block; margin-top: 6px;
       background: var(--yellow-bg); border: 1.5px solid var(--yellow);
-      border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600;
+      border-radius: 8px; padding: 6px 12px; font-size: 0.75rem; font-weight: 600;
       color: var(--dark); text-decoration: none;
     }
     .wiki-link-btn:active { background: var(--yellow); color: var(--on-yellow); }
     .wiki-source-meta {
       display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
-      margin-top: 10px; font-size: 11px; line-height: 1.4; color: var(--muted);
+      margin-top: 10px; font-size: 0.6875rem; line-height: 1.4; color: var(--muted);
     }
     .wiki-source-badge {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 2px 8px; border-radius: 999px;
-      font-size: 10.5px; font-weight: 700; letter-spacing: 0.2px;
+      font-size: 0.6562rem; font-weight: 700; letter-spacing: 0.2px;
       text-transform: uppercase;
     }
     .wiki-source-badge--ai {
-      background: var(--yellow-bg); color: var(--yellow-dark);
+      background: var(--yellow-bg); color: var(--yellow-ink);
       border: 1px solid var(--yellow);
     }
     .wiki-source-badge--direct {
@@ -889,14 +891,14 @@
     /* If the image fails to load, drop it from layout — body text reflows full-width. */
     .wiki-media-row--no-cover .wiki-media-cover { display: none; }
     .wiki-region-heading {
-      font-size: 13px; font-weight: 700; color: var(--muted);
+      font-size: 0.8125rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: 0.5px;
       margin: 12px 0 8px;
     }
     .wiki-region-heading:first-child { margin-top: 0; }
     .wiki-loading, .wiki-empty {
       padding: 20px 12px; text-align: center; color: var(--muted);
-      font-size: 13px; line-height: 1.6;
+      font-size: 0.8125rem; line-height: 1.6;
     }
     .wiki-empty a { color: var(--yellow-dark); }
     .wiki-wisdom-card {
@@ -906,24 +908,24 @@
     }
     .wiki-wisdom-topic {
       display: inline-block; background: var(--yellow); color: var(--on-yellow);
-      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      font-size: 0.625rem; font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.5px; padding: 2px 8px; border-radius: 10px; margin-bottom: 8px;
     }
-    .wiki-wisdom-text { font-size: 14px; color: var(--dark); line-height: 1.6; }
-    .wiki-wisdom-attr { font-size: 12px; color: var(--muted); margin-top: 8px; font-style: italic; }
+    .wiki-wisdom-text { font-size: 0.875rem; color: var(--dark); line-height: 1.6; }
+    .wiki-wisdom-attr { font-size: 0.75rem; color: var(--muted); margin-top: 8px; font-style: italic; }
     .wiki-search-bar {
       display: flex; gap: 8px; align-items: center;
       margin-bottom: 12px;
     }
     .wiki-search-bar input[type="search"] {
       flex: 1; border: 1.5px solid var(--yellow); border-radius: 12px;
-      padding: 10px 12px; font-size: 14px; font-family: inherit; outline: none;
+      padding: 10px 12px; font-size: 0.875rem; font-family: inherit; outline: none;
       background: var(--surface); color: var(--dark);
     }
     .wiki-search-bar input[type="search"]:focus { border-color: var(--yellow-dark); }
     .wiki-search-close {
       background: var(--surface-2); color: var(--dark); border: none; border-radius: 50%;
-      width: 32px; height: 32px; font-size: 12px; cursor: pointer; flex-shrink: 0;
+      width: 32px; height: 32px; font-size: 0.75rem; cursor: pointer; flex-shrink: 0;
     }
     .wiki-search-close:active { background: var(--yellow-bg); }
 
@@ -935,21 +937,21 @@
     .post-more-items { display: none; }
     .more-btn {
       background: none; border: none; cursor: pointer; font-family: inherit;
-      font-size: 18px; font-weight: 800; line-height: 1; letter-spacing: 1px;
+      font-size: 1.125rem; font-weight: 800; line-height: 1; letter-spacing: 1px;
       color: var(--muted); padding: 4px 8px; border-radius: 14px; flex-shrink: 0;
     }
     .more-btn:active { background: var(--surface-2); }
-    .comment-actions .more-btn { font-size: 15px; padding: 2px 6px; }
+    .comment-actions .more-btn { font-size: 0.9375rem; padding: 2px 6px; }
     .action-row {
       width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
       background: var(--yellow-bg); border: none; border-radius: 12px;
       padding: 13px 14px; margin-bottom: 8px; cursor: pointer;
-      font-family: inherit; font-size: 14px; font-weight: 700; color: var(--dark);
+      font-family: inherit; font-size: 0.875rem; font-weight: 700; color: var(--dark);
     }
-    .action-row .action-ico { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+    .action-row .action-ico { font-size: 1.125rem; width: 24px; text-align: center; flex-shrink: 0; }
     .action-row.action-danger { color: #c62828; }
     .action-preview {
-      font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 14px;
+      font-size: 0.8125rem; color: var(--muted); line-height: 1.5; margin-bottom: 14px;
       display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
     }
 
@@ -959,7 +961,7 @@
       display: inline-flex; align-items: center; gap: 3px;
       background: var(--yellow-bg); color: var(--muted);
       border: none; border-radius: 999px; padding: 1px 7px;
-      font-size: 10.5px; font-weight: 700; line-height: 1.6;
+      font-size: 0.6562rem; font-weight: 700; line-height: 1.6;
       font-family: inherit; cursor: pointer; white-space: nowrap;
     }
     /* Medication chip: never wider than its row (ellipsis as a last resort
@@ -984,7 +986,7 @@
     /* ── Pull to refresh ── */
     .ptr {
       height: 0; overflow: hidden; display: flex; align-items: flex-end; justify-content: center;
-      font-size: 12px; font-weight: 700; color: var(--muted);
+      font-size: 0.75rem; font-weight: 700; color: var(--muted);
     }
     .ptr-inner { display: flex; align-items: center; gap: 6px; padding-bottom: 8px; }
     .ptr-ico { display: inline-block; transition: transform 0.15s; }
@@ -993,7 +995,7 @@
     @keyframes ptr-spin { to { transform: rotate(360deg); } }
 
     /* ── Illustrated empty states ── */
-    .empty-illus { text-align: center; padding: 36px 24px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .empty-illus { text-align: center; padding: 36px 24px; color: var(--muted); font-size: 0.875rem; line-height: 1.6; }
     .empty-illus img { width: 96px; height: 96px; display: block; margin: 0 auto 12px; opacity: 0.9; }
     .empty-illus.compact { padding: 20px 12px 12px; }
     .empty-illus.compact img { width: 64px; height: 64px; margin-bottom: 8px; }
@@ -1002,7 +1004,7 @@
     .help-btn {
       flex-shrink: 0; border: none; cursor: pointer; font-family: inherit;
       background: rgba(0,0,0,0.1); color: var(--dark);
-      border-radius: 20px; padding: 6px 10px; font-size: 12px; font-weight: 800;
+      border-radius: 20px; padding: 6px 10px; font-size: 0.75rem; font-weight: 800;
       display: flex; align-items: center; gap: 4px; white-space: nowrap;
     }
     /* Pushed right, beside the identity pill, rather than floating mid-row. */
@@ -1014,15 +1016,15 @@
       background: var(--yellow-bg); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
       color: var(--dark);
     }
-    .help-row .help-ico { font-size: 22px; flex-shrink: 0; }
-    .help-row .help-name { display: block; font-size: 14px; font-weight: 800; }
-    .help-row .help-sub  { display: block; font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .help-row .help-ico { font-size: 1.375rem; flex-shrink: 0; }
+    .help-row .help-name { display: block; font-size: 0.875rem; font-weight: 800; }
+    .help-row .help-sub  { display: block; font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
     .help-row.help-urgent { background: rgba(229,57,53,0.10); }
-    .help-link { display: block; text-align: center; font-size: 13px; font-weight: 700; color: var(--yellow-ink); margin: 6px 0 14px; }
+    .help-link { display: block; text-align: center; font-size: 0.8125rem; font-weight: 700; color: var(--yellow-ink); margin: 6px 0 14px; }
 
     /* ── The Friendly neighbourhood Bipolar Bear (crisis auto-reply) ── */
-    .bot-badge { display: inline-block; background: var(--yellow-bg); color: var(--yellow-dark); font-size: 9px; font-weight: 800; border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: 1px; }
-    .bot-crisis summary { cursor: pointer; list-style: none; color: var(--muted); font-size: 12px; font-weight: 700; padding: 2px 0; }
+    .bot-badge { display: inline-block; background: var(--yellow-bg); color: var(--yellow-dark); font-size: 0.5625rem; font-weight: 800; border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: 1px; }
+    .bot-crisis summary { cursor: pointer; list-style: none; color: var(--muted); font-size: 0.75rem; font-weight: 700; padding: 2px 0; }
     .bot-crisis summary::-webkit-details-marker { display: none; }
     .bot-crisis summary::after { content: ' ▾'; }
     .bot-crisis[open] summary { margin-bottom: 8px; }
@@ -1030,26 +1032,26 @@
     .bot-crisis p { margin: 0 0 8px; }
     .bot-crisis .help-row { padding: 10px 12px; }
     .bot-crisis .help-link { text-align: left; margin: 2px 0 8px; }
-    .bot-crisis .bot-danger { font-size: 12px; font-weight: 700; }
-    .bot-crisis .bot-note { font-size: 11px; color: var(--muted); }
+    .bot-crisis .bot-danger { font-size: 0.75rem; font-weight: 700; }
+    .bot-crisis .bot-note { font-size: 0.6875rem; color: var(--muted); }
 
     /* ── Saved posts ── */
     .saved-card { background: var(--yellow-bg); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; text-align: left; }
     .saved-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .saved-head .post-av-circle { width: 26px; height: 26px; font-size: 10px; box-shadow: none; }
-    .saved-name { font-size: 12px; font-weight: 700; color: var(--dark); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .saved-when { font-size: 11px; color: var(--muted); }
-    .saved-text { font-size: 13px; color: var(--dark); line-height: 1.55; white-space: pre-wrap; }
+    .saved-head .post-av-circle { width: 26px; height: 26px; font-size: 0.625rem; box-shadow: none; }
+    .saved-name { font-size: 0.75rem; font-weight: 700; color: var(--dark); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .saved-when { font-size: 0.6875rem; color: var(--muted); }
+    .saved-text { font-size: 0.8125rem; color: var(--dark); line-height: 1.55; white-space: pre-wrap; }
     .saved-actions { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
     .saved-actions .sugg-btn { flex: 0 0 auto; padding: 6px 12px; }
-    .saved-gone { font-size: 11px; color: var(--muted); font-style: italic; }
+    .saved-gone { font-size: 0.6875rem; color: var(--muted); font-style: italic; }
 
     /* ── Swipe a reply to answer it ── */
     .comment-card { position: relative; transition: transform 0.18s ease; }
     .comment-card.swiping { transition: none; }
     .comment-card .swipe-cue {
       position: absolute; left: -30px; top: 50%; transform: translateY(-50%);
-      font-size: 16px; opacity: 0; transition: opacity 0.1s;
+      font-size: 1rem; opacity: 0; transition: opacity 0.1s;
     }
     .comment-card.swipe-ready .swipe-cue { opacity: 1; }
     .thread-scroll { overflow-x: hidden; }
@@ -1080,30 +1082,30 @@
     }
     .wiki-hero-ico {
       width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.5rem;
       background: color-mix(in srgb, var(--wiki-accent) 30%, var(--surface));
     }
-    .wiki-hero-title { font-size: 16px; font-weight: 800; color: var(--dark); }
-    .wiki-hero-count { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .wiki-hero-title { font-size: 1rem; font-weight: 800; color: var(--dark); }
+    .wiki-hero-count { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
 
     /* ── Your figures, top of the Your Moniker sheet ── */
     .ms-stats { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin: -4px 0 16px; }
     .ms-stat {
       display: inline-flex; flex-direction: column; align-items: center; min-width: 76px;
-      background: var(--yellow-bg); border-radius: 12px; padding: 8px 10px; color: var(--dark); font-size: 11px;
+      background: var(--yellow-bg); border-radius: 12px; padding: 8px 10px; color: var(--dark); font-size: 0.6875rem;
     }
-    .ms-stat .ms-stat-e { font-size: 18px; line-height: 1.1; }
-    .ms-stat b { font-size: 16px; font-weight: 800; line-height: 1.2; }
+    .ms-stat .ms-stat-e { font-size: 1.125rem; line-height: 1.1; }
+    .ms-stat b { font-size: 1rem; font-weight: 800; line-height: 1.2; }
     .ms-stat span:last-child { color: var(--muted); font-weight: 600; }
 
     /* ── Polls ── */
     .poll { margin: -4px 0 12px; }
-    .poll-tag { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+    .poll-tag { font-size: 0.6875rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
     .poll-opt {
       position: relative; overflow: hidden; width: 100%; display: flex; align-items: center; gap: 8px;
       text-align: left; background: var(--surface); border: 1.5px solid var(--yellow);
       border-radius: 10px; padding: 9px 12px; margin-bottom: 6px; cursor: pointer;
-      font-family: inherit; font-size: 13px; font-weight: 700; color: var(--dark);
+      font-family: inherit; font-size: 0.8125rem; font-weight: 700; color: var(--dark);
     }
     .poll-opt.voted { border-color: var(--line); background: var(--surface-2); }
     .poll-opt.mine { border-color: var(--yellow-dark); }
@@ -1111,10 +1113,10 @@
     .poll-fill { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--yellow) 35%, transparent); transition: width 0.3s ease; }
     .poll-label, .poll-pct { position: relative; }
     .poll-label { flex: 1; min-width: 0; }
-    .poll-pct { font-size: 12px; color: var(--muted); }
+    .poll-pct { font-size: 0.75rem; color: var(--muted); }
     .poll-toggle, .poll-more {
       background: none; border: 1.5px dashed var(--yellow); border-radius: 10px; color: var(--dark);
-      font-family: inherit; font-size: 13px; font-weight: 700; padding: 8px 12px; cursor: pointer;
+      font-family: inherit; font-size: 0.8125rem; font-weight: 700; padding: 8px 12px; cursor: pointer;
       width: 100%; margin-bottom: 10px;
     }
     .poll-more { border-style: solid; border-color: var(--line); color: var(--muted); }
@@ -1125,7 +1127,7 @@
        the bears, counts and labels read against white rather than yellow. */
     .mood-block:empty { display: none; }
     .mood-block { margin-top: 12px; padding: 12px 10px 10px; background: var(--surface); border-radius: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .mood-ask { font-size: 13px; font-weight: 800; color: var(--dark); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .mood-ask { font-size: 0.8125rem; font-weight: 800; color: var(--dark); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
     .mood-btns { display: flex; gap: 4px; }
     .mood-btn {
       flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -1140,18 +1142,18 @@
     .mood-btn .mb-l { font-size: clamp(9px, 2.55vw, 10.5px); font-weight: 800; line-height: 1.15; letter-spacing: -0.1px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mood-bar { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: var(--surface-2); margin-bottom: 8px; }
     .mood-bar span { display: block; height: 100%; }
-    .mood-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; color: var(--dark); }
+    .mood-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8125rem; color: var(--dark); }
     .mood-legend .ml-i { display: inline-flex; align-items: center; gap: 3px; }
     .mood-legend b, .mood-you b { font-weight: 800; }
     .ml-img { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; }
-    .mood-note { font-size: 11.5px; color: var(--muted); margin-top: 8px; }
+    .mood-note { font-size: 0.7188rem; color: var(--muted); margin-top: 8px; }
     /* After checking in: who else picked the same mood (_moodSameHtml). The
        min-height is two lines, so the placeholder holds the same space. */
-    .mood-same { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 13px; line-height: 1.35; color: var(--dark); text-align: left; }
+    .mood-same { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 0.8125rem; line-height: 1.35; color: var(--dark); text-align: left; }
     .mood-same .ms-img { flex: none; width: 32px; height: 32px; object-fit: contain; }
     .mood-same b { font-weight: 800; }
     .mood-same + .mood-bar { margin-top: 10px; }
-    .mood-all { display: block; margin: 6px auto 0; padding: 4px 8px; background: none; border: 0; font: inherit; font-size: 12px; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .mood-all { display: block; margin: 6px auto 0; padding: 4px 8px; background: none; border: 0; font: inherit; font-size: 0.75rem; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     /* "✓ Checked in" beside the heading, fading out after a tap (opacity
        only, so nothing moves when it goes). */
     .mood-flash { flex: none; font-weight: 700; color: var(--muted); animation: moodFlash 3.5s ease-in forwards; }
@@ -1196,6 +1198,8 @@
     html.theme-dark #app-shell,
     html.theme-dark .onboard-bg { background: var(--cream); }
     html.theme-dark .board-tab { background: rgba(255,255,255,0.06); }
+    /* The red text buttons in Your Moniker were 2.6–3.8:1 on the dark sheet. */
+    html.theme-dark #ms-signout, html.theme-dark #ms-delete { color: #ff8787 !important; }
     html.theme-dark .board-tab.active { background: var(--cream); }
     html.theme-dark .board-back-btn,
     html.theme-dark .help-btn { background: rgba(255,255,255,0.08); }

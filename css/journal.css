@@ -97,7 +97,7 @@
     }
     .fm-opt.sel {
       border-color: var(--brand-primary); background: rgba(255,149,0,0.08);
-      color: var(--brand-primary); font-weight: 700;
+      color: var(--brand-ink); font-weight: 700;
     }
     .fm-opt:active { background: #f8f9fa; }
 
@@ -129,10 +129,10 @@
     @media (hover: hover) and (pointer: fine) {
       .fm-card-btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
       .fm-card-btn.sq-bad:hover    { border-color:#dc3545; background:#dc354518; color:#dc3545; }
-      .fm-card-btn.sq-ok:hover     { border-color:#adb5bd; background:#adb5bd18; color:#6c757d; }
+      .fm-card-btn.sq-ok:hover     { border-color:#adb5bd; background:#adb5bd18; color:var(--text-muted-ink); }
       .fm-card-btn.sq-good:hover   { border-color:#51cf66; background:#51cf6618; color:#51cf66; }
       #sqBad:hover    { border-color:#dc3545!important; background:#dc354514!important; color:#dc3545!important; }
-      #sqUnsure:hover { border-color:#adb5bd!important; background:#adb5bd14!important; color:#6c757d!important; }
+      #sqUnsure:hover { border-color:#adb5bd!important; background:#adb5bd14!important; color:var(--text-muted-ink)!important; }
       #sqGood:hover   { border-color:#51cf66!important; background:#51cf6614!important; color:#51cf66!important; }
       .fm-hover-orange:not(.sel):hover { border-color:var(--brand-primary)!important; background:#ff950018!important; color:#212529!important; font-weight:700!important; }
       .fm-hover-green:not(.sel):hover  { border-color:#51cf66!important; background:#51cf6618!important; color:#212529!important; font-weight:700!important; }
@@ -142,7 +142,7 @@
     }
     .fm-card-btn:active { transform: translateY(-1px); }
     .fm-card-btn.sq-bad:active    { border-color:#dc3545; background:#dc354518; color:#dc3545; }
-    .fm-card-btn.sq-ok:active     { border-color:#adb5bd; background:#adb5bd18; color:#6c757d; }
+    .fm-card-btn.sq-ok:active     { border-color:#adb5bd; background:#adb5bd18; color:var(--text-muted-ink); }
     .fm-card-btn.sq-good:active   { border-color:#51cf66; background:#51cf6618; color:#51cf66; }
 
     .fm-dot {
@@ -248,7 +248,7 @@
       font-weight: 800;
       letter-spacing: 0.24em;
       text-transform: uppercase;
-      color: var(--fm-accent, var(--brand-primary));
+      color: var(--fm-accent-ink, var(--brand-ink));
       margin-bottom: 6px;
     }
     body.bb-fm-full #fmTitle { font-size: 1.45em; font-weight: 800; }
@@ -421,7 +421,7 @@
     }
     /* rise — upward flecks for the elevated mood (energised, lifting) */
     .fm-aura[data-type="rise"] span {
-      left: 50%; bottom: 8%; color: var(--brand-primary);
+      left: 50%; bottom: 8%; color: var(--brand-ink);
       font-size: 13px; font-weight: 900; animation: fmRise 1.9s ease-out infinite;
     }
     .fm-aura[data-type="rise"] .a1 { margin-left: -18px; animation-delay: 0s; }
@@ -511,7 +511,7 @@
     }
     /* meh — a neutral "…" pulsing in sequence for the "unsure" quality face */
     .fm-aura[data-type="meh"] span {
-      left: 50%; top: 20%; font-size: 20px; font-weight: 900; color: #adb5bd;
+      left: 50%; top: 20%; font-size: 20px; font-weight: 900; color: var(--text-muted-ink);
       animation: fmMeh 2.2s ease-in-out infinite;
     }
     .fm-aura[data-type="meh"] .a1 { margin-left: -16px; animation-delay: 0s; }
@@ -525,8 +525,8 @@
       font-size: 2.3em; font-weight: 800; color: #343a40; line-height: 1.1;
       text-align: center;
     }
-    .fm-hero-value.ghost { color: #adb5bd; }
-    .fm-hero-value .u { font-size: 0.55em; font-weight: 700; color: #868e96; }
+    .fm-hero-value.ghost { color: var(--text-muted-ink); }
+    .fm-hero-value .u { font-size: 0.55em; font-weight: 700; color: var(--text-muted-ink); }
     .fm-hero-badge {
       display: inline-flex; align-items: center; gap: 6px;
       background: #e6f9ed; color: #2b8a3e; border: 1.5px solid #b2f2bb;
@@ -534,7 +534,7 @@
       font-size: 0.82em; font-weight: 700;
     }
     .fm-hero-badge.guess {
-      background: var(--brand-tint); color: var(--brand-primary); border-color: #ffd8a8;
+      background: var(--brand-tint); color: var(--brand-ink); border-color: #ffd8a8;
     }
 
     /* ── Focused mode: slider-wheel option picker ── */
@@ -578,18 +578,15 @@
        (revealed inside the media query below). */
     #fmReducedMotionBadge { display: none; }
     @media (prefers-reduced-motion: reduce) {
-      /* Motion-sensitivity compromise: suppress the large / travelling particle
-         effects (sparks, pill bob, and the drifting auras — zzz, flame, rain,
-         money, tear), but KEEP the gentle in-place idle motion — the hero's
-         soft float and the stable-bear halo glow — so the form still feels
-         alive without anything sweeping across the screen. */
-      .fm-wheel-btn img, .fm-wheel-emoji { animation: none !important; }
+      /* Reduce Motion means none (2026-10-16, Apple's Reduced Motion label):
+         the old compromise kept the hero's float and the stable-bear halo
+         glow; now nothing moves on its own. Sparks, pill bob, hero float and
+         every aura (halo and drain included) are off, and the bear simply
+         sits still. css/theme.css stops any other animation site-wide. */
+      .fm-wheel-btn img, .fm-wheel-emoji,
+      .fm-hero-emoji, .fm-hero-emoji img, .step-hero-emoji { animation: none !important; }
       .fm-spark { animation: none !important; opacity: 0 !important; }
-      /* Suppress every travelling / flashing aura; keep only the in-place glows
-         (halo, drain). Covers current and future aura types by default. */
-      .fm-aura:not([data-type="halo"]):not([data-type="drain"]) span {
-        animation: none !important; opacity: 0 !important;
-      }
+      .fm-aura span { animation: none !important; opacity: 0 !important; }
       #fmReducedMotionBadge {
         display: inline-flex;
         align-items: center;
@@ -599,7 +596,7 @@
         padding: 3px 10px;
         border-radius: 999px;
         background: rgba(0, 0, 0, 0.05);
-        color: #868e96;
+        color: var(--text-muted-ink);
         font-size: 0.68em;
         font-weight: 700;
         letter-spacing: 0.02em;
@@ -628,6 +625,11 @@
       font-family: inherit; font-size: 1em; font-weight: 700;
       cursor: pointer; -webkit-tap-highlight-color: transparent;
     }
+    /* Larger Text (html.bb-text-large, set by js/shared/a11y.js from iOS Dynamic
+       Type): the Additional-tracking question sits above its answers instead of
+       beside them, so the answer buttons keep the full width. */
+    html.bb-text-large .fm-md-grid { grid-template-columns: 1fr !important; }
+    html.bb-text-large .fm-md-grid > span { white-space: normal !important; }
     #fmContent.fm-notes .fm-hero { min-height: 96px; }
     #fmContent.fm-notes .fm-hero-emoji { width: 84px; height: 84px; font-size: 46px; }
 
@@ -650,7 +652,7 @@
       padding: 12px 8px; gap: 3px;
     }
     .fm-done-actions .fm-wheel-emoji { font-size: 1.5em; line-height: 1.1; }
-    .fm-done-del  { border-color: #ffc9c9 !important; color: #e03131 !important; background: #fff5f5 !important; }
+    .fm-done-del  { border-color: #ffc9c9 !important; color: #c92a2a !important; background: #fff5f5 !important; } /* #e03131 was 4.2:1 */
     .fm-done-save { --wb-color: var(--fm-accent, var(--brand-primary)); background: var(--fm-accent-btn, var(--brand-btn)) !important; color: var(--fm-accent-btn-text, #fff) !important; border-color: transparent !important; box-shadow: var(--fm-accent-btn-ring, none); }
     .fm-done-save.grey { background: #adb5bd !important; color: #fff !important; box-shadow: none; }
     .fm-wheel-btn {
@@ -687,7 +689,7 @@
     .fm-wheel-hint {
       text-align: center;
       font-size: 0.78em; font-weight: 600;
-      color: #adb5bd;
+      color: var(--text-muted-ink);
       margin: 0 0 2px;
     }
     .fm-wheel-btn.sel { background: var(--wb-color, var(--brand-primary)); color: #fff; }
@@ -743,7 +745,7 @@
     .step-hero-emoji { font-size: 44px; line-height: 1.15; animation: fmHeroFloat 3.2s ease-in-out infinite; }
     .step-hero-emoji img { width: 52px; height: 52px; object-fit: contain; }
     .step-hero-value { font-size: 1.5em; font-weight: 800; color: #343a40; line-height: 1.1; }
-    .step-hero-value .u { font-size: 0.6em; font-weight: 700; color: #868e96; }
+    .step-hero-value .u { font-size: 0.6em; font-weight: 700; color: var(--text-muted-ink); }
     .step-hero-badge {
       display: inline-flex; align-items: center; gap: 5px;
       background: #e6f9ed; color: #2b8a3e; border: 1.5px solid #b2f2bb;
@@ -793,13 +795,13 @@
       width: 16px; height: 16px;
       border-radius: 50%;
       background: rgba(255,255,255,0.4);
-      border: 2px solid rgba(255,255,255,0.8);
+      border: 2px solid var(--brand-on);
       transition: background 0.15s;
     }
-    .pin-dot.filled { background: white; }
+    .pin-dot.filled { background: var(--brand-on); }
     .pin-dot-dark {
       background: rgba(0,0,0,0.1);
-      border-color: #adb5bd;
+      border-color: #868e96;
     }
     .pin-dot-dark.filled { background: var(--brand-primary); border-color: var(--brand-primary); }
     .pin-key {
@@ -807,7 +809,7 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.2);
       border: none;
-      color: white;
+      color: var(--brand-on); /* dark ink on the orange lock screen; white in dark mode */
       font-size: 1.5em;
       font-weight: 600;
       cursor: pointer;
@@ -828,6 +830,8 @@
       gap: 10px;
       margin-bottom: 15px;
     }
+    /* Larger Text: five bears no longer fit one row — wrap to rows of three. */
+    html.bb-text-large .mood-selector { grid-template-columns: repeat(3, 1fr) !important; }
 
     .mood-btn {
       background: #f8f9fa;
@@ -938,12 +942,12 @@
     }
     .msc-scale {
       display: flex; justify-content: space-between;
-      font-size: 0.68em; color: #adb5bd; font-weight: 600; margin-top: 2px;
+      font-size: 0.68em; color: var(--text-muted-ink); font-weight: 600; margin-top: 2px;
     }
     .msc-scale span:nth-child(2) { text-align: center; }
     .msc-scale span:last-child { text-align: right; }
     .msc-hint {
-      text-align: center; font-size: 0.78em; color: var(--brand-primary);
+      text-align: center; font-size: 0.78em; color: var(--brand-ink);
       font-weight: 600; margin-top: 10px;
     }
     /* Full spectrum reuses this control for sleep + energy, where the readout is
@@ -1371,7 +1375,7 @@
 
     .medication-dose {
       font-size: 0.9em;
-      color: #6c757d;
+      color: var(--text-muted-ink);
     }
 
     .medication-delete {
@@ -1418,7 +1422,7 @@
     .chart-label {
       text-align: center;
       font-size: 0.8em;
-      color: #6c757d;
+      color: var(--text-muted-ink);
       margin-top: 2px;
     }
 
@@ -1487,7 +1491,7 @@
       width: 100%;
       padding: 15px;
       background: white;
-      color: var(--brand-primary);
+      color: var(--brand-ink);
       border: 3px solid var(--brand-primary);
       border-radius: 10px;
       font-size: 1.1em;
@@ -1515,7 +1519,7 @@
     }
 
     .auth-toggle span {
-      color: var(--brand-primary);
+      color: var(--brand-ink);
       font-weight: 600;
     }
 
@@ -1675,11 +1679,11 @@
 
       textarea {
         min-height: 80px;
-        font-size: 16px; /* Prevents iOS zoom on focus */
+        font-size: max(16px, 1rem); /* Prevents iOS zoom on focus; grows with Larger Text */
       }
 
       input {
-        font-size: 16px; /* Prevents iOS zoom on focus */
+        font-size: max(16px, 1rem); /* Prevents iOS zoom on focus; grows with Larger Text */
       }
 
       input[type="date"] {
@@ -1916,7 +1920,7 @@
 
     .confirm-content p {
       margin-bottom: 25px;
-      color: #6c757d;
+      color: var(--text-muted-ink);
     }
 
     .confirm-buttons {
@@ -1971,7 +1975,7 @@
     .pagination-btn {
       padding: 10px 16px;
       background: white;
-      color: #6c757d;
+      color: var(--text-muted-ink);
       border: 1.5px solid #e9ecef;
       border-radius: 10px;
       cursor: pointer;
@@ -2030,7 +2034,7 @@
     * { touch-action: manipulation; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes hintFade { 0%,100%{opacity:0.55;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} }
+    @keyframes hintFade { 0%,100%{opacity:0.92;transform:translateY(0)} 50%{opacity:1;transform:translateY(-4px)} } /* faintest point still 4.5:1 */
     @keyframes bbHintNudge { 0%,100%{transform:scale(1)} 25%{transform:scale(1.18) rotate(-4deg)} 75%{transform:scale(1.12) rotate(3deg)} }
 
     /* Force light mode — prevent OS dark mode from affecting colours */
@@ -2361,7 +2365,7 @@
 #lifeChart { margin-top: 18px; background: #fff; border: 1.5px solid #e9ecef; border-radius: 14px; padding: 14px 12px 12px; }
 #lifeChart .lc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 #lifeChart .lc-title { font-weight: 700; color: #495057; font-size: 1em; }
-#lifeChart .lc-sub { color: #6c757d; font-size: 0.78em; line-height: 1.4; margin: 4px 0 10px; }
+#lifeChart .lc-sub { color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.4; margin: 4px 0 10px; }
 #lifeChart .lc-frame { display: flex; align-items: flex-start; }
 #lifeChart .lc-ylabels { position: relative; width: 60px; flex: 0 0 60px; }
 #lifeChart .lc-ylab { position: absolute; right: 6px; font-size: 9.5px; line-height: 12px; font-weight: 600; white-space: nowrap; max-width: 58px; overflow: hidden; text-overflow: ellipsis; }
@@ -2392,7 +2396,7 @@
 #lifeChart .lc-axis-sm { fill: #adb5bd; }
 #lifeChart .lc-hl { fill: rgba(255,149,0,0.14); stroke: var(--brand-primary); stroke-width: 1; }
 #lifeChart .lc-detail { font-size: 0.8em; color: #495057; min-height: 1.3em; margin-top: 6px; text-align: center; }
-#lifeChart .lc-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; margin-top: 8px; font-size: 0.72em; color: #6c757d; }
+#lifeChart .lc-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center; margin-top: 8px; font-size: 0.72em; color: var(--text-muted-ink); }
 #lifeChart .lc-key { display: inline-flex; align-items: center; gap: 3px; }
 #lifeChart .lc-key i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
 #lifeChart .lc-key-gap { font-style: italic; }
@@ -2403,12 +2407,12 @@
 .ew-title { font-weight: 700; font-size: 0.98em; margin-bottom: 6px; color: #2b8a3e; }
 .ew-list { list-style: none; margin: 0 0 10px; padding: 0; font-size: 0.88em; line-height: 1.5; }
 .ew-list li + li { margin-top: 8px; }
-.ew-hist { color: #6c757d; font-size: 0.95em; margin-top: 3px; font-style: italic; }
-.ew-close { position: absolute; top: 6px; right: 8px; background: none; border: 0; font-size: 1.4em; line-height: 1; color: #adb5bd; cursor: pointer; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
-.ew-strat { display: inline-block; background: rgba(255,149,0,0.1); border: 1.5px solid var(--brand-primary); color: var(--brand-primary); border-radius: 20px; padding: 7px 14px; font-size: 0.85em; font-weight: 600; text-decoration: none; }
-.ew-care { font-size: 0.8em; color: #6c757d; margin-top: 10px; line-height: 1.5; }
+.ew-hist { color: var(--text-muted-ink); font-size: 0.95em; margin-top: 3px; font-style: italic; }
+.ew-close { position: absolute; top: 6px; right: 8px; background: none; border: 0; font-size: 1.4em; line-height: 1; color: var(--text-muted-ink); cursor: pointer; padding: 4px 6px; -webkit-tap-highlight-color: transparent; }
+.ew-strat { display: inline-block; background: rgba(255,149,0,0.1); border: 1.5px solid var(--brand-primary); color: var(--brand-ink); border-radius: 20px; padding: 7px 14px; font-size: 0.85em; font-weight: 600; text-decoration: none; }
+.ew-care { font-size: 0.8em; color: var(--text-muted-ink); margin-top: 10px; line-height: 1.5; }
 .ew-care a { color: #5c7cfa; font-weight: 600; }
-.ew-device { font-size: 0.72em; color: #adb5bd; margin-top: 4px; }
+.ew-device { font-size: 0.72em; color: var(--text-muted-ink); margin-top: 4px; }
 
 /* ── The landing stack on the orange page: one family (James, 2026-09-30) ──
    "View yesterday's entry" and "Open Journal" are the same button: one width,
@@ -2484,7 +2488,7 @@
 /* Personalised Feedback: 1M / 3M / 6M / 1Y / All — the life chart's range
    control, reused (showPersonalisedFeedback in js/journal.js). */
 .fb-ranges { display: flex; width: fit-content; margin: 0 auto 12px; border: 1.5px solid #e9ecef; border-radius: 10px; overflow: hidden; }
-.fb-range { background: #fff; border: 0; padding: 6px 12px; font-size: 0.8em; font-weight: 700; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
+.fb-range { background: #fff; border: 0; padding: 6px 12px; font-size: 0.8em; font-weight: 700; color: var(--text-muted-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; font-family: inherit; }
 .fb-range + .fb-range { border-left: 1px solid #e9ecef; }
 .fb-range.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
 
@@ -2623,17 +2627,17 @@ html [style*="var(--brand-btn)"] {
 #calViewSwitch { margin: 14px 0 4px; }
 #journeyRanges { margin: 0 0 8px; }
 .seg-switch .cv-seg { display: inline-flex; border: 1.5px solid #e9ecef; border-radius: 12px; overflow: hidden; background: #fff; }
-.seg-switch .cv-opt { background: #fff; border: 0; padding: 8px 14px; font-family: inherit; font-size: 0.88em; font-weight: 600; color: #6c757d; cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
+.seg-switch .cv-opt { background: #fff; border: 0; padding: 8px 14px; font-family: inherit; font-size: 0.88em; font-weight: 600; color: var(--text-muted-ink); cursor: pointer; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
 #journeyRanges .cv-opt { padding: 8px 13px; }
 .seg-switch .cv-opt + .cv-opt { border-left: 1px solid #e9ecef; }
 .seg-switch .cv-opt.on { background: #fff8ef; color: #5a2a00; box-shadow: inset 0 0 0 2px rgba(168, 67, 10, 0.35); }
-.seg-switch .cv-note { min-height: 1.3em; margin-top: 5px; font-size: 0.75em; color: #adb5bd; font-style: italic; }
+.seg-switch .cv-note { min-height: 1.3em; margin-top: 5px; font-size: 0.75em; color: var(--text-muted-ink); font-style: italic; }
 /* The custom range's start date (📅), under the range buttons when it is picked. */
 .seg-switch .cv-from { margin: 2px auto 6px; max-width: 360px; text-align: center; font-size: 0.85em; color: #495057; }
 .seg-switch .cv-from label { font-weight: 600; }
 .seg-switch .cv-from input[type=date] { margin-left: 6px; padding: 5px 8px; border: 2px solid #e9ecef; border-radius: 8px; font: inherit; color: #495057; background: #fff; }
 .seg-switch .cv-from-all { margin-left: 6px; padding: 5px 10px; border: 1px solid #e9ecef; border-radius: 8px; background: #fff; font: inherit; color: #a8430a; cursor: pointer; }
-.seg-switch .cv-from-hint { margin-top: 5px; font-size: 0.85em; color: #868e96; }
+.seg-switch .cv-from-hint { margin-top: 5px; font-size: 0.85em; color: var(--text-muted-ink); }
 html.theme-dark .seg-switch .cv-from { color: var(--dk-text); }
 html.theme-dark .seg-switch .cv-from input[type=date], html.theme-dark .seg-switch .cv-from-all { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text); }
 html.theme-dark .seg-switch .cv-from-hint { color: var(--dk-muted); }
@@ -2686,7 +2690,7 @@ html.theme-dark .pf-link { color: #ffb347; }
 @keyframes bbImportNudge { 0%,100% { transform: scale(1); } 30% { transform: scale(1.14); } 60% { transform: scale(0.97); } }
 #settingsImportBtn.bb-import-glow {
   position: relative;
-  color: var(--brand-primary) !important;
+  color: var(--brand-ink) !important;
   font-weight: 700;
   background: rgba(255,149,0,0.12) !important;
   border-radius: 20px;
@@ -2695,7 +2699,7 @@ html.theme-dark .pf-link { color: #ffb347; }
 .bb-import-label {
   text-align: center; margin: 0 0 2px; pointer-events: none;
   font-size: 0.85em; font-weight: 700; font-style: italic; font-family: 'Georgia', serif;
-  color: var(--brand-primary); animation: hintFade 2.4s ease-in-out infinite;
+  color: var(--brand-ink); animation: hintFade 2.4s ease-in-out infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   #settingsImportBtn.bb-import-glow, .bb-import-label { animation: none; }

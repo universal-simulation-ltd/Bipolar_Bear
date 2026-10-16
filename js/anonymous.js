@@ -545,7 +545,7 @@ function renderMutedList() {
   listEl.innerHTML = [...mutedUsers].map(n => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
       <span>🙈 [${esc(n)}]</span>
-      <button class="btn-secondary" data-unmute="${esc(n)}" style="padding:4px 12px;font-size:12px;">${esc(_wt('anon.mute.unmute'))}</button>
+      <button class="btn-secondary" data-unmute="${esc(n)}" style="padding:4px 12px;font-size:0.75rem;">${esc(_wt('anon.mute.unmute'))}</button>
     </div>`).join('');
   listEl.querySelectorAll('[data-unmute]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -650,19 +650,39 @@ function initials(name) { return (name || '??').slice(0, 2).toUpperCase(); }
 
 // Initials colour for an avatar gradient: dark on the light gold one (white
 // there is under 2:1), white on every other preset, as before.
-function _avInk(g1, g2) {
-  const lum = h => {
+// Avatar initials sit on the member's chosen two-colour gradient. Some
+// presets run from a light to a dark shade, so neither white nor dark ink
+// reaches 4.5:1 across the whole circle. _avTone picks the ink that reads
+// better and, when needed, lays a light (dark ink) or dark (white ink) scrim
+// over the gradient — just enough for both ends to pass. _avInk / _avBg
+// return the two halves; always use them together.
+function _avTone(g1, g2) {
+  const rgb = h => {
     const m = /^#([0-9a-f]{6})$/i.exec(String(h || '').trim());
-    if (!m) return null;
-    return [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
-      .map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
-      .reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+    return m ? [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16)) : null;
   };
-  const a = lum(g1), b = lum(g2);
-  if (a == null || b == null) return '#fff';
-  const contrast = 1.05 / ((a + b) / 2 + 0.05);
-  return contrast < 2 ? '#1a1500' : '#fff';
+  const lum = c => c.map(v => v / 255)
+    .map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+    .reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const c1 = rgb(g1), c2 = rgb(g2);
+  const grad = `linear-gradient(135deg,${g1},${g2})`;
+  if (!c1 || !c2) return { ink: '#fff', bg: grad };
+  const over = (c, w, a) => c.map(v => v + (w - v) * a);
+  const DARK = 0.0074; // #1a1500
+  const darkOk  = a => Math.min(lum(over(c1, 255, a)), lum(over(c2, 255, a))) >= 4.6 * (DARK + 0.05) - 0.05;
+  const whiteOk = a => Math.max(lum(over(c1, 0, a)), lum(over(c2, 0, a))) <= 1.05 / 4.6 - 0.05;
+  const la = lum(c1), lb = lum(c2);
+  const useDark = (Math.min(la, lb) + 0.05) / (DARK + 0.05) > 1.05 / (Math.max(la, lb) + 0.05);
+  for (let a = 0; a <= 0.6; a += 0.05) {
+    if (useDark ? darkOk(a) : whiteOk(a)) {
+      const scrim = a < 0.01 ? '' : `linear-gradient(rgba(${useDark ? '255,255,255' : '0,0,0'},${a.toFixed(2)}),rgba(${useDark ? '255,255,255' : '0,0,0'},${a.toFixed(2)})),`;
+      return { ink: useDark ? '#1a1500' : '#fff', bg: scrim + grad };
+    }
+  }
+  return { ink: useDark ? '#1a1500' : '#fff', bg: grad };
 }
+function _avInk(g1, g2) { return _avTone(g1, g2).ink; }
+function _avBg(g1, g2) { return _avTone(g1, g2).bg; }
 
 function esc(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -935,7 +955,7 @@ function openSaved() {
       const live = !!_findPost(s.id);
       return `<div class="saved-card" data-sid="${esc(s.id)}">
         <div class="saved-head">
-          <div class="post-av-circle" style="background:linear-gradient(135deg,${safeColor(s.grad1, YELLOW_LT)},${safeColor(s.grad2, YELLOW_DARK)});color:${_avInk(safeColor(s.grad1, YELLOW_LT), safeColor(s.grad2, YELLOW_DARK))};">${esc(s.initials || '')}</div>
+          <div class="post-av-circle" style="background:${_avBg(safeColor(s.grad1, YELLOW_LT), safeColor(s.grad2, YELLOW_DARK))};color:${_avInk(safeColor(s.grad1, YELLOW_LT), safeColor(s.grad2, YELLOW_DARK))};">${esc(s.initials || '')}</div>
           <div class="saved-name">[${esc(s.name)}]</div>
           <div class="saved-when">${esc(timeAgo(new Date(num(s.ts, Date.now()))))}</div>
         </div>
@@ -1552,6 +1572,8 @@ function setupVerify() {
   const boxes     = document.querySelectorAll('.code-box');
   const errDiv    = document.getElementById('verify-error');
   const agreeChk  = document.getElementById('agree-terms');
+  // VoiceOver: "Code digit 3 of 6" (translated) for each one-digit box.
+  boxes.forEach((b, i) => b.setAttribute('aria-label', _wt('a11y.codeDigit', { n: i + 1, total: boxes.length })));
   let   _pendingEmail = '';
   let   _sessionId    = null;
 
@@ -2165,12 +2187,12 @@ function setupMedDefine(onDone) {
     const el = document.getElementById('anon-med-list-wrap');
     if (!el) return;
     if (!medList.length) {
-      el.innerHTML = '<p style="color:var(--muted);font-size:13px;text-align:center;margin:4px 0 10px;">' + esc(_wt('anon.ui.noMedsYet')) + '</p>';
+      el.innerHTML = '<p style="color:var(--muted);font-size:0.8125rem;text-align:center;margin:4px 0 10px;">' + esc(_wt('anon.ui.noMedsYet')) + '</p>';
       return;
     }
     el.innerHTML = medList.map((m, i) => `
       <div class="anon-med-tag">
-        <span style="flex:1;">💊 <strong>${esc(m.name)}</strong>${m.dosage ? ` <span style="color:var(--muted);font-size:12px;">${esc(m.dosage)}</span>` : ''}</span>
+        <span style="flex:1;">💊 <strong>${esc(m.name)}</strong>${m.dosage ? ` <span style="color:var(--muted);font-size:0.75rem;">${esc(m.dosage)}</span>` : ''}</span>
         <button class="anon-med-tag-del" data-idx="${i}">✕</button>
       </div>`).join('');
     el.querySelectorAll('.anon-med-tag-del').forEach(btn => {
@@ -2216,12 +2238,12 @@ function openMedSettings() {
     const el = document.getElementById('med-ov-list');
     if (!el) return;
     if (!medList.length) {
-      el.innerHTML = '<p style="color:var(--muted);font-size:13px;margin:4px 0 8px;">' + esc(_wt('anon.ui.noMedsYet')) + '</p>';
+      el.innerHTML = '<p style="color:var(--muted);font-size:0.8125rem;margin:4px 0 8px;">' + esc(_wt('anon.ui.noMedsYet')) + '</p>';
       return;
     }
     el.innerHTML = medList.map((m, i) => `
       <div class="anon-med-tag">
-        <span style="flex:1;">💊 <strong>${esc(m.name)}</strong>${m.dosage ? ` <span style="color:var(--muted);font-size:12px;">${esc(m.dosage)}</span>` : ''}</span>
+        <span style="flex:1;">💊 <strong>${esc(m.name)}</strong>${m.dosage ? ` <span style="color:var(--muted);font-size:0.75rem;">${esc(m.dosage)}</span>` : ''}</span>
         <button class="anon-med-tag-del" data-idx="${i}">✕</button>
       </div>`).join('');
     el.querySelectorAll('.anon-med-tag-del').forEach(btn => {
@@ -2472,10 +2494,10 @@ function renderUserPill() {
   const av = profile.avatarInitials();
   document.getElementById('board-user-pill').innerHTML = `
     <div class="pill-row" style="display:flex;align-items:center;gap:5px;">
-      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,${g1},${g2});display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px;flex-shrink:0;">${esc(av)}</div>
+      <div aria-hidden="true" style="width:28px;height:28px;border-radius:50%;background:${_avBg(g1, g2)};display:flex;align-items:center;justify-content:center;color:${_avInk(g1, g2)};font-weight:800;font-size:0.6875rem;flex-shrink:0;">${esc(av)}</div>
       <div class="pill-namecol" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;">
-        <span class="pill-name" style="font-size:12px;color:rgba(0,0,0,0.75);font-weight:600;">[${esc(m)}]</span>
-        ${profile.isAdmin ? `<span style="background:rgba(0,0,0,0.55);color:#fff;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;line-height:1.2;">${profile.postAsMember ? '🕶️ ' : ''}ADMIN</span>` : ''}
+        <span class="pill-name" style="font-size:0.75rem;color:rgba(0,0,0,0.75);font-weight:600;">[${esc(m)}]</span>
+        ${profile.isAdmin ? `<span style="background:rgba(0,0,0,0.55);color:#fff;font-size:0.5625rem;font-weight:800;border-radius:4px;padding:1px 5px;line-height:1.2;">${profile.postAsMember ? '🕶️ ' : ''}ADMIN</span>` : ''}
       </div>
     </div>`;
   // The 🔥 / 🧘 / 🎂 figures used to follow the name here; they moved into
@@ -2792,6 +2814,8 @@ function syncUnreadFlags() {
     el.classList.toggle('has-unread', unread);
     if (el.classList.contains('comment-btn')) {
       el.title = _wt(unread ? 'anon.modbtn.newReplies' : 'anon.modbtn.viewComments');
+      const _n = (el.textContent || '').replace(/\D+/g, '');
+      el.setAttribute('aria-label', _n ? `${el.title} (${_n})` : el.title);
     }
   });
 }
@@ -2801,16 +2825,22 @@ function syncUnreadFlags() {
 function commentBtnHtml(p, commentCount) {
   const unread = threadHasUnread(p);
   const title  = _wt(unread ? 'anon.modbtn.newReplies' : 'anon.modbtn.viewComments');
-  return `<button class="comment-btn${unread ? ' has-unread' : ''}" data-comment="${esc(p.id)}" title="${esc(title)}">`
-       + `<span class="cb-icon">💬</span>${commentCount > 0 ? ` <span>${commentCount}</span>` : ''}</button>`;
+  const speak  = commentCount > 0 ? `${title} (${commentCount})` : title;
+  return `<button class="comment-btn${unread ? ' has-unread' : ''}" data-comment="${esc(p.id)}" title="${esc(title)}" aria-label="${esc(speak)}">`
+       + `<span class="cb-icon" aria-hidden="true">💬</span>${commentCount > 0 ? ` <span aria-hidden="true">${commentCount}</span>` : ''}</button>`;
 }
 // ──────────────────────────────────────────────────────────────────
 
 function setTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.board-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.board-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+    b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
+  });
   document.getElementById('fab-ann').classList.toggle('active', tab === 'announcements');
   document.getElementById('fab-gen').classList.toggle('active', tab === 'general');
+  document.getElementById('fab-ann').setAttribute('aria-pressed', tab === 'announcements' ? 'true' : 'false');
+  document.getElementById('fab-gen').setAttribute('aria-pressed', tab === 'general' ? 'true' : 'false');
 
   const postList    = document.getElementById('post-list');
   const wikiSection = document.getElementById('wiki-section');
@@ -4663,7 +4693,7 @@ function renderSuggestion(x) {
     <div class="sugg-flag">${esc(label)}</div>
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
+        <div class="post-av-circle" style="background:${_avBg(g1, g2)};color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div><div class="post-name">[${esc(x.name || '')}]</div></div>
       </div>
       <span class="post-time">${x.timestamp ? timeAgo(x.timestamp) : _wt('anon.time.now')}</span>
@@ -4963,7 +4993,7 @@ function renderThreadHeader(p) {
     return `<div class="thread-orig-post">
       <div class="post-header">
         <div class="post-avatar">
-          <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
+          <div class="post-av-circle" style="background:${_avBg(a.grad1, a.grad2)};color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
           <div>
             <div class="post-name">[${esc(a.name)}]</div>
             ${_chipsHtml({ streak: a.streak, label: '💬 ' + label })}
@@ -4984,7 +5014,7 @@ function renderThreadHeader(p) {
   return `<div class="thread-orig-post">
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
+        <div class="post-av-circle" style="background:${_avBg(g1, g2)};color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div>
           <div class="post-name">${authorLabel(p)}</div>
           ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, med: showMed ? p.med : '' })}
@@ -5055,10 +5085,10 @@ function renderComment(c) {
   return `<div class="comment-card" data-cid="${esc(c.id)}" data-author="${esc(c.name)}">
     ${isMine ? '' : '<span class="swipe-cue">↩️</span>'}
     <div class="comment-header">
-      <div class="post-av-circle" style="width:28px;height:28px;font-size:11px;flex-shrink:0;background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
+      <div class="post-av-circle" style="width:28px;height:28px;font-size:0.6875rem;flex-shrink:0;background:${_avBg(g1, g2)};color:${_avInk(g1, g2)};">${esc(av)}</div>
       <div style="flex:1;min-width:0;">
-        <span class="post-name" style="font-size:12px;">${authorLabel(c)}</span>
-        <span style="font-size:11px;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
+        <span class="post-name" style="font-size:0.75rem;">${authorLabel(c)}</span>
+        <span style="font-size:0.6875rem;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
       </div>
     </div>
     ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt>${esc(c.text)}</div>`}
@@ -5477,7 +5507,7 @@ function renderArchivedTopic(p) {
   return `<div class="post-card" data-pid="${esc(p.id)}">
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${a.grad1},${a.grad2});color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
+        <div class="post-av-circle" style="background:${_avBg(a.grad1, a.grad2)};color:${_avInk(a.grad1, a.grad2)};">${esc(a.initials)}</div>
         <div>
           <div class="post-name">[${esc(a.name)}]</div>
           ${_chipsHtml({ streak: a.streak, label: '💬 ' + _wt('anon.feed.pastTopic') })}
@@ -5488,7 +5518,7 @@ function renderArchivedTopic(p) {
     <div class="post-text" data-tt>${esc(p.text)}</div>
     ${pollHtml(p)}
     <div class="post-actions">
-      <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(a.name)}">
+      <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(a.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}">
         💛 <span>${likes}</span>
       </button>
       ${commentBtnHtml(p, commentCount)}
@@ -5502,7 +5532,7 @@ function renderArchivedTopic(p) {
 // POST_RETENTION_DAYS (the cleanOldPosts cutoff and the seed rotation cadence).
 function renderFeedFooter() {
   const days = POST_RETENTION_DAYS;
-  return `<div class="feed-footer" style="text-align:center;padding:18px 16px 10px;font-size:12px;line-height:1.5;color:var(--muted);">
+  return `<div class="feed-footer" style="text-align:center;padding:18px 16px 10px;font-size:0.75rem;line-height:1.5;color:var(--muted);">
     ${esc(_wt('anon.feed.footer', { days }))}
   </div>`;
 }
@@ -5513,8 +5543,8 @@ function renderAnnouncement(p) {
     : '';
   return `<div class="ann-card">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,${YELLOW_LT},${YELLOW_DARK});display:flex;align-items:center;justify-content:center;font-size:16px;">🐻</div>
-      <div style="font-size:13px;font-weight:700;color:var(--dark);">BipolarBear</div>
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,${YELLOW_LT},${YELLOW_DARK});display:flex;align-items:center;justify-content:center;font-size:1rem;">🐻</div>
+      <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);">BipolarBear</div>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
     ${wikiBtn}
@@ -5593,7 +5623,7 @@ function renderPost(p) {
     ${pinnedBadge}
     <div class="post-header">
       <div class="post-avatar">
-        <div class="post-av-circle" style="background:linear-gradient(135deg,${g1},${g2});color:${_avInk(g1, g2)};">${esc(av)}</div>
+        <div class="post-av-circle" style="background:${_avBg(g1, g2)};color:${_avInk(g1, g2)};">${esc(av)}</div>
         <div>
           <div class="post-name">${authorLabel(p)}</div>
           ${_chipsHtml({ streak: streakNum, stable: showStable ? stableNum : 0, bday: postBday, med: showMed ? p.med : '' })}
@@ -5604,7 +5634,7 @@ function renderPost(p) {
     <div class="post-text" data-tt>${esc(p.text)}</div>
     ${pollHtml(p)}
     <div class="post-actions">
-      <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}"${p.name === profile.monika ? ` data-self="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
+      <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}"${p.name === profile.monika ? ` data-self="true" aria-disabled="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
         💛 <span>${likes}</span>
       </button>
       ${commentBtn}
@@ -5637,6 +5667,8 @@ function handleLike(btn) {
     btn.classList.remove('liked');
     btn.dataset.likes = count - 1;
     span.textContent  = count - 1;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', _wt('a11y.likes', { count: count - 1 }));
     if (db) db.collection(BB_BRAND.collections.posts).doc(id).update({ likes: firebase.firestore.FieldValue.increment(-1) }).catch(() => {});
   } else {
     _haptic();
@@ -5644,6 +5676,8 @@ function handleLike(btn) {
     btn.classList.add('liked');
     btn.dataset.likes = count + 1;
     span.textContent  = count + 1;
+    btn.setAttribute('aria-pressed', 'true');
+    btn.setAttribute('aria-label', _wt('a11y.likes', { count: count + 1 }));
     if (db) db.collection(BB_BRAND.collections.posts).doc(id).update({ likes: firebase.firestore.FieldValue.increment(1) }).catch(() => {});
   }
   saveLiked();
@@ -6504,7 +6538,7 @@ function openMonikaSettings() {
     const key  = msColors.querySelector('.color-swatch.selected')?.dataset.key || profile.colorKey;
     const col  = COLOR_PRESETS.find(c => c.key === key) || COLOR_PRESETS[0];
     msAv.textContent = init;
-    msAv.style.background = `linear-gradient(135deg,${col.g1},${col.g2})`;
+    msAv.style.background = _avBg(col.g1, col.g2);
     msAv.style.color = _avInk(col.g1, col.g2);
     msAvName.textContent = `[${name}] 🔥 ${profile.streak}d`;
   }

@@ -20,6 +20,7 @@
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
   <script src="js/shared/safety-plan.js"></script>
@@ -125,7 +126,7 @@
     <div id="userInfo"><span id="userEmail"></span></div>
   </div>
   <!-- Version chip under the auth FAB — populated by BB.versionLabel() in version-check.js -->
-  <span id="bbHomeVersion" style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:49;font-size:0.62em;font-weight:600;color:#6c757d;letter-spacing:0.04em;white-space:nowrap;pointer-events:none;"></span>
+  <span id="bbHomeVersion" style="position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:49;font-size:0.62em;font-weight:600;color:var(--text-muted-ink);letter-spacing:0.04em;white-space:nowrap;pointer-events:none;"></span>
   <div class="container">
     <div class="logo-bounce-wrapper"><img src="images/logos/good_logo.png" alt="My Bipolar Bear" class="logo-img" draggable="false" oncontextmenu="return false;"></div>
     <div class="logo-hint" id="logoHint">
@@ -453,12 +454,12 @@
       <div style="display:flex;align-items:flex-start;gap:12px;">
         <span style="font-size:1.5em;line-height:1;flex-shrink:0;margin-top:1px;">🎉</span>
         <div style="flex:1;min-width:0;">
-          <div id="whatsNewVersion" style="font-size:0.7em;font-weight:700;color:var(--brand-primary);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:5px;"></div>
+          <div id="whatsNewVersion" style="font-size:0.7em;font-weight:700;color:var(--brand-ink);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:5px;"></div>
           <div id="whatsNewHeadline" style="font-size:0.9em;color:#212529;line-height:1.45;font-weight:600;"></div>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;">
-        <button onclick="_dismissWhatsNew()" style="flex:1;padding:10px;background:#f8f9fa;color:#6c757d;border:none;border-radius:10px;font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.whatsNew.gotIt">Got it</button>
+        <button onclick="_dismissWhatsNew()" style="flex:1;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:10px;font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.whatsNew.gotIt">Got it</button>
         <button onclick="_openFullChangelog()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.whatsNew.changelog">Full changelog ↗</button>
       </div>
     </div>
@@ -469,7 +470,7 @@
     <div class="wa-modal-box">
       <div style="font-size:2em;margin-bottom:12px;">💬</div>
       <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:8px;" data-i18n="home.wa.title">Join Bipolar Anonymous</div>
-      <p style="font-size:0.9em;color:#6c757d;line-height:1.5;margin-bottom:20px;" data-i18n="home.wa.body">Would you like to join our WhatsApp group Bipolar Anonymous?</p>
+      <p style="font-size:0.9em;color:var(--text-muted-ink);line-height:1.5;margin-bottom:20px;" data-i18n="home.wa.body">Would you like to join our WhatsApp group Bipolar Anonymous?</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <a href="https://chat.whatsapp.com/Crsfo0x9u887tnTiQUpAvy" target="_blank" rel="noopener noreferrer"
           onclick="_closeWaModal(); localStorage.setItem('bbWaJoined','1');"
@@ -481,7 +482,7 @@
           Cancel
         </button>
         <button onclick="_showHidePermanently('wa')"
-          style="padding:10px;background:none;border:none;color:#6c757d;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.wa.hide">
+          style="padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.wa.hide">
           🙈 Hide this button
         </button>
       </div>
@@ -493,7 +494,7 @@
   <div class="overlay-modal" id="personalDetailsModal" onclick="if(event.target===this)closePersonalDetailsModal()">
     <div class="modal-box" style="max-height:85dvh;overflow-y:auto;">
       <h3 style="margin-bottom:8px;" data-i18n="pd.title">👤 Personal Details</h3>
-      <p style="color:#6c757d;font-size:0.82em;margin-bottom:16px;font-style:italic;" data-i18n="pd.subtitle">All fields optional. Appears on exported PDF reports for your healthcare provider.</p>
+      <p style="color:var(--text-muted-ink);font-size:0.82em;margin-bottom:16px;font-style:italic;" data-i18n="pd.subtitle">All fields optional. Appears on exported PDF reports for your healthcare provider.</p>
       <div style="display:grid;gap:10px;">
         <input type="text"  id="pdName"      placeholder="Name"                                       style="padding:8px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;" data-i18n-placeholder="pd.name">
         <input type="text"  id="pdDOB"       placeholder="Date of Birth (e.g. 15 Jan 1990)"           style="padding:8px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;" data-i18n-placeholder="pd.dob">
@@ -508,7 +509,7 @@
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;">
         <button onclick="savePersonalDetails()" style="flex:1;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;" data-i18n="common.save">Save</button>
-        <button onclick="closePersonalDetailsModal()" style="padding:12px 18px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
+        <button onclick="closePersonalDetailsModal()" style="padding:12px 18px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
       </div>
     </div>
   </div>
@@ -520,34 +521,34 @@
       <!-- PANEL 1: Customise -->
       <div id="idxProfilePanelCustomise">
         <h3 style="text-align:center;margin-bottom:6px;" data-i18n="home.profileTitle">👤 Profile</h3>
-        <div id="idxProfileEmailCustomise" style="font-size:0.82em;color:#6c757d;margin-bottom:18px;word-break:break-all;text-align:center;"></div>
+        <div id="idxProfileEmailCustomise" style="font-size:0.82em;color:var(--text-muted-ink);margin-bottom:18px;word-break:break-all;text-align:center;"></div>
 
         <div style="font-size:0.85em;font-weight:600;color:#495057;margin-bottom:2px;" data-i18n="home.homeButtons">🏠 Home buttons</div>
-        <div style="color:#6c757d;font-size:0.8em;margin-bottom:10px;" data-i18n="home.homeButtonsHint">Tap to add a feature to your home screen.</div>
+        <div style="color:var(--text-muted-ink);font-size:0.8em;margin-bottom:10px;" data-i18n="home.homeButtonsHint">Tap to add a feature to your home screen.</div>
         <div id="idxHomeBtnToggles" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:18px;"></div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;padding:10px 12px;border:1.5px solid #e9ecef;border-radius:12px;">
           <div>
-            <div style="font-weight:600;color:#495057;font-size:0.92em;" data-i18n="home.hideStats">📊 Hide stats</div>
-            <div style="color:#6c757d;font-size:0.8em;margin-top:2px;" data-i18n="home.showStatsSub">Streaks &amp; progress under each button</div>
+            <div id="idxShowStatsLbl" style="font-weight:600;color:#495057;font-size:0.92em;" data-i18n="home.hideStats">📊 Hide stats</div>
+            <div style="color:var(--text-muted-ink);font-size:0.8em;margin-top:2px;" data-i18n="home.showStatsSub">Streaks &amp; progress under each button</div>
           </div>
-          <button id="idxShowStatsToggle" onclick="_toggleHomeStats()" style="position:relative;display:inline-block;width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;transition:background 0.2s;">
+          <button id="idxShowStatsToggle" type="button" role="switch" aria-checked="false" aria-labelledby="idxShowStatsLbl" onclick="_toggleHomeStats()" style="position:relative;display:inline-block;width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;transition:background 0.2s;">
             <span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left 0.2s;"></span>
           </button>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:18px;padding:10px 12px;border:1.5px solid #e9ecef;border-radius:12px;">
           <div>
-            <div style="font-weight:600;color:#495057;font-size:0.92em;" data-i18n="home.quickWidget">🐻 Hide quick check-in</div>
-            <div style="color:#6c757d;font-size:0.8em;margin-top:2px;" data-i18n="home.quickWidgetSub">Show the Mood Journal button on the home screen instead of the one-tap mood bears</div>
+            <div id="idxQuickCheckinLbl" style="font-weight:600;color:#495057;font-size:0.92em;" data-i18n="home.quickWidget">🐻 Hide quick check-in</div>
+            <div style="color:var(--text-muted-ink);font-size:0.8em;margin-top:2px;" data-i18n="home.quickWidgetSub">Show the Mood Journal button on the home screen instead of the one-tap mood bears</div>
           </div>
-          <button id="idxQuickCheckinToggle" onclick="_toggleHomeQuickCheckin()" style="position:relative;display:inline-block;width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;transition:background 0.2s;">
+          <button id="idxQuickCheckinToggle" type="button" role="switch" aria-checked="false" aria-labelledby="idxQuickCheckinLbl" onclick="_toggleHomeQuickCheckin()" style="position:relative;display:inline-block;width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;flex-shrink:0;-webkit-tap-highlight-color:transparent;padding:0;transition:background 0.2s;">
             <span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left 0.2s;"></span>
           </button>
         </div>
 
         <div style="margin-bottom:18px;">
-          <div style="font-size:0.85em;font-weight:600;color:#495057;margin-bottom:6px;" data-i18n="account.language">🌐 Language</div>
+          <label for="idxLangSelect" style="display:block;font-size:0.85em;font-weight:600;color:#495057;margin-bottom:6px;" data-i18n="account.language">🌐 Language</label>
           <select id="idxLangSelect" onchange="window.BB&&window.BB.i18n&&window.BB.i18n.setLanguage(this.value)" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;font-family:inherit;color:#495057;background:white;cursor:pointer;-webkit-appearance:none;appearance:none;">
             <option value="en">🇬🇧 English</option>
             <option value="es">🇪🇸 Español</option>
@@ -567,19 +568,19 @@
         <button id="idxCustomiseSignIn" onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;margin-bottom:18px;-webkit-tap-highlight-color:transparent;" data-i18n="home.signUpIn">Sign up / in</button>
 
         <div style="display:flex;gap:10px;">
-          <button onclick="closeProfileModal()" style="flex:1;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.92em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.close">Close</button>
+          <button onclick="closeProfileModal()" style="flex:1;padding:11px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.92em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.close">Close</button>
           <button onclick="_profileShowPanel('account')" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="home.more">More →</button>
         </div>
         <!-- Version → the full changelog, with the credit underneath (moved
              here from the home screen, 30 Sep 2026). -->
-        <button type="button" id="idxProfileVersion" onclick="closeProfileModal();_openFullChangelog()" style="display:block;margin:12px auto 0;background:none;border:none;padding:2px 6px;text-align:center;font:inherit;font-size:0.7em;color:#868e96;letter-spacing:0.02em;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;"></button>
+        <button type="button" id="idxProfileVersion" onclick="closeProfileModal();_openFullChangelog()" style="display:block;margin:12px auto 0;background:none;border:none;padding:2px 6px;text-align:center;font:inherit;font-size:0.7em;color:var(--text-muted-ink);letter-spacing:0.02em;cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;"></button>
         <a href="https://www.jamesmarkey.co.uk/" target="_blank" rel="noopener noreferrer" class="bb-credit" data-i18n="home.madeBy">Being built by James Markey MBE</a>
       </div>
 
       <!-- PANEL 2: Account -->
       <div id="idxProfilePanelAccount" style="display:none;">
         <h3 style="text-align:center;margin-bottom:6px;" data-i18n="home.accountTitle">⚙️ Account</h3>
-        <div id="idxProfileEmail" style="font-size:0.82em;color:#6c757d;margin-bottom:14px;word-break:break-all;text-align:center;"></div>
+        <div id="idxProfileEmail" style="font-size:0.82em;color:var(--text-muted-ink);margin-bottom:14px;word-break:break-all;text-align:center;"></div>
         <div id="idxProfileMsg" style="font-size:0.85em;margin-bottom:12px;display:none;padding:8px 12px;border-radius:8px;"></div>
 
         <!-- Signed-in account actions -->
@@ -592,7 +593,7 @@
               <input type="password" id="idxNewPass" placeholder="New password" data-i18n-placeholder="account.newPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
                 <button onclick="_idxSubmitPasswordChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
-                <button onclick="document.getElementById('idxPassFields').style.display='none';document.getElementById('idxPassToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
+                <button onclick="document.getElementById('idxPassFields').style.display='none';document.getElementById('idxPassToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
             <button id="idxPassToggleBtn" onclick="document.getElementById('idxPassFields').style.display='';document.getElementById('idxPassToggleBtn').style.display='none';document.getElementById('idxCurrentPass').focus();" style="width:100%;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.changePassword">Change password</button>
@@ -604,7 +605,7 @@
               <input type="password" id="idxEmailPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;">
               <div style="display:flex;gap:8px;">
                 <button onclick="_idxSubmitEmailChange()" style="flex:1;padding:10px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.save">Save</button>
-                <button onclick="document.getElementById('idxEmailFields').style.display='none';document.getElementById('idxEmailToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
+                <button onclick="document.getElementById('idxEmailFields').style.display='none';document.getElementById('idxEmailToggleBtn').style.display='';" style="padding:10px 14px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.cancel">Cancel</button>
               </div>
             </div>
             <button id="idxEmailToggleBtn" onclick="document.getElementById('idxEmailFields').style.display='';document.getElementById('idxEmailToggleBtn').style.display='none';document.getElementById('idxNewEmail').focus();" style="width:100%;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.changeEmail">Change email</button>
@@ -615,7 +616,7 @@
 
         <!-- Guest notice (shown when not signed in) -->
         <div id="idxAccountGuest" style="display:none;margin-bottom:10px;">
-          <p style="font-size:0.85em;color:#6c757d;line-height:1.5;text-align:center;margin-bottom:10px;" data-i18n="home.guestNotice">You're using Bipolar Bear as a guest. Sign in to save your progress and manage your account.</p>
+          <p style="font-size:0.85em;color:var(--text-muted-ink);line-height:1.5;text-align:center;margin-bottom:10px;" data-i18n="home.guestNotice">You're using Bipolar Bear as a guest. Sign in to save your progress and manage your account.</p>
           <button onclick="closeProfileModal();window.showAuthModal&&window.showAuthModal()" style="width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.signIn">Sign in</button>
         </div>
 
@@ -626,16 +627,16 @@
 
         <button onclick="_profileShowPanel('danger')" style="width:100%;padding:12px;background:rgba(201,42,42,0.06);color:#c92a2a;border:1.5px solid #c92a2a;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:14px;-webkit-tap-highlight-color:transparent;" data-i18n="home.deleteEllipsis">🗑️ Delete…</button>
 
-        <button onclick="_profileShowPanel('customise')" style="width:100%;padding:10px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
+        <button onclick="_profileShowPanel('customise')" style="width:100%;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
       </div>
 
       <!-- PANEL 3: Danger zone -->
       <div id="idxProfilePanelDanger" style="display:none;">
         <h3 style="text-align:center;margin-bottom:16px;" data-i18n="home.dangerZone">⚠️ Danger Zone</h3>
         <div style="font-weight:600;margin-bottom:6px;color:#495057;font-size:0.95em;">🗑️ <span id="idxDangerTitle" data-i18n="home.danger.deleteTitle">Delete Account</span></div>
-        <div id="idxDangerDesc" style="color:#6c757d;font-size:0.84em;margin-bottom:14px;line-height:1.5;" data-i18n="home.danger.deleteDesc">Permanently delete your account, all journal entries, and reset everything on this device. This cannot be undone.</div>
+        <div id="idxDangerDesc" style="color:var(--text-muted-ink);font-size:0.84em;margin-bottom:14px;line-height:1.5;" data-i18n="home.danger.deleteDesc">Permanently delete your account, all journal entries, and reset everything on this device. This cannot be undone.</div>
         <button onclick="closeProfileModal(); confirmDeleteAll();" style="width:100%;background:rgba(201,42,42,0.08);border:1.5px solid #c92a2a;color:#c92a2a;font-size:0.92em;cursor:pointer;padding:11px;font-weight:600;border-radius:10px;margin-bottom:14px;-webkit-tap-highlight-color:transparent;"><span id="idxDangerBtnLabel" data-i18n="home.danger.deleteBtn">🗑️ Delete Account &amp; Reset</span></button>
-        <button onclick="_profileShowPanel('account')" style="width:100%;padding:10px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
+        <button onclick="_profileShowPanel('account')" style="width:100%;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
       </div>
 
     </div>
@@ -670,9 +671,9 @@
   <!-- Guest PIN unlock overlay (shown on index when journal data is encrypted) -->
   <div id="guestPinOverlay" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <img src="icons/AppIcon.png" width="72" height="72" style="margin-top:auto;flex-shrink:0;border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
-    <h2 style="color:white;margin-bottom:6px;font-size:1.3em;">Bipolar Bear</h2>
-    <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.88em;margin-bottom:12px;" data-i18n="pin.title">Enter your PIN to continue</p>
-    <button onclick="document.getElementById('pinE2eeModal').style.display='flex'" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;border-radius:20px;padding:5px 14px;font-size:0.78em;cursor:pointer;margin-bottom:22px;-webkit-tap-highlight-color:transparent;" data-i18n="pin.moreInfo">🔐 More info</button>
+    <h2 style="color:var(--brand-on);margin-bottom:6px;font-size:1.3em;">Bipolar Bear</h2>
+    <p style="color:var(--brand-on);font-size:0.88em;margin-bottom:12px;" data-i18n="pin.title">Enter your PIN to continue</p>
+    <button onclick="document.getElementById('pinE2eeModal').style.display='flex'" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:5px 14px;font-size:0.78em;cursor:pointer;margin-bottom:22px;-webkit-tap-highlight-color:transparent;" data-i18n="pin.moreInfo">🔐 More info</button>
     <!-- E2EE info sub-modal (inside overlay so z-index works automatically) -->
     <div id="pinE2eeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10001;align-items:center;justify-content:center;padding:24px;" onclick="if(event.target===this)this.style.display='none'">
       <div style="background:white;border-radius:20px;padding:24px;max-width:300px;width:100%;text-align:left;box-shadow:0 10px 40px rgba(0,0,0,0.25);">
@@ -684,32 +685,32 @@
       </div>
     </div>
     <div id="idxPinDots" style="display:flex;gap:12px;margin-bottom:24px;">
-      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid rgba(255,255,255,0.8);transition:background 0.15s;" class="idx-pin-dot"></div>
-      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid rgba(255,255,255,0.8);transition:background 0.15s;" class="idx-pin-dot"></div>
-      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid rgba(255,255,255,0.8);transition:background 0.15s;" class="idx-pin-dot"></div>
-      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid rgba(255,255,255,0.8);transition:background 0.15s;" class="idx-pin-dot"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid var(--brand-on);transition:background 0.15s;" class="idx-pin-dot"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid var(--brand-on);transition:background 0.15s;" class="idx-pin-dot"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid var(--brand-on);transition:background 0.15s;" class="idx-pin-dot"></div>
+      <div style="width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,0.4);border:2px solid var(--brand-on);transition:background 0.15s;" class="idx-pin-dot"></div>
     </div>
-    <div id="idxPinError" style="color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.35);font-size:0.85em;min-height:20px;margin-bottom:8px;"></div>
+    <div id="idxPinError" style="color:var(--brand-on);font-weight:600;font-size:0.85em;min-height:20px;margin-bottom:8px;"></div>
     <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:16px;">
-      <button onclick="idxPinKey('1')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">1</button>
-      <button onclick="idxPinKey('2')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">2</button>
-      <button onclick="idxPinKey('3')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">3</button>
-      <button onclick="idxPinKey('4')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">4</button>
-      <button onclick="idxPinKey('5')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">5</button>
-      <button onclick="idxPinKey('6')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">6</button>
-      <button onclick="idxPinKey('7')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">7</button>
-      <button onclick="idxPinKey('8')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">8</button>
-      <button onclick="idxPinKey('9')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">9</button>
+      <button onclick="idxPinKey('1')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">1</button>
+      <button onclick="idxPinKey('2')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">2</button>
+      <button onclick="idxPinKey('3')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">3</button>
+      <button onclick="idxPinKey('4')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">4</button>
+      <button onclick="idxPinKey('5')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">5</button>
+      <button onclick="idxPinKey('6')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">6</button>
+      <button onclick="idxPinKey('7')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">7</button>
+      <button onclick="idxPinKey('8')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">8</button>
+      <button onclick="idxPinKey('9')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">9</button>
       <div></div>
-      <button onclick="idxPinKey('0')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.5em;font-weight:600;cursor:pointer;">0</button>
-      <button onclick="idxPinDel()" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:1.2em;cursor:pointer;">⌫</button>
+      <button onclick="idxPinKey('0')" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.5em;font-weight:600;cursor:pointer;">0</button>
+      <button onclick="idxPinDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete" style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:var(--brand-on);font-size:1.2em;cursor:pointer;">⌫</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;align-items:center;margin-top:4px;margin-bottom:auto;flex-shrink:0;">
-      <button onclick="idxPinForgot()" style="background:none;border:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
+      <button onclick="idxPinForgot()" style="background:none;border:none;color:var(--brand-on);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
       <!-- Help stays one tap away even when the app is locked (fab.js openChatModal). -->
-      <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
+      <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
       <!-- Opt-in (Survival Kit → My safety plan → "Show my safety plan on the lock screen"): js/shared/safety-plan.js un-hides it. -->
-      <button type="button" class="bbsp-lockbtn" hidden onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.openViewer({fromLock:true})" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="safety.plan.lockBtn">🛟 My safety plan</button>
+      <button type="button" class="bbsp-lockbtn" hidden onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.openViewer({fromLock:true})" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="safety.plan.lockBtn">🛟 My safety plan</button>
     </div>
   </div>
 

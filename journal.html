@@ -29,6 +29,7 @@
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
   <script src="js/shared/safety-plan.js"></script>
@@ -224,15 +225,15 @@
         <button id="startOtherEntryBtn" onclick="startOtherDateEntry()" style="display:none; background:rgba(255,255,255,0.18); color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.25); border:1.5px solid rgba(255,255,255,0.55); border-radius:20px; padding:7px 16px; font-size:0.85em; font-weight:600; cursor:pointer; -webkit-tap-highlight-color:transparent;"></button>
       </div>
       <!-- Evenings only, once yesterday is logged: why it isn't asking about today. -->
-      <div id="todayOpensNote" style="display:none; margin-top:8px; padding:0 12px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.3); font-size:0.8em; opacity:0.85;"></div>
+      <div id="todayOpensNote" style="display:none; margin-top:8px; padding:0 12px; color:var(--brand-on); font-size:0.8em;"></div>
     </div>
 
     <div class="card" id="entryFormCard" style="background: var(--brand-tint); display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <button id="editCancelBtn" onclick="cancelEdit()" style="display:none;background:none;border:none;color:#6c757d;font-size:0.82em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
+        <button id="editCancelBtn" onclick="cancelEdit()" style="display:none;background:none;border:none;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
         <button id="formCalendarBtn" onclick="toggleDatePicker()" style="background:none;border:none;font-size:1.5em;cursor:pointer;padding:4px;line-height:1;-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="Change date" data-i18n-title="journal.mods.changeDateTip">🗓️</button>
         <h2 id="entryFormHeading" data-i18n="journal.prompt.howYesterday" style="margin:0;flex:1;text-align:center;">How was yesterday?</h2>
-        <button id="favouriteBtn" onclick="toggleFavourite()" style="background:none;border:none;font-size:1.5em;cursor:pointer;padding:4px;line-height:1;color:#6c757d;-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="Favourite" data-i18n-title="journal.mods.favouriteTip">☆</button>
+        <button id="favouriteBtn" onclick="toggleFavourite()" style="background:none;border:none;font-size:1.5em;cursor:pointer;padding:4px;line-height:1;color:var(--text-muted-ink);-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="Favourite" data-i18n-title="journal.mods.favouriteTip">☆</button>
       </div>
       
       
@@ -279,7 +280,7 @@
         <div id="mscHint" class="msc-hint">Slide to choose your mood</div>
       </div>
 
-      <div id="moodSelectorTip" style="display:none;text-align:center;font-size:0.82em;color:#6c757d;margin-bottom:8px;"></div>
+      <div id="moodSelectorTip" style="display:none;text-align:center;font-size:0.82em;color:var(--text-muted-ink);margin-bottom:8px;"></div>
 
       <div class="form-group hidden-until-mood" id="sleepSection">
         <label id="sleepLabel" style="display:none;" data-i18n="t143.j.sleepHours">😴 Sleep Hours</label>
@@ -307,14 +308,14 @@
           <input type="range" id="slscSlider" class="msc-slider msc-sleep" min="4" max="12" step="1" value="8"
                  oninput="_onSleepSpectrumChange(this.value)" aria-label="Hours of sleep from 4 or fewer to 12 or more" data-i18n-aria-label="t143.j.ariaSleep">
           <div class="msc-scale"><span>≤4h</span><span>8h</span><span>≥12h</span></div>
-          <p style="text-align:center;margin:10px 0 0;"><button type="button" onclick="_revealSleepQuality()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.sleepQualityAdd">+ Add sleep quality</button></p>
+          <p style="text-align:center;margin:10px 0 0;"><button type="button" onclick="_revealSleepQuality()" style="background:none;border:none;color:var(--brand-ink);font-size:0.8em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.sleepQualityAdd">+ Add sleep quality</button></p>
         </div>
         <div id="sleepQualitySubSection" style="display:none;">
-          <label style="display:block;margin-top:10px;margin-bottom:6px;font-size:0.85em;color:#6c757d;" data-i18n="journal.label.sleepQuality">Sleep Quality</label>
+          <label style="display:block;margin-top:10px;margin-bottom:6px;font-size:0.85em;color:var(--text-muted-ink);" data-i18n="journal.label.sleepQuality">Sleep Quality</label>
           <div style="display:flex;gap:8px;">
-            <button type="button" id="sqBad"    onclick="_setSleepQuality('bad')"    style="flex:1;padding:8px 4px;border:1.5px solid #dee2e6;border-radius:10px;background:white;color:#6c757d;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">😴 <span data-i18n="journal.value.bad">Bad</span></button>
-            <button type="button" id="sqUnsure" onclick="_setSleepQuality('unsure')" style="flex:1;padding:8px 4px;border:1.5px solid #dee2e6;border-radius:10px;background:white;color:#6c757d;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">😐 <span data-i18n="journal.value.ok">OK</span></button>
-            <button type="button" id="sqGood"   onclick="_setSleepQuality('good')"   style="flex:1;padding:8px 4px;border:1.5px solid #dee2e6;border-radius:10px;background:white;color:#6c757d;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">😊 <span data-i18n="journal.value.good">Good</span></button>
+            <button type="button" id="sqBad"    onclick="_setSleepQuality('bad')"    style="flex:1;padding:8px 4px;border:1.5px solid #dee2e6;border-radius:10px;background:white;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">😴 <span data-i18n="journal.value.bad">Bad</span></button>
+            <button type="button" id="sqUnsure" onclick="_setSleepQuality('unsure')" style="flex:1;padding:8px 4px;border:1.5px solid #dee2e6;border-radius:10px;background:white;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">😐 <span data-i18n="journal.value.ok">OK</span></button>
+            <button type="button" id="sqGood"   onclick="_setSleepQuality('good')"   style="flex:1;padding:8px 4px;border:1.5px solid #dee2e6;border-radius:10px;background:white;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">😊 <span data-i18n="journal.value.good">Good</span></button>
           </div>
         </div>
       </div>
@@ -357,7 +358,7 @@
       </div>
 
       <div class="form-group hidden-until-mood" id="moreDataArea" style="margin-top:4px;">
-        <button type="button" id="moreDataToggle" onclick="toggleMoreData()" style="background:none;border:none;color:var(--brand-primary);font-size:0.88em;font-weight:600;cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px;" data-i18n="journal.moreData">📊 More data</button>
+        <button type="button" id="moreDataToggle" onclick="toggleMoreData()" style="background:none;border:none;color:var(--brand-ink);font-size:0.88em;font-weight:600;cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px;" data-i18n="journal.moreData">📊 More data</button>
         <div id="moreDataSection" style="display:none;margin-top:12px;border-radius:10px;">
           <!-- All tracking rows in ONE unified 4-column grid so buttons align across rows -->
           <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr;align-items:center;gap:8px;width:100%;">
@@ -436,9 +437,9 @@
           </div>
           <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-top:10px;padding-bottom:6px;">
             <span></span>
-            <button onclick="showFieldPicker()" style="width:36px;height:36px;min-width:36px;min-height:36px;border-radius:50%;background:rgba(255,149,0,0.08);color:var(--brand-primary);font-size:1.3em;border:2px dashed var(--brand-primary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;-webkit-tap-highlight-color:transparent;box-sizing:border-box;">+</button>
+            <button onclick="showFieldPicker()" aria-label="Add a field" data-i18n-aria-label="a11y.addField" style="width:36px;height:36px;min-width:36px;min-height:36px;border-radius:50%;background:rgba(255,149,0,0.08);color:var(--brand-ink);font-size:1.3em;border:2px dashed var(--brand-primary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;-webkit-tap-highlight-color:transparent;box-sizing:border-box;">+</button>
             <label style="display:flex;align-items:center;gap:6px;cursor:pointer;justify-content:flex-end;" onclick="toggleMoreDataDefault()">
-              <span style="font-size:0.75em;color:#6c757d;" data-i18n="journal.openByDefault">Open by default</span>
+              <span style="font-size:0.75em;color:var(--text-muted-ink);" data-i18n="journal.openByDefault">Open by default</span>
               <span id="moreDataDefaultSwitch" style="display:inline-flex;width:32px;height:18px;border-radius:9px;background:#dee2e6;position:relative;transition:background 0.2s;flex-shrink:0;">
                 <span style="width:14px;height:14px;border-radius:50%;background:white;position:absolute;top:2px;left:2px;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2);"></span>
               </span>
@@ -449,10 +450,10 @@
 
       <div style="display:flex; gap:10px; align-items:stretch; margin-top:12px;">
         <button id="editDeleteBtn" onclick="deleteEditingEntry()" style="display:none; min-width:52px; background:white; color:#ff6b6b; border:none; border-radius:10px; font-size:1.3em; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,0.15); transition:all 0.3s ease; -webkit-tap-highlight-color:transparent;">🗑️</button>
-        <button id="draftClearBtn" onclick="clearDraftWithConfirm()" class="hidden-until-mood" style="min-width:52px; background:white; color:#ff6b6b; border:none; border-radius:10px; font-size:1.3em; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,0.15); transition:all 0.3s ease; -webkit-tap-highlight-color:transparent;">🗑️</button>
+        <button id="draftClearBtn" onclick="clearDraftWithConfirm()" class="hidden-until-mood" aria-label="Clear" data-i18n-aria-label="a11y.clearDraft" style="min-width:52px; background:white; color:#ff6b6b; border:none; border-radius:10px; font-size:1.3em; cursor:pointer; box-shadow:0 3px 12px rgba(0,0,0,0.15); transition:all 0.3s ease; -webkit-tap-highlight-color:transparent;">🗑️</button>
         <button class="submit-btn hidden-until-mood" id="submitBtn" data-i18n="journal.save.submitToday" onclick="showSaveConfirmModal()" style="flex:1; min-width:0; width:auto;">Save Today's Entry ✨</button>
       </div>
-      <div id="draftStatus" style="text-align:center; font-size:0.78em; color:#6c757d; margin-top:6px; min-height:1.1em; transition:opacity 0.5s ease; opacity:0;"></div>
+      <div id="draftStatus" style="text-align:center; font-size:0.78em; color:var(--text-muted-ink); margin-top:6px; min-height:1.1em; transition:opacity 0.5s ease; opacity:0;"></div>
     </div>
 
     <!-- Switch to focused mode (shown below full form card when user has switched away from focused mode) -->
@@ -464,11 +465,11 @@
     <div class="card" id="focusedModeCard" style="background:var(--brand-tint);display:none;flex-direction:column;padding:20px 20px 16px;">
       <!-- Top bar: back + progress dots + skip -->
       <div id="fmTopBar" style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <button id="fmBackBtn" onclick="_fmExit()" style="background:none;border:none;color:#6c757d;font-size:0.85em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;white-space:nowrap;" data-i18n="journal.mods.fmExit">✕ Exit</button>
+        <button id="fmBackBtn" onclick="_fmExit()" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.85em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;white-space:nowrap;" data-i18n="journal.mods.fmExit">✕ Exit</button>
         <div id="fmProgressDots" style="display:flex;gap:5px;flex:1;justify-content:center;align-items:center;"></div>
-        <button id="fmSkipBtn" onclick="_fmSkip()" style="background:none;border:none;color:#6c757d;font-size:0.85em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;white-space:nowrap;" data-i18n="journal.mods.fmSkip">Skip →</button>
+        <button id="fmSkipBtn" onclick="_fmSkip()" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.85em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;white-space:nowrap;" data-i18n="journal.mods.fmSkip">Skip →</button>
       </div>
-      <div id="fmStepCounter" style="text-align:center;font-size:0.75em;color:#6c757d;margin-bottom:10px;"></div>
+      <div id="fmStepCounter" style="text-align:center;font-size:0.75em;color:var(--text-muted-ink);margin-bottom:10px;"></div>
 
       <!-- Reduced-motion indicator: hidden by default, revealed purely by the
            prefers-reduced-motion media query in journal.css so it appears
@@ -481,7 +482,7 @@
       <!-- Completed-step summary chips + save shortcut -->
       <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:14px;">
         <div id="fmSummaryBar" style="display:none;flex-wrap:nowrap;overflow-x:auto;gap:6px;justify-content:center;scrollbar-width:none;"></div>
-        <button id="fmSaveShortcutBtn" onclick="_fmGoToDone()" style="display:none;background:none;border:none;color:#6c757d;font-size:1.1em;cursor:pointer;padding:0 2px;-webkit-tap-highlight-color:transparent;line-height:1;flex-shrink:0;" title="Go to save" data-i18n-title="journal.mods.goToSaveTip">💾</button>
+        <button id="fmSaveShortcutBtn" onclick="_fmGoToDone()" style="display:none;background:none;border:none;color:var(--text-muted-ink);font-size:1.1em;cursor:pointer;padding:0 2px;-webkit-tap-highlight-color:transparent;line-height:1;flex-shrink:0;" title="Go to save" data-i18n-title="journal.mods.goToSaveTip">💾</button>
       </div>
 
       <!-- Flexible space so the title/subheader sits roughly halfway between
@@ -493,7 +494,7 @@
       <div id="fmHeader">
         <div id="fmEyebrow" class="fm-eyebrow" style="display:none;"></div>
         <h2 id="fmTitle" style="margin:0 0 4px;font-size:1.25em;font-weight:700;text-align:center;"></h2>
-        <p id="fmSubtitle" style="margin:0 0 20px;font-size:0.82em;color:#6c757d;text-align:center;min-height:1em;"></p>
+        <p id="fmSubtitle" style="margin:0 0 20px;font-size:0.82em;color:var(--text-muted-ink);text-align:center;min-height:1em;"></p>
       </div>
 
       <!-- Step content area -->
@@ -510,7 +511,7 @@
         <button id="fmDeleteBtn" onclick="_fmDoneDelete()" style="display:none;min-width:52px;height:52px;background:white;color:#ff6b6b;border:2px solid #ff6b6b;border-radius:14px;font-size:1.3em;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">🗑️</button>
         <button id="fmNextBtn" onclick="_fmNext()" style="flex:1;padding:14px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:1em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.fmNext">Next →</button>
       </div>
-      <div id="fmDraftStatus" style="text-align:right;font-size:0.75em;color:#6c757d;margin-top:4px;min-height:1em;transition:opacity 0.5s ease;opacity:0;"></div>
+      <div id="fmDraftStatus" style="text-align:right;font-size:0.75em;color:var(--text-muted-ink);margin-top:4px;min-height:1em;transition:opacity 0.5s ease;opacity:0;"></div>
 
     </div>
 
@@ -574,7 +575,7 @@
 
       <div id="entriesLoading" style="display:none; text-align:center; padding: 30px 0;">
         <div style="display:inline-block; width:36px; height:36px; border:4px solid #f0e6d3; border-top-color:var(--brand-primary); border-radius:50%; animation:spin 0.8s linear infinite;"></div>
-        <div style="margin-top:12px; color:#6c757d; font-size:0.95em;" data-i18n="journal.stats.loading">Loading your journal...</div>
+        <div style="margin-top:12px; color:var(--text-muted-ink); font-size:0.95em;" data-i18n="journal.stats.loading">Loading your journal...</div>
       </div>
       <div id="entries"></div>
     </div>
@@ -607,7 +608,7 @@
   <div class="confirm-modal" id="hideSuggestionModal" style="z-index:1200;" onclick="if(event.target===this)document.getElementById('hideSuggestionModal').classList.remove('active')">
     <div class="confirm-content">
       <h3 data-i18n="journal.hideSuggestion.title">Never show suggested mood again?</h3>
-      <p style="color:#6c757d;font-size:0.9em;" data-i18n="journal.hideSuggestion.body">The suggested mood will no longer appear on the save screen. You can re-enable this in Settings.</p>
+      <p style="color:var(--text-muted-ink);font-size:0.9em;" data-i18n="journal.hideSuggestion.body">The suggested mood will no longer appear on the save screen. You can re-enable this in Settings.</p>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('hideSuggestionModal').classList.remove('active')" data-i18n="common.cancel">Cancel</button>
         <button class="confirm-btn confirm-btn-yes" onclick="_doHideMoodSuggestion()" data-i18n="journal.hideSuggestion.confirm">Yes, hide it</button>
@@ -621,7 +622,7 @@
       <h3 style="margin-bottom:6px;" data-i18n="t143.calc.title">🐻 How does the Bear think?</h3>
       <!-- Page 1 -->
       <div id="moodCalcPage1">
-        <p style="color:#6c757d;font-size:0.85em;line-height:1.5;margin-bottom:10px;" data-i18n="t143.calc.intro">The Bear analyses the data you've logged and gives each signal a score. Only the fields you actually filled in are counted — unanswered fields are excluded so they don't skew the result.</p>
+        <p style="color:var(--text-muted-ink);font-size:0.85em;line-height:1.5;margin-bottom:10px;" data-i18n="t143.calc.intro">The Bear analyses the data you've logged and gives each signal a score. Only the fields you actually filled in are counted — unanswered fields are excluded so they don't skew the result.</p>
         <div style="font-size:0.83em;color:#495057;line-height:1.65;">
           <div style="margin-bottom:5px;" data-i18n-html="t143.calc.energy"><b>⚡ Energy</b> — carries the most weight. Very low = depressed direction; very high = manic direction.</div>
           <div style="margin-bottom:5px;" data-i18n-html="t143.calc.sleep"><b>😴 Sleep</b> — too little sleep = manic signal; too much = depressed signal.</div>
@@ -639,14 +640,14 @@
       </div>
       <!-- Page 2 -->
       <div id="moodCalcPage2" style="display:none;">
-        <p style="color:#6c757d;font-size:0.85em;line-height:1.5;margin-bottom:10px;" data-i18n="t143.calc.combined">Here's how the scores are combined into a suggestion:</p>
+        <p style="color:var(--text-muted-ink);font-size:0.85em;line-height:1.5;margin-bottom:10px;" data-i18n="t143.calc.combined">Here's how the scores are combined into a suggestion:</p>
         <div style="font-size:0.83em;color:#495057;line-height:1.65;">
           <div style="margin-bottom:8px;" data-i18n-html="t143.calc.weighted"><b>Weighted average</b> — each signal is weighted by importance (energy has the highest weight) and all filled-in scores are averaged together into a single number on a scale from depressed → manic.</div>
           <div style="margin-bottom:8px;" data-i18n-html="t143.calc.norm"><b>Normalisation</b> — only fields you answered count. If you only fill in energy and sleep, the result is based purely on those two. This means missing data never drags the score toward "stable" artificially.</div>
           <div style="margin-bottom:8px;" data-i18n-html="t143.calc.middle"><b>Middle moods are harder</b> — "Stable" and "Low" are narrow bands in the middle of the scale. When signals are mixed, the Bear may land on either. The extremes (Manic, Elevated, Depressed) are easier to detect.</div>
           <div style="margin-bottom:8px;" data-i18n-html="t143.calc.notDiag"><b>It's not a diagnosis</b> — this is a pattern-spotting tool, not a clinical assessment. It works best over time as a prompt to reflect, not as a definitive label for how you feel.</div>
         </div>
-        <p style="color:#6c757d;font-size:0.76em;margin-top:8px;" data-i18n="t143.calc.experimental">Experimental — accuracy improves as more fields are filled in each day.</p>
+        <p style="color:var(--text-muted-ink);font-size:0.76em;margin-top:8px;" data-i18n="t143.calc.experimental">Experimental — accuracy improves as more fields are filled in each day.</p>
         <div class="confirm-buttons" style="margin-top:14px;">
           <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" data-i18n="t143.calc.back">← Back</button>
           <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active');document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" style="background:var(--brand-btn);color:white;" data-i18n="common.gotIt">Got it</button>
@@ -659,10 +660,10 @@
   <div class="confirm-modal" id="feedbackModal" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="confirm-content" style="max-width:500px;">
       <h3 style="margin-bottom:4px;"><img src="images/moods/AI_Bear.png" style="max-width: 50px" ><br><span data-i18n="t143.fb.title">Personalised Feedback</span></h3>
-      <p style="color:#6c757d;font-size:0.8em;margin-bottom:8px;" data-i18n="t143.fb.sub">Based on your journal data only — not medical advice.</p>
+      <p style="color:var(--text-muted-ink);font-size:0.8em;margin-bottom:8px;" data-i18n="t143.fb.sub">Based on your journal data only — not medical advice.</p>
       <div id="feedbackRanges" class="fb-ranges" role="group" aria-label="Time range" data-i18n-title="journal.lifeChart.rangeLabel"></div>
       <div id="feedbackBody" style="max-height:62vh;overflow-y:auto;"></div>
-      <p onclick="const b=document.getElementById('rInfoBox');const open=b.style.display!=='none';b.style.display=open?'none':'block';document.getElementById('rInfoChevron').textContent=open?'▼':'▲';if(!open)this.scrollIntoView({behavior:'smooth',block:'start'});" style="color:#6c757d;font-size:0.8em;margin-top:12px;margin-bottom:0;cursor:pointer;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;">
+      <p onclick="const b=document.getElementById('rInfoBox');const open=b.style.display!=='none';b.style.display=open?'none':'block';document.getElementById('rInfoChevron').textContent=open?'▼':'▲';if(!open)this.scrollIntoView({behavior:'smooth',block:'start'});" style="color:var(--text-muted-ink);font-size:0.8em;margin-top:12px;margin-bottom:0;cursor:pointer;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;">
         <span>ℹ️</span>
         <span style="flex:1;" data-i18n="t143.fb.rQ">What does r = … mean?</span>
         <span id="rInfoChevron">▼</span>
@@ -690,23 +691,23 @@
       </div>
       <p id="moodInfoBody" style="font-size:0.9em;color:#495057;line-height:1.65;margin:0 0 14px;text-align:left;"></p>
       <div id="moodInfoDefinition" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-bottom:14px;">
-        <div data-i18n="journal.moodInfo.yourDefinition" style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:6px;">Your Definition</div>
+        <div data-i18n="journal.moodInfo.yourDefinition" style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted-ink);margin-bottom:6px;">Your Definition</div>
         <div id="moodInfoDefinitionText" style="font-size:0.88em;color:#495057;line-height:1.5;font-style:italic;"></div>
       </div>
       <div id="moodInfoCoping" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-bottom:16px;">
-        <div data-i18n="journal.moodInfo.yourStrategies" style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Your Coping Strategies</div>
+        <div data-i18n="journal.moodInfo.yourStrategies" style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted-ink);margin-bottom:8px;">Your Coping Strategies</div>
         <div id="moodInfoCopingList"></div>
       </div>
       <div id="moodInfoMemories" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-bottom:16px;">
-        <div data-i18n="journal.moodInfo.mostRecentMemory" style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6c757d;margin-bottom:8px;">Most Recent Memory</div>
+        <div data-i18n="journal.moodInfo.mostRecentMemory" style="font-size:0.78em;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted-ink);margin-bottom:8px;">Most Recent Memory</div>
         <div id="moodInfoMemoriesList"></div>
       </div>
       <div id="moodInfoSurvivalLink" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-bottom:16px;text-align:center;">
-        <a data-i18n="journal.moodInfo.customiseLink" onclick="closeMoodInfo(); location.replace('survival-kit.html');" style="font-size:0.85em;color:var(--brand-primary);font-weight:600;cursor:pointer;text-decoration:none;">✏️ Customise in Survival Guide →</a>
+        <a data-i18n="journal.moodInfo.customiseLink" onclick="closeMoodInfo(); location.replace('survival-kit.html');" style="font-size:0.85em;color:var(--brand-ink);font-weight:600;cursor:pointer;text-decoration:none;">✏️ Customise in Survival Guide →</a>
       </div>
       <div id="moodInfoLinkRow" style="display:none;border-top:1px solid #f0f0f0;padding-top:12px;margin-bottom:14px;text-align:center;">
-        <button id="moodInfoLinkBtn" style="background:none;border:2px solid var(--brand-primary);border-radius:20px;color:var(--brand-primary);padding:8px 18px;font-size:0.88em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;"></button>
-        <p id="moodInfoLinkCaption" data-i18n="journal.moodInfo.linkCaption" style="font-size:0.75em;color:#6c757d;margin:6px 0 0;line-height:1.4;">Counted in both mood stats · doesn't add an extra day</p>
+        <button id="moodInfoLinkBtn" style="background:none;border:2px solid var(--brand-primary);border-radius:20px;color:var(--brand-ink);padding:8px 18px;font-size:0.88em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;"></button>
+        <p id="moodInfoLinkCaption" data-i18n="journal.moodInfo.linkCaption" style="font-size:0.75em;color:var(--text-muted-ink);margin:6px 0 0;line-height:1.4;">Counted in both mood stats · doesn't add an extra day</p>
       </div>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" data-i18n="common.close" onclick="closeMoodInfo()">Close</button>
@@ -718,11 +719,11 @@
   <div class="confirm-modal" id="pdfExportModal" onclick="if(event.target===this)this.classList.remove('active')">
     <div class="confirm-content" style="max-width:340px;">
       <h3 style="margin-bottom:6px;text-align:center;" data-i18n="journal.ui.exportPdf">📄 Export PDF</h3>
-      <p style="font-size:0.82em;color:#6c757d;margin-bottom:18px;text-align:center;" data-i18n="t143.pdfx.choose">Choose the comparison periods for each column</p>
+      <p style="font-size:0.82em;color:var(--text-muted-ink);margin-bottom:18px;text-align:center;" data-i18n="t143.pdfx.choose">Choose the comparison periods for each column</p>
       <div style="display:flex;gap:12px;margin-bottom:20px;">
         <div style="flex:1;">
           <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:6px;" data-i18n="t143.pdfx.left">Left column</div>
-          <select id="pdfLeftPeriod" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.88em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
+          <select id="pdfLeftPeriod" aria-label="Left column" data-i18n-aria-label="t143.pdfx.left" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.88em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
             <option value="alltime" data-i18n="t143.pdfx.alltime">All-time</option>
             <option value="365d" data-i18n="t143.pdfx.lastYear">Last year</option>
             <option value="180d" data-i18n="t143.pdfx.last180">Last 180 days</option>
@@ -733,7 +734,7 @@
         </div>
         <div style="flex:1;">
           <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:6px;" data-i18n="t143.pdfx.right">Right column</div>
-          <select id="pdfRightPeriod" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.88em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
+          <select id="pdfRightPeriod" aria-label="Right column" data-i18n-aria-label="t143.pdfx.right" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.88em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
             <option value="alltime" selected data-i18n="t143.pdfx.alltime">All-time</option>
             <option value="365d" data-i18n="t143.pdfx.lastYear">Last year</option>
             <option value="180d" data-i18n="t143.pdfx.last180">Last 180 days</option>
@@ -746,7 +747,7 @@
       <hr style="border:none;border-top:1px solid #e9ecef;margin:4px 0 14px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div style="font-size:0.8em;font-weight:600;color:#495057;" data-i18n="t143.pdfx.showRecent">Show recent entries</div>
-        <select id="pdfRecentEntries" style="padding:7px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
+        <select id="pdfRecentEntries" aria-label="Show recent entries" data-i18n-aria-label="t143.pdfx.showRecent" style="padding:7px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
           <option value="none" data-i18n="t143.pdfx.none">None</option>
           <option value="7d" data-i18n="t143.pdfx.week1">1 Week</option>
           <option value="30d" selected data-i18n="t143.pdfx.month1">1 Month</option>
@@ -756,15 +757,15 @@
       <hr style="border:none;border-top:1px solid #e9ecef;margin:4px 0 14px;">
       <div id="pdfChartSection">
       <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:8px;" data-i18n="t143.pdfx.charts12">12-month charts (5 Max)</div>
-      <div id="pdfChartsNoData" style="display:none;font-size:0.82em;color:#6c757d;margin-bottom:18px;text-align:center;" data-i18n="t143.pdfx.needs3m">You require 3 months+ of data for this feature</div>
+      <div id="pdfChartsNoData" style="display:none;font-size:0.82em;color:var(--text-muted-ink);margin-bottom:18px;text-align:center;" data-i18n="t143.pdfx.needs3m">You require 3 months+ of data for this feature</div>
       <div id="pdfChartButtons" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
-        <button id="pdfChartMood" data-on="1" onclick="_togglePdfChart('Mood')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">📊</span><span data-i18n="journal.label.mood">Mood</span></button>
-        <button id="pdfChartSleep" data-on="1" onclick="_togglePdfChart('Sleep')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🛌</span><span data-i18n="journal.label.sleep">Sleep</span></button>
-        <button id="pdfChartEnergy" data-on="1" onclick="_togglePdfChart('Energy')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">⚡️</span><span data-i18n="journal.label.energy">Energy</span></button>
-        <button id="pdfChartSteps" data-on="1" onclick="_togglePdfChart('Steps')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🚶</span><span data-i18n="t143.pdfx.steps">Steps</span></button>
-        <button id="pdfChartSleepQ" data-on="1" onclick="_togglePdfChart('SleepQ')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💤</span><span data-i18n="t143.pdfx.sleepQ">Sleep Q</span></button>
-        <button id="pdfChartGoals" data-on="1" onclick="_togglePdfChart('Goals')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🏅</span><span data-i18n="journal.label.goals">Goals</span></button>
-        <button id="pdfChartBudget" data-on="1" onclick="_togglePdfChart('Budget')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💰</span><span data-i18n="journal.label.budget">Budget</span></button>
+        <button type="button" id="pdfChartMood" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Mood')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">📊</span><span data-i18n="journal.label.mood">Mood</span></button>
+        <button type="button" id="pdfChartSleep" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Sleep')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🛌</span><span data-i18n="journal.label.sleep">Sleep</span></button>
+        <button type="button" id="pdfChartEnergy" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Energy')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">⚡️</span><span data-i18n="journal.label.energy">Energy</span></button>
+        <button type="button" id="pdfChartSteps" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Steps')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🚶</span><span data-i18n="t143.pdfx.steps">Steps</span></button>
+        <button type="button" id="pdfChartSleepQ" data-on="1" aria-pressed="true" onclick="_togglePdfChart('SleepQ')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💤</span><span data-i18n="t143.pdfx.sleepQ">Sleep Q</span></button>
+        <button type="button" id="pdfChartGoals" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Goals')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🏅</span><span data-i18n="journal.label.goals">Goals</span></button>
+        <button type="button" id="pdfChartBudget" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Budget')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💰</span><span data-i18n="journal.label.budget">Budget</span></button>
       </div>
       </div><!-- /pdfChartSection -->
       <div class="confirm-buttons">
@@ -780,7 +781,7 @@
       <h3 style="margin-bottom:16px;" data-i18n="t143.j.changelog">📋 Changelog</h3>
       <div style="text-align:left; font-size:0.9em; color:#495057; line-height:1.7;">
         <div style="margin-bottom:14px;">
-          <strong style="color:var(--brand-primary);">v1.39</strong><br>
+          <strong style="color:var(--brand-ink);">v1.39</strong><br>
           • 🐻 <strong>Quick check-in on home</strong> — turn it on in Profile to log your mood in one tap; it takes the Mood Journal button's place, with your streak and last 7 days underneath<br>
           • 📱 Every step of the check-in now fits on one screen, below the notch and clear of the bottom edge<br>
           • 🔝 The chips along the top show every step from the first page, and follow the wheel as you spin it<br>
@@ -796,29 +797,29 @@
           • 💛 The board's greeting on the home screen
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.38</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.38</strong><br>
           • 📊 Behind the scenes: the UNI·SIM community count now tells the app from the website — still only a random install ID, nothing about you<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.37</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.37</strong><br>
           • 🌍 Bipolar Bear is now part of the <strong>UNI·SIM suite</strong> — tap the community count to switch between this app and every UNI·SIM app<br>
           • 🌐 <strong>Bipolar Anonymous in your language</strong> — posts and replies are translated for you, with “Show original” a tap away<br>
           • 🙏 The Bipolar Anonymous <strong>12 Steps</strong> have their own page in the Wiki<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.36</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.36</strong><br>
           • ⏳ No more <strong>“signed out” flash</strong> when the app opens — a short splash covers the moment your session loads<br>
           • ✨ <strong>Auto-fill yesterday</strong> — the journal’s first step can fill yesterday’s mood, energy and sleep from Apple Health or Health Connect, marked as an estimate<br>
           • 📱 Android: the buttons at the bottom now sit clear of the gesture bar<br>
           • 🌍 The tutorial’s progress line is now translated<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.35</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.35</strong><br>
           • 📱 Fixed the iPhone <strong>home-screen widget</strong> getting stuck on "Yesterday needs logging" — it now updates as soon as you log, along with your streak<br>
           • 🌙 The widget also resets properly at midnight instead of showing the new day as already logged<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.34</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.34</strong><br>
           • 🔔 Bipolar Anonymous can now send you <strong>notifications</strong> — new posts, replies to your posts, announcements and a weekly summary. You choose which, and they never show what anyone wrote<br>
           • ✨ <strong>Auto-complete missing entries</strong> — fill several missed days in one go from your health data and recent entries, each clearly marked as an estimate<br>
           • 📢 Members can now <strong>suggest an announcement</strong> for the admin to publish<br>
@@ -826,29 +827,29 @@
           • 🌍 Every language now has a complete translation<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.33</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.33</strong><br>
           • 👀 The home screen and the Bipolar Anonymous board now show how many people are using them <strong>right now</strong>, alongside the community total<br>
           • 🔒 The live count stores nothing about who you are — just an anonymous heartbeat that expires after two minutes<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.32</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.32</strong><br>
           • 👥 The home screen now shows how many people are using Bipolar Bear, just above the credit<br>
           • 👥 Bipolar Anonymous shows how many members the community has, at the top of the board<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.31</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.31</strong><br>
           • ⭐ New <strong>Leave a Review</strong> button in the dock — it takes the first free slot and links straight to the App Store or Google Play<br>
           • 🔧 The dock no longer stacks two buttons on the same spot when a slot is already taken, and any button it couldn't place now shows up in the picker<br>
           • ✅ The Bipolar Anonymous tick on the home screen now ticks when you've read everything on the board, not only when you posted<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.30</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.30</strong><br>
           • 🎚️ <strong>Full spectrum</strong> now works in the classic journal form too — hour-by-hour sleep and 0–10 energy sliders there as well as in Focus mode<br>
           • 🎯 Focus mode sits centred on the screen, and the page no longer scrolls when everything already fits<br>
           • 💬 "1 new message" instead of "1 new messages" on the Bipolar Anonymous badge<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.29</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.29</strong><br>
           • 🎚️ <strong>Full Mood Spectrum</strong> is now <strong>Full spectrum</strong> — as well as mood, you can log sleep hour by hour (≤4h to ≥12h) and energy on a 0–10 scale, on a slider or the wheel<br>
           • 🎡 Wheel mode moved under Focus mode in Settings, where it belongs — it only changes how focus mode looks<br>
           • 📅 Your Journey: on the 60 and 90 day views, a box per month shows green when every day is logged and amber when there are gaps. Tap one to jump to that month<br>
@@ -857,55 +858,55 @@
           • 🩹 Fixed: the survival kit and home screen showing sections as incomplete right after signing in; a duplicate Save row on the save screen; and the Settings tutorial pointing at a button that wasn't there<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.28</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.28</strong><br>
           • 🎯 Focus mode: the question and answers now sit centred on the screen instead of hugging the top<br>
           • 🔔 The weekly summary notification always uses a positive emoji (🎉 for a full 7/7, 🙂 otherwise) — a low-mood week no longer arrives on your lock screen as a sad face<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.27</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.27</strong><br>
           • 🎯 Focus mode: restored the original horizontal layout — mood keeps the bear buttons, energy and sleep keep their emoji cards, and sleep still takes a long-press to log sleep quality<br>
           • 🎚️ With Full Mood Spectrum on, the 0–10 mood step uses the slider rather than a long list<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.26</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.26</strong><br>
           • 🎯 Focus mode now asks each question as a plain tap-to-answer list by default. The spinning wheel is still there — turn on <strong>Wheel mode (BETA)</strong> if you preferred it<br>
           • 📄 Fixed the medical PDF: the mood percentages divided by your all-time entry count instead of the chosen period's, so a 30-day export could read "3% stable"<br>
           • 📄 Additional Data in the PDF now spells out "N yes · N no · N untracked" instead of one ambiguous figure<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.25</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.25</strong><br>
           • 🎚️ New advanced setting: <strong>Full Mood Spectrum</strong> — track your mood on a 0–10 scale (e.g. 4 = sad but stable) by spinning a wheel or sliding, instead of the five fixed moods. Turn it on under Advanced → Journal Options<br>
           • 🎨 Cleaner classic journal form — tidier energy, sleep and medication rows, with the health-sync info kept to a compact badge<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.24</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.24</strong><br>
           • 🎨 The medication step now starts on "Taken" (the most common answer) instead of "Unsure"<br>
           • ✨ The home screen shows a tick next to Bipolar Anonymous once you've posted or commented on the board today<br>
           • 🎨 Bipolar Anonymous: admins now post as "Bipolar Bear Admin", and a new "Post actions" box on the About screen explains every button (💛 Like, 💬 Comment, 🆘 SOS, 🚨 Report, 🙈 Mute, 🗑️ Remove)<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.23</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.23</strong><br>
           • 🎨 Cleaner medication &amp; sleep-quality steps: the spinner now shows only the answers you pick from. The extra repeated options on either side (added to make the shorter wheels swipe smoothly) are now hidden, so the wheel reads clearly while spinning exactly the same<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.21</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.21</strong><br>
           • ✨ New: the medication step now has an "🤷 Unsure" answer in the middle — for nights you can’t quite remember. It shows up as Unsure across your calendar, stats and export, and counts as not taken for your adherence streak<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.20</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.20</strong><br>
           • 🐛 Fix: the medication and sleep-quality wheels are rebuilt as full spinners so they swipe exactly like the mood and energy steps<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.19</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.19</strong><br>
           • 🐛 Fix: swiping the medication and sleep-quality steps now works reliably — the shorter wheels now spin exactly like the mood and energy ones<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.18</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.18</strong><br>
           • 🐛 Fix: swiping the medication step (and the sleep-quality wheel) now works — the short wheels scroll natively like every other step<br>
           • 🐛 Fix: the first journal step no longer opens with a large empty gap between the top bar and the question<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.17</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.17</strong><br>
           • ✨ Journal redesign: every step is now full screen with a spinner wheel — swipe (or use ← → on desktop) to preview, tap to confirm<br>
           • ✨ Big animated emoji on each step — sparks, drifting zzz's, rocket exhaust, rain under the stormy bear and more (respects Reduce Motion)<br>
           • ✨ Apple Health / Health Connect front and centre: sleep shows the exact synced time ("7h 32m"), energy shows your step count, and mood gets a best-guess suggestion from your sleep + steps<br>
@@ -918,7 +919,7 @@
           • 🎨 Anonymous board: example posts rotate weekly, with a note that posts auto-delete after 7 days<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v1.14</strong><br>
+          <strong style="color:var(--text-muted-ink);">v1.14</strong><br>
           • ✨ Your Survival Kit and Bipolar Anonymous now unlock automatically at the end of the tutorial — pre-selected in Profile and waiting on your home screen<br>
           • ✨ The first time you open the journal after the tutorial, a guided hint points you to the Settings button so you can customise your form<br>
           • 🎨 Apple Health sync moved into Advanced settings, below the Daily Mood Reminder<br>
@@ -927,7 +928,7 @@
           • 🐛 Fix: removed a duplicate "Health data" status line from the top of Settings<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v0.98</strong><br>
+          <strong style="color:var(--text-muted-ink);">v0.98</strong><br>
           • 🐛 Fix: Journal streak &amp; stability counters now load on home page immediately after sign-in (no need to visit Journal first)<br>
           • 🐛 Fix: Achievement toasts no longer re-fire on a new device — unlocked achievements now sync across devices<br>
           • 🐛 Fix: Sign-out now clears streak, stability, and Bipolar Anonymous stats so the next account starts fresh<br>
@@ -935,7 +936,7 @@
           • ✨ FAB dock customisation (slot order &amp; hidden buttons) now syncs across your devices via your account<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v0.97</strong><br>
+          <strong style="color:var(--text-muted-ink);">v0.97</strong><br>
           • 🐛 Fix: Reminder &amp; weekly summary toggles now save instantly when changed (no need to tap Save)<br>
           • ✨ Reminder/weekly toggles now request iOS notification permission inline — clear "Blocked in iOS Settings" alert if denied<br>
           • ✨ Reminder time, reminders on/off, and weekly summary now sync across devices via your account<br>
@@ -944,18 +945,18 @@
           • ✨ Bipolar Anonymous button and sign-in button hidden during tutorial — revealed once tutorial is complete<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v0.87</strong><br>
+          <strong style="color:var(--text-muted-ink);">v0.87</strong><br>
           • ✨ "What's New" popup on every update — headline feature + full changelog link<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v0.86</strong><br>
+          <strong style="color:var(--text-muted-ink);">v0.86</strong><br>
           • ✨ FAB picker now shows hidden default buttons so you can add them back<br>
           • ✨ All FABs have "Hide this button" — removed from dock, returns to picker<br>
           • ✨ Celebrity FAB now loads real Wikipedia photos<br>
           • 🐛 Fix: Quick Note hide button now works correctly<br>
         </div>
         <div style="margin-bottom:14px;">
-          <strong style="color:#6c757d;">v0.85</strong><br>
+          <strong style="color:var(--text-muted-ink);">v0.85</strong><br>
           • ✨ Dock synced across all 3 pages — hide a button on one page, it's hidden everywhere<br>
           • ✨ Empty dock slots show a + placeholder; tap to add Stats, Celebrity, Goals, or Quick Note<br>
         </div>
@@ -1011,7 +1012,7 @@
           <span style="font-size:1.4em;">📞</span>
           <div style="text-align:left;">
             <div style="font-weight:700;font-size:0.95em;color:#5c7cfa;">Samaritans</div>
-            <div style="font-size:0.82em;color:#6c757d;" data-i18n="journal.mods.samaritansFree">116 123 · Free, 24/7</div>
+            <div style="font-size:0.82em;color:var(--text-muted-ink);" data-i18n="journal.mods.samaritansFree">116 123 · Free, 24/7</div>
           </div>
         </a>
         </div>
@@ -1020,7 +1021,7 @@
             <span style="font-size:1.4em;">🧡</span>
             <div style="text-align:left;">
               <div style="font-weight:700;font-size:0.95em;color:#5c7cfa;" data-i18n="journal.mods.emergencyContact">Emergency Contact</div>
-              <div id="depressedEmergencyText" style="font-size:0.82em;color:#6c757d;"></div>
+              <div id="depressedEmergencyText" style="font-size:0.82em;color:var(--text-muted-ink);"></div>
             </div>
           </a>
         </div>
@@ -1046,12 +1047,12 @@
     <div class="confirm-content" style="max-width:500px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <h3 id="saveConfirmTitle" data-i18n="journal.save.confirmTitleNew" style="margin:0;">Ready to save? ✨</h3>
-        <button onclick="closeSaveConfirmModal()" style="background:none;border:none;font-size:1.4em;cursor:pointer;color:#6c757d;line-height:1;padding:2px 4px;-webkit-tap-highlight-color:transparent;">✕</button>
+        <button onclick="closeSaveConfirmModal()" style="background:none;border:none;font-size:1.4em;cursor:pointer;color:var(--text-muted-ink);line-height:1;padding:2px 4px;-webkit-tap-highlight-color:transparent;">✕</button>
       </div>
       <div id="saveConfirmSummary" style="margin-bottom:16px;"></div>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" data-i18n="journal.save.confirmCancel" onclick="closeSaveConfirmModal()">← Edit</button>
-        <button id="saveConfirmSaveBtn" class="confirm-btn confirm-btn-yes" data-i18n="journal.save.confirmBtnNew" onclick="closeSaveConfirmModal(); saveAndOpenJournal()" style="color:var(--brand-primary);border-color:var(--brand-primary);">Save ✨</button>
+        <button id="saveConfirmSaveBtn" class="confirm-btn confirm-btn-yes" data-i18n="journal.save.confirmBtnNew" onclick="closeSaveConfirmModal(); saveAndOpenJournal()" style="color:var(--brand-ink);border-color:var(--brand-primary);">Save ✨</button>
       </div>
     </div>
   </div>
@@ -1059,12 +1060,12 @@
   <!-- PIN Lock Overlay (shown on load when PIN is enabled) -->
   <div id="pinOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9999;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;">
     <img src="icons/AppIcon.png" width="72" height="72" style="margin-top:auto;flex-shrink:0;border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
-    <h2 style="color:white;margin-bottom:6px;font-size:1.3em;">Bipolar Bear</h2>
-    <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.88em;margin-bottom:28px;" data-i18n="pin.title">Enter your PIN to continue</p>
+    <h2 style="color:var(--brand-on);margin-bottom:6px;font-size:1.3em;">Bipolar Bear</h2>
+    <p style="color:var(--brand-on);font-size:0.88em;margin-bottom:28px;" data-i18n="pin.title">Enter your PIN to continue</p>
     <div id="pinDots" style="display:flex;gap:12px;margin-bottom:24px;">
       <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
-    <div id="pinError" style="color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.35);font-size:0.85em;min-height:20px;margin-bottom:8px;"></div>
+    <div id="pinError" style="color:var(--brand-on);font-weight:600;font-size:0.85em;min-height:20px;margin-bottom:8px;"></div>
     <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:16px;">
       <button class="pin-key" onclick="pinKey('1')">1</button>
       <button class="pin-key" onclick="pinKey('2')">2</button>
@@ -1077,14 +1078,14 @@
       <button class="pin-key" onclick="pinKey('9')">9</button>
       <div></div>
       <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key pin-key-del" onclick="pinDel()">⌫</button>
+      <button class="pin-key pin-key-del" onclick="pinDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete">⌫</button>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center;align-items:center;margin-top:4px;margin-bottom:auto;flex-shrink:0;">
-      <button onclick="pinForgot()" style="background:none;border:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
+      <button onclick="pinForgot()" style="background:none;border:none;color:var(--brand-on);font-size:0.78em;cursor:pointer;padding:10px 12px;min-height:44px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
       <!-- Help stays one tap away even when the app is locked (fab.js openChatModal). -->
-      <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
+      <button type="button" onclick="window.openChatModal&&openChatModal(true)" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="crisis.needHelp">🆘 Need help now?</button>
       <!-- Opt-in (Survival Kit → My safety plan → "Show my safety plan on the lock screen"): js/shared/safety-plan.js un-hides it. -->
-      <button type="button" class="bbsp-lockbtn" hidden onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.openViewer({fromLock:true})" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.5);color:#fff;border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="safety.plan.lockBtn">🛟 My safety plan</button>
+      <button type="button" class="bbsp-lockbtn" hidden onclick="window.BB&&BB.safetyPlan&&BB.safetyPlan.openViewer({fromLock:true})" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 16px;min-height:44px;font-family:inherit;font-size:0.85em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="safety.plan.lockBtn">🛟 My safety plan</button>
     </div>
   </div>
 
@@ -1092,7 +1093,7 @@
   <div class="confirm-modal" id="pinSetupModal" onclick="if(event.target===this)closePinSetup()">
     <div class="confirm-content" style="max-width:320px;text-align:center;">
       <h3 id="pinSetupTitle" style="margin-bottom:8px;" data-i18n="journal.mods.setPinTitle">🔒 Set PIN</h3>
-      <p id="pinSetupDesc" style="color:#6c757d;font-size:0.88em;margin-bottom:20px;"></p>
+      <p id="pinSetupDesc" style="color:var(--text-muted-ink);font-size:0.88em;margin-bottom:20px;"></p>
       <div id="pinSetupDots" style="display:flex;gap:12px;justify-content:center;margin-bottom:16px;">
         <div class="pin-dot pin-dot-dark"></div><div class="pin-dot pin-dot-dark"></div><div class="pin-dot pin-dot-dark"></div><div class="pin-dot pin-dot-dark"></div>
       </div>
@@ -1109,7 +1110,7 @@
         <button class="pin-key pin-key-dark" onclick="pinSetupKey('9')">9</button>
         <div></div>
         <button class="pin-key pin-key-dark" onclick="pinSetupKey('0')">0</button>
-        <button class="pin-key pin-key-dark pin-key-del" onclick="pinSetupDel()">⌫</button>
+        <button class="pin-key pin-key-dark pin-key-del" onclick="pinSetupDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete">⌫</button>
       </div>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closePinSetup()" data-i18n="common.cancel">Cancel</button>
@@ -1121,12 +1122,12 @@
   <!-- Guest PIN Setup Overlay (mandatory on first entry save for guests) -->
   <div id="guestPinSetupOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9998;flex-direction:column;align-items:center;justify-content:center;padding:24px;display:none;">
     <img src="icons/AppIcon.png" width="72" height="72" style="border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
-    <h2 id="guestPinSetupTitle" style="color:white;margin-bottom:6px;font-size:1.3em;text-align:center;" data-i18n="journal.mods.protectData">Protect your data</h2>
-    <p id="guestPinSetupDesc" style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.88em;margin-bottom:28px;text-align:center;max-width:260px;" data-i18n="journal.mods.choosePinDesc">Choose a 4-digit PIN to lock your journal.</p>
+    <h2 id="guestPinSetupTitle" style="color:var(--brand-on);margin-bottom:6px;font-size:1.3em;text-align:center;" data-i18n="journal.mods.protectData">Protect your data</h2>
+    <p id="guestPinSetupDesc" style="color:var(--brand-on);font-size:0.88em;margin-bottom:28px;text-align:center;max-width:260px;" data-i18n="journal.mods.choosePinDesc">Choose a 4-digit PIN to lock your journal.</p>
     <div id="guestPinSetupDots" style="display:flex;gap:12px;margin-bottom:24px;">
       <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
     </div>
-    <div id="guestPinSetupError" style="color:#fff;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.35);font-size:0.85em;min-height:20px;margin-bottom:8px;text-align:center;"></div>
+    <div id="guestPinSetupError" style="color:var(--brand-on);font-weight:600;font-size:0.85em;min-height:20px;margin-bottom:8px;text-align:center;"></div>
     <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:16px;">
       <button class="pin-key" onclick="guestPinSetupKey('1')">1</button>
       <button class="pin-key" onclick="guestPinSetupKey('2')">2</button>
@@ -1139,12 +1140,12 @@
       <button class="pin-key" onclick="guestPinSetupKey('9')">9</button>
       <div></div>
       <button class="pin-key" onclick="guestPinSetupKey('0')">0</button>
-      <button class="pin-key pin-key-del" onclick="guestPinSetupDel()">⌫</button>
+      <button class="pin-key pin-key-del" onclick="guestPinSetupDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete">⌫</button>
     </div>
     <!-- Back out of the guest PIN (2026-10-16): the entry stays open, unsaved. -->
-    <button type="button" onclick="guestPinSetupCancel()" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.6);color:#fff;border-radius:20px;padding:8px 22px;min-height:44px;font-family:inherit;font-size:0.9em;font-weight:700;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;" data-i18n="fix143.pinNotNow">Not now</button>
-    <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.75em;text-align:center;max-width:260px;line-height:1.5;margin-bottom:8px;" data-i18n="fix143.pinNeededToSave">You need a PIN to save. Not now keeps your entry open, not saved yet.</p>
-    <p style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.3);font-size:0.75em;text-align:center;max-width:240px;line-height:1.5;" data-i18n="journal.mods.pinEncryptNote">Your PIN encrypts your data on this device. If you forget your PIN, your entries cannot be recovered.</p>
+    <button type="button" onclick="guestPinSetupCancel()" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 22px;min-height:44px;font-family:inherit;font-size:0.9em;font-weight:700;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;" data-i18n="fix143.pinNotNow">Not now</button>
+    <p style="color:var(--brand-on);font-size:0.75em;text-align:center;max-width:260px;line-height:1.5;margin-bottom:8px;" data-i18n="fix143.pinNeededToSave">You need a PIN to save. Not now keeps your entry open, not saved yet.</p>
+    <p style="color:var(--brand-on);font-size:0.75em;text-align:center;max-width:240px;line-height:1.5;" data-i18n="journal.mods.pinEncryptNote">Your PIN encrypts your data on this device. If you forget your PIN, your entries cannot be recovered.</p>
   </div>
 
   <!-- Favourite Anniversary Modal -->
@@ -1154,7 +1155,7 @@
       <div id="favAnniversaryList" style="max-height:55vh;overflow-y:auto;margin-bottom:16px;"></div>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closeFavAnniversaryModal()" data-i18n="common.close">Close</button>
-        <button class="confirm-btn" onclick="rescheduleAnniversary()" style="background:white;color:var(--brand-primary);border:2px solid var(--brand-primary);" data-i18n="journal.mods.showAgainNextYear">Show again next year</button>
+        <button class="confirm-btn" onclick="rescheduleAnniversary()" style="background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);" data-i18n="journal.mods.showAgainNextYear">Show again next year</button>
       </div>
     </div>
   </div>
@@ -1162,7 +1163,7 @@
   <div class="confirm-modal" id="medicationModal">
     <div class="confirm-content" style="max-width: 500px;">
       <h3 data-i18n="journal.mods.medTitle">My Medications</h3>
-      <p style="color: #6c757d; margin-bottom: 20px;" data-i18n="journal.mods.medDesc">Track your current medications and dosages</p>
+      <p style="color: var(--text-muted-ink); margin-bottom: 20px;" data-i18n="journal.mods.medDesc">Track your current medications and dosages</p>
       
       <div id="medicationList" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
         <!-- Medications will be listed here -->
@@ -1174,7 +1175,7 @@
       </div>
       
       <div class="confirm-buttons">
-        <button class="confirm-btn" onclick="addMedication()" style="background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary);" data-i18n="journal.mods.addMed">Add Medication</button>
+        <button class="confirm-btn" onclick="addMedication()" style="background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary);" data-i18n="journal.mods.addMed">Add Medication</button>
         <button class="confirm-btn confirm-btn-no" onclick="closeMedicationModal()" data-i18n="common.close">Close</button>
       </div>
     </div>
@@ -1184,13 +1185,13 @@
   <div class="confirm-modal" id="goalsModal">
     <div class="confirm-content" style="max-width: 500px;">
       <h3 data-i18n="journal.mods.goalsTitle">🏅 Today's Goals</h3>
-      <p style="color: #6c757d; margin-bottom: 20px;" data-i18n="journal.mods.goalsDesc">Your daily goals — track whether you hit them each day</p>
+      <p style="color: var(--text-muted-ink); margin-bottom: 20px;" data-i18n="journal.mods.goalsDesc">Your daily goals — track whether you hit them each day</p>
       <div id="goalsList" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;"></div>
       <div style="margin-bottom: 15px;">
         <input type="text" id="newGoalText" placeholder="New goal (e.g. Go to the gym)" data-i18n-placeholder="journal.mods.goalPlaceholder" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1em; box-sizing: border-box;">
       </div>
       <div class="confirm-buttons">
-        <button class="confirm-btn" onclick="addGoal()" style="background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary);" data-i18n="journal.mods.addGoal">Add Goal</button>
+        <button class="confirm-btn" onclick="addGoal()" style="background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary);" data-i18n="journal.mods.addGoal">Add Goal</button>
         <button class="confirm-btn confirm-btn-no" onclick="closeGoalsModal()" data-i18n="common.close">Close</button>
       </div>
     </div>
@@ -1200,7 +1201,7 @@
   <div class="confirm-modal" id="budgetModal" onclick="if(event.target===this)closeBudgetModal()">
     <div class="confirm-content" style="max-width:400px;">
       <h3 style="margin-bottom:8px;" data-i18n="journal.mods.budgetTitle">💰 Daily Budget</h3>
-      <p style="color:#6c757d;font-size:0.88em;margin:0 0 16px;" data-i18n="journal.mods.budgetDesc">Set a daily spending limit — you'll be asked if you kept to it when logging each entry.</p>
+      <p style="color:var(--text-muted-ink);font-size:0.88em;margin:0 0 16px;" data-i18n="journal.mods.budgetDesc">Set a daily spending limit — you'll be asked if you kept to it when logging each entry.</p>
       <input type="text" id="budgetInput" placeholder="e.g. £50 daily" data-i18n-placeholder="journal.mods.budgetPlaceholder" onkeydown="if(event.key==='Enter')saveBudgetSetting()" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;box-sizing:border-box;outline:none;margin-bottom:16px;">
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closeBudgetModal()" data-i18n="common.cancel">Cancel</button>
@@ -1213,9 +1214,9 @@
   <div class="confirm-modal" id="exportModal">
     <div class="confirm-content">
       <h3 data-i18n="journal.mods.exportTitle">Choose Export Format</h3>
-      <p style="margin-bottom: 25px; color: #6c757d;" data-i18n="journal.mods.exportDesc">Select the format for your backup</p>
+      <p style="margin-bottom: 25px; color: var(--text-muted-ink);" data-i18n="journal.mods.exportDesc">Select the format for your backup</p>
       <div class="confirm-buttons" style="flex-direction: column; gap: 15px;">
-        <button class="confirm-btn" onclick="document.getElementById('exportModal').classList.remove('active');exportData()" style="background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); width: 100%;" data-i18n="journal.mods.exportJson">
+        <button class="confirm-btn" onclick="document.getElementById('exportModal').classList.remove('active');exportData()" style="background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary); width: 100%;" data-i18n="journal.mods.exportJson">
           🐻 Bipolar Bear (.json)
         </button>
         <button class="confirm-btn" onclick="document.getElementById('exportModal').classList.remove('active');exportDataCSV()" style="background: white; color: #51cf66; border: 2px solid #51cf66; width: 100%;" data-i18n="journal.mods.exportCsv">
@@ -1230,9 +1231,9 @@
   <div class="confirm-modal" id="importModal">
     <div class="confirm-content">
       <h3 data-i18n="journal.mods.importTitle">Choose Import Format</h3>
-      <p style="margin-bottom: 25px; color: #6c757d;" data-i18n="journal.mods.importDesc">Select the format of your data file</p>
+      <p style="margin-bottom: 25px; color: var(--text-muted-ink);" data-i18n="journal.mods.importDesc">Select the format of your data file</p>
       <div class="confirm-buttons" style="flex-direction: column; gap: 15px;">
-        <button class="confirm-btn" onclick="selectImportFormat('bipolarbear')" style="background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); width: 100%;" data-i18n="journal.mods.importJson">
+        <button class="confirm-btn" onclick="selectImportFormat('bipolarbear')" style="background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary); width: 100%;" data-i18n="journal.mods.importJson">
           🐻 BipolarBear Format (.json)
         </button>
         <button class="confirm-btn" onclick="selectImportFormat('daylio')" style="background: white; color: var(--imp-daylio); border: 2px solid var(--imp-daylio); width: 100%;" data-i18n="journal.mods.importDaylio">
@@ -1240,11 +1241,11 @@
         </button>
         <div style="width:100%;">
           <button class="confirm-btn" onclick="selectImportFormat('bipolaruk')" style="background: white; color: var(--imp-bpuk); border: 2px solid var(--imp-bpuk); width: 100%;" data-i18n="journal.mods.importBipolarUk">🧠 Bipolar UK Mood Tracker (.json, .csv)</button>
-          <p style="font-size:0.8em;color:#6c757d;line-height:1.45;margin:8px 4px 0;" data-i18n="journal.mods.importBipolarUkHelp">In the Mood Tracker app: Export Data, then JSON (under Advanced formats) or CSV. JSON brings across more.</p>
+          <p style="font-size:0.8em;color:var(--text-muted-ink);line-height:1.45;margin:8px 4px 0;" data-i18n="journal.mods.importBipolarUkHelp">In the Mood Tracker app: Export Data, then JSON (under Advanced formats) or CSV. JSON brings across more.</p>
         </div>
         <div style="width:100%;">
           <button class="confirm-btn" onclick="selectImportFormat('sheet')" style="background: white; color: var(--imp-sheet); border: 2px solid var(--imp-sheet); width: 100%;" data-i18n="journal.mods.importSheet">📄 Spreadsheet or text file (.csv, .txt)</button>
-          <p style="font-size:0.8em;color:#6c757d;line-height:1.45;margin:8px 4px 4px;" data-i18n="journal.mods.importSheetHelp">One row per day, or per stretch of days: date, end date (optional), mood (a bear's name or 0–10), notes (optional).</p>
+          <p style="font-size:0.8em;color:var(--text-muted-ink);line-height:1.45;margin:8px 4px 4px;" data-i18n="journal.mods.importSheetHelp">One row per day, or per stretch of days: date, end date (optional), mood (a bear's name or 0–10), notes (optional).</p>
           <button type="button" onclick="downloadImportExample()" style="background:none;border:none;color:var(--imp-sheet);font-size:0.82em;font-weight:600;cursor:pointer;padding:2px 4px;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.importExample">⬇️ Download an example file</button>
         </div>
         <button class="confirm-btn confirm-btn-no" onclick="closeImportModal()" style="width: 100%;" data-i18n="common.cancel">Cancel</button>
@@ -1372,7 +1373,7 @@
         </select>
       </div>
       <div class="confirm-buttons">
-        <button class="confirm-btn" onclick="saveEditedEntry()" style="background:white; color:var(--brand-primary); border:2px solid var(--brand-primary);" data-i18n="journal.saveChanges">Save Changes</button>
+        <button class="confirm-btn" onclick="saveEditedEntry()" style="background:white; color:var(--brand-ink); border:2px solid var(--brand-primary);" data-i18n="journal.saveChanges">Save Changes</button>
         <button class="confirm-btn confirm-btn-no" onclick="closeEditModal()" data-i18n="common.cancel">Cancel</button>
       </div>
     </div>
@@ -1381,14 +1382,14 @@
   <div class="confirm-modal" id="missingDatesModal">
     <div class="confirm-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;">
       <h3 data-i18n="journal.missingTitle">Missing Entries</h3>
-      <p style="color: #6c757d; margin-bottom: 20px;" data-i18n="journal.missingSub">Click on a date to fill in that entry (showing up to 30 days):</p>
+      <p style="color: var(--text-muted-ink); margin-bottom: 20px;" data-i18n="journal.missingSub">Click on a date to fill in that entry (showing up to 30 days):</p>
 
       <!-- Auto-complete promo — shown by showMissingDates() only when 2+ days are missing -->
       <div id="autoFillPromo" style="display:none; text-align:left; background:var(--brand-tint,#fff6ec); border:1.5px solid rgba(255,149,0,0.35); border-radius:12px; padding:14px; margin-bottom:20px;">
         <div style="font-weight:700; color:#333; margin-bottom:6px;">
           <span data-i18n="journal.autofill.promoTitle">✨ Auto-complete these days</span>
         </div>
-        <p style="color:#6c757d; font-size:0.86em; margin:0 0 12px; line-height:1.5;" data-i18n="journal.autofill.promoDesc">Fill the gaps in one go from the data you already have — sleep and steps from your phone's health app, with a mood and energy level suggested from them. You review every day before anything is saved.</p>
+        <p style="color:var(--text-muted-ink); font-size:0.86em; margin:0 0 12px; line-height:1.5;" data-i18n="journal.autofill.promoDesc">Fill the gaps in one go from the data you already have — sleep and steps from your phone's health app, with a mood and energy level suggested from them. You review every day before anything is saved.</p>
         <button id="autoFillPromoBtn" onclick="showAutoFillModal()" style="width:100%; padding:11px 16px; background:var(--brand-btn); color:white; border:none; border-radius:10px; font-weight:700; font-size:0.92em; cursor:pointer; -webkit-tap-highlight-color:transparent;" data-i18n="journal.autofill.promoBtn">✨ Auto-complete</button>
       </div>
 
@@ -1407,9 +1408,9 @@
     <div class="confirm-content" style="max-width: 520px; text-align: left;">
       <h3 style="text-align:center;" data-i18n="journal.autofill.title">✨ Auto-complete missing days</h3>
       <p id="autoFillIntro" style="font-size:0.88em; line-height:1.55; margin-bottom:16px;" data-i18n="journal.autofill.intro">Bipolar Bear will add an entry for each day below. Sleep and steps come from your phone's health app where it has them, and from your recent typical day where it doesn't. Mood and energy are suggested from that data — nothing else is filled in.</p>
-      <div id="autoFillStatus" style="text-align:center; color:#6c757d; font-size:0.9em; padding:18px 0;"></div>
+      <div id="autoFillStatus" style="text-align:center; color:var(--text-muted-ink); font-size:0.9em; padding:18px 0;"></div>
       <div id="autoFillPreview" style="display:none; max-height:38vh; overflow-y:auto; margin-bottom:14px;"></div>
-      <p id="autoFillFoot" style="display:none; font-size:0.8em; color:#adb5bd; line-height:1.5; margin-bottom:18px;" data-i18n="journal.autofill.foot">These are estimates, not a record of how you actually felt. Every day added is marked AUTO in your journal — tap ✏️ to edit it or × to delete it.</p>
+      <p id="autoFillFoot" style="display:none; font-size:0.8em; color:var(--text-muted-ink); line-height:1.5; margin-bottom:18px;" data-i18n="journal.autofill.foot">These are estimates, not a record of how you actually felt. Every day added is marked AUTO in your journal — tap ✏️ to edit it or × to delete it.</p>
       <div class="confirm-buttons" id="autoFillActions" style="display:none;">
         <button class="confirm-btn confirm-btn-no" onclick="closeAutoFillModal()" data-i18n="common.cancel">Cancel</button>
         <button class="confirm-btn" id="autoFillConfirmBtn" onclick="runAutoFill()" style="background:var(--brand-btn); color:white; border:2px solid var(--brand-primary);">Fill these in</button>
@@ -1427,16 +1428,16 @@
       <!-- Native content -->
       <div id="sleepSyncNative">
         <div style="font-weight:600; font-size:1.05em; margin-bottom:8px;" data-i18n="journal.mods.importHealthTitle">Import health data</div>
-        <p style="color:#6c757d; font-size:0.9em; margin-bottom:16px;" data-i18n="journal.mods.importHealthDesc">Import data from your phone's health app.</p>
+        <p style="color:var(--text-muted-ink); font-size:0.9em; margin-bottom:16px;" data-i18n="journal.mods.importHealthDesc">Import data from your phone's health app.</p>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:4px;">
-          <button class="confirm-btn" onclick="doSleepOnlySync()" style="background:white;color:var(--brand-primary);border:2px solid var(--brand-primary);" data-i18n="journal.mods.importSleep">😴 Import sleep</button>
+          <button class="confirm-btn" onclick="doSleepOnlySync()" style="background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);" data-i18n="journal.mods.importSleep">😴 Import sleep</button>
           <button class="confirm-btn confirm-btn-no" onclick="closeSleepSyncModal()" data-i18n="common.close">Close</button>
         </div>
       </div>
       <!-- Web content -->
       <div id="sleepSyncWeb" style="display:none;">
         <div style="font-weight:600; font-size:1.05em; margin-bottom:8px;" data-i18n="journal.mods.mobileOnly">Mobile app only</div>
-        <p style="color:#6c757d; font-size:0.9em; margin-bottom:20px;" data-i18n="journal.mods.sleepMobileOnly">Sleep data can only be synced on the mobile app.</p>
+        <p style="color:var(--text-muted-ink); font-size:0.9em; margin-bottom:20px;" data-i18n="journal.mods.sleepMobileOnly">Sleep data can only be synced on the mobile app.</p>
         <div class="confirm-buttons">
           <button class="confirm-btn confirm-btn-no" onclick="closeSleepSyncModal()" data-i18n="common.close">Close</button>
         </div>
@@ -1450,15 +1451,15 @@
       <div style="font-size:1.8em; margin-bottom:10px;">⚡</div>
       <div id="energySyncNative">
         <div style="font-weight:600; font-size:1.05em; margin-bottom:8px;" data-i18n="journal.mods.importHealthTitle">Import health data</div>
-        <p style="color:#6c757d; font-size:0.9em; margin-bottom:16px;" data-i18n="journal.mods.importHealthDesc">Import data from your phone's health app.</p>
+        <p style="color:var(--text-muted-ink); font-size:0.9em; margin-bottom:16px;" data-i18n="journal.mods.importHealthDesc">Import data from your phone's health app.</p>
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:4px;">
-          <button class="confirm-btn" onclick="doStepsOnlySync()" style="background:white;color:var(--brand-primary);border:2px solid var(--brand-primary);" data-i18n="journal.mods.importSteps">🏃 Import steps</button>
+          <button class="confirm-btn" onclick="doStepsOnlySync()" style="background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);" data-i18n="journal.mods.importSteps">🏃 Import steps</button>
           <button class="confirm-btn confirm-btn-no" onclick="closeEnergySyncModal()" data-i18n="common.close">Close</button>
         </div>
       </div>
       <div id="energySyncWeb" style="display:none;">
         <div style="font-weight:600; font-size:1.05em; margin-bottom:8px;" data-i18n="journal.mods.mobileOnly">Mobile app only</div>
-        <p style="color:#6c757d; font-size:0.9em; margin-bottom:20px;" data-i18n="journal.mods.stepMobileOnly">Step data can only be synced on the mobile app.</p>
+        <p style="color:var(--text-muted-ink); font-size:0.9em; margin-bottom:20px;" data-i18n="journal.mods.stepMobileOnly">Step data can only be synced on the mobile app.</p>
         <div class="confirm-buttons">
           <button class="confirm-btn confirm-btn-no" onclick="closeEnergySyncModal()" data-i18n="common.close">Close</button>
         </div>
@@ -1482,7 +1483,7 @@
           <div style="font-weight: 600; font-size: 1.1em; color: #495057; margin-bottom: 10px;" data-i18n="journal.settings.fullExp">
             Get the Full Experience
           </div>
-          <div style="color: #6c757d; font-size: 0.95em; line-height: 1.6; margin-bottom: 20px;" data-i18n="journal.settings.fullExpDesc">
+          <div style="color: var(--text-muted-ink); font-size: 0.95em; line-height: 1.6; margin-bottom: 20px;" data-i18n="journal.settings.fullExpDesc">
             Download the BipolarBear app for daily reminders, haptic feedback, and more native features.
           </div>
           <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -1497,16 +1498,16 @@
 
           <div id="customiseFormWrap" style="margin-bottom:16px;position:relative;">
           <div id="customiseFormHintEl" style="display:none;flex-direction:column;align-items:flex-end;gap:2px;margin-bottom:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;">
-            <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
+            <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;letter-spacing:0.01em;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="13" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,8 8,13 13,8" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
           </div>
           <details id="customiseFormDetails" ontoggle="if(this.open)_onCustomiseDetailsOpen()">
             <summary style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;padding:2px 0;">
               <div>
                 <div style="font-weight:600;color:#495057;font-size:0.95em;" data-i18n="journal.settings.customise">📋 Customise form</div>
-                <div style="color:#6c757d;font-size:0.82em;margin-top:2px;" data-i18n="journal.settings.customiseDesc">Choose which fields appear</div>
+                <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;" data-i18n="journal.settings.customiseDesc">Choose which fields appear</div>
               </div>
-              <span style="color:#6c757d;font-size:1em;line-height:1;">▸</span>
+              <span style="color:var(--text-muted-ink);font-size:1em;line-height:1;">▸</span>
             </summary>
             <div id="stepTogglesRow" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;"></div>
           </details>
@@ -1520,9 +1521,9 @@
             <summary style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;padding:2px 0;">
               <div>
                 <div style="font-weight:600;color:#495057;font-size:0.95em;">🌗 <span data-i18n="anon.ux.theme">Appearance</span></div>
-                <div id="appearanceCurrent" style="color:#6c757d;font-size:0.82em;margin-top:2px;"></div>
+                <div id="appearanceCurrent" style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;"></div>
               </div>
-              <span style="color:#6c757d;font-size:1em;line-height:1;">▸</span>
+              <span style="color:var(--text-muted-ink);font-size:1em;line-height:1;">▸</span>
             </summary>
             <select id="appearanceSelect" aria-label="Appearance" onchange="window.BB&&BB.theme&&BB.theme.set(this.value);_syncAppearanceCurrent()" style="width:100%;margin-top:12px;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;font-family:inherit;color:#495057;background:white;cursor:pointer;">
               <option value="auto" data-i18n="anon.ux.themeAuto">Automatic (follows your phone)</option>
@@ -1534,24 +1535,24 @@
 
         <!-- Guest-only: signing in is optional and only backs up data (hidden once signed in) -->
         <button id="settingsGuestSignIn" onclick="closeSettingsModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
-        <div id="settingsGuestSignInNote" style="display:none;color:#6c757d;font-size:0.78em;text-align:center;margin-bottom:14px;" data-i18n="journal.settings.guestSignInNote">Optional — everything works without an account. Sign in to sync across devices.</div>
+        <div id="settingsGuestSignInNote" style="display:none;color:var(--text-muted-ink);font-size:0.78em;text-align:center;margin-bottom:14px;" data-i18n="journal.settings.guestSignInNote">Optional — everything works without an account. Sign in to sync across devices.</div>
 
         <div style="text-align: center; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 0 12px; margin-bottom: 14px;">
-          <button onclick="showAchievementsPanel()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;" data-i18n="journal.settings.achievements">🏅 Achievements</button>
-          <button id="settingsImportBtn" onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: #6c757d; font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
+          <button onclick="showAchievementsPanel()" style="background: none; border: none; color: var(--text-muted-ink); font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;" data-i18n="journal.settings.achievements">🏅 Achievements</button>
+          <button id="settingsImportBtn" onclick="closeSettingsModal();showImportModal()" style="background: none; border: none; color: var(--text-muted-ink); font-size: 0.82em; cursor: pointer; padding: 4px 6px; letter-spacing: 0.02em; white-space: nowrap;">📥 <span data-i18n="journal.ui.importBtn">Import</span></button>
         </div>
 
         <!-- Advanced: same grey pill as the "Focus Mode →" / "Journal →" page buttons -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:0;margin-bottom:14px;">
           <div id="advancedSettingsBadgeHint" style="display:none;flex-direction:row;align-items:center;gap:3px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-bottom:2px;">
-            <span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
+            <span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;" data-i18n="journal.hint.clickHere">🐻 Click here</span>
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="8" y1="2" x2="8" y2="13" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round"/><polyline points="3,8 8,13 13,8" stroke="var(--brand-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
           </div>
           <button id="advancedSettingsBtn" onclick="openAdvancedSettings()" style="width:100%;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.advanced">Advanced →</button>
         </div>
 
         <div style="margin-top:4px;text-align:center;">
-          <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
+          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
             <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
@@ -1575,15 +1576,15 @@
         <div style="margin-bottom: 24px;">
           <div style="font-weight: 600; margin-bottom: 8px; color: #495057;" data-i18n="journal.settings.dailyReminder">🔔 Daily Mood Reminder</div>
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-            <label style="flex: 1; color: #6c757d; font-size: 0.95em;" data-i18n="journal.settings.remindAt">Remind me at:</label>
+            <label style="flex: 1; color: var(--text-muted-ink); font-size: 0.95em;" data-i18n="journal.settings.remindAt">Remind me at:</label>
             <input type="time" id="reminderTime" value="07:00" onchange="_persistReminderSettings()" style="padding: 8px 12px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1em; color: #495057;">
           </div>
           <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
-            <label for="reminderEnabled" style="flex: 1; color: #6c757d; font-size: 0.95em; cursor: pointer;" data-i18n="journal.settings.remindersOn">Reminders on:</label>
+            <label for="reminderEnabled" style="flex: 1; color: var(--text-muted-ink); font-size: 0.95em; cursor: pointer;" data-i18n="journal.settings.remindersOn">Reminders on:</label>
             <label class="bb-switch"><input type="checkbox" id="reminderEnabled" onchange="_onReminderToggleChange()"><span class="bb-slider"></span></label>
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
-            <label for="weeklySummaryEnabled" style="flex: 1; color: #6c757d; font-size: 0.95em; cursor: pointer;" data-i18n="journal.settings.weeklySummary">Weekly summary (Sundays):</label>
+            <label for="weeklySummaryEnabled" style="flex: 1; color: var(--text-muted-ink); font-size: 0.95em; cursor: pointer;" data-i18n="journal.settings.weeklySummary">Weekly summary (Sundays):</label>
             <label class="bb-switch"><input type="checkbox" id="weeklySummaryEnabled" onchange="_onWeeklyToggleChange()" checked><span class="bb-slider"></span></label>
           </div>
         </div>
@@ -1595,7 +1596,7 @@
           <div style="display: flex; align-items: center; justify-content: space-between; gap:12px;">
             <div>
               <div style="font-weight: 600; color: #495057; font-size: 0.95em;" id="healthSyncLabel">📱 Sync health data</div>
-              <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px; max-width: 240px; line-height: 1.4;" id="healthSyncDesc">Import steps &amp; sleep hours from your phone's health app</div>
+              <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px; max-width: 240px; line-height: 1.4;" id="healthSyncDesc">Import steps &amp; sleep hours from your phone's health app</div>
             </div>
             <label class="bb-switch"><input type="checkbox" id="healthSyncToggle" onchange="_toggleHealthSync()"><span class="bb-slider"></span></label>
           </div>
@@ -1604,13 +1605,13 @@
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 20px;">
 
         <div style="display:flex;gap:10px;">
-          <button onclick="closeMobileSettings()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-primary);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
+          <button onclick="closeMobileSettings()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
           <button onclick="_openFocusModeSettings()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.focusModeBtn">Focus Mode →</button>
         </div>
 
         <div style="margin-top:16px;text-align:center;">
-          <div class="settings-notif-info" style="color:#6c757d;font-size:0.78em;"></div>
-          <div class="settings-health-info" style="color:#6c757d;font-size:0.78em;"></div>
+          <div class="settings-notif-info" style="color:var(--text-muted-ink);font-size:0.78em;"></div>
+          <div class="settings-health-info" style="color:var(--text-muted-ink);font-size:0.78em;"></div>
         </div>
       </div>
 
@@ -1628,7 +1629,7 @@
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
             <div>
               <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.focusMode">🎯 Focus mode</div>
-              <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.focusModeDesc">Only one question at a time</div>
+              <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.focusModeDesc">Only one question at a time</div>
             </div>
             <!-- Ticked by default on purpose: it's the parent of the switches below,
                  which only show while it's on (the one exception to unticked-by-default). -->
@@ -1639,14 +1640,14 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
               <div>
                 <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.confirmStep">⏸ Confirm each step</div>
-                <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.confirmStepDesc">Show a Next button instead of auto-advancing</div>
+                <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.confirmStepDesc">Show a Next button instead of auto-advancing</div>
               </div>
               <label class="bb-switch"><input type="checkbox" id="fmConfirmStepToggle" onchange="_toggleFmConfirmStep()"><span class="bb-slider"></span></label>
             </div>
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
               <div>
                 <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.elaborate">📝 Elaborate Responses</div>
-                <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.elaborateDesc">Add optional notes to each step &amp; set tomorrow's intention</div>
+                <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.elaborateDesc">Add optional notes to each step &amp; set tomorrow's intention</div>
               </div>
               <label class="bb-switch"><input type="checkbox" id="elaborateResponsesToggle" onchange="_toggleElaborateResponses()"><span class="bb-slider"></span></label>
             </div>
@@ -1656,7 +1657,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0;">
               <div>
                 <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.plainList">📃 Plain list</div>
-                <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.plainListDesc">Tap an answer from a list instead of spinning the wheel</div>
+                <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.plainListDesc">Tap an answer from a list instead of spinning the wheel</div>
               </div>
               <!-- Ticked = wheel OFF (localStorage.wheelModeEnabled '0'); the wheel is the default. -->
               <label class="bb-switch"><input type="checkbox" id="plainListToggle" onchange="_toggleWheelMode()"><span class="bb-slider"></span></label>
@@ -1667,12 +1668,12 @@
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
         <div style="display:flex;gap:10px;">
-          <button onclick="closeAdvancedSettings()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-primary);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
+          <button onclick="closeAdvancedSettings()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
           <button onclick="openAdvancedJournal()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.journalBtn">Journal →</button>
         </div>
 
         <div style="margin-top:16px;text-align:center;">
-          <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
+          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
             <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
@@ -1694,7 +1695,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <div>
             <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="t143.j.fullSpectrum">🎚️ Full spectrum</div>
-            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="t143.j.fullSpectrumDesc">Advanced: pick mood on a 0–10 scale (e.g. 4 = sad but stable), sleep hour by hour and energy 0–10, instead of a handful of fixed choices</div>
+            <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="t143.j.fullSpectrumDesc">Advanced: pick mood on a 0–10 scale (e.g. 4 = sad but stable), sleep hour by hour and energy 0–10, instead of a handful of fixed choices</div>
           </div>
           <label class="bb-switch"><input type="checkbox" id="moodSpectrumToggle" onchange="_toggleMoodSpectrum()"><span class="bb-slider"></span></label>
         </div>
@@ -1702,7 +1703,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <div>
             <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.bearSuggested">🐻 Bear suggested mood</div>
-            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.bearSuggestedDesc">Experimental: Suggest a mood state before saving</div>
+            <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.bearSuggestedDesc">Experimental: Suggest a mood state before saving</div>
           </div>
           <label class="bb-switch"><input type="checkbox" id="moodSuggestionToggle" onchange="_toggleMoodSuggestion()"><span class="bb-slider"></span></label>
         </div>
@@ -1710,7 +1711,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <div>
             <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.incognito">🕵️ Incognito Mode</div>
-            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.incognitoDesc">Hide entries from PDF export by default</div>
+            <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.incognitoDesc">Hide entries from PDF export by default</div>
           </div>
           <label class="bb-switch"><input type="checkbox" id="incognitoModeToggle" onchange="_toggleIncognitoMode()"><span class="bb-slider"></span></label>
         </div>
@@ -1719,7 +1720,7 @@
         <div id="privateJournalRow" style="display: none; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
           <div>
             <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.private">🔐 Private journal</div>
-            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.privateDesc">Only your journal password opens it, end to end. Off: still encrypted, and it opens on your new devices without one.</div>
+            <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="journal.settings.privateDesc">Only your journal password opens it, end to end. Off: still encrypted, and it opens on your new devices without one.</div>
           </div>
           <label class="bb-switch"><input type="checkbox" id="privateJournalToggle" onchange="_togglePrivateJournal()"><span class="bb-slider"></span></label>
         </div>
@@ -1732,12 +1733,12 @@
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
         <div style="display:flex;gap:10px;">
-          <button onclick="closeAdvancedJournal()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-primary);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
+          <button onclick="closeAdvancedJournal()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
           <button onclick="openAdvancedMore()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.moreBtn">More →</button>
         </div>
 
         <div style="margin-top:16px;text-align:center;">
-          <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
+          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
             <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
@@ -1759,21 +1760,21 @@
         <!-- Stats Start Date -->
         <div style="margin-bottom: 16px;">
           <div style="font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.statsStartDate">🗓️ All-Time Stats Start Date</div>
-          <div style="color: #6c757d; font-size: 0.82em; margin-bottom: 8px;" data-i18n="journal.settings.statsStartDateDesc">Stats, charts and PDF all-time column will start from this date without deleting old entries.</div>
+          <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-bottom: 8px;" data-i18n="journal.settings.statsStartDateDesc">Stats, charts and PDF all-time column will start from this date without deleting old entries.</div>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
             <input type="date" id="statsStartDateInput" style="flex: 1 1 150px; min-width: 0; padding: 8px 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 0.95em; color: #495057;">
-            <button onclick="clearStatsStartDate()" style="padding: 8px 12px; background: white; color: #6c757d; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;" data-i18n="journal.settings.clear">Clear</button>
-            <button onclick="saveStatsStartDate()" class="btn-outline-orange" style="padding: 8px 12px; background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;" data-i18n="common.save">Save</button>
+            <button onclick="clearStatsStartDate()" style="padding: 8px 12px; background: white; color: var(--text-muted-ink); border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;" data-i18n="journal.settings.clear">Clear</button>
+            <button onclick="saveStatsStartDate()" class="btn-outline-orange" style="padding: 8px 12px; background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary); border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;" data-i18n="common.save">Save</button>
           </div>
         </div>
 
         <div style="display:flex;gap:10px;">
-          <button onclick="closeAdvancedMore()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-primary);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
+          <button onclick="closeAdvancedMore()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
           <button onclick="openAdvancedMore2()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.deleteBtn">Delete →</button>
         </div>
 
         <div style="margin-top:16px;text-align:center;">
-          <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
+          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
             <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
@@ -1794,20 +1795,20 @@
 
         <div id="fullResetSection" style="margin-bottom: 16px;">
           <div style="font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.fullReset">🗑️ Full Reset</div>
-          <div style="color: #6c757d; font-size: 0.82em; margin-bottom: 10px;" data-i18n="journal.settings.fullResetDesc">Permanently delete all journal entries and reset all settings to their defaults. This cannot be undone.</div>
+          <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-bottom: 10px;" data-i18n="journal.settings.fullResetDesc">Permanently delete all journal entries and reset all settings to their defaults. This cannot be undone.</div>
           <button onclick="closeSettingsModal(); confirmDeleteAll();" style="width:100%;background:rgba(201,42,42,0.08);border:1.5px solid #c92a2a;color:#c92a2a;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.fullResetBtn">🗑️ Delete All Data &amp; Reset Settings</button>
         </div>
         <div id="fullResetLocked" style="display:none;margin-bottom:16px;">
           <div style="font-weight:600;margin-bottom:6px;color:#495057;font-size:0.95em;" data-i18n="journal.settings.fullReset">🗑️ Full Reset</div>
-          <div style="color:#6c757d;font-size:0.82em;padding:10px;border:1.5px solid #dee2e6;border-radius:20px;text-align:center;" data-i18n="account.deleteLocked">🔒 Account cannot be deleted</div>
+          <div style="color:var(--text-muted-ink);font-size:0.82em;padding:10px;border:1.5px solid #dee2e6;border-radius:20px;text-align:center;" data-i18n="account.deleteLocked">🔒 Account cannot be deleted</div>
         </div>
 
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
-        <button onclick="closeAdvancedMore2()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-primary);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
+        <button onclick="closeAdvancedMore2()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
 
         <div style="margin-top:16px;text-align:center;">
-          <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
+          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
             <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
@@ -1819,10 +1820,10 @@
       <!-- ACHIEVEMENTS PANEL -->
       <div id="settingsAchievementsPanel" style="display: none;">
         <h3 style="margin: 0 0 4px; text-align: center;" data-i18n="journal.settings.achievements">🏅 Achievements</h3>
-        <div id="achievementsCount" style="text-align:center;color:#6c757d;font-size:0.85em;margin-bottom:16px;"></div>
+        <div id="achievementsCount" style="text-align:center;color:var(--text-muted-ink);font-size:0.85em;margin-bottom:16px;"></div>
         <div id="achievementsGrid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;max-height:calc(85dvh - 240px);overflow-y:auto;overflow-x:hidden;"></div>
-        <button id="achNotifToggleBtn" onclick="toggleAchievementNotifications()" style="margin-top: 16px; width: 100%; background: white; color: #6c757d; border: 1.5px solid #dee2e6; font-size: 0.85em; cursor: pointer; padding: 9px; font-weight: 600; border-radius: 20px;"></button>
-        <button onclick="closeAchievementsPanel()" style="margin-top: 10px; width: 100%; background: rgba(255,149,0,0.1); border: 1.5px solid var(--brand-primary); color: var(--brand-primary); font-size: 0.9em; cursor: pointer; padding: 10px; font-weight: 600; border-radius: 20px;" data-i18n="common.back">← Back</button>
+        <button id="achNotifToggleBtn" onclick="toggleAchievementNotifications()" style="margin-top: 16px; width: 100%; background: white; color: var(--text-muted-ink); border: 1.5px solid #dee2e6; font-size: 0.85em; cursor: pointer; padding: 9px; font-weight: 600; border-radius: 20px;"></button>
+        <button onclick="closeAchievementsPanel()" style="margin-top: 10px; width: 100%; background: rgba(255,149,0,0.1); border: 1.5px solid var(--brand-primary); color: var(--brand-ink); font-size: 0.9em; cursor: pointer; padding: 10px; font-weight: 600; border-radius: 20px;" data-i18n="common.back">← Back</button>
       </div>
 
     </div>
@@ -1833,8 +1834,8 @@
     <div class="confirm-content" style="max-width:360px;text-align:left;">
       <div id="calDayContent"></div>
       <div class="confirm-buttons" style="margin-top:16px;">
-        <button id="calDayDeleteBtn" class="confirm-btn confirm-btn-yes" style="display:none;" onclick="deleteFromCalDay()">🗑️</button>
-        <button id="calDayEditBtn" class="confirm-btn confirm-btn-no" style="display:none;" onclick="closeCalDayModal();openEditInForm(window._calDayEntry)">✏️</button>
+        <button id="calDayDeleteBtn" class="confirm-btn confirm-btn-yes" style="display:none;" onclick="deleteFromCalDay()" aria-label="Delete entry" data-i18n-aria-label="a11y.deleteEntry">🗑️</button>
+        <button id="calDayEditBtn" class="confirm-btn confirm-btn-no" style="display:none;" onclick="closeCalDayModal();openEditInForm(window._calDayEntry)" aria-label="Edit entry" data-i18n-aria-label="a11y.editEntry">✏️</button>
         <button class="confirm-btn confirm-btn-no" onclick="closeCalDayModal()" data-i18n="common.close">Close</button>
       </div>
     </div>
@@ -1845,7 +1846,7 @@
     <div class="confirm-content" style="max-width: 420px; max-height: 90vh; overflow-y: auto;">
       <h3 data-i18n="pd.title">👤 Personal Details</h3>
 
-      <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 16px; font-style: italic;" data-i18n="pd.subtitle">
+      <div style="color: var(--text-muted-ink); font-size: 0.85em; margin-bottom: 16px; font-style: italic;" data-i18n="pd.subtitle">
         All fields are optional. This information will appear on exported PDF reports for your healthcare provider.
       </div>
 
@@ -1863,7 +1864,7 @@
       </div>
 
       <div class="confirm-buttons" style="margin-top: 20px;">
-        <button class="confirm-btn" onclick="savePersonalDetails()" style="background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary);" data-i18n="common.save">Save</button>
+        <button class="confirm-btn" onclick="savePersonalDetails()" style="background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary);" data-i18n="common.save">Save</button>
         <button class="confirm-btn confirm-btn-no" onclick="closePersonalDetailsModal()" data-i18n="common.close">Close</button>
       </div>
     </div>
@@ -1873,7 +1874,7 @@
   <div class="confirm-modal" id="fieldPickerModal" style="background:rgba(0,0,0,0.72);" onclick="if(event.target===this)closeFieldPicker()">
     <div class="confirm-content" style="max-width:340px;display:flex;flex-direction:column;max-height:82dvh;overflow:hidden;">
       <h3 style="margin-bottom:4px;" data-i18n="journal.mods.fieldPickerTitle">📊 Track Data</h3>
-      <p style="color:#6c757d;font-size:0.82em;margin-bottom:14px;" data-i18n="journal.mods.fieldPickerDesc">Choose which fields to show when logging.</p>
+      <p style="color:var(--text-muted-ink);font-size:0.82em;margin-bottom:14px;" data-i18n="journal.mods.fieldPickerDesc">Choose which fields to show when logging.</p>
       <div id="fieldPickerList" style="flex:1;min-height:0;display:flex;flex-direction:column;gap:2px;text-align:left;overflow-y:auto;box-shadow:inset 0 -16px 12px -12px rgba(0,0,0,0.06);"></div>
       <!-- Add new field form — outside the scrollable list so it's always accessible -->
       <div id="fieldPickerAddRow" style="flex-shrink:0;padding:8px 0 2px;border-top:1px solid #f0f0f0;margin-top:4px;"></div>

@@ -958,7 +958,7 @@
     var row = h('div', { style: 'display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;' }, [
       h('div', null, [
         h('label', { for: 'lowMoodSupportToggle', style: 'display:block;font-weight:600;color:#495057;font-size:0.95em;cursor:pointer;', text: tr('low.settingTitle') }),
-        h('div', { style: 'color:#6c757d;font-size:0.82em;margin-top:2px;', text: tr('low.settingDesc', { mood: tAny('mood.depressed', 'Depressed') }) }),
+        h('div', { style: 'color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;', text: tr('low.settingDesc', { mood: tAny('mood.depressed', 'Depressed') }) }),
       ]),
       h('label', { class: 'bb-switch' }, [chk, h('span', { class: 'bb-slider' })]),
     ]);

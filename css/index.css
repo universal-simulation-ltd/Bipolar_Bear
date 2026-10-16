@@ -103,7 +103,7 @@
     }
 
     @keyframes hintFade {
-      0%, 100% { opacity: 0.7; }
+      0%, 100% { opacity: 0.92; } /* faintest point still 4.5:1 */
       50% { opacity: 1; }
     }
     @keyframes bbHintNudge { 0%,100%{transform:scale(1)} 25%{transform:scale(1.18) rotate(-4deg)} 75%{transform:scale(1.12) rotate(3deg)} }
@@ -147,7 +147,7 @@
     html.is-android .fab-hint { bottom: calc(38px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))); }
     html.is-android #bbHomeVersion { bottom: calc(8px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))) !important; }
     /* Dock locked: no white bar behind the version chip, so it sits on the orange page */
-    html.bb-dock-locked:not(.theme-dark) #bbHomeVersion { color: rgba(255,255,255,0.9) !important; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+    html.bb-dock-locked:not(.theme-dark) #bbHomeVersion { color: var(--brand-on) !important; }
     .fab-hint {
       position: fixed;
       bottom: 38px;
@@ -270,11 +270,11 @@
     /* Greeting above the Mood Journal button — the Anonymous board's words. */
     .home-greeting {
       text-align: center;
-      color: #fff;
+      /* Dark ink on the orange page (white was 1.9:1); white in dark mode. */
+      color: var(--brand-on);
       font-weight: 700;
       font-size: 0.95em;
       line-height: 1.45;
-      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       margin: 0 8px 14px;
     }
     .home-greeting:empty { display: none; }
@@ -789,7 +789,7 @@
       .modal-btn-secondary:hover { background: #e9ecef; }
     }
     .modal-toggle { text-align: center; font-size: 0.9em; color: #495057; margin-top: 4px; }
-    .modal-toggle span { color: var(--brand-primary); cursor: pointer; font-weight: 600; }
+    .modal-toggle span { color: var(--brand-ink); cursor: pointer; font-weight: 600; }
     .modal-error { color: #c92a2a; font-size: 0.9em; margin-bottom: 10px; display: none; }
 
     /* ── Entry status tick inside journal button ── */
@@ -814,7 +814,7 @@
     .entry-tick[data-done="true"] {
       border: 2px solid white;
       background: white;
-      color: var(--brand-primary);
+      color: var(--brand-ink);
     }
     /* Dotted placeholder for hidden FAB slot */
 
