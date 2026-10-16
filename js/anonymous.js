@@ -31,9 +31,8 @@
 const YELLOW      = 'var(--brand-secondary)';
 const YELLOW_DARK = '#c49e00';
 const YELLOW_LT   = '#ffe566';
-// How long a post/reply lives before cleanOldPosts() removes it. Also the cadence
-// the example (seed) posts rotate on, and the number surfaced in the feed footer,
-// so all three stay in lockstep.
+// How long a post/reply lives before cleanOldPosts() removes it, and the number
+// surfaced in the feed footer, so the two stay in lockstep.
 const POST_RETENTION_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const ADMIN_EMAIL = 'inbox@jamesmarkey.co.uk';
@@ -2616,7 +2615,7 @@ function unseenPostCount() {
 function _postIsUnseen(p, tab) {
   const seen = lastSeenMs[tab];
   const mine = profile.monika;
-  if (p.isSystem || p.isSeed || p.isAnnouncement || p.deleted || p.isTopic) return false;
+  if (p.isSystem || p.isAnnouncement || p.deleted || p.isTopic) return false;
   // Unread replies count on any post, your own included — that's how you
   // hear that somebody answered you.
   if (threadSeen[p.id]) {
@@ -2694,7 +2693,7 @@ function _saveThreadSeen() {
 // (marked read against the real id once the write lands).
 function _isThreadable(p) {
   return !!(p && p.id && !String(p.id).startsWith('local-')
-    && !p.isSeed && !p.isSystem && !p.isAnnouncement && !p.isFooter && !p.deleted);
+    && !p.isSystem && !p.isAnnouncement && !p.isFooter && !p.deleted);
 }
 
 function threadHasUnread(p) {
@@ -4064,35 +4063,6 @@ function todaySystemPost() {
   return { id: 'sys_daily', isSystem: true, icon, text };
 }
 
-// Example posts shown at the foot of the General feed so the board never looks
-// empty. Purely local demo content (isSeed: no likes/comments/reports persist).
-// Two are shown at a time and the pair rotates every POST_RETENTION_DAYS so the
-// examples stay fresh — the same cadence real posts age out on. Keep entries
-// warm, supportive and non-clinical.
-const SEED_POOL = [
-  { name: 'SunnyDaze',  streak: 42, likes: 5, med: 'Lithium',     grad1: YELLOW_LT, grad2: YELLOW_DARK, initials: 'SD', textKey: 'anon.seed.s1' },
-  { name: 'NightOwl',   streak: 7,  likes: 3, med: '',            grad1: '#64b5f6', grad2: '#1565c0',   initials: 'NO', textKey: 'anon.seed.s2' },
-  { name: 'QuietTide',  streak: 15, likes: 4, med: '',            grad1: '#81c784', grad2: '#2e7d32',   initials: 'QT', textKey: 'anon.seed.s3' },
-  { name: 'PaperMoon',  streak: 63, likes: 8, med: 'Lamotrigine', grad1: '#ba68c8', grad2: '#6a1b9a',   initials: 'PM', textKey: 'anon.seed.s4' },
-  { name: 'RiverStone', streak: 21, likes: 6, med: '',            grad1: '#4dd0e1', grad2: '#00838f',   initials: 'RS', textKey: 'anon.seed.s5' },
-  { name: 'EmberGlow',  streak: 3,  likes: 2, med: 'Quetiapine',  grad1: '#ff8a65', grad2: '#d84315',   initials: 'EG', textKey: 'anon.seed.s6' },
-  { name: 'MapleHush',  streak: 30, likes: 7, med: '',            grad1: '#f06292', grad2: '#ad1457',   initials: 'MH', textKey: 'anon.seed.s7' },
-  { name: 'DriftWood',  streak: 9,  likes: 5, med: '',            grad1: '#9575cd', grad2: '#4527a0',   initials: 'DW', textKey: 'anon.seed.s8' },
-];
-
-function seedPosts() {
-  // Deterministic per-device from the clock — every POST_RETENTION_DAYS the
-  // window advances and the next consecutive pair shows. SEED_POOL has an even
-  // length so pairs never straddle the wrap. `text` is resolved from textKey at
-  // render time so the sample posts follow the active UI language.
-  const period = Math.floor(Date.now() / (POST_RETENTION_DAYS * DAY_MS));
-  const pick = i => SEED_POOL[(period * 2 + i) % SEED_POOL.length];
-  return [0, 1].map(i => {
-    const s = pick(i);
-    return { id: 'seed_' + (i + 1), isSeed: true, tab: 'general', timestamp: null, ...s, text: _wt(s.textKey) };
-  });
-}
-
 // A quiet note at the very bottom of the General feed telling users their posts
 // aren't permanent. isFooter is rendered by renderFeedFooter (see renderPosts).
 function feedFooter() {
@@ -4100,7 +4070,7 @@ function feedFooter() {
 }
 
 function assembleGeneralPosts(realPosts) {
-  return [todaySystemPost(), ...sortPosts(dedupeTopics(realPosts)), ...seedPosts(), feedFooter()];
+  return [todaySystemPost(), ...sortPosts(dedupeTopics(realPosts)), feedFooter()];
 }
 
 // Defensive: only ever surface ONE "Today's topic". Firestore can transiently
@@ -4732,7 +4702,7 @@ function _scrollThreadToEnd() {
 
 async function openThread(postId) {
   const post = localPosts.find(p => p.id === postId);
-  if (!post || post.isSeed) return;
+  if (!post) return;
   commentTargetId = postId;
   lastCommentAuthor = ''; // reset until the listener reports the thread's newest comment
   _threadStickToBottom = true; // open on the newest comment, not the top of the thread
@@ -5508,15 +5478,15 @@ function renderPost(p) {
   const g1           = safeColor(p.grad1, YELLOW_LT);
   const g2           = safeColor(p.grad2, YELLOW_DARK);
   const av           = p.initials || initials(p.name);
-  const deleteBtn    = profile.isAdmin && !p.isSeed
+  const deleteBtn    = profile.isAdmin
     ? `<button class="icon-btn" data-delete="${esc(p.id)}" title="${esc(_wt('anon.modbtn.deletePost'))}">🗑️</button>` : '';
-  const banBtn       = profile.isAdmin && !p.isSeed && !p.isAdmin && p.name !== profile.monika
+  const banBtn       = profile.isAdmin && !p.isAdmin && p.name !== profile.monika
     ? `<button class="icon-btn" data-ban="${esc(p.name)}" title="${esc(_wt('anon.modbtn.banUser'))}">🚫</button>` : '';
-  const pinBtn       = profile.isAdmin && !p.isSeed
+  const pinBtn       = profile.isAdmin
     ? `<button class="icon-btn${p.pinned ? ' pin-active' : ''}" data-pin="${esc(p.id)}" data-tab="${esc(p.tab || currentTab)}" title="${esc(p.pinned ? _wt('anon.modbtn.unpinPost') : _wt('anon.modbtn.pinPost'))}">📌</button>` : '';
-  const selfDeleteBtn = !p.isSeed && !profile.isAdmin && p.name === profile.monika && isSelfDeleteEligible(p)
+  const selfDeleteBtn = !profile.isAdmin && p.name === profile.monika && isSelfDeleteEligible(p)
     ? `<button class="icon-btn" data-selfdelete="${esc(p.id)}" title="${esc(_wt('anon.modbtn.selfDeletePost'))}" style="opacity:0.4;">🗑️</button>` : '';
-  const commentBtn   = !p.isSeed ? commentBtnHtml(p, commentCount) : '';
+  const commentBtn   = commentBtnHtml(p, commentCount);
   const pinnedBadge  = p.pinned ? `<div class="pinned-badge">📌 ${esc(_wt('anon.modbtn.pinnedBadge'))}</div>` : '';
   const postBday     = _birthdayCompact(p.joinedAt || '');
   return `<div class="post-card${p.pinned ? ' post-pinned' : ''}" data-pid="${esc(p.id)}">
@@ -5532,14 +5502,14 @@ function renderPost(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
-    ${p.isSeed ? '' : pollHtml(p)}
+    ${pollHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}"${p.name === profile.monika ? ` data-self="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
         💛 <span>${likes}</span>
       </button>
       ${commentBtn}
       <div style="flex:1"></div>
-      ${p.isSeed ? '' : moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
+      ${moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
         + (p.name !== profile.monika ? `<button class="icon-btn" data-sos="${esc(p.name)}" title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>`
           + `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>`
           + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''))}
@@ -5760,7 +5730,7 @@ function setupCompose() {
 
     // Show post immediately (optimistic update). Route through assembleGeneralPosts
     // on the general tab so the optimistic render keeps the system greeting, the
-    // deduped daily topic, and the seed posts instead of dropping them until the
+    // deduped daily topic and the footer instead of dropping them until the
     // next snapshot fires.
     localPosts.unshift({ id: optimisticId, ...entry });
     renderPosts(currentTab === 'general'
