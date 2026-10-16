@@ -1552,7 +1552,13 @@
 // v329: journal Settings "🛠️ Advanced ▸" text link → a full-width "Advanced →"
 //   pill on its own row, styled like the "Focus Mode →" / "Journal →" buttons.
 //   Touches journal.html, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v329';
+// v330: the journal key fix (support, 2026-10-16) — the account's key wins
+//   over a stale device (Keychain) key, entries under an old device key are
+//   re-encrypted, undecryptable entries are counted on screen instead of
+//   dropped; 🙋 Support in the feedback popup (+ bipolar@unisim.co.uk), and a
+//   one-off support hint after the tutorial. Touches js/journal.js, fab.js,
+//   js/index.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v330';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -778,7 +778,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       overlay.innerHTML = `<div style="background:linear-gradient(135deg,var(--brand-primary-mid),var(--brand-primary-light));border-radius:20px;padding:28px 32px;text-align:center;max-width:300px;width:calc(100vw - 64px);box-shadow:0 12px 48px rgba(255,107,0,0.55);">
         <div style="font-size:2.6em;margin-bottom:10px;">🎓</div>
         <div style="font-weight:800;font-size:1.1em;color:white;margin-bottom:6px;">${_tr('home.tutorialCompleteTitle', 'Tutorial Complete!')}</div>
-        <div style="font-size:0.88em;color:rgba(255,255,255,0.9);line-height:1.5;margin-bottom:16px;">${_tr('home.tutorialCompleteBody', 'Done for now! There will be a few more hints as you progress.')}</div>
+        <div style="font-size:0.88em;color:rgba(255,255,255,0.9);line-height:1.5;margin-bottom:12px;">${_tr('home.tutorialCompleteBody', 'Done for now! There will be a few more hints as you progress.')}</div>
+        <div style="font-size:0.82em;color:white;line-height:1.5;margin-bottom:16px;">🙋 ${_tr('home.tutorialSupport', 'Need help? Tap 📣 for support, or email')} <strong style="white-space:nowrap;">bipolar@unisim.co.uk</strong></div>
         <div style="font-size:0.78em;color:rgba(255,255,255,0.65);">${_tr('home.tapDismiss', 'Tap to dismiss')}</div>
       </div>`;
       Object.assign(overlay.style, {
@@ -787,11 +788,54 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       });
       overlay.addEventListener('click', () => {
         overlay.remove();
+        _showSupportHint();
       });
       document.body.appendChild(overlay);
       overlay.style.opacity = '0';
       overlay.style.transition = 'opacity 0.3s ease';
       requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+    }
+
+    /**
+     * After the "Tutorial Complete!" popup: once per device, a label above the
+     * 📣 button, where Support lives (James, 2026-10-16). Tapping it opens the
+     * feedback popup on Support; any other tap, or 8 s, clears it. Skipped
+     * when the button isn't on screen.
+     */
+    function _showSupportHint() {
+      if (BB.storage.get('SupportHintShown') === '1') return;
+      const fab = document.querySelector('.feedback-fab');
+      const r = fab && fab.getBoundingClientRect();
+      if (!r || !r.width || getComputedStyle(fab).display === 'none') return;
+      BB.storage.set('SupportHintShown', '1');
+      const wrap = document.createElement('div');
+      wrap.id = 'bbSupportHint';
+      Object.assign(wrap.style, {
+        position: 'fixed', zIndex: '60', visibility: 'hidden',
+        bottom: (window.innerHeight - r.top + 14) + 'px', left: '0',
+      });
+      const tip = document.createElement('button');
+      tip.type = 'button';
+      tip.className = 'fab-hint-label';
+      tip.textContent = _tr('home.supportHint', '🙋 Need help? Tap here for support');
+      Object.assign(tip.style, { border: 'none', cursor: 'pointer', animation: 'signinHintPulse 1.6s ease-in-out infinite' });
+      wrap.appendChild(tip);
+      const done = () => { wrap.remove(); document.removeEventListener('click', onAway, true); clearTimeout(timer); };
+      const onAway = (e) => { if (!wrap.contains(e.target)) done(); };
+      const timer = setTimeout(done, 8000);
+      tip.addEventListener('click', () => {
+        done();
+        if (typeof window.openFabFeedback === 'function') {
+          window.openFabFeedback();
+          if (typeof window.selectFabFeedbackType === 'function') window.selectFabFeedbackType('support');
+        }
+      });
+      document.body.appendChild(wrap);
+      // Centred over the button, kept 12 px inside the screen edges.
+      const w = wrap.offsetWidth;
+      wrap.style.left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12)) + 'px';
+      wrap.style.visibility = '';
+      setTimeout(() => document.addEventListener('click', onAway, true), 0);
     }
 
     /**

@@ -316,7 +316,7 @@ const ORANGE_DARK = '#c97900';
 const ORANGE_BG   = '#fff8ee';
 
 function feedbackEmailHtml(d) {
-  const TYPE_EMOJI = { bug: '🐛', comment: '💬', idea: '💡' };
+  const TYPE_EMOJI = { support: '🙋', bug: '🐛', comment: '💬', idea: '💡' };
   const typeLabel = d.type ? `${TYPE_EMOJI[d.type] || '📣'} ${d.type}` : '📣 unknown';
   const ts = d.ts ? new Date(d.ts).toUTCString() : 'unknown';
   const rows = [
@@ -397,7 +397,11 @@ exports.onFeedbackSubmitted = onDocumentCreated(
     const d = event.data.data();
     const typeLabel = d.type || 'feedback';
     const from    = [d.name, d.email].filter(Boolean).join(' · ') || d.uid || 'guest';
-    const subject = `[BipolarBear] New ${typeLabel} from ${from}`;
+    const subject = d.type === 'support'
+      ? `[BipolarBear] Support request from ${from}`
+      : `[BipolarBear] New ${typeLabel} from ${from}`;
+    // Reply straight from the inbox to whoever wrote in.
+    const replyTo = typeof d.email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email.trim()) ? d.email.trim() : null;
 
     const resend = new Resend(RESEND_API_KEY.value());
     const shot   = screenshotAttachment(d.screenshot);
@@ -407,6 +411,7 @@ exports.onFeedbackSubmitted = onDocumentCreated(
       subject,
       html:    feedbackEmailHtml(d),
       ...(shot ? { attachments: [shot] } : {}),
+      ...(replyTo ? { reply_to: replyTo } : {}),
       text:    `Name: ${d.name || '(not given)'}\nType: ${typeLabel}\nMessage: ${d.message || ''}\nPage: ${d.page || ''}\nPlatform: ${d.platform || ''}\nUID: ${d.uid || 'guest'}\nUser email: ${d.email || '—'}\nNotify: ${d.notify ? 'yes' : 'no'}\nTime: ${d.ts ? new Date(d.ts).toUTCString() : 'unknown'}`,
     });
 

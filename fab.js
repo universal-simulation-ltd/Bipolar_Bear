@@ -470,8 +470,10 @@
         <div class="bb-feedback-content">
           <h3 style="margin-bottom:4px;color:#333;" data-i18n="feedback.title">Share Feedback</h3>
           <p id="bbFbMeta" style="font-size:0.78em;color:#adb5bd;margin-bottom:4px;"></p>
-          <p style="font-size:0.85em;color:#6c757d;margin-bottom:16px;" data-i18n="feedback.subtitle">Help us make Bipolar Bear better.</p>
-          <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <p style="font-size:0.85em;color:#6c757d;margin-bottom:6px;" data-i18n="feedback.subtitle">Help us make Bipolar Bear better.</p>
+          <p style="font-size:0.85em;color:#6c757d;margin-bottom:16px;"><span data-i18n="feedback.orEmail">Or email us at</span> <a href="mailto:bipolar@unisim.co.uk" style="color:var(--brand-primary);font-weight:600;text-decoration:none;">bipolar@unisim.co.uk</a></p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+            <button class="bb-fb-type-btn" id="bbFbTypeSupport" onclick="selectFabFeedbackType('support')">🙋 <span data-i18n="feedback.typeSupport">Support</span></button>
             <button class="bb-fb-type-btn" id="bbFbTypeBug" onclick="selectFabFeedbackType('bug')">🐛 <span data-i18n="feedback.typeBug">Bug</span></button>
             <button class="bb-fb-type-btn" id="bbFbTypeComment" onclick="selectFabFeedbackType('comment')">💬 <span data-i18n="feedback.typeComment">Comment</span></button>
             <button class="bb-fb-type-btn" id="bbFbTypeIdea" onclick="selectFabFeedbackType('idea')">💡 <span data-i18n="feedback.typeIdea">Idea</span></button>
@@ -1110,7 +1112,7 @@
 
   // ── Feedback FAB ──────────────────────────────────────────────────────────
 
-  /** Currently-selected feedback type ('bug' | 'comment' | 'idea') or null. */
+  /** Currently-selected feedback type ('support' | 'bug' | 'comment' | 'idea') or null. */
   let _fbType = null;
   /** Base64-encoded compressed screenshot, or null. */
   let _fbScreenshotData = null;
@@ -1232,16 +1234,21 @@
   /**
    * Toggle which feedback-type chip is selected. Also reveals the optional
    * email input for bug reports (so we can follow up).
-   * @param {'bug'|'comment'|'idea'} type
+   * @param {'support'|'bug'|'comment'|'idea'} type
    */
   window.selectFabFeedbackType = function (type) {
     _fbType = type;
     document.querySelectorAll('.bb-fb-type-btn').forEach(b => b.classList.remove('selected'));
-    const _map = { bug: 'bbFbTypeBug', comment: 'bbFbTypeComment', idea: 'bbFbTypeIdea' };
+    const _map = { support: 'bbFbTypeSupport', bug: 'bbFbTypeBug', comment: 'bbFbTypeComment', idea: 'bbFbTypeIdea' };
     const _el = document.getElementById(_map[type]);
     if (_el) _el.classList.add('selected');
     const _emailRow = document.getElementById('bbFbEmailRow');
-    if (_emailRow) _emailRow.style.display = type === 'bug' ? '' : 'none';
+    if (_emailRow) _emailRow.style.display = (type === 'bug' || type === 'support') ? '' : 'none';
+    // Support needs somewhere to reply to (an account's own email will do).
+    const _emailEl = document.getElementById('bbFbEmail');
+    if (_emailEl) _emailEl.placeholder = type === 'support'
+      ? _bbT('feedback.emailForReply', 'Your email, so we can reply')
+      : _bbT('feedback.emailPlaceholder', 'Your email (optional)');
   };
   /**
    * Validate and submit feedback to Firestore (`feedback` collection). Signs
@@ -1257,6 +1264,10 @@
     if (!_msg)    { if (_errEl) { _errEl.textContent = _bbT('fab.fb.writeFirst', 'Please write something first.'); _errEl.style.display = ''; } return; }
     const _notifyEl = document.getElementById('bbFbNotify');
     const _emailEl  = document.getElementById('bbFbEmail');
+    if (_fbType === 'support' && !(_emailEl && _emailEl.value.trim()) && !(window.currentUser && window.currentUser.email)) {
+      if (_errEl) { _errEl.textContent = _bbT('fab.fb.needEmail', 'Add your email so we can reply.'); _errEl.style.display = ''; }
+      return;
+    }
     const _nameRow  = document.getElementById('bbFbNameRow');
     const _nameEl   = document.getElementById('bbFbName');
     const _typed    = (_nameRow && _nameRow.style.display !== 'none' && _nameEl) ? _nameEl.value.trim().slice(0, 80) : '';
@@ -1288,7 +1299,9 @@
       // Remember a typed name so the next feedback doesn't ask again.
       if (_typed) BB.storage.set('FeedbackName', _typed);
       window.closeFabFeedback();
-      alert(_bbT('fab.fb.thanks', 'Thanks for your feedback! 🐻'));
+      alert(_fbType === 'support'
+        ? _bbT('fab.fb.thanksSupport', "Thanks, we've got your message and will reply by email. 🐻")
+        : _bbT('fab.fb.thanks', 'Thanks for your feedback! 🐻'));
     } catch (e) {
       if (_errEl) { _errEl.textContent = _bbT('fab.fb.sendFail', 'Could not send — please try again.'); _errEl.style.display = ''; }
     }

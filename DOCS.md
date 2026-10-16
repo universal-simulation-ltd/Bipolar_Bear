@@ -765,6 +765,13 @@ _applyOnboardingGating()      — shows/hides elements based on current step
 
 **On login** (`onAuthStateChanged`): the server step is compared with the local step; the maximum is used. If the combined step is ≥ 12, all completion flags are silently set in localStorage before `_applyOnboardingGating()` runs — this prevents the tutorial popup from appearing on every login and ensures the FAB dock is always accessible for existing users.
 
+**Support hint** (2026-10-16): the "Tutorial Complete" popup has a line on
+where help is (📣 → Support, or bipolar@unisim.co.uk). Dismissing it shows
+`_showSupportHint()` once per device (`bbSupportHintShown`): a label over the
+📣 button that opens the feedback popup on **Support**. Any other tap, or 8 s,
+clears it. Support feedback asks a guest for an email, and the
+`onFeedbackSubmitted` email to inbox@unisim.co.uk carries it as `reply_to`.
+
 **Tutorial skip**: available via the logo easter egg (5 taps). Instantly sets step to 12 and marks all flags, with a "✅ Tutorial skipped" toast.
 
 ### 2.11 Bipolar Anonymous Board
@@ -1471,6 +1478,47 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   ⚠️ **The store listings and screenshots** (`store-assets/`) still say
   end-to-end. That stays true for the store builds until a native release ships
   this; update them with that release.
+
+#### The device key never wins over the account's (2026-10-16)
+
+Support case (2026-10-16): an iPhone user's whole journal vanished after the
+1.42 update. The 32 entries were on Firestore throughout. What happened:
+
+- Builds before `_requireUserKey` saved entries **in plaintext** when no key
+  was in hand. 31 of the 44 accounts with entries still had no key at all on
+  2026-10-16, and 38 still had plaintext entries.
+- On the first load of a current build, `_resolveUserKey` gives such an account
+  a Standard key and `_encryptExistingEntries` encrypts everything (all 32 in
+  the same second, 2026-10-15 15:10 UTC, from the iPhone app).
+- The device key lives in **one Keychain slot (`bb_user_key`) that belongs to
+  no account**, survives deleting the app, and is cleared only by an explicit
+  sign-out. Its read is raced against 3 s and tried once per session. A key
+  left there earlier, which that load missed or the new key's write never
+  replaced, was taken on the next load ahead of the account's key.
+  `_decodeFirestoreEntry` then dropped every entry without a word.
+
+Now (`js/journal.js`):
+- `_checkDeviceKey(user, d)` runs once per load when a device key is in hand.
+  For a Standard account it unwraps the account's key and, if the device's
+  differs, adopts the account's (`_preferAccountKey`) and sets the device's
+  aside in `_staleUserKeys` (memory only). An account with no key at all
+  takes the device's key as its Standard key (in a transaction) and encrypts
+  any plaintext entries.
+- Every place that gets the key from the account (password unwrap, Standard
+  unwrap, unlock prompt, a freshly created key) goes through
+  `_preferAccountKey`, so a different device key never stays in charge.
+- `_decodeFirestoreEntry` tries the set-aside keys after the current one. An
+  entry only a set-aside key opens is re-encrypted under the account's key
+  (`_reencryptUnderAccountKey`, once the key is verified).
+- Entries nothing opens are counted (`_undecryptableCount`) and shown above
+  the list (`journal.undecryptable`). An all-undecryptable journal no longer
+  shows "No entries yet" or the import offer.
+- After a password reset, the device key may replace the password wrap only
+  if it opens one of the account's entries (`_keyOpensAccountEntries`).
+- Private accounts can only be checked with their password, which the
+  sign-in branch does.
+- Test: `node scripts/test-journal-key.mjs` runs the real functions against a
+  mocked Firestore.
 
 ### 2.19 The Friendly neighbourhood Bipolar Bear (crisis auto-reply)
 

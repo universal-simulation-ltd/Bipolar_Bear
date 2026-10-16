@@ -684,17 +684,17 @@ window.addEventListener('pageshow', () => {
                   const _wrappingKey = await _userDeriveKey(_pendingAuthPassword, _wrapSalt);
                   try {
                     const _dataKey = await _unwrapDataKey(d.wrappedKey, d.wrappedKeyIv, _wrappingKey);
-                    if (!_userCryptoKey) {
-                      _userCryptoKey = _dataKey;
-                      await _userExportKeyToSession(_userCryptoKey);
-                    }
-                    // If Keychain had the key it's the same data key — no action needed
+                    // The account's key, whatever the device held (2026-10-16).
+                    await _preferAccountKey(_dataKey);
                   } catch(e) {
                     // Unwrap failed — password was changed via email reset, Firestore has stale wrap.
                     // Unless the wrap is a journal password chosen on its own
                     // (d.journalPw, see _promptJournalKey): then the sign-in
                     // password was never meant to open it, so leave it be.
-                    if (_userCryptoKey && !d.journalPw) {
+                    // And only a device key that opens this account's entries
+                    // may replace the wrap: a key left in the Keychain by an
+                    // earlier install would lock the journal for good.
+                    if (_userCryptoKey && !d.journalPw && await _keyOpensAccountEntries(user.uid, _userCryptoKey)) {
                       // Native: Keychain has the true data key — re-wrap with new password
                       const _newWrapSaltBytes = crypto.getRandomValues(new Uint8Array(16));
                       const _newWrapSalt = btoa(String.fromCharCode(..._newWrapSaltBytes));
@@ -785,6 +785,8 @@ window.addEventListener('pageshow', () => {
               // load hanging behind the spinner (iPhone, 2026-10-07).
               if (!_userCryptoKey && _journalKeyDeclined) return;
             }
+            // A key this device held may not be the account's: check (once).
+            if (_userCryptoKey && !_accountKeyVerified) await _checkDeviceKey(user, doc.exists ? doc.data() : null);
             if (_userKeyMode === null) _userKeyMode = _keyModeOf(doc.exists ? doc.data() : null);
 
             // The account and its encryption key are in place: a save that was
@@ -2774,6 +2776,7 @@ window.addEventListener('pageshow', () => {
 
           // Helper: decode a QuerySnapshot into the entries array (handles decryption)
           async function _pushDecoded(snap) {
+            _undecryptableCount = 0; // each snapshot is the whole journal
             const decoded = await Promise.all(snap.docs.map(doc => _decodeFirestoreEntry(doc)));
             decoded.forEach(e => { if (e) entries.push(e); });
           }
@@ -2858,6 +2861,8 @@ window.addEventListener('pageshow', () => {
         }
 
         if (loader) loader.style.display = 'none';
+        if (!currentUser) _undecryptableCount = 0;
+        _showUndecryptableNotice();
         if (entries.length === 0) {
           // Encrypted entries exist but no key — redirect to index where the PIN prompt lives
           if (_lockedEntryCount > 0) {
@@ -2866,6 +2871,17 @@ window.addEventListener('pageshow', () => {
           }
           _allEntries = [];
           _writeRecentMoods([]);
+          if (_undecryptableCount > 0) {
+            // Not an empty journal: the notice above says so. No "No entries
+            // yet" and no import offer, which would add a second history.
+            document.getElementById('entries').innerHTML = '';
+            document.getElementById('stats').style.display = 'none';
+            document.getElementById('chart').style.display = 'none';
+            const _eh = document.querySelector('.entries-header');
+            if (_eh) _eh.style.display = 'none';
+            updateDatePickerStatus([]);
+            return;
+          }
           // Import lives with the entry list, which an empty journal doesn't
           // have, so offer it here: new users are the ones moving their history in.
           document.getElementById('entries').innerHTML = '<div class="no-entries">' + BB.t('journal.noEntries') + '</div>'
@@ -3785,6 +3801,114 @@ window.addEventListener('pageshow', () => {
       await _userExportKeyToSession(key);
     }
 
+    // ── The device's key against the account's (2026-10-16) ──
+    // The phone keeps the data key in one Keychain slot that belongs to no
+    // account, and iOS keeps it when the app is deleted. A key left there by an
+    // earlier install or account used to win over the account's own key, and
+    // a Keychain read that timed out let the journal mint a second one, so
+    // every entry failed to decrypt and the journal looked empty (support,
+    // 2026-10-16). The account's key now wins. A device key set aside still
+    // opens entries it encrypted, which _decodeFirestoreEntry re-encrypts
+    // under the account's key.
+    let _staleUserKeys = [];
+    let _accountKeyChecked = false;
+    let _accountKeyVerified = false; // _userCryptoKey is known to be the account's
+    let _undecryptableCount = 0;     // entries no key on this device opens
+
+    async function _rawKeyB64(key) {
+      const raw = await crypto.subtle.exportKey('raw', key);
+      return btoa(String.fromCharCode(...new Uint8Array(raw)));
+    }
+
+    /** Make `accountKey` the journal key, setting aside a different one this device held. */
+    async function _preferAccountKey(accountKey) {
+      if (_userCryptoKey && await _rawKeyB64(_userCryptoKey) !== await _rawKeyB64(accountKey)) {
+        console.warn("This device's journal key is not the account's: using the account's");
+        _staleUserKeys.push(_userCryptoKey);
+        await _adoptUserKey(accountKey);
+      } else if (!_userCryptoKey) {
+        await _adoptUserKey(accountKey);
+      }
+      _accountKeyVerified = true;
+    }
+
+    /**
+     * Once per page load, with a key already on this device: a Standard
+     * account's own key wins; an account with no key at all takes this
+     * device's as its Standard key, so other devices and a reinstall can open
+     * what it encrypted. A Private account can only be checked with its
+     * password (the sign-in branch does that).
+     */
+    async function _checkDeviceKey(user, d, _again) {
+      if (_accountKeyChecked || !_userCryptoKey || !user) return;
+      _accountKeyChecked = true;
+      try {
+        if (d && d.stdWrappedKey && d.stdWrappedKeyIv) {
+          await _preferAccountKey(await _unwrapDataKey(d.stdWrappedKey, d.stdWrappedKeyIv, await _serverWrapKey()));
+          _userKeyMode = 'standard';
+        } else if (_keyModeOf(d) === null) {
+          const w = await _wrapDataKey(_userCryptoKey, await _serverWrapKey());
+          const ref = db.collection('userSettings').doc(user.uid);
+          const made = await db.runTransaction(async (tx) => {
+            const snap = await tx.get(ref);
+            const cur = snap.exists ? snap.data() : {};
+            if (cur.stdWrappedKey || cur.wrappedKey || cur.encSalt) return false;
+            tx.set(ref, { stdWrappedKey: w.wrappedKey, stdWrappedKeyIv: w.wrappedKeyIv, encMigrated: true }, { merge: true });
+            return true;
+          });
+          if (made) {
+            _accountKeyVerified = true;
+            _userKeyMode = 'standard';
+            await _encryptExistingEntries(user.uid);
+          } else if (!_again) {
+            // Another device gave the account a key first: check against that.
+            _accountKeyChecked = false;
+            const snap = await ref.get();
+            return _checkDeviceKey(user, snap.exists ? snap.data() : null, true);
+          }
+        }
+      } catch (e) {
+        // Offline, say: try again on the next load.
+        _accountKeyChecked = false;
+        console.warn('Could not check the journal key against the account', e);
+      }
+    }
+
+    /** Whether `key` opens this account's encrypted entries (true when it has none to try). */
+    async function _keyOpensAccountEntries(uid, key) {
+      try {
+        const snap = await db.collection('entries').where('userId', '==', uid).limit(20).get();
+        const enc = snap.docs.map(x => x.data()).find(x => x._enc);
+        if (!enc) return true;
+        await _userDecrypt(key, enc);
+        return true;
+      } catch (e) { return false; }
+    }
+
+    /** An entry only a set-aside device key opens goes back encrypted under the account's key. */
+    function _reencryptUnderAccountKey(doc, decrypted) {
+      if (!_accountKeyVerified || !_userCryptoKey) return;
+      const data = doc.data();
+      _userEncrypt(_userCryptoKey, decrypted)
+        .then(enc => doc.ref.set({ userId: data.userId, timestamp: data.timestamp, ...enc }))
+        .catch(e => console.warn('Could not re-encrypt entry', doc.id, e));
+    }
+
+    /** Says so when entries exist that this device can't open, rather than leave them out silently. */
+    function _showUndecryptableNotice() {
+      const entriesEl = document.getElementById('entries');
+      let el = document.getElementById('bbUndecryptableNotice');
+      if (!_undecryptableCount || !entriesEl) { if (el) el.remove(); return; }
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'bbUndecryptableNotice';
+        el.className = 'no-entries';
+        el.setAttribute('role', 'status');
+        entriesEl.parentNode.insertBefore(el, entriesEl);
+      }
+      el.textContent = BB.t('journal.undecryptable', { n: _undecryptableCount });
+    }
+
     /**
      * Try a typed journal password against the account. Resolves the data key,
      * or null when it is the wrong password.
@@ -3872,7 +3996,7 @@ window.addEventListener('pageshow', () => {
       const settings = d || {};
       if (settings.stdWrappedKey) {
         try {
-          await _adoptUserKey(await _unwrapDataKey(settings.stdWrappedKey, settings.stdWrappedKeyIv, await _serverWrapKey()));
+          await _preferAccountKey(await _unwrapDataKey(settings.stdWrappedKey, settings.stdWrappedKeyIv, await _serverWrapKey()));
           _userKeyMode = 'standard';
           return true;
         } catch (e) {
@@ -3892,7 +4016,7 @@ window.addEventListener('pageshow', () => {
           const snap = await db.collection('userSettings').doc(user.uid).get();
           return _resolveUserKey(user, snap.exists ? snap.data() : null, true);
         }
-        await _adoptUserKey(key);
+        await _preferAccountKey(key);
         _userKeyMode = 'standard';
         // Anything this account saved before it had a key goes encrypted now.
         await _encryptExistingEntries(user.uid);
@@ -3980,7 +4104,7 @@ window.addEventListener('pageshow', () => {
             if (unlock) {
               const key = await _unlockWithJournalPassword(user.uid, settings, p);
               if (!key) { showErr(t('wrong')); go.disabled = false; pw.select(); return; }
-              await _adoptUserKey(key);
+              await _preferAccountKey(key);
               _userKeyMode = settings.stdWrappedKey ? 'standard' : 'private';
               if (spareBox.checked) {
                 try { await _saveStandardWrap(user.uid, key); _userKeyMode = 'standard'; }
@@ -4046,8 +4170,16 @@ window.addEventListener('pageshow', () => {
             const decrypted = await _userDecrypt(_userCryptoKey, data);
             return { id: doc.id, ...decrypted };
           } catch (e) {
+            for (const k of _staleUserKeys) {
+              try {
+                const decrypted = await _userDecrypt(k, data);
+                _reencryptUnderAccountKey(doc, decrypted);
+                return { id: doc.id, ...decrypted };
+              } catch (_) { /* not this one */ }
+            }
             console.error('Failed to decrypt entry', doc.id, e);
-            return null; // skip undecryptable entry
+            _undecryptableCount++;
+            return null; // counted, and said so (_showUndecryptableNotice)
           }
         }
         return null; // key not available — entry locked
