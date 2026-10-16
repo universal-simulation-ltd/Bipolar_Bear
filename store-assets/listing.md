@@ -35,25 +35,25 @@ depression,mania,hypomania,manic,mental health,wellbeing,diary,sleep,energy,medi
 Bipolar Bear is a free, private mood journal and mood tracker built for people living with bipolar disorder. Log your moods, energy and sleep day by day, spot the patterns that matter, and keep a survival kit for the hard days.
 
 TRACK WHAT MATTERS
-Log your mood, energy, sleep, anxiety and custom fields every day. It takes less than a minute, and gentle reminders and streaks help you keep the habit without the pressure.
+Log your mood, energy, sleep, anxiety and custom fields every day. It takes less than a minute, and gentle reminders and streaks help you keep the habit without the pressure. Focus mode takes you through each entry one question at a time.
 
 UNDERSTAND YOUR PATTERNS
 See your mood over time with charts and personalised insights. Spot what's affecting your next-day mood — sleep, alcohol, exercise and more — worked out privately on your device.
 
 SYNC WITH APPLE HEALTH
-Pull your sleep in from Apple Health, so your sleep log fills itself in.
+Bring your sleep and steps in from Apple Health, so your journal fills itself in.
 
 BUILD YOUR SURVIVAL KIT
-Keep the strategies, medications, goals, memories and crisis resources that help you through hard times, all in one place. On overwhelming days, focused mode strips the app back to just what you need.
+Keep the strategies, medications, goals, memories and crisis resources that help you through hard times, all in one place. Add the Safety plan widget to your lock screen to keep your support number close.
 
 SHARE WITH YOUR CARE TEAM
 Export a clean PDF summary for your doctor or psychiatrist.
 
 ANONYMOUS COMMUNITY
-Connect with others who get it. Share your thoughts without sharing your identity on the optional anonymous community board.
+Connect with others who get it. Share your thoughts without sharing your identity on the optional anonymous community board, for adults aged 18 and over.
 
 PRIVATE BY DESIGN
-Journal entries are encrypted on your device before they leave it. Turn on Private journal and only you can read them: not even we can. Insights stay on your device. No ads, and we never sell your data.
+Journal entries are encrypted on your device before they leave it. As standard we keep a spare key, so your journal opens on a new phone; turn on Private journal and only you can read them: not even we can. Insights stay on your device. No ads, and we never sell your data.
 
 Bipolar Bear is for people living with bipolar disorder, their families, and anyone who wants to understand their mental health better.
 
@@ -62,9 +62,49 @@ Bipolar Bear is not a medical device and does not give medical advice. It's a to
 Built by James Markey MBE and hosted by UNI·SIM.
 ```
 
+### Google Play full description (en-GB, max 4000 chars)
+Play has its own en-GB copy: Health Connect instead of Apple Health, and the
+home-screen "Call for support" widget instead of the lock-screen one.
+`play-upload.mjs` never touches en-GB; it went up with the Play API on 2026-10-16.
+```
+Bipolar Bear is a free, private mood journal and mood tracker built for people living with bipolar disorder. Log your moods, energy, sleep and medications day by day, spot the patterns that matter, and keep a survival kit for the hard days.
+
+TRACK WHAT MATTERS
+Log your mood, energy, sleep, anxiety and custom fields every day. It takes less than a minute, and gentle reminders and streaks help you keep the habit without the pressure. Focus mode takes you through each entry one question at a time.
+
+UNDERSTAND YOUR PATTERNS
+See your mood over time with charts and personalised insights. Spot what's affecting your next-day mood — sleep, alcohol, exercise and more — worked out privately on your device.
+
+SYNC WITH HEALTH CONNECT
+Bring your sleep and steps in from Health Connect, so your journal fills itself in.
+
+BUILD YOUR SURVIVAL KIT
+Keep the strategies, medications, goals, memories and crisis resources that help you through hard times, all in one place. A home-screen widget puts a call to your support contact one tap away.
+
+SHARE WITH YOUR CARE TEAM
+Export a clean PDF summary for your doctor or psychiatrist.
+
+ANONYMOUS COMMUNITY
+Connect with others who get it. Share your thoughts without sharing your identity on the optional anonymous community board, for adults aged 18 and over.
+
+PRIVATE BY DESIGN
+Journal entries are encrypted on your device before they leave it. As standard we keep a spare key, so your journal opens on a new phone; turn on Private journal and only you can read them: not even we can. Insights stay on your device. No ads, and we never sell your data.
+
+Bipolar Bear is for people living with bipolar disorder, their families, and anyone who wants to understand their mental health better.
+
+Bipolar Bear is not a medical device and does not give medical advice. It's a tool to help you notice, reflect and stay connected, alongside the care of your health professionals.
+
+Built by James Markey MBE and hosted by UNI·SIM.
+```
+
+### Support email (Play contact email)
+```
+bipolar@unisim.co.uk
+```
+
 ### Support URL
 ```
-https://www.bipolarbear.app
+https://www.bipolarbear.app/privacy.html
 ```
 
 ### Marketing URL
@@ -109,10 +149,10 @@ Living with bipolar can feel isolating. Highs, lows, medication changes, sleeple
 
 WHY PEOPLE USE IT
 
-• Anonymous by design — you choose a private nickname (your "moniker"), not your real identity. There are no profiles to fill in and no real names on display.
+• Anonymous by design — you choose a Moniker, a private nickname, not your real identity. There are no profiles to fill in and no real names on display.
 • Real peer support — post about how you're doing, reply to others, and offer encouragement. Everyone here gets it.
 • A fresh daily topic — a rotating discussion prompt gives the community something new to talk about each day.
-• Reach out when things are hard — flag a post for support when you're struggling and want others to know.
+• Look out for each other — if someone's post worries you, send an SOS flag and the moderators are told. A post that reads like someone in crisis gets an automatic reply with crisis lines within seconds.
 • A community you can shape — mute anyone you'd rather not see, and report posts that cross the line. Posts are moderated, and you can delete your own at any time.
 
 A BUILT-IN WIKI
@@ -133,12 +173,14 @@ Search across it all to quickly find what you need.
 PRIVATE AND LOW-PRESSURE
 
 • No real names, no public profiles.
+• Your email is used only to send your sign-in code, and is deleted as soon as the code is used. Your profile is filed under a code made with a secret key on our server, and posts carry no account ID.
+• Posts are visible to other members and are not end-to-end encrypted, so please don't share anything that identifies you.
 • You're in control of what you share and can remove your posts or account whenever you want.
 • Older posts are automatically cleared over time, so the board stays current rather than becoming a permanent record.
 
 A KIND PLACE TO LAND
 
-Bipolar Anonymous is built to be supportive and judgement-free. Whether you're newly diagnosed, supporting someone you love, or years into managing bipolar, you're welcome here.
+Bipolar Anonymous is built to be supportive and judgement-free. Whether you're newly diagnosed, supporting someone you love, or years into managing bipolar, you're welcome here. The board is for adults aged 18 and over.
 
 IMPORTANT
 
@@ -151,12 +193,12 @@ Built by James Markey MBE and hosted by UNI·SIM.
 
 ### Support URL
 ```
-https://www.bipolarbear.app
+https://bipolaranonymous.app/privacy.html
 ```
 
 ### Privacy Policy URL
 ```
-https://www.bipolarbear.app/privacy.html
+https://bipolaranonymous.app/privacy.html
 ```
 
 ---
