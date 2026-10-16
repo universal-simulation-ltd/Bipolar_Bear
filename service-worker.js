@@ -1599,7 +1599,13 @@
 //   js/shared/i18n.js, js/shared/translate.js.
 // v337: the release-1.43 batch above (translations, Bear fixes, Anonymous
 //   fixes) merged as one cache version.
-const CACHE_NAME = 'bipolarbear-v337';
+// v338-ipad (placeholder, renumbered at merge): iPad / wide-screen layout —
+//   wider home column, Your Journey in two columns, two-column entries on
+//   native landscape, four-column survival kit grid, wider Anonymous feed
+//   with centred sheets and a two-column wiki, centred FAB dock. Layout
+//   only, phones unchanged. Touches css/index.css, css/journal.css,
+//   css/survival-kit.css, css/anonymous.css, fab.js.
+const CACHE_NAME = 'bipolarbear-v338-ipad';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
