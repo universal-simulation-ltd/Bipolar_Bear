@@ -89,7 +89,7 @@
       <div id="step-email">
         <!-- What to do first, and why the email: said once, above the field
              (the code step has its own "Code sent to …" line). -->
-        <div id="verify-how" style="font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 12px;" data-i18n="anon.verify.how">To join, enter your email and we'll send you a 6-digit code. Your email is never shown or shared.</div>
+        <div id="verify-how" style="font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 12px;" data-i18n="anon.verify.how">To join, enter your email and we'll send you a 6-digit code. Other members never see your email.</div>
         <input id="email-input" type="email" class="bb-input" placeholder="your@email.com" autocomplete="email" data-i18n-placeholder="anon.misc.emailPlaceholder">
         <!-- App Store guideline 1.2: users must affirmatively agree to terms
              with an explicit zero-tolerance clause before account creation.
@@ -265,6 +265,12 @@
   <!-- Pull-to-refresh indicator, grown by setupPullToRefresh() -->
   <div id="ptr" class="ptr"><div class="ptr-inner"><span class="ptr-ico">⬇️</span><span id="ptr-label"></span></div></div>
 
+  <!-- Shown by _setBoardOffline() in js/anonymous.js -->
+  <div id="board-offline" class="board-offline" role="status" style="display:none;">
+    <span data-i18n="anon.net.offline">Can't reach the board right now.</span>
+    <button type="button" id="board-retry" data-i18n="anon.net.retry">Try again</button>
+  </div>
+
   <div id="post-list">
     <div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div><div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div><div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div>
   </div>
@@ -434,8 +440,8 @@
     <div class="sheet-title" style="font-size:20px;font-weight:800;" data-i18n="anon.e2ee.title">Your privacy, explained</div>
     <div class="sheet-sub" data-i18n="anon.e2ee.sub">Here's exactly how Bipolar Anonymous handles your data:</div>
     <div class="e2ee-row"><span class="e2ee-row-icon">💬</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.messagesTitle">Posts are public to the community</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.messagesSub">Anyone in the community can read what you post — that's how peer support works. Share only what you're comfortable being seen.</div></div></div>
-    <div class="e2ee-row"><span class="e2ee-row-icon">👤</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.identityTitle">No real identity</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.identitySub">No real name, profile or photo. Your email is only ever stored as a one-way hash that can't be reversed.</div></div></div>
-    <div class="e2ee-row"><span class="e2ee-row-icon">🚫</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.noSellTitle">Never sold</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.noSellSub">We will never sell, share or monetise your data.</div></div></div>
+    <div class="e2ee-row"><span class="e2ee-row-icon">👤</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.identityTitle">No real identity</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.identitySub">No real name, profile or photo. Your email is only used to send your sign-in code: the code's record holds it until the code is used (an unused code is deleted within 25 hours). Your board profile is filed under a code made from your email with a secret key only our server has, and the address stays on this device to keep you signed in.</div></div></div>
+    <div class="e2ee-row"><span class="e2ee-row-icon">🚫</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.noSellTitle">Never sold</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.noSellSub">We will never sell your data or use it for advertising. A few services run the app for us: Google Firebase (the board and sign-in), Resend (sign-in emails) and Google Cloud Translation (translating posts). The privacy policy says what each one receives.</div></div></div>
     <div class="e2ee-row"><span class="e2ee-row-icon">🔒</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.secureTitle">Encrypted in transit & at rest</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.secureSub">Your data travels over encrypted connections and is stored encrypted on secure Google Cloud servers.</div></div></div>
     <p style="text-align:center;font-size:13px;margin:4px 0 14px;"><a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacyFull">Read the full privacy policy →</a></p>
     <button class="btn-primary" onclick="closeOv('ov-e2ee')" style="margin-top:6px;" data-i18n="anon.e2ee.gotIt">Got it 👍</button>
@@ -475,7 +481,7 @@
 
     <!-- Bipolar Bear birthday — populated by openMonikaSettings() -->
     <div id="ms-birthday" style="display:none;background:var(--yellow-bg);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;">🎂 Bipolar Bear birthday: <span id="ms-birthday-date"></span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;"><span id="ms-birthday-label">🎂 Bipolar Bear birthday:</span> <span id="ms-birthday-date"></span></div>
       <div style="font-size:11px;color:var(--muted);" id="ms-birthday-age"></div>
     </div>
 
@@ -842,9 +848,7 @@
       <div style="font-size:13px;color:var(--muted);margin-top:3px;" data-i18n="anon.about.subtitle">A safe space for people living with bipolar</div>
     </div>
 
-    <p style="font-size:13px;color:var(--dark);line-height:1.65;margin-bottom:16px;" data-i18n="anon.about.body">
-      This is an anonymous peer community for people living with bipolar disorder. You join with a chosen name — your real identity is never stored or shared.
-    </p>
+    <p style="font-size:13px;color:var(--dark);line-height:1.65;margin-bottom:16px;" data-i18n="anon.about.body">This is an anonymous peer community for people living with bipolar disorder. You join with a name you make up: you never give your real name, and other members never see your email.</p>
 
     <div style="background:var(--yellow-bg);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.guidelinesTitle">Community guidelines</div>

@@ -615,10 +615,16 @@ function _updateBoardLogo() {
   _fitBoardLogo();
 }
 
-// Close on backdrop tap
-['ov-compose','ov-firstpost','ov-sos','ov-report','ov-mute','ov-e2ee','ov-monika','ov-self-delete','ov-admin-delete','ov-admin-ban','ov-anon-delete','ov-terms','ov-med','ov-stable','ov-about'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => {
-    if (e.target === document.getElementById(id)) closeOv(id);
+// Close on backdrop tap — every sheet. A few close through their own
+// dismiss button, so what that button does (record a "Not now", clear a
+// report target) happens too. The thread is handled below.
+const _BACKDROP_VIA = { 'ov-notif-ask': 'notif-ask-no', 'ov-report': 'report-cancel', 'ov-notifs': 'notif-close', 'ov-translate': 'xlate-close' };
+document.querySelectorAll('.overlay').forEach(ov => {
+  if (ov.id === 'ov-thread') return;
+  ov.addEventListener('click', e => {
+    if (e.target !== ov) return;
+    const via = _BACKDROP_VIA[ov.id] && document.getElementById(_BACKDROP_VIA[ov.id]);
+    if (via) via.click(); else closeOv(ov.id);
   });
 });
 // Thread overlay needs special handling to also unsubscribe the comments listener
@@ -726,7 +732,8 @@ function _birthdayCompact(iso) {
   return years > 0 ? `${years}y ${rem}d` : `${days}d`;
 }
 
-// Verbose "1 year, 23 days old" used in the Monika overlay.
+// Verbose "1 year, 23 days old" used in the Monika overlay, in the app's
+// language (Intl's own unit names: "1 Jahr, 23 Tage alt", "1年23天").
 function _birthdayVerbose(iso) {
   if (!iso) return '';
   const ms = Date.now() - new Date(iso).getTime();
@@ -734,9 +741,16 @@ function _birthdayVerbose(iso) {
   const days = Math.floor(ms / 86400000);
   const years = Math.floor(days / 365);
   const rem = days - years * 365;
-  const yPart = years === 1 ? '1 year' : `${years} years`;
-  const dPart = rem === 1 ? '1 day'   : `${rem} days`;
-  return years > 0 ? `${yPart}, ${dPart} old` : `${dPart} old`;
+  const unit = (n, u) => {
+    try { return new Intl.NumberFormat(_uiLocale(), { style: 'unit', unit: u, unitDisplay: 'long' }).format(n); }
+    catch (_) { return `${n} ${u}${n === 1 ? '' : 's'}`; }
+  };
+  let age = unit(rem, 'day');
+  if (years > 0) {
+    try { age = new Intl.ListFormat(_uiLocale(), { style: 'short', type: 'unit' }).format([unit(years, 'year'), age]); }
+    catch (_) { age = unit(years, 'year') + ', ' + age; }
+  }
+  return _wt('anon.misc.ageOld', { age });
 }
 
 // Localised "10 May 2026" for the Monika overlay row.
@@ -745,7 +759,7 @@ function _birthdayDateLabel(iso) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
   try {
-    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+    return d.toLocaleDateString(_uiLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
   } catch (_) {
     return d.toISOString().slice(0, 10);
   }
@@ -1518,6 +1532,19 @@ function setupAgree() {
 // ─────────────────────────────────────────────────────────────────
 // SCREEN: Verify
 // ─────────────────────────────────────────────────────────────────
+// The message for a send-code / verify failure that has no specific case:
+// one of ours (bbKey), the network, or the fallback. Raw Firebase messages
+// ("internal", "Failed to fetch") are never shown.
+function _codeErrorKey(err, fallbackKey) {
+  if (err && err.bbKey) return err.bbKey;
+  const code = (err && err.code) || '';
+  if (navigator.onLine === false || code === 'functions/unavailable'
+      || code === 'functions/deadline-exceeded' || /network|fetch/i.test((err && err.message) || '')) {
+    return 'anon.authErr.offline';
+  }
+  return fallbackKey;
+}
+
 function setupVerify() {
   const emailIn   = document.getElementById('email-input');
   const sendBtn   = document.getElementById('send-code-btn');
@@ -1608,7 +1635,7 @@ function setupVerify() {
         return;
       }
       if (!window._anonSendCode) {
-        throw new Error(_wt('anon.verifyMsg.serviceUnavailable'));
+        throw Object.assign(new Error('no functions'), { bbKey: 'anon.verifyMsg.serviceUnavailable' });
       }
       // Sign in first: verifyAnonCode links the verified address to this
       // session, which is what lets it read and save the profile below.
@@ -1631,7 +1658,8 @@ function setupVerify() {
       } else if (errCode === 'functions/invalid-argument') {
         showError(_wt('anon.verifyMsg.invalidEmail'));
       } else {
-        showError(err.message || _wt('anon.verifyMsg.couldNotSend'));
+        // Never Firebase's own text ("internal"): it's English and says nothing.
+        showError(_wt(_codeErrorKey(err, 'anon.verifyMsg.couldNotSend')));
       }
     }
   }
@@ -1683,7 +1711,7 @@ function setupVerify() {
       if (_pendingEmail.toLowerCase() === REVIEW_EMAIL) {
         // Reviewer bypass: validate the fixed demo code locally, then make sure
         // an anonymous auth session exists so the reviewer can post and comment.
-        if (code !== REVIEW_CODE) throw new Error(_wt('anon.verifyMsg.incorrectDemo'));
+        if (code !== REVIEW_CODE) throw Object.assign(new Error('demo code'), { bbKey: 'anon.verifyMsg.incorrectDemo' });
         await _ensureAuthSession();
       } else {
         await _ensureAuthSession();
@@ -1701,14 +1729,15 @@ function setupVerify() {
       BB.storage.set('Anon_agreedTerms', 'true');
       BB.storage.set('Anon_agreedTermsAt', new Date().toISOString());
 
-      // If the user is signed in via the BipolarBear app, link the verified
-      // anon email to their user account so it can be used for future
-      // recovery / cross-device restore, then pull any existing anon profile
-      // they've already set up against this account (uid lookup beats
-      // email-hash lookup).
+      // If the user is signed in via the BipolarBear app, pull any existing
+      // anon profile they've already set up against this account (uid lookup
+      // beats the profile-id lookup).
       if (_bbUser && db) {
+        // Nothing reads userSettings.anonEmail, and it was the address in
+        // plaintext: stop writing it, and take any old one away. The board
+        // profile is found by its p2_ id (_anonProfileId) instead.
         db.collection('userSettings').doc(_bbUser.uid)
-          .set({ anonEmail: _pendingEmail }, { merge: true }).catch(() => {});
+          .set({ anonEmail: firebase.firestore.FieldValue.delete() }, { merge: true }).catch(() => {});
         await _bbRestoreProfile(_bbUser.uid);
       }
       // Standalone path: email-hash lookup. _anonRestoreProfile no-ops when
@@ -1755,8 +1784,10 @@ function setupVerify() {
       verifyBtn.textContent = origText;
       const errCode = err.code || '';
       if (errCode === 'functions/unauthenticated') {
-        // Wrong code — message already includes "X attempts remaining"
-        showError(err.message || _wt('anon.verifyMsg.incorrectCode'));
+        // Wrong code. The server's (English) message carries "N attempts
+        // remaining"; say it in the app's language.
+        const left = /(\d+)\s+attempts?\s+remaining/i.exec(err.message || '');
+        showError(left ? _wt('anon.authErr.wrongCodeLeft', { n: left[1] }) : _wt('anon.verifyMsg.incorrectCode'));
         resetBoxes();
         boxes[0].focus();
       } else if (errCode === 'functions/deadline-exceeded') {
@@ -1770,7 +1801,7 @@ function setupVerify() {
         showError(_wt('anon.verifyMsg.sessionNotFound'));
         goToEmailStep();
       } else {
-        showError(err.message || _wt('anon.verifyMsg.verifyFailed'));
+        showError(_wt(_codeErrorKey(err, 'anon.verifyMsg.verifyFailed')));
         resetBoxes();
         boxes[0].focus();
       }
@@ -2467,13 +2498,21 @@ function _fitBoardLogo() {
   logo.classList.remove('logo-iconly', 'logo-backonly');
   // Board not laid out yet (screen hidden) — nothing to measure.
   if (!nameEl.clientWidth && !nameEl.scrollWidth) return;
-  // Wordmark fits — nothing to drop.
-  if (nameEl.scrollWidth <= nameEl.clientWidth + 1) return;
+  // Wordmark fits — nothing to drop. Measured to the sub-pixel: scrollWidth
+  // rounds, and a word 0.3px too wide still gets its ellipsis ("Anonymo…"
+  // in Polish, where the Help pill is wider).
+  const overflows = el => {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    return r.getBoundingClientRect().width > el.getBoundingClientRect().width + 0.01
+      || el.scrollWidth > el.clientWidth;
+  };
+  if (!overflows(nameEl)) return;
   // Back-to-BipolarBear mode: the "← Go back" line is the point of the logo,
   // so drop the wordmark first and only go icon-only if that truncates too.
   if (logo.classList.contains('logo-back') && subEl) {
     logo.classList.add('logo-backonly');
-    if (subEl.scrollWidth <= subEl.clientWidth + 1) return;
+    if (!overflows(subEl)) return;
     logo.classList.remove('logo-backonly');
   }
   logo.classList.add('logo-iconly');
@@ -4380,8 +4419,58 @@ async function maybePostDailyTopic() {
   }
 }
 
+// ── Can we reach the board? ──
+// The feed listeners report whether a snapshot came from the server or only
+// from the device's cache; an error kills a listener. Cache-only for more than
+// a few seconds, the phone saying it's offline, or a dead listener shows
+// "Can't reach the board right now" with a retry, and writing is paused:
+// a post or reply written then would sit in a queue while the sheet said it
+// had gone.
+let _boardOffline = false;
+let _cacheOnlyTimer = null;
+function _setBoardOffline(off) {
+  if (off) { clearTimeout(_cacheOnlyTimer); _cacheOnlyTimer = null; }
+  if (_boardOffline === off) return;
+  _boardOffline = off;
+  const bar = document.getElementById('board-offline');
+  if (bar) bar.style.display = off ? '' : 'none';
+  const fab = document.getElementById('fab-compose');
+  if (fab) fab.classList.toggle('is-offline', off);
+}
+function _noteSnapshotSource(fromCache) {
+  if (!fromCache) {
+    clearTimeout(_cacheOnlyTimer); _cacheOnlyTimer = null;
+    _setBoardOffline(false);
+    return;
+  }
+  if (navigator.onLine === false) { _setBoardOffline(true); return; }
+  if (!_boardOffline && !_cacheOnlyTimer) {
+    _cacheOnlyTimer = setTimeout(() => { _cacheOnlyTimer = null; _setBoardOffline(true); }, 5000);
+  }
+}
+// Start the board's listeners again (the Try again button, coming back online).
+function _reconnectBoard() {
+  if (!db) return;
+  listenPosts({ keep: true });
+  listenBanned();
+  listenSuggestions();
+}
+window.addEventListener('offline', () => { if (_boardSetupDone) _setBoardOffline(true); });
+window.addEventListener('online',  () => { if (_boardSetupDone) _reconnectBoard(); });
+// True (and says so) when a write shouldn't be attempted right now.
+function _writeBlockedOffline() {
+  if (!_boardOffline) return false;
+  showHint(_wt('anon.net.composeOffline'));
+  return true;
+}
+
 // opts.keep (pull-to-refresh): leave the current feed on screen until the new
 // snapshot replaces it, rather than blanking it to skeletons.
+document.getElementById('board-retry').addEventListener('click', () => {
+  _haptic();
+  _reconnectBoard();
+});
+
 function listenPosts(opts) {
   const keep = !!(opts && opts.keep);
   stopAllListeners();
@@ -4400,11 +4489,20 @@ function listenPosts(opts) {
 
   // Run one listener per tab simultaneously so badge counts stay live
   // even when the user is looking at the other tab.
+  const rendered = {};
   ['announcements', 'general'].forEach(tab => {
     unsubTabListeners[tab] = db.collection(BB_BRAND.collections.posts)
       .where('tab', '==', tab)
       .limit(60)
-      .onSnapshot(snap => {
+      .onSnapshot({ includeMetadataChanges: true }, snap => {
+        if (tab === currentTab) _noteSnapshotSource(snap.metadata.fromCache);
+        // A snapshot that only says the data is now confirmed by the server
+        // (or only cached) changes nothing on screen.
+        if (snap.docChanges().length === 0 && rendered[tab]) {
+          if (tab === currentTab && _ptrDone) _ptrDone();
+          return;
+        }
+        rendered[tab] = true;
         postsByTab[tab] = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }));
         if (tab === 'general') maybePostDailyTopic(); // rotate the daily topic if due
         if (tab === currentTab) {
@@ -4417,6 +4515,7 @@ function listenPosts(opts) {
         renderTabBadges();
       }, err => {
         console.error('[Anonymous] posts error', tab, err);
+        _setBoardOffline(true);
         if (tab === currentTab) {
           renderPosts(currentTab === 'general'
             ? assembleGeneralPosts(localPosts)
@@ -4787,7 +4886,7 @@ function deleteComment(parentId, commentId, opts) {
       commentCount: firebase.firestore.FieldValue.increment(-1),
     }).catch(() => {}))
     .catch(err => console.error('[Thread] comment delete failed', err));
-  showHint(admin ? 'Comment deleted 🛡️' : 'Comment removed ✓');
+  showHint(_wt(admin ? 'anon.misc.commentDeleted' : 'anon.misc.commentRemoved'));
 }
 
 // The self-delete / admin-delete overlays are shared between feed posts and
@@ -5039,6 +5138,7 @@ function setupThread() {
     if (_sending) return;
     const text = ta.value.trim();
     if (!text || !commentTargetId) return;
+    if (_writeBlockedOffline()) return;
     // Banned users can't comment (Apple UGC 1.2).
     if (isMeBanned()) {
       showHint(_bannedMessage());
@@ -5576,6 +5676,7 @@ function setupFAB() {
     setTab('general');
   });
   document.getElementById('fab-compose').addEventListener('click', () => {
+    if (_writeBlockedOffline()) return;
     if (isMeBanned()) {
       showHint(_bannedMessage());
       return;
@@ -5677,6 +5778,7 @@ function setupCompose() {
     if (_posting) return; // guard against double-tap / re-entrant clicks
     const text = ta.value.trim();
     if (!text) return;
+    if (_writeBlockedOffline()) return;
     // Banned users can't post (Apple UGC 1.2 — ejected users stay out).
     if (isMeBanned()) {
       showHint(_bannedMessage());
@@ -5772,23 +5874,27 @@ function setupCompose() {
         _haptic('success');
         // Replace optimistic entry with the real one from the snapshot (happens automatically)
       } catch (e) {
+        // Refused (the rules, a ban, the network): nothing is on the board, so
+        // take the optimistic card back down and give the text back. Never
+        // "Your post is now live".
         console.error('[Anonymous] post failed', e);
-        if (pollOpts) {
-          // No snapshot will replace the optimistic card, so take it back down.
-          localPosts = localPosts.filter(p => p.id !== optimisticId);
-          renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
-          showHint(_wt('anon.ux.pollFailed'));
-          _posting = false;
-          return;
-        }
+        localPosts = localPosts.filter(p => p.id !== optimisticId);
+        renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
+        showHint(_wt(pollOpts ? 'anon.ux.pollFailed' : 'anon.net.postFailed'));
+        ta.value = text;
+        post.disabled = false;
+        openOv('ov-compose');
+        _posting = false;
+        return;
       }
     }
+    if (!docId) { _posting = false; return; } // no Firestore on this page: nothing was posted
 
     if (!profile.hasPosted) {
-      if (docId) BB.storage.set('Anon_firstPostId', docId);
+      BB.storage.set('Anon_firstPostId', docId);
       BB.storage.set('Anon_hasPosted', 'true');
       openOv('ov-firstpost');   // its close offers notifications
-    } else if (docId) {
+    } else {
       maybeAskNotifications();  // no-op unless they've never seen the posts offer
     }
     _posting = false;
@@ -6296,6 +6402,9 @@ function _paintTranslateNote() {
 // drawn again. js/shared/translate.js listens for the same event and puts the
 // posts back into the language they were written in before re-translating.
 document.addEventListener('bb:languagechange', () => {
+  // Before sign-up the board isn't running: re-rendering its hidden feed
+  // would only send the topic text off to be translated for nobody.
+  if (!_boardSetupDone) return;
   try {
     renderUserPill();
     _rerenderCurrentTab();
@@ -6370,6 +6479,9 @@ function openMonikaSettings() {
     const dateLabel = _birthdayDateLabel(joinedISO);
     const ageLabel  = _birthdayVerbose(joinedISO);
     if (dateLabel) {
+      // Inside the Bipolar Anonymous app, its own name; inside Bipolar Bear, Bear's.
+      document.getElementById('ms-birthday-label').textContent =
+        _wt(_isAnonymousApp ? 'anon.misc.birthdayAnon' : 'anon.misc.birthdayBB');
       document.getElementById('ms-birthday-date').textContent = dateLabel;
       document.getElementById('ms-birthday-age').textContent  = ageLabel;
       msBday.style.display = '';
@@ -6532,7 +6644,7 @@ document.getElementById('adel-acc-confirm').addEventListener('click', deleteAnon
  */
 async function deleteAnonAccount() {
   const btn = document.getElementById('adel-acc-confirm');
-  if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
+  if (btn) { btn.disabled = true; btn.textContent = _wt('anon.misc.deleting'); }
 
   const monika = profile.monika;
   const email  = BB.storage.get('Anon_email');
@@ -6600,7 +6712,7 @@ async function deleteAnonAccount() {
       .filter(k => k === 'bbAnonLastVisit' || k === 'bbAnonVisitDate' || k.startsWith('bbAnon_'))
       .forEach(k => localStorage.removeItem(k));
     stopAllListeners();
-    if (btn) { btn.disabled = false; btn.textContent = 'Delete forever'; }
+    if (btn) { btn.disabled = false; btn.textContent = _wt('anon.deleteAccount.confirm'); }
     closeOv('ov-anon-delete');
     boot(null);
     showHint(_wt('anon.toast.accountDeleted'));
