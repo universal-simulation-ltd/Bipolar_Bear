@@ -77,6 +77,8 @@ const THREAD_SEEN_KEY = 'Anon_threadSeen';
 let threadSeen = _loadThreadSeen();
 let localPosts      = [];
 let sosTargetName   = '';
+let sosTargetPost    = ''; // post id the SOS is about (the team's email links to it)
+let sosTargetComment = ''; // comment id, when the SOS came from a reply
 let reportTargetId  = '';
 let muteTargetName  = '';
 let adminDeleteId    = '';
@@ -4900,8 +4902,10 @@ function setupThread() {
       openOv('ov-mute');
     } else if ('csos' in d) {
       sosTargetName = author;
+      sosTargetPost = commentTargetId;
+      sosTargetComment = cid;
       document.getElementById('sos-body').innerHTML =
-        `Are you worried about <strong>[${esc(author)}]</strong>? A moderator will be notified to check in. Only use this if genuinely concerned.`;
+        _wt('anon.sos.bodyNamed', { name: `<strong>[${esc(author)}]</strong>` });
       openOv('ov-sos');
     } else if ('cban' in d) {
       adminBanName = author;
@@ -5137,6 +5141,9 @@ function renderPosts(posts) {
   list.querySelectorAll('[data-sos]').forEach(btn => {
     btn.addEventListener('click', () => {
       sosTargetName = btn.dataset.sos;
+      const card = btn.closest('.post-card');
+      sosTargetPost = (card && card.dataset.pid) || '';
+      sosTargetComment = '';
       document.getElementById('sos-body').innerHTML =
         _wt('anon.sos.bodyNamed', { name: `<strong>[${esc(sosTargetName)}]</strong>` });
       openOv('ov-sos');
@@ -5928,6 +5935,29 @@ function openStableSettings() {
   openOv('ov-stable');
 }
 
+// A report or SOS flag. It is written to bbAnonReports, which only the server
+// reads (onAnonReportCreated emails the team), so the member is told it was
+// sent only once Firestore has it, and told it failed otherwise. A write that
+// is still queued after 12 s (offline) counts as failed: they can try again.
+async function _sendModerationFlag(doc, okKey) {
+  let ok = false;
+  if (db) {
+    try {
+      await _ensureAuthSession();
+      await Promise.race([
+        db.collection(BB_BRAND.collections.reports).add(doc),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000)),
+      ]);
+      ok = true;
+    } catch (e) {
+      console.warn('[Anonymous] report / SOS not sent', e && (e.code || e.message));
+    }
+  }
+  showHint(_wt(ok ? okKey : 'anon.net.flagFailed'));
+  if (ok) _haptic('success');
+  return ok;
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Overlay button wiring
 // ─────────────────────────────────────────────────────────────────
@@ -5946,48 +5976,57 @@ function setupOverlayActions() {
   document.getElementById('sos-cancel').addEventListener('click',  () => closeOv('ov-sos'));
   document.getElementById('sos-confirm').addEventListener('click', () => {
     closeOv('ov-sos');
-    // Production: write SOS report to Firestore for moderator review
-    if (db && sosTargetName) {
-      db.collection(BB_BRAND.collections.reports).add({
-        type: 'sos', targetName: sosTargetName,
-        reportedBy: profile.monika, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      }).catch(() => {});
-    }
-    showHint(_wt('anon.toast.sosSent'));
+    if (!sosTargetName) return;
+    // onAnonReportCreated (functions/index.js) emails the team the post id and
+    // a link to the thread. Only say it was sent once Firestore has it.
+    const doc = {
+      type: 'sos', targetName: sosTargetName,
+      reportedBy: profile.monika, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    if (sosTargetPost) doc.postId = sosTargetPost;
+    if (sosTargetComment) doc.commentId = sosTargetComment;
+    _sendModerationFlag(doc, 'anon.toast.sosSent');
+    sosTargetPost = ''; sosTargetComment = '';
   });
 
   // Report
+  document.getElementById('report-cancel').addEventListener('click', () => {
+    closeOv('ov-report');
+    reportCommentMeta = null;
+    reportTargetId = '';
+  });
   document.querySelectorAll('.report-opt').forEach(btn => {
     btn.addEventListener('click', () => {
       closeOv('ov-report');
-      if (db && reportCommentMeta) {
+      if (reportCommentMeta) {
         // Comment report — target the comment in its parent thread.
         const m = reportCommentMeta;
-        db.collection(BB_BRAND.collections.reports).add({
+        _sendModerationFlag({
           type: 'report', kind: 'comment',
           postId: m.parentId, commentId: m.id, reason: btn.dataset.reason,
           postText: m.text, postName: m.name,
           reportedBy: profile.monika,
           adminEmail: ADMIN_EMAIL,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        }).catch(() => {});
-      } else if (db && reportTargetId) {
-        const post = localPosts.find(p => p.id === reportTargetId);
-        db.collection(BB_BRAND.collections.reports).add({
-          type: 'report', postId: reportTargetId, reason: btn.dataset.reason,
+        }, 'anon.toast.reportSubmitted');
+      } else if (reportTargetId) {
+        const id = reportTargetId;
+        const post = localPosts.find(p => p.id === id);
+        _sendModerationFlag({
+          type: 'report', postId: id, reason: btn.dataset.reason,
           postText: post ? post.text : '',
           postName: post ? post.name : '',
           reportedBy: profile.monika,
           adminEmail: ADMIN_EMAIL,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        }).catch(() => {});
-        // Flag post so 7-day auto-delete skips it
-        db.collection(BB_BRAND.collections.posts).doc(reportTargetId)
-          .update({ reported: true }).catch(() => {});
+        }, 'anon.toast.reportSubmitted').then(ok => {
+          // Flag post so 7-day auto-delete skips it
+          if (ok) db.collection(BB_BRAND.collections.posts).doc(id)
+            .update({ reported: true }).catch(() => {});
+        });
       }
       reportCommentMeta = null;
       reportTargetId = '';
-      showHint(_wt('anon.toast.reportSubmitted'));
     });
   });
 

@@ -498,6 +498,7 @@
         fb: { pickType: 'Please pick a type.', writeFirst: 'Please write something first.', thanks: 'Thanks for your feedback! 🐻', sendFail: 'Could not send — please try again.', imgTooLarge: 'Screenshot is too large — please crop or resize it first.', imgUnreadable: 'Could not read image — please try a different file.', needEmail: "Add your email so we can reply.", thanksSupport: "Thanks, we've got your message and will reply by email. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"That didn't send. Check your connection and try again."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Support lines, if you need them",
@@ -2593,6 +2594,7 @@
         fb: { pickType: 'Elige un tipo.', writeFirst: 'Escribe algo primero.', thanks: '¡Gracias por tus comentarios! 🐻', sendFail: 'No se pudo enviar — inténtalo de nuevo.', imgTooLarge: 'La captura es demasiado grande — recórtala o redúcela primero.', imgUnreadable: 'No se pudo leer la imagen — prueba con otro archivo.', needEmail: "Añade tu correo para que podamos responderte.", thanksSupport: "Gracias, hemos recibido tu mensaje y te responderemos por correo. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"No se ha enviado. Comprueba tu conexión e inténtalo de nuevo."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Líneas de apoyo, si las necesitas",
@@ -4690,6 +4692,7 @@
         fb: { pickType: 'Choisis un type.', writeFirst: "Écris d'abord quelque chose.", thanks: 'Merci pour ton retour ! 🐻', sendFail: "Impossible d'envoyer — réessaie.", imgTooLarge: "La capture est trop grande — recadre-la ou redimensionne-la d'abord.", imgUnreadable: "Impossible de lire l'image — essaie un autre fichier.", needEmail: "Ajoute ton e-mail pour que nous puissions te répondre.", thanksSupport: "Merci, nous avons bien reçu ton message et te répondrons par e-mail. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"L'envoi a échoué. Vérifie ta connexion et réessaie."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Lignes d'écoute, si tu en as besoin",
@@ -6739,6 +6742,7 @@
         fb: { pickType: 'Bitte wähle einen Typ.', writeFirst: 'Bitte schreib zuerst etwas.', thanks: 'Danke für dein Feedback! 🐻', sendFail: 'Senden fehlgeschlagen — bitte versuche es erneut.', imgTooLarge: 'Der Screenshot ist zu groß — bitte zuschneiden oder verkleinern.', imgUnreadable: 'Bild konnte nicht gelesen werden — bitte versuche eine andere Datei.', needEmail: "Gib deine E-Mail an, damit wir antworten können.", thanksSupport: "Danke, wir haben deine Nachricht erhalten und antworten per E-Mail. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"Das wurde nicht gesendet. Prüfe deine Verbindung und versuche es erneut."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Hilfe-Telefone, falls du sie brauchst",
@@ -8804,6 +8808,7 @@
         fb: { pickType: 'Scegli un tipo.', writeFirst: 'Scrivi prima qualcosa.', thanks: 'Grazie per il tuo feedback! 🐻', sendFail: 'Invio non riuscito — riprova.', imgTooLarge: 'Lo screenshot è troppo grande — ritaglialo o ridimensionalo prima.', imgUnreadable: 'Impossibile leggere l\'immagine — prova con un altro file.', needEmail: "Aggiungi la tua email così possiamo risponderti.", thanksSupport: "Grazie, abbiamo ricevuto il tuo messaggio e ti risponderemo via email. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"Invio non riuscito. Controlla la connessione e riprova."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Linee di supporto, se ne hai bisogno",
@@ -10869,6 +10874,7 @@
         fb: { pickType: 'Escolhe um tipo.', writeFirst: 'Escreve algo primeiro.', thanks: 'Obrigado pelos teus comentários! 🐻', sendFail: 'Não foi possível enviar — tenta novamente.', imgTooLarge: 'A captura é demasiado grande — recorta-a ou redimensiona-a primeiro.', imgUnreadable: 'Não foi possível ler a imagem — tenta outro ficheiro.', needEmail: "Adiciona o teu email para te podermos responder.", thanksSupport: "Obrigado, recebemos a tua mensagem e vamos responder por email. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"Não foi enviado. Verifica a tua ligação e tenta novamente."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Linhas de apoio, se precisares",
@@ -12934,6 +12940,7 @@
         fb: { pickType: 'Kies een type.', writeFirst: 'Schrijf eerst iets.', thanks: 'Bedankt voor je feedback! 🐻', sendFail: 'Verzenden mislukt — probeer het opnieuw.', imgTooLarge: 'De schermafbeelding is te groot — snijd deze eerst bij of verklein deze.', imgUnreadable: 'Kan afbeelding niet lezen — probeer een ander bestand.', needEmail: "Vul je e-mailadres in zodat we kunnen antwoorden.", thanksSupport: "Bedankt, we hebben je bericht ontvangen en antwoorden per e-mail. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"Dat is niet verzonden. Controleer je verbinding en probeer het opnieuw."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Hulplijnen, als je ze nodig hebt",
@@ -14999,6 +15006,7 @@
         fb: { pickType: 'Wybierz typ.', writeFirst: 'Najpierw coś napisz.', thanks: 'Dziękujemy za opinię! 🐻', sendFail: 'Nie udało się wysłać — spróbuj ponownie.', imgTooLarge: 'Zrzut ekranu jest za duży — najpierw przytnij go lub zmniejsz.', imgUnreadable: 'Nie udało się odczytać obrazu — spróbuj innego pliku.', needEmail: "Podaj e-mail, abyśmy mogli odpowiedzieć.", thanksSupport: "Dziękujemy, otrzymaliśmy Twoją wiadomość i odpowiemy e-mailem. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"Nie udało się wysłać. Sprawdź połączenie i spróbuj ponownie."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Telefony wsparcia, jeśli ich potrzebujesz",
@@ -17072,6 +17080,7 @@
         fb: { pickType: 'Välj en typ.', writeFirst: 'Skriv något först.', thanks: 'Tack för din feedback! 🐻', sendFail: 'Det gick inte att skicka — försök igen.', imgTooLarge: 'Skärmbilden är för stor — beskär eller förminska den först.', imgUnreadable: 'Det gick inte att läsa bilden — prova en annan fil.', needEmail: "Fyll i din e-post så att vi kan svara.", thanksSupport: "Tack, vi har fått ditt meddelande och svarar via e-post. 🐻" },
       },
       anon: {
+        net: {"flagFailed":"Det skickades inte. Kontrollera din anslutning och försök igen."},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 Stödlinjer, om du behöver dem",
@@ -19137,6 +19146,7 @@
         fb: { pickType: '请选择一个类型。', writeFirst: '请先写点什么。', thanks: '感谢你的反馈！🐻', sendFail: '无法发送——请重试。', imgTooLarge: '截图太大——请先裁剪或缩小。', imgUnreadable: '无法读取图片——请尝试其他文件。', needEmail: "请填写你的邮箱，方便我们回复。", thanksSupport: "谢谢，我们已收到你的消息，会通过邮件回复你。🐻" },
       },
       anon: {
+        net: {"flagFailed":"发送失败。请检查网络连接后重试。"},
         // The Friendly neighbourhood Bipolar Bear: crisis auto-reply (functions/crisis-bot.js).
         bot: {
           crisisSummary: "🛟 支持热线（如有需要）",
