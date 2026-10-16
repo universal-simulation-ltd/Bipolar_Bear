@@ -1481,15 +1481,12 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
 
 #### The device key never wins over the account's (2026-10-16)
 
-Support case (2026-10-16): an iPhone user's whole journal vanished after the
-1.42 update. The 32 entries were on Firestore throughout. What happened:
-
+A support case (2026-10-16): a journal looked empty on iPhone after an update,
+though its entries were on Firestore all along.
 - Builds before `_requireUserKey` saved entries **in plaintext** when no key
-  was in hand. 31 of the 44 accounts with entries still had no key at all on
-  2026-10-16, and 38 still had plaintext entries.
+  was in hand, so some accounts had no key at all.
 - On the first load of a current build, `_resolveUserKey` gives such an account
-  a Standard key and `_encryptExistingEntries` encrypts everything (all 32 in
-  the same second, 2026-10-15 15:10 UTC, from the iPhone app).
+  a Standard key and `_encryptExistingEntries` encrypts everything.
 - The device key lives in **one Keychain slot (`bb_user_key`) that belongs to
   no account**, survives deleting the app, and is cleared only by an explicit
   sign-out. Its read is raced against 3 s and tried once per session. A key
@@ -1657,6 +1654,28 @@ sign-in); no Supabase suite beat (the Firestore live count stays: random
 per-tab id, `lastSeen` only); Firebase SDK and jsPDF self-hosted under
 `vendor/` (jsPDF loads on export via `BB.loadJsPdf()`); no `measurementId`;
 Workers observability off.
+
+#### Service emails and opting out (2026-10-16)
+
+`scripts/send-service-email.mjs` sends a service email (a problem, a fix) to
+account holders: one email per person through Resend, from
+bipolar@mail.unisim.co.uk, with replies to bipolar@unisim.co.uk. It leaves out
+our own and test addresses, de-duplicates, and skips anyone who opted out.
+Always run `--count` and `--test` before `--send-all`. The email text lives
+outside this public repo.
+
+Every email has an Unsubscribe footer and RFC 8058 `List-Unsubscribe` /
+`List-Unsubscribe-Post` headers. The link goes to the `emailOptOut` function
+(`functions/email-optout.js`) with `?id=` set to base64url(HMAC-SHA256(
+`EMAIL_OPTOUT_SECRET`, `bb-email-optout:v1:` + the lower-cased email)). So:
+- the link carries no address, and only whoever holds the secret can make one;
+- GET shows a confirm button, because mail scanners open links;
+- POST writes `emailOptOuts/{id}` (`{at}`), and that collection has no client
+  rule;
+- the script compares every recipient's id with that collection.
+
+⚠️ Never rotate `EMAIL_OPTOUT_SECRET`: every recorded opt-out would stop
+matching.
 
 ## 3. Algorithm Flowcharts
 

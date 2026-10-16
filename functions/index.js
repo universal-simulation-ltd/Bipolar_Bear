@@ -17,6 +17,8 @@ const db = admin.firestore();
 const privacy = require('./privacy');
 const P = privacy._lib;
 Object.keys(privacy).forEach((k) => { if (k !== '_lib') exports[k] = privacy[k]; });
+// Opting out of service emails (scripts/send-service-email.mjs).
+exports.emailOptOut = require('./email-optout').emailOptOut;
 
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 
