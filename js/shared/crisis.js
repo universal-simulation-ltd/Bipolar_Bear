@@ -46,6 +46,8 @@
     GB: { emergency: '999', lines: [
       { name: 'Samaritans', tel: '116123', n: '116 123', kind: 'callFree' },
       { name: 'Shout', sms: '85258', body: 'SHOUT', n: '85258', kw: 'SHOUT', kind: 'textFree' },
+      // NHS 111, option 2: the NHS mental health crisis line (England, 24/7).
+      { name: 'NHS 111', nameKey: 'fix143.nhs111', tel: '111', n: '111', o: '2', kind: 'callOption' },
     ] },
     IE: { emergency: '112', lines: [
       { name: 'Samaritans', tel: '116123', n: '116 123', kind: 'callFree' },
@@ -164,8 +166,13 @@
   function _line(l) {
     var href = l.tel ? 'tel:' + l.tel
       : 'sms:' + l.sms + (l.body ? '?&body=' + encodeURIComponent(l.body) : '');
+    var nm = l.name;
+    if (l.nameKey && window.BB && typeof BB.t === 'function') {
+      var tn = BB.t(l.nameKey);
+      if (tn && tn !== l.nameKey) nm = tn;
+    }
     return {
-      name: l.name,
+      name: nm,
       number: l.n,
       href: href,
       icon: l.tel ? '📞' : '💬',

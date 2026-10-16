@@ -412,11 +412,32 @@
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:6px;" data-i18n="fab.crisis.title">Crisis Support</div>
           <p style="font-size:0.84em;color:#6c757d;margin-bottom:14px;" data-i18n="fab.crisis.body">If you're struggling and need to talk to someone:</p>
           <div id="chatModalLines">
-          <a href="tel:116123" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:14px;text-align:left;">
+          <a href="tel:116123" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
             <span style="font-size:1.6em;line-height:1;">📞</span>
             <div>
               <div style="font-weight:700;font-size:0.95em;">Samaritans</div>
               <div style="color:#6c757d;font-size:0.82em;margin-top:1px;" data-i18n="fab.crisis.samaritansInfo">116 123 · Free · 24/7</div>
+            </div>
+          </a>
+          <a href="sms:85258?&body=SHOUT" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
+            <span style="font-size:1.6em;line-height:1;">💬</span>
+            <div>
+              <div style="font-weight:700;font-size:0.95em;">Shout</div>
+              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Text SHOUT to 85258 · free, 24/7</div>
+            </div>
+          </a>
+          <a href="tel:111" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;">
+            <span style="font-size:1.6em;line-height:1;">📞</span>
+            <div>
+              <div style="font-weight:700;font-size:0.95em;">NHS 111 · mental health</div>
+              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Call 111, option 2 · 24/7</div>
+            </div>
+          </a>
+          <a href="tel:999" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:14px;text-align:left;">
+            <span style="font-size:1.6em;line-height:1;">🚑</span>
+            <div>
+              <div style="font-weight:700;font-size:0.95em;">Emergency</div>
+              <div style="color:#6c757d;font-size:0.82em;margin-top:1px;">Call 999</div>
             </div>
           </a>
           </div>
@@ -1018,7 +1039,9 @@
     const box = document.getElementById('chatModalLines');
     if (C && box) {
       const g = C.get();
-      if (!g.uk) {
+      // Every country, the UK too: the static markup above is only the
+      // fallback for when crisis.js didn't load (it had Samaritans alone).
+      {
         const cls = {
           rowStyle: 'display:flex;align-items:center;gap:12px;padding:13px 14px;background:#f8f9fa;border-radius:12px;text-decoration:none;color:#212529;margin-bottom:10px;text-align:left;',
           icoStyle: 'font-size:1.6em;line-height:1;',
@@ -1031,8 +1054,21 @@
         if (g.emergency) {
           box.appendChild(C.row({ name: BB.t('crisis.emergency'), href: 'tel:' + g.emergency, icon: '🚑',
             sub: BB.t('crisis.callN', { n: g.emergency }) }, cls));
+        } else {
+          // Not a listed country: no number to show, so say what to do.
+          const em = document.createElement('div');
+          em.style.cssText = cls.rowStyle;
+          const ico = document.createElement('span');
+          ico.style.cssText = cls.icoStyle; ico.setAttribute('aria-hidden', 'true'); ico.textContent = '🚑';
+          const txt = document.createElement('div');
+          const nm = document.createElement('div');
+          nm.style.cssText = cls.nameStyle; nm.textContent = BB.t('crisis.emergency');
+          const sb = document.createElement('div');
+          sb.style.cssText = cls.subStyle; sb.textContent = BB.t('fix143.localEmergency');
+          txt.appendChild(nm); txt.appendChild(sb); em.appendChild(ico); em.appendChild(txt);
+          box.appendChild(em);
         }
-        if (g.cc) {
+        if (g.cc && !g.uk) {
           const more = document.createElement('a');
           more.href = g.findUrl; more.target = '_blank'; more.rel = 'noopener';
           more.style.cssText = 'display:block;font-size:0.8em;color:#6c757d;margin:2px 0 14px;';
