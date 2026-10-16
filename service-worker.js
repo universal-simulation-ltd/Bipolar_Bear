@@ -1646,6 +1646,7 @@ const STATIC_ASSETS = [
   './js/shared/pin-guard.js',
   './js/shared/pin-reauth.js',
   './js/shared/bear-arcade.js',
+  './js/shared/a11y.js',
 
   // NOTE: firebase-messaging-sw.js is deliberately NOT precached either — it
   // is a service worker in its own right, registered by js/shared/anon-push.js,

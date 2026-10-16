@@ -73,7 +73,7 @@ function _setHomeAuthFab(signedIn) {
   } else {
     fab.title = _tr('fab.profileTip', 'Profile / Sign in');
     fab.style.background = 'white';
-    fab.style.color = 'var(--brand-primary)';
+    fab.style.color = 'var(--brand-ink)';
     fab.style.border = '2px solid var(--brand-primary)';
     fab.style.boxShadow = '0 2px 10px rgba(255,149,0,0.25)';
   }
@@ -1556,13 +1556,13 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         const on = t.locked || BB.storage.get(t.flag) === '1';
         const _border = on ? 'var(--brand-primary)' : '#dee2e6';
         const _bg     = on ? 'rgba(255,149,0,0.1)' : 'white';
-        const _color  = on ? 'var(--brand-primary)' : '#adb5bd';
+        const _color  = on ? 'var(--brand-ink)' : 'var(--text-muted-ink)';
         const _click  = t.locked ? '' : ` onclick="_toggleHomeBtn('${t.id}')"`;
         const _cursor = t.locked ? 'default' : 'pointer';
         const _lock   = t.locked ? '<span style="position:absolute;top:4px;right:6px;font-size:0.7em;">🔒</span>' : '';
         const _isNew  = _newHintOn && !t.locked && !on;
         const _pill   = _isNew ? `<span class="bb-new-pill">${_tr('home.newPill', 'NEW')}</span>` : '';
-        return `<button${_click}${_isNew ? ' class="bb-new-toggle"' : ''} style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:12px;border:1.5px solid ${_border};background:${_bg};color:${_color};cursor:${_cursor};font-size:0.82em;font-weight:600;min-width:64px;-webkit-tap-highlight-color:transparent;">${_lock}${_pill}<span style="font-size:1.3em;">${t.icon}</span><span>${_tr(t.labelKey, t.label)}</span></button>`;
+        return `<button type="button"${_click}${_isNew ? ' class="bb-new-toggle"' : ''} aria-pressed="${on}"${t.locked ? ' aria-disabled="true"' : ''} style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:12px;border:1.5px solid ${_border};background:${_bg};color:${_color};cursor:${_cursor};font-size:0.82em;font-weight:600;min-width:64px;-webkit-tap-highlight-color:transparent;">${_lock}${_pill}<span style="font-size:1.3em;">${t.icon}</span><span>${_tr(t.labelKey, t.label)}</span></button>`;
       }).join('');
     }
 
@@ -1602,6 +1602,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       if (!btn) return;
       const on = BB.storage.get('HomeStatsEnabled') === '0';
       btn.style.background = on ? 'var(--brand-primary)' : '#ccc';
+      btn.setAttribute('aria-checked', on ? 'true' : 'false');
       const thumb = btn.querySelector('span');
       if (thumb) thumb.style.left = on ? '23px' : '3px';
     }
@@ -1626,7 +1627,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       if (!btn) return;
       const on = BB.storage.get('HomeQuickCheckin') === '0';
       btn.style.background = on ? 'var(--brand-primary)' : '#ccc';
-      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.setAttribute('aria-checked', on ? 'true' : 'false');
       const thumb = btn.querySelector('span');
       if (thumb) thumb.style.left = on ? '23px' : '3px';
     }
@@ -2589,6 +2590,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       document.head.appendChild(_cfStyle);
 
       function launchConfetti(count, colors) {
+        // Reduce Motion: no confetti at all (the toast still says well done).
+        if (window.BB && BB.a11y && BB.a11y.reducedMotion()) return;
         for (let i = 0; i < count; i++) {
           const el = document.createElement('div');
           const color = colors[Math.floor(Math.random() * colors.length)];
@@ -2771,9 +2774,9 @@ function _handleIndexJournalNav() {
       // it in whatever language gets picked (listener dropped on close).
       const _renderWelcome = () => { overlay.innerHTML = `<div style="background:linear-gradient(135deg,var(--brand-primary-mid),var(--brand-primary-light));border-radius:20px;padding:28px 28px 24px;text-align:center;max-width:300px;width:calc(100vw - 64px);box-shadow:0 12px 48px rgba(255,107,0,0.55);">
         <div style="font-size:2.4em;margin-bottom:10px;">🐻</div>
-        <div style="font-weight:800;font-size:1.05em;color:white;margin-bottom:10px;line-height:1.4;">${_tr('home.welcomeTitle', 'Welcome to your BipolarBear.app!')}</div>
-        <div style="font-size:0.88em;color:rgba(255,255,255,0.92);line-height:1.55;margin-bottom:18px;">${_tr('home.welcomeBody', "This will be your mood journal and personalised survival kit going forward. I'm here to help you get started. Let's go!")}</div>
-        <div style="font-size:0.78em;color:rgba(255,255,255,0.65);">${_tr('home.tapDismiss', 'Tap to dismiss')}</div>
+        <div style="font-weight:800;font-size:1.05em;color:var(--on-orange);margin-bottom:10px;line-height:1.4;">${_tr('home.welcomeTitle', 'Welcome to your BipolarBear.app!')}</div>
+        <div style="font-size:0.88em;color:var(--on-orange);line-height:1.55;margin-bottom:18px;">${_tr('home.welcomeBody', "This will be your mood journal and personalised survival kit going forward. I'm here to help you get started. Let's go!")}</div>
+        <div style="font-size:0.78em;color:var(--on-orange);">${_tr('home.tapDismiss', 'Tap to dismiss')}</div>
       </div>`; };
       _renderWelcome();
       document.addEventListener('bb:languagechange', _renderWelcome);
@@ -2996,7 +2999,7 @@ function _handleIndexJournalNav() {
 
     function _idxRenderDots(filled) {
       document.querySelectorAll('.idx-pin-dot').forEach((d, i) => {
-        d.style.background = i < filled ? 'white' : 'rgba(255,255,255,0.4)';
+        d.style.background = i < filled ? 'var(--brand-on)' : 'rgba(255,255,255,0.4)';
       });
     }
 

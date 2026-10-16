@@ -66,6 +66,37 @@ function _bbTime(d, opts) {
   const x = d instanceof Date ? d : new Date(d);
   try { return x.toLocaleTimeString(_bbLocale(), opts); } catch (_) { return x.toLocaleTimeString('en-GB', opts); }
 }
+// A text colour that reads at 4.5:1+ for a mood / energy / sleep accent
+// colour: the same hue, darkened (light mode) or lightened (dark mode) only as
+// far as needed, judged against the palest wash it sits on. Fills and borders
+// keep the raw accent; only text goes through this (2026-10-16).
+function _readableInk(c) {
+  if (!c) return 'var(--text-muted-ink)';
+  if (/^var\(--brand-primary/.test(c)) return 'var(--brand-ink)';
+  const m = /^#([0-9a-f]{6})$/i.exec(String(c).trim());
+  if (!m) return c;
+  const rgb = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16));
+  const lum = a => a.map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const dark = document.documentElement.classList.contains('theme-dark');
+  const bgL = lum(dark ? [59, 49, 39] : [231, 248, 234]);
+  for (let t = 0; t <= 1.001; t += 0.05) {
+    const mix = rgb.map(v => Math.round(dark ? v + (255 - v) * t : v * (1 - t)));
+    const L = lum(mix);
+    if ((Math.max(L, bgL) + 0.05) / (Math.min(L, bgL) + 0.05) >= 4.6) return '#' + mix.map(v => v.toString(16).padStart(2, '0')).join('');
+  }
+  return dark ? '#ffffff' : '#000000';
+}
+// Label colour on a filled accent button: white when it reads at 4.5:1,
+// otherwise the dark ink (most of the light energy / sleep / mood fills).
+function _onFillInk(c) {
+  const m = /^#([0-9a-f]{6})$/i.exec(String(c || '').trim());
+  if (!m) return 'white';
+  const L = [0, 2, 4].map(i => parseInt(m[1].slice(i, i + 2), 16) / 255)
+    .map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
+    .reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const w = 1.05 / (L + 0.05), d = (L + 0.05) / 0.0574;
+  return w >= 4.5 || w >= d ? 'white' : '#1a1300';
+}
 function _bbNum(n) {
   try { return Number(n).toLocaleString(_bbLocale()); } catch (_) { return String(n); }
 }
@@ -961,7 +992,7 @@ function _tt(k, vars, fallback) {
     if (_labelSpan) _labelSpan.textContent = _label;
     hint.style.display = 'flex';
     var _inner = document.getElementById('settingsFabHintInner');
-    var _pulse = _inner ? _inner.animate([{ opacity: 0.75 }, { opacity: 1 }, { opacity: 0.75 }], { duration: 1600, iterations: Infinity }) : null;
+    var _pulse = (_inner && !(window.BB && BB.a11y && BB.a11y.reducedMotion())) ? _inner.animate([{ opacity: 0.75 }, { opacity: 1 }, { opacity: 0.75 }], { duration: 1600, iterations: Infinity }) : null;
 
     // Dim the page; lift the FAB above the dimmer so it stays tappable.
     var prevFabZ = fab.style.zIndex;
@@ -1211,12 +1242,13 @@ function _tt(k, vars, fallback) {
       // Compact single-line labels: emoji (pulled from the full i18n label) +
       // a short symbol, so all five buttons sit on one line each.
       const _enEmoji = key => (BB.t(key).split(' ')[0] || '');
+      const _enSpoken = key => BB.t(key).replace(/^\S+\s*/, '');
       const energyRanges = [
-        { label: `${_enEmoji('journal.energy.notEnough')} - -`, value: 0 },
-        { label: `${_enEmoji('journal.energy.less')} -`, value: 3 },
-        { label: `${_enEmoji('journal.energy.normal')} ${BB.t('journal.value.normal')}`, value: 5 },
-        { label: `${_enEmoji('journal.energy.more')} +`, value: 7 },
-        { label: `${_enEmoji('journal.energy.tooMuch')} ++`, value: 10 }
+        { label: `${_enEmoji('journal.energy.notEnough')} - -`, value: 0, name: _enSpoken('journal.energy.notEnough') },
+        { label: `${_enEmoji('journal.energy.less')} -`, value: 3, name: _enSpoken('journal.energy.less') },
+        { label: `${_enEmoji('journal.energy.normal')} ${BB.t('journal.value.normal')}`, value: 5, name: _enSpoken('journal.energy.normal') },
+        { label: `${_enEmoji('journal.energy.more')} +`, value: 7, name: _enSpoken('journal.energy.more') },
+        { label: `${_enEmoji('journal.energy.tooMuch')} ++`, value: 10, name: _enSpoken('journal.energy.tooMuch') }
       ];
       
       energyRanges.forEach(range => {
@@ -1224,6 +1256,7 @@ function _tt(k, vars, fallback) {
         btn.type = 'button';
         btn.className = 'energy-btn';
         btn.textContent = range.label;
+        if (range.name) btn.setAttribute('aria-label', range.name);
         btn.dataset.energy = range.value;
         btn.dataset.color = getEnergyColor(range.value);
         
@@ -1235,7 +1268,7 @@ function _tt(k, vars, fallback) {
           });
           btn.classList.add('selected');
           btn.style.background = btn.dataset.color;
-          btn.style.color = 'white';
+          btn.style.color = _onFillInk(btn.dataset.color);
           selectedEnergy = parseFloat(btn.dataset.energy);
           _updateEnergyHero();
           scheduleDraftSave();
@@ -1249,7 +1282,7 @@ function _tt(k, vars, fallback) {
       if (defaultEnergyBtn) {
         defaultEnergyBtn.classList.add('selected');
         defaultEnergyBtn.style.background = defaultEnergyBtn.dataset.color;
-        defaultEnergyBtn.style.color = 'white';
+        defaultEnergyBtn.style.color = _onFillInk(defaultEnergyBtn.dataset.color);
       }
 
       // Initialize sleep buttons
@@ -1283,7 +1316,7 @@ function _tt(k, vars, fallback) {
           });
           b.classList.add('selected');
           b.style.background = b.dataset.color;
-          b.style.color = 'white';
+          b.style.color = _onFillInk(b.dataset.color);
           selectedSleep = parseFloat(b.dataset.sleep);
           // Manual pick overrides any synced value
           _sleepHealthSynced = false;
@@ -1327,7 +1360,7 @@ function _tt(k, vars, fallback) {
       if (defaultSleepBtn) {
         defaultSleepBtn.classList.add('selected');
         defaultSleepBtn.style.background = defaultSleepBtn.dataset.color;
-        defaultSleepBtn.style.color = 'white';
+        defaultSleepBtn.style.color = _onFillInk(defaultSleepBtn.dataset.color);
       }
       
       // Helper: wire a group of buttons with toggle-deselect behaviour
@@ -1588,7 +1621,7 @@ function _tt(k, vars, fallback) {
         textTag: 'div',
         textStyle: 'text-align:left;',
         nameStyle: 'font-weight:700;font-size:0.95em;color:#5c7cfa;',
-        subStyle: 'font-size:0.82em;color:#6c757d;',
+        subStyle: 'font-size:0.82em;color:var(--text-muted-ink);',
       })));
     }
     function _fmDismissDepressedMsg() {
@@ -1639,7 +1672,7 @@ function _tt(k, vars, fallback) {
       const btn = document.getElementById('favouriteBtn');
       if (!btn) return;
       btn.textContent = selectedFavourite ? '★' : '☆';
-      btn.style.color = selectedFavourite ? 'var(--brand-primary)' : '#adb5bd';
+      btn.style.color = selectedFavourite ? 'var(--brand-ink)' : 'var(--text-muted-ink)';
     }
     window.toggleFavourite = toggleFavourite;
 
@@ -1751,7 +1784,7 @@ function _tt(k, vars, fallback) {
           const sel = parseFloat(b.dataset.energy) === draft.energy;
           b.classList.toggle('selected', sel);
           b.style.background = sel ? (b.dataset.color || getEnergyColor(draft.energy)) : '#f8f9fa';
-          b.style.color = sel ? 'white' : '#495057';
+          b.style.color = sel ? _onFillInk((b.dataset.color || getEnergyColor(draft.energy))) : '#495057';
         });
       }
 
@@ -1763,7 +1796,7 @@ function _tt(k, vars, fallback) {
           const sel = parseFloat(b.dataset.sleep) === draft.sleep;
           b.classList.toggle('selected', sel);
           b.style.background = sel ? (b.dataset.color || getSleepColor(draft.sleep)) : '#f8f9fa';
-          b.style.color = sel ? 'white' : '#495057';
+          b.style.color = sel ? _onFillInk((b.dataset.color || getSleepColor(draft.sleep))) : '#495057';
         });
         // Only show "Sleep | Xh" on the sync button if sleep actually came from a health sync
         const _draftSleepBtn = document.getElementById('healthSleepBtn');
@@ -2149,10 +2182,10 @@ function _tt(k, vars, fallback) {
       // Bipolar UK definition text is kept in English — it's sourced from Bipolar UK
       // and translating it would produce unofficial medical content. The UI chrome
       // around it (toggle button, link label) is translated below.
-      const _bipolarHtml = `${def.text}<br><a href="${_bipolarUkUrl}" target="_blank" style="color:var(--brand-primary);font-size:0.82em;white-space:nowrap;">${_t('journal.moodInfo.bipolarUkLink')}</a>`;
+      const _bipolarHtml = `${def.text}<br><a href="${_bipolarUkUrl}" target="_blank" style="color:var(--brand-ink);font-size:0.82em;white-space:nowrap;">${_t('journal.moodInfo.bipolarUkLink')}</a>`;
       if (_personalDef) {
         // Initial state: body collapsed → button shows the "click here" prompt.
-        document.getElementById('moodInfoBody').innerHTML = `<button onclick="window._toggleBipolarDef(this)" style="background:none;border:none;color:#adb5bd;font-size:0.82em;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_t('journal.moodInfo.bipolarUkToggleOpen')}</button><div id="_moodBipBody" style="display:none;margin-top:6px;font-size:0.9em;color:#495057;line-height:1.65;">${_bipolarHtml}</div>`;
+        document.getElementById('moodInfoBody').innerHTML = `<button onclick="window._toggleBipolarDef(this)" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_t('journal.moodInfo.bipolarUkToggleOpen')}</button><div id="_moodBipBody" style="display:none;margin-top:6px;font-size:0.9em;color:#495057;line-height:1.65;">${_bipolarHtml}</div>`;
       } else {
         document.getElementById('moodInfoBody').innerHTML = _bipolarHtml;
       }
@@ -2196,7 +2229,7 @@ function _tt(k, vars, fallback) {
           const text = typeof lastMem === 'object' ? lastMem.text : lastMem;
           const date = typeof lastMem === 'object' && lastMem.date ? lastMem.date : null;
           memoriesList.innerHTML = `<div style="padding:7px 10px;background:#f8f9fa;border-radius:8px;font-size:0.88em;color:#495057;line-height:1.4;">
-            ${date ? `<div style="font-size:0.8em;color:#adb5bd;margin-bottom:2px;">${date}</div>` : ''}${text}</div>`;
+            ${date ? `<div style="font-size:0.8em;color:var(--text-muted-ink);margin-bottom:2px;">${date}</div>` : ''}${text}</div>`;
           memoriesBox.style.display = '';
         } else {
           memoriesBox.style.display = 'none';
@@ -2221,7 +2254,7 @@ function _tt(k, vars, fallback) {
           const _ch = document.createElement('div');
           _ch.id = '_fmMoodInfoCloseHintEl';
           _ch.style.cssText = 'display:flex;flex-direction:row;align-items:center;gap:4px;margin-right:8px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;';
-          _ch.innerHTML = `<span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.closeToContinue')}</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="2" y1="8" x2="13" y2="8" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="8,3 13,8 8,13" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+          _ch.innerHTML = `<span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.closeToContinue')}</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><line x1="2" y1="8" x2="13" y2="8" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="8,3 13,8 8,13" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
           _confirmBtns.insertBefore(_ch, _confirmBtns.firstChild);
           const _closeBtn = _confirmBtns.querySelector('.confirm-btn-no');
           if (_closeBtn) _closeBtn.style.zIndex = '1001';
@@ -2924,7 +2957,7 @@ function _tt(k, vars, fallback) {
           // Import lives with the entry list, which an empty journal doesn't
           // have, so offer it here: new users are the ones moving their history in.
           document.getElementById('entries').innerHTML = '<div class="no-entries">' + BB.t('journal.noEntries') + '</div>'
-            + '<div style="text-align:center;margin-top:10px;"><button type="button" onclick="showImportModal()" style="background:none;border:none;color:var(--brand-primary);font-size:0.88em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">' + _esc(BB.t('journal.mods.importHistory')) + '</button></div>';
+            + '<div style="text-align:center;margin-top:10px;"><button type="button" onclick="showImportModal()" style="background:none;border:none;color:var(--brand-ink);font-size:0.88em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">' + _esc(BB.t('journal.mods.importHistory')) + '</button></div>';
           document.getElementById('stats').style.display = 'none';
           document.getElementById('chart').style.display = 'none';
           const entriesHeader = document.querySelector('.entries-header');
@@ -2993,7 +3026,7 @@ function _tt(k, vars, fallback) {
                 const r = new Date(entry.recordedAt);
                 const timeStr = r.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
                 const tz = entry.recordedTz || Intl.DateTimeFormat().resolvedOptions().timeZone;
-                return `<span style="font-size:0.8em; color:#adb5bd;"> · ${timeStr} (${tz})</span>`;
+                return `<span style="font-size:0.8em; color:var(--text-muted-ink);"> · ${timeStr} (${tz})</span>`;
               })()
             : '';
           return `
@@ -3004,14 +3037,14 @@ function _tt(k, vars, fallback) {
                   <img src="${_moodImg(entry.mood)}" alt="${_moodLabelOf(entry.mood)}" class="entry-mood" style="width:32px;height:32px;object-fit:contain;">
                   ${_linkedMoodsOf(entry).map(lm => `<img src="${_moodImg(lm)}" alt="${_moodLabelOf(lm)}" style="width:22px;height:22px;object-fit:contain;opacity:0.75;margin-left:-4px;" title="${_tt('t143.j.alsoMood', { mood: _moodLabelOf(lm) }, 'Also: {mood}')}">`).join('')}
                   ${entry.pdfHide ? `<span style="font-size:1em;line-height:1;opacity:0.7;" title="${BB.t('journal.ui.privateTitle')}">🕵️</span>` : ''}
-                  ${entry.autoFilled ? `<span style="font-size:0.6em;font-weight:700;letter-spacing:0.05em;color:var(--brand-primary);border:1.5px solid rgba(255,149,0,0.45);border-radius:6px;padding:2px 4px;line-height:1;" title="${BB.t('journal.autofill.badgeTitle')}">${BB.t('journal.autofill.badge')}</span>` : ''}
-                  ${entry.favourite ? `<span style="font-size:1em;color:var(--brand-primary);line-height:1;" title="${BB.t('journal.ui.favouriteTitle')}">★</span>` : ''}
+                  ${entry.autoFilled ? `<span style="font-size:0.6em;font-weight:700;letter-spacing:0.05em;color:var(--brand-ink);border:1.5px solid rgba(255,149,0,0.45);border-radius:6px;padding:2px 4px;line-height:1;" title="${BB.t('journal.autofill.badgeTitle')}">${BB.t('journal.autofill.badge')}</span>` : ''}
+                  ${entry.favourite ? `<span style="font-size:1em;color:var(--brand-ink);line-height:1;" title="${BB.t('journal.ui.favouriteTitle')}">★</span>` : ''}
                   <button class="edit-btn" id="edit-${actualIndex}" title="${BB.t('journal.ui.editEntry')}" style="background:none; border:none; cursor:pointer; font-size:1.1em; padding:4px;">✏️</button>
-                  <button class="delete-btn" id="delete-${actualIndex}">×</button>
+                  <button class="delete-btn" id="delete-${actualIndex}" aria-label="${BB.t('a11y.deleteEntry')}">×</button>
                 </div>
               </div>
-              <div style="color: #6c757d; font-size: 0.9em; display:flex; flex-wrap:wrap; line-height:1.8;">${(() => {
-                const _G='#2ECC40',_R='#FF4136',_N='#adb5bd';
+              <div style="color: var(--text-muted-ink); font-size: 0.9em; display:flex; flex-wrap:wrap; line-height:1.8;">${(() => {
+                const _G='var(--ok-ink)',_R='var(--bad-ink)',_N='var(--text-muted-ink)';
                 const _chips = [];
                 const _Y = BB.t('journal.value.yes'), _No = BB.t('journal.value.no'), _Mo = BB.t('journal.chip.more'), _Nm = BB.t('journal.chip.normal'), _Le = BB.t('journal.chip.less');
                 if (entry.medication) _chips.push([entry.medication==='taken'?BB.t('t143.j.chipTaken'):entry.medication==='unsure'?BB.t('t143.j.chipUnsure'):BB.t('t143.j.chipNotTaken'), entry.medication==='taken'?_G:entry.medication==='unsure'?_N:_R]);
@@ -3038,8 +3071,8 @@ function _tt(k, vars, fallback) {
                 const _intParts = entry.intention.trim().split(/\n?_{3,}\n/);
                 const _intMain = _intParts[0].trim();
                 const _intNotes = _intParts[1] ? _intParts[1].trim() : '';
-                return (_intMain ? `<div class="entry-notes" style="font-style:italic;color:#adb5bd;">🌅 ${_esc(_intMain)}</div>` : '')
-                     + (_intNotes ? `<div class="entry-notes" style="font-size:0.82em;color:#adb5bd;white-space:pre-line;">${_esc(_intNotes)}</div>` : '');
+                return (_intMain ? `<div class="entry-notes" style="font-style:italic;color:var(--text-muted-ink);">🌅 ${_esc(_intMain)}</div>` : '')
+                     + (_intNotes ? `<div class="entry-notes" style="font-size:0.82em;color:var(--text-muted-ink);white-space:pre-line;">${_esc(_intNotes)}</div>` : '');
               })() : ''}
             </div>
           `;
@@ -3080,18 +3113,18 @@ function _tt(k, vars, fallback) {
             </div>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
               ${currentUser ? `
-                <span style="font-size:0.82em;color:#6c757d;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${currentUser.email || ''}</span>
-                <button onclick="logout()" class="logout-btn-list" style="flex-shrink:0;padding:7px 14px;background:white;color:#adb5bd;border:1.5px solid #dee2e6;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.logout')}</button>
+                <span style="font-size:0.82em;color:var(--text-muted-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${currentUser.email || ''}</span>
+                <button onclick="logout()" class="logout-btn-list" style="flex-shrink:0;padding:7px 14px;background:white;color:var(--text-muted-ink);border:1.5px solid #dee2e6;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.logout')}</button>
               ` : `
-                <span style="font-size:0.82em;color:#adb5bd;font-style:italic;">${BB.t('fix143.loginToBackup')}</span>
+                <span style="font-size:0.82em;color:var(--text-muted-ink);font-style:italic;">${BB.t('fix143.loginToBackup')}</span>
                 <button onclick="window.showAuthModal()" style="flex-shrink:0;padding:7px 14px;background:var(--brand-btn);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.85em;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.signInUp')}</button>
               `}
             </div>
             <div style="text-align:center;margin-top:8px;position:relative;display:inline-block;width:100%;">
-              <button onclick="_dismissPersonalDetailsHint();showPersonalDetailsModal()" style="background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;padding:4px 8px;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.personalDetailsBtn')}</button>
+              <button onclick="_dismissPersonalDetailsHint();showPersonalDetailsModal()" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;padding:4px 8px;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.personalDetailsBtn')}</button>
               ${BB.storage.get('PersonalHintDone') !== '1' ? `<div id="personalDetailsJournalHint" style="display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:2px;">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
-                <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.ui.addDetailsHere')}</span>
+                <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.ui.addDetailsHere')}</span>
               </div>` : ''}
             </div>
           </div>
@@ -3406,7 +3439,7 @@ function _tt(k, vars, fallback) {
       document.getElementById('stats').innerHTML = html;
 
       // streak card lives inside the year calendar; show personalised feedback link for all timeframes (only when bear suggestion enabled)
-      const _pfLimitedNote = statsTimeframe === 30 ? `<div style="font-size:0.75em;color:#adb5bd;margin-top:2px;">${BB.t('t143.j.pfLimited', { period: timeframeLabel })}</div>` : '';
+      const _pfLimitedNote = statsTimeframe === 30 ? `<div style="font-size:0.75em;color:var(--text-muted-ink);margin-top:2px;">${BB.t('t143.j.pfLimited', { period: timeframeLabel })}</div>` : '';
       document.getElementById('streakStats').innerHTML = (localStorage.getItem('showMoodSuggestion') === '1' && statsEntries.length > 0)
         ? `<div style="text-align:center;margin:8px 0 16px;">
             <button onclick="showPersonalisedFeedback()" class="pf-link"><img src="images/moods/AI_Bear.png" style="max-width: 50px" > <br>${BB.t('journal.ui.personalisedFeedback')}</button><br>
@@ -3428,7 +3461,7 @@ function _tt(k, vars, fallback) {
           ? `<div style="height:6px;border-radius:3px;background:#eee;margin-top:3px;"><div style="height:100%;width:${Math.min(bar*100,100).toFixed(0)}%;background:${barColor};border-radius:3px;"></div></div>`
           : '';
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0f0f0;">
-          <span style="color:#6c757d;">${label}</span><span style="font-weight:600;">${value}</span></div>${barHtml}`;
+          <span style="color:var(--text-muted-ink);">${label}</span><span style="font-weight:600;">${value}</span></div>${barHtml}`;
       };
 
       if (type === 'energy') {
@@ -3475,6 +3508,11 @@ function _tt(k, vars, fallback) {
           const pct = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
           const bar = total > 0 ? count / total : 0;
           const color = _moodColors[mood];
+          // Text in a darker (light mode) / lighter (dark mode) shade of the
+          // bar colour: the raw palette was 2.1–4.2:1 on white.
+          const ink = (_fmIsDark()
+            ? { manic:'#ff8787', elevated:'#ffa94d', stable:'#69db7c', good:'#69db7c', low:'#74c0fc', depressed:'#b197fc' }
+            : { manic:'#c92a2a', elevated:'#a94600', stable:'#1f7a33', good:'#1f7a33', low:'#0b5cad', depressed:'#5f3dc4' })[mood] || '#495057';
           const value = `${BB.t('t143.j.nDays', { n: count })}\u2009|\u2009${pct}%`;
           return `<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
@@ -3482,7 +3520,7 @@ function _tt(k, vars, fallback) {
                 <img src="${_moodImg(mood)}" style="width:22px;height:22px;object-fit:contain;">
                 <span style="color:#495057;font-weight:600;">${_moodLabels[mood]}</span>
               </div>
-              <span style="font-weight:700;color:${color};">${value}</span>
+              <span style="font-weight:700;color:${ink};">${value}</span>
             </div>
             <div style="height:5px;border-radius:3px;background:#eee;">
               <div style="height:100%;width:${(bar*100).toFixed(0)}%;background:${color};border-radius:3px;"></div>
@@ -3501,7 +3539,7 @@ function _tt(k, vars, fallback) {
             <span style="color:#495057;font-size:0.9em;">${d}</span>
             <span style="display:flex;align-items:center;gap:5px;">
               <img src="${_moodImg(e.mood)}" alt="${_moodLabelOf(e.mood)}" style="width:22px;height:22px;object-fit:contain;">
-              <span style="font-size:0.82em;font-weight:600;color:${c};">${lbl}</span>
+              <span style="font-size:0.82em;font-weight:600;color:${_readableInk(c)};">${lbl}</span>
             </span>
           </div>`;
         }).join('');
@@ -3522,14 +3560,14 @@ function _tt(k, vars, fallback) {
       const favs = _allEntries.filter(e => e.favourite).sort((a, b) => b.timestamp - a.timestamp);
       const el = document.getElementById('favouritesList');
       if (favs.length === 0) {
-        el.innerHTML = '<p style="text-align:center;color:#6c757d;font-style:italic;margin:16px 0;">' + BB.t('journal.ui.noFavYet') + '</p>';
+        el.innerHTML = '<p style="text-align:center;color:var(--text-muted-ink);font-style:italic;margin:16px 0;">' + BB.t('journal.ui.noFavYet') + '</p>';
       } else {
         el.innerHTML = favs.map(entry => {
           const d = new Date(entry.date);
           const label = _bbDate(d, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
-            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
+            ? `<div style="font-size:0.82em;color:var(--text-muted-ink);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
             : '';
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${color};">
@@ -3538,7 +3576,7 @@ function _tt(k, vars, fallback) {
                 <div style="font-weight:600;font-size:0.88em;">${label}</div>
                 ${notesPreview}
               </div>
-              <button onclick="openFavouriteDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-primary);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.open')}</button>
+              <button onclick="openFavouriteDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-ink);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.open')}</button>
             </div>`;
         }).join('');
       }
@@ -3631,14 +3669,14 @@ function _tt(k, vars, fallback) {
       document.getElementById('favAnniversaryTitle').textContent = BB.t('t143.j.onThisDay', { date: _annDate });
       const el = document.getElementById('favAnniversaryList');
       if (favs.length === 0) {
-        el.innerHTML = '<p style="text-align:center;color:#6c757d;font-style:italic;margin:16px 0;">' + BB.t('journal.ui.noFavForDate') + '</p>';
+        el.innerHTML = '<p style="text-align:center;color:var(--text-muted-ink);font-style:italic;margin:16px 0;">' + BB.t('journal.ui.noFavForDate') + '</p>';
       } else {
         el.innerHTML = favs.map(entry => {
           const d = new Date(entry.date);
           const label = _bbDate(d, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
-            ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
+            ? `<div style="font-size:0.82em;color:var(--text-muted-ink);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(entry.notes)}</div>`
             : '';
           return `
             <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;background:#f8f9fa;border-radius:10px;border-left:4px solid ${color};">
@@ -3647,7 +3685,7 @@ function _tt(k, vars, fallback) {
                 <div style="font-weight:600;font-size:0.88em;">${label}</div>
                 ${notesPreview}
               </div>
-              <button onclick="openFavAnniversaryDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-primary);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.open')}</button>
+              <button onclick="openFavAnniversaryDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-ink);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.open')}</button>
             </div>`;
         }).join('');
       }
@@ -4104,7 +4142,7 @@ function _tt(k, vars, fallback) {
         const inputCss = 'width:100%;padding:12px;border:2px solid #e9ecef;border-radius:10px;font-size:1em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;';
         const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', t(unlock ? 'unlockTitle' : 'privateTitle'));
         const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', unlock ? BB.t('fix143.unlockBody') : t('privateBody')); // not "end-to-end": Standard accounts see it too
-        const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:#6c757d;', t(unlock ? 'unlockHint' : 'createWarning'));
+        const hint = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:var(--text-muted-ink);', t(unlock ? 'unlockHint' : 'createWarning'));
         const pw = el('input', inputCss); pw.type = 'password'; pw.autocomplete = unlock ? 'current-password' : 'new-password';
         pw.placeholder = t(unlock ? 'passwordPlaceholder' : 'newPasswordPlaceholder');
         const pw2 = el('input', inputCss); pw2.type = 'password'; pw2.autocomplete = 'new-password';
@@ -4119,9 +4157,9 @@ function _tt(k, vars, fallback) {
         if (!unlock) spare.style.display = 'none';
         const err = el('div', 'display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;');
         const go = el('button', 'width:100%;padding:13px;background:var(--brand-btn);color:var(--brand-btn-text, white);box-shadow:var(--brand-btn-ring, none);border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin:4px 0 8px;', t(unlock ? 'unlock' : 'save'));
-        const later = el('button', 'width:100%;padding:11px;background:#f8f9fa;color:#6c757d;border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;', unlock ? t('notNow') : BB.t('common.cancel'));
-        const forgot = el('button', 'display:block;margin:10px auto 0;background:none;border:none;color:var(--brand-primary);font-size:0.82em;cursor:pointer;padding:4px;', t('forgot'));
-        const forgotText = el('p', 'display:none;margin:8px 0 0;font-size:0.8em;line-height:1.45;color:#6c757d;', t('forgotBody'));
+        const later = el('button', 'width:100%;padding:11px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;', unlock ? t('notNow') : BB.t('common.cancel'));
+        const forgot = el('button', 'display:block;margin:10px auto 0;background:none;border:none;color:var(--brand-ink);font-size:0.82em;cursor:pointer;padding:4px;', t('forgot'));
+        const forgotText = el('p', 'display:none;margin:8px 0 0;font-size:0.8em;line-height:1.45;color:var(--text-muted-ink);', t('forgotBody'));
         if (!unlock) forgot.style.display = 'none';
         [title, body, hint, err, pw, pw2, spare, go, later, forgot, forgotText].forEach(n => box.appendChild(n));
         ov.appendChild(box);
@@ -5264,7 +5302,7 @@ function _tt(k, vars, fallback) {
       if (slider) slider.style.setProperty('--msc-accent', m.color);
       if (ctrl) { ctrl.style.setProperty('--msc-accent', m.color); ctrl.classList.add('committed'); }
       if (emoji) emoji.textContent = m.emoji;
-      if (val) { val.textContent = m.label; val.style.color = m.color; }
+      if (val) { val.textContent = m.label; val.style.color = _readableInk(m.color); }
       if (label) label.textContent = m.band;
     }
 
@@ -5279,7 +5317,7 @@ function _tt(k, vars, fallback) {
       if (slider) slider.style.setProperty('--msc-accent', m.color);
       if (ctrl) { ctrl.style.setProperty('--msc-accent', m.color); ctrl.classList.add('committed'); }
       if (emoji) emoji.textContent = m.emoji;
-      if (val) { val.textContent = String(v); val.style.color = m.color; }
+      if (val) { val.textContent = String(v); val.style.color = _readableInk(m.color); }
       if (label) label.textContent = m.label;
     }
 
@@ -5330,7 +5368,7 @@ function _tt(k, vars, fallback) {
       const slider = document.getElementById('mscSlider');
       const ctrl = document.getElementById('moodSpectrumControl');
       if (img) img.src = _moodImg(Number(n));
-      if (valEl) { valEl.textContent = _fmtMoodNum(n); valEl.style.color = color; }
+      if (valEl) { valEl.textContent = _fmtMoodNum(n); valEl.style.color = _readableInk(color); }
       if (labelEl) labelEl.textContent = _moodLabelOf(Number(n));
       if (slider) slider.style.setProperty('--msc-accent', color);
       if (ctrl) ctrl.style.setProperty('--msc-accent', color);
@@ -5386,7 +5424,7 @@ function _tt(k, vars, fallback) {
       const ctrl = document.getElementById('fmSpectrumControl');
       const btn = document.getElementById('fmSpectrumContinue');
       if (img) img.src = _moodImg(n);
-      if (valEl) { valEl.textContent = _fmtMoodNum(n); valEl.style.color = color; }
+      if (valEl) { valEl.textContent = _fmtMoodNum(n); valEl.style.color = _readableInk(color); }
       if (labelEl) labelEl.textContent = _moodLabelOf(n);
       if (slider) slider.style.setProperty('--msc-accent', color);
       if (ctrl) ctrl.style.setProperty('--msc-accent', color);
@@ -5423,7 +5461,7 @@ function _tt(k, vars, fallback) {
       const ctrl    = document.getElementById('fmSleepSpectrumControl');
       const btn     = document.getElementById('fmSleepSpectrumContinue');
       if (emojiEl) emojiEl.textContent = m.emoji;
-      if (valEl) { valEl.textContent = m.label; valEl.style.color = m.color; }
+      if (valEl) { valEl.textContent = m.label; valEl.style.color = _readableInk(m.color); }
       if (labelEl) labelEl.textContent = m.band;
       if (slider) slider.style.setProperty('--msc-accent', m.color);
       if (ctrl) { ctrl.style.setProperty('--msc-accent', m.color); ctrl.classList.add('committed'); }
@@ -5465,7 +5503,7 @@ function _tt(k, vars, fallback) {
       const ctrl    = document.getElementById('fmEnergySpectrumControl');
       const btn     = document.getElementById('fmEnergySpectrumContinue');
       if (emojiEl) emojiEl.textContent = m.emoji;
-      if (valEl) { valEl.textContent = String(n); valEl.style.color = m.color; }
+      if (valEl) { valEl.textContent = String(n); valEl.style.color = _readableInk(m.color); }
       if (labelEl) labelEl.textContent = m.label;
       if (slider) slider.style.setProperty('--msc-accent', m.color);
       if (ctrl) { ctrl.style.setProperty('--msc-accent', m.color); ctrl.classList.add('committed'); }
@@ -5675,23 +5713,32 @@ function _tt(k, vars, fallback) {
     // Keyboard: ← / → cycle the spinner wheel on desktop. Scrolling the
     // adjacent pill into the centre fires the wheel's scroll pipeline, so the
     // preview, dial needle and haptic tick all follow as if swiped.
+    // Also ↑ / ↓ (radio-group convention) and Home / End; when focus is on a
+    // pill it moves with the selection, so a keyboard user can pick a mood
+    // with Tab → arrows → Enter. Reduce Motion: the wheel jumps, no glide.
     document.addEventListener('keydown', (e) => {
-      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const _keys = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1, Home: -99, End: 99 };
+      if (!(e.key in _keys)) return;
       if (typeof _fmActive === 'undefined' || !_fmActive) return;
       const wheel = document.getElementById('fmWheel');
       if (!wheel) return;
       const _ae = document.activeElement;
       if (_ae && ['TEXTAREA', 'INPUT', 'SELECT'].includes(_ae.tagName)) return;
+      const _inWheel = !!(_ae && wheel.contains(_ae));
+      // ↑ / ↓ / Home / End only steer the wheel when it has focus (they scroll the page otherwise).
+      if (!_inWheel && !(e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
       if (document.querySelector('.confirm-modal.active')) return;
-      const btns = Array.prototype.slice.call(wheel.querySelectorAll('.fm-wheel-btn'));
+      const btns = Array.prototype.slice.call(wheel.querySelectorAll('.fm-wheel-btn:not(.fm-wheel-runway)'));
       if (!btns.length) return;
       const cur = btns.findIndex(b => b.classList.contains('center'));
       const from = cur < 0 ? Math.floor(btns.length / 2) : cur;
-      const next = Math.max(0, Math.min(btns.length - 1, from + (e.key === 'ArrowRight' ? 1 : -1)));
-      if (next === from && cur >= 0) return; // already at the end stop
-      const b = btns[next];
-      wheel.scrollTo({ left: b.offsetLeft - (wheel.clientWidth - b.offsetWidth) / 2, behavior: 'smooth' });
+      const next = Math.max(0, Math.min(btns.length - 1, from + _keys[e.key]));
       e.preventDefault();
+      if (next === from && cur >= 0) { if (_inWheel) btns[next].focus({ preventScroll: true }); return; } // already at the end stop
+      const b = btns[next];
+      const _rm = window.BB && BB.a11y && BB.a11y.reducedMotion();
+      wheel.scrollTo({ left: b.offsetLeft - (wheel.clientWidth - b.offsetWidth) / 2, behavior: _rm ? 'auto' : 'smooth' });
+      if (_inWheel) { btns.forEach(x => { x.tabIndex = (x === b ? 0 : -1); }); b.focus({ preventScroll: true }); }
     });
 
     function _openFocusedMode() {
@@ -6029,13 +6076,13 @@ function _tt(k, vars, fallback) {
         const sel = parseFloat(b.dataset.energy) === selectedEnergy;
         b.classList.toggle('selected', sel);
         b.style.background = sel ? (b.dataset.color || getEnergyColor(selectedEnergy)) : '#f8f9fa';
-        b.style.color = sel ? 'white' : '#495057';
+        b.style.color = sel ? _onFillInk((b.dataset.color || getEnergyColor(selectedEnergy))) : '#495057';
       });
       document.querySelectorAll('.sleep-btn').forEach(b => {
         const sel = parseFloat(b.dataset.sleep) === selectedSleep;
         b.classList.toggle('selected', sel);
         b.style.background = sel ? (b.dataset.color || getSleepColor(selectedSleep)) : '#f8f9fa';
-        b.style.color = sel ? 'white' : '#495057';
+        b.style.color = sel ? _onFillInk((b.dataset.color || getSleepColor(selectedSleep))) : '#495057';
       });
       document.querySelectorAll('[data-medication]').forEach(b => b.classList.toggle('selected', b.dataset.medication === selectedMedication));
       document.querySelectorAll('[data-goals]').forEach(b => b.classList.toggle('selected', b.dataset.goals === selectedGoals));
@@ -6050,6 +6097,11 @@ function _tt(k, vars, fallback) {
       _updateSleepHero();
     }
 
+    const _FM_MOOD_INK      = { manic:'#c92a2a', elevated:'var(--brand-ink)', stable:'#1f7a33', good:'#1f7a33', low:'#6741d9', depressed:'#3b5bdb' };
+    const _FM_MOOD_INK_DARK = { manic:'#ff8787', elevated:'#ffa94d', stable:'#69db7c', good:'#69db7c', low:'#b197fc', depressed:'#91a7ff' };
+    /** Readable text colour for a mood (light or dark mode), for mood names in text. */
+    function _fmMoodInk(cat) { return (cat && (_fmIsDark() ? _FM_MOOD_INK_DARK : _FM_MOOD_INK)[cat]) || 'var(--brand-ink)'; }
+    const _FM_MOOD_BTN      = { manic:['#ff4444', '#1a1300'], stable:['#51cf66', '#1a1300'], good:['#51cf66', '#1a1300'], low:['#7950f2', '#fff'], depressed:['#4263eb', '#fff'] };
     const _FM_MOOD_BG     = { manic:'#fff0f0', elevated:'var(--brand-secondary-tint)', stable:'#f0fff4', good:'#f0fff4', low:'#f5f0ff', depressed:'#f0f4ff' };
     function _fmApplyMoodTheme(mood) {
       // Accept a legacy category string OR a spectrum number — normalise to a category.
@@ -6069,8 +6121,15 @@ function _tt(k, vars, fallback) {
         // page's --brand-btn (cream, dark label — css/journal.css); a mood
         // accent keeps its colour with a white label.
         const _brandAccent = accent === 'var(--brand-primary)';
-        card.style.setProperty('--fm-accent-btn', _brandAccent ? 'var(--brand-btn)' : accent);
-        card.style.setProperty('--fm-accent-btn-text', _brandAccent ? 'var(--brand-btn-text)' : '#fff');
+        // Contrast (2026-10-16): a white label only reached 2.0:1 on the stable
+        // green and 3.4:1 on the manic red, so those take a dark label; low and
+        // depressed keep white on one shade deeper (4.95 / 4.98:1).
+        const _btn = cat && _FM_MOOD_BTN[cat];
+        card.style.setProperty('--fm-accent-btn', _brandAccent ? 'var(--brand-btn)' : (_btn ? _btn[0] : accent));
+        card.style.setProperty('--fm-accent-btn-text', _brandAccent ? 'var(--brand-btn-text)' : (_btn ? _btn[1] : '#fff'));
+        // Eyebrow and other small accent TEXT: a darker (light mode) or lighter
+        // (dark mode) ink of the mood colour, 4.8:1 or better on its wash.
+        card.style.setProperty('--fm-accent-ink', (cat && (_fmIsDark() ? _FM_MOOD_INK_DARK : _FM_MOOD_INK)[cat]) || 'var(--brand-ink)');
         card.style.setProperty('--fm-accent-btn-ring', _brandAccent ? 'var(--brand-btn-ring)' : 'none');
       }
       if (sticky) { sticky.style.background = bg; }
@@ -6220,7 +6279,7 @@ function _tt(k, vars, fallback) {
       skipBtn.title = '';
       skipBtn.onclick = _fmSkip;
       skipBtn.style.visibility = (step.id === 'done' || step.id === 'mood') ? 'hidden' : 'visible';
-      skipBtn.style.color = '#adb5bd';
+      skipBtn.style.color = 'var(--text-muted-ink)';
       const saveShortcutBtn = document.getElementById('fmSaveShortcutBtn');
       if (saveShortcutBtn) saveShortcutBtn.style.display = (step.id === 'done' || (_fmStepIndex === 0 && _fmHighWater === 0)) ? 'none' : 'inline-block';
       // Next/save button row
@@ -6327,7 +6386,7 @@ function _tt(k, vars, fallback) {
       _notesEl.id = 'fmStepNotesEl';
       if (_noteOpen) _notesEl.open = true;
       _notesEl.style.cssText = 'margin-top:14px;';
-      _notesEl.innerHTML = `<summary style="font-size:0.85em;font-weight:600;color:#6c757d;cursor:pointer;list-style:none;display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;padding:4px 0;" onclick="this.querySelector('.bb-stpchev').style.transform=this.parentElement.open?'rotate(0deg)':'rotate(90deg)'"><span class="bb-stpchev" style="font-size:0.75em;color:#6c757d;transition:transform 0.2s;">${_noteOpen ? '▼' : '▶'}</span>${BB.t('journal.addNote')}</summary><textarea id="fmStepNoteInput" placeholder="${BB.t('journal.placeholder.stepNote')}" style="width:100%;height:60px;border:1.5px solid #e9ecef;border-radius:10px;padding:10px;margin-top:6px;font-size:0.88em;font-family:inherit;resize:none;box-sizing:border-box;outline:none;transition:border-color 0.15s;" oninput="selectedStepNotes['${step.id}']=this.value;saveDraft();" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='#e9ecef'">${_noteVal.replace(/</g,'&lt;')}</textarea>`;
+      _notesEl.innerHTML = `<summary style="font-size:0.85em;font-weight:600;color:var(--text-muted-ink);cursor:pointer;list-style:none;display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;padding:4px 0;" onclick="this.querySelector('.bb-stpchev').style.transform=this.parentElement.open?'rotate(0deg)':'rotate(90deg)'"><span class="bb-stpchev" style="font-size:0.75em;color:var(--text-muted-ink);transition:transform 0.2s;">${_noteOpen ? '▼' : '▶'}</span>${BB.t('journal.addNote')}</summary><textarea id="fmStepNoteInput" placeholder="${BB.t('journal.placeholder.stepNote')}" style="width:100%;height:60px;border:1.5px solid #e9ecef;border-radius:10px;padding:10px;margin-top:6px;font-size:0.88em;font-family:inherit;resize:none;box-sizing:border-box;outline:none;transition:border-color 0.15s;" oninput="selectedStepNotes['${step.id}']=this.value;saveDraft();" onfocus="this.style.borderColor='var(--brand-primary)'" onblur="this.style.borderColor='#e9ecef'">${_noteVal.replace(/</g,'&lt;')}</textarea>`;
       const _container = document.getElementById('fmContent');
       if (_container) _container.appendChild(_notesEl);
     }
@@ -6403,7 +6462,7 @@ function _tt(k, vars, fallback) {
     // The other moods picked for the day, as a row of small bears + names.
     function _fmAlsoMoodsLine(px) {
       if (!selectedLinkedMoods.length) return '';
-      return `<div style="margin-top:6px;font-size:1.05em;font-weight:700;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;">${selectedLinkedMoods.map(lm => `<span style="color:${_FM_MOOD_COLORS[_moodCat(lm)] || '#6c757d'};white-space:nowrap;"><img src="images/moods/${lm}.png" alt="" style="width:${px}px;height:${px}px;object-fit:contain;vertical-align:middle;margin-right:3px;">${_moodLabelOf(lm)}</span>`).join('')}</div>`;
+      return `<div style="margin-top:6px;font-size:1.05em;font-weight:700;display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;">${selectedLinkedMoods.map(lm => `<span style="color:${_fmMoodInk(_moodCat(lm))};white-space:nowrap;"><img src="images/moods/${lm}.png" alt="" style="width:${px}px;height:${px}px;object-fit:contain;vertical-align:middle;margin-right:3px;">${_moodLabelOf(lm)}</span>`).join('')}</div>`;
     }
 
     function _fmHeroHtml() {
@@ -6417,8 +6476,13 @@ function _tt(k, vars, fallback) {
     }
 
     function _fmWheelHtml(items, extraHintHtml) {
-      return `<div class="fm-wheel-block"><div class="fm-dial-arrow" aria-hidden="true"></div><div class="fm-wheel" id="fmWheel">${items.map(it => `<button type="button"
+      // Accessibility: the wheel is a radio group — VoiceOver users swipe
+      // through the options and double-tap one, keyboard users Tab in and use
+      // ← / → (roving tabindex, see _fmInitWheel). The empty "runway" pills
+      // that only pad short wheels are hidden from both.
+      return `<div class="fm-wheel-block"><div class="fm-dial-arrow" aria-hidden="true"></div><div class="fm-wheel" id="fmWheel" role="radiogroup">${items.map(it => `<button type="button"
           class="fm-wheel-btn${(it.cls && !it.spacer) ? ' ' + it.cls : ''}${it.init ? ' init' : ''}${it.spacer ? ' fm-wheel-runway' : ''}"
+          ${it.spacer ? 'aria-hidden="true" tabindex="-1"' : `role="radio" aria-checked="${/(^|\s)sel(\s|$)/.test(it.cls || '') ? 'true' : 'false'}" tabindex="-1"`}
           data-val="${it.val}" data-label="${it.label}" data-color="${it.color}"
           ${it.emoji ? `data-emoji="${it.emoji}"` : ''} ${it.img ? `data-img="${it.img}"` : ''}
           style="--wb-color:${it.color};"
@@ -6553,6 +6617,8 @@ function _tt(k, vars, fallback) {
         });
         if (best && !best.classList.contains('center')) {
           btns.forEach(b => b.classList.toggle('center', b === best));
+          // Roving tabindex follows the centred pill, so Tab lands on it.
+          btns.forEach(b => { if (!b.classList.contains('fm-wheel-runway')) b.tabIndex = (b === best ? 0 : -1); });
           _fmHeroPreview(best);
           _fmSetChipPreview(best.dataset.val);
           // Dial needle takes the colour of the slot it points at.
@@ -6582,6 +6648,11 @@ function _tt(k, vars, fallback) {
       if (_fmWheelBrowsed && _fmWheelBrowsed.key !== _fmWheelKey()) _fmWheelBrowsed = null;
       const browsed = _fmWheelBrowsed ? btns.find(b => b.dataset.val === _fmWheelBrowsed.val) : null;
       const init = wheel.querySelector('.fm-wheel-btn.sel') || browsed || wheel.querySelector('.fm-wheel-btn.init') || btns[Math.floor(btns.length / 2)];
+      // Name the group after the step's question, and make the starting pill
+      // the one Tab reaches.
+      const _q = document.getElementById('fmTitle');
+      if (_q && _q.textContent) wheel.setAttribute('aria-label', _q.textContent.trim());
+      btns.forEach(b => { if (!b.classList.contains('fm-wheel-runway')) b.tabIndex = (b === init ? 0 : -1); });
       wheel.style.scrollSnapType = 'none';
       wheel.scrollLeft = init.offsetLeft - (wheel.clientWidth - init.offsetWidth) / 2;
       setTimeout(() => { wheel.style.scrollSnapType = ''; }, 50);
@@ -6658,7 +6729,7 @@ function _tt(k, vars, fallback) {
         : _fmDayFillMsg === 'nodata' ? BB.t('journal.autofill.dayNoData')
         : BB.t('journal.autofill.dayBtn');
       return `<button type="button" onclick="_fmAutoFillDay()" ${_fmDayFillBusy ? 'disabled' : ''}
-        style="width:100%;padding:11px 16px;margin-top:16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;${_fmDayFillBusy ? 'opacity:0.6;' : ''}">${label}</button>`;
+        style="width:100%;padding:11px 16px;margin-top:16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;${_fmDayFillBusy ? 'opacity:0.6;' : ''}">${label}</button>`;
     }
 
     async function _fmAutoFillDay() {
@@ -6789,7 +6860,7 @@ function _tt(k, vars, fallback) {
                 const _border = i > 0 ? 'margin-top:7px;padding-top:7px;border-top:1px solid rgba(74,158,255,0.2);' : '';
                 return `<div style="display:flex;align-items:flex-start;gap:8px;${_border}">
                   <p style="flex:1;font-size:0.85em;color:#495057;margin:0;line-height:1.45;">${_esc}</p>
-                  <button onclick="_dismissQuickNote('${n.id}')" style="background:none;border:none;color:#adb5bd;font-size:1em;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="${BB.t('journal.ui.dismiss')}">✕</button>
+                  <button onclick="_dismissQuickNote('${n.id}')" style="background:none;border:none;color:var(--text-muted-ink);font-size:1em;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="${BB.t('journal.ui.dismiss')}">✕</button>
                 </div>`;
               }).join('');
               _quickNotesHtml = `<div style="background:#f0f7ff;border-radius:10px;padding:10px 14px;margin-bottom:14px;border-left:3px solid #5b8dee;">
@@ -6812,19 +6883,19 @@ function _tt(k, vars, fallback) {
                 if (_pe && _pe.intention) {
                   const _piClean = _pe.intention.split(/\n?_{3,}\n/)[0].trim();
                   if (_piClean) {
-                    _prevIntentionHtml = `<div style="background:var(--brand-tint);border-radius:10px;padding:10px 14px;margin-bottom:14px;border-left:3px solid var(--brand-primary);"><p style="font-size:0.75em;font-weight:700;color:var(--brand-primary);margin:0 0 3px;text-transform:uppercase;letter-spacing:0.3px;">${BB.t('journal.ui.yourIntention')}</p><p style="font-size:0.85em;color:#495057;margin:0;line-height:1.4;font-style:italic;">${_piClean.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p></div>`;
+                    _prevIntentionHtml = `<div style="background:var(--brand-tint);border-radius:10px;padding:10px 14px;margin-bottom:14px;border-left:3px solid var(--brand-primary);"><p style="font-size:0.75em;font-weight:700;color:var(--brand-ink);margin:0 0 3px;text-transform:uppercase;letter-spacing:0.3px;">${BB.t('journal.ui.yourIntention')}</p><p style="font-size:0.85em;color:#495057;margin:0;line-height:1.4;font-style:italic;">${_piClean.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p></div>`;
                   }
                 }
               }
             } catch(_) {}
           }
           let _linkedChip = '';
-          const _linkBtnCss = 'background:none;border:none;color:#adb5bd;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0;text-decoration:underline;';
+          const _linkBtnCss = 'background:none;border:none;color:var(--text-muted-ink);font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:0;text-decoration:underline;';
           if (_fmLinkMoodPickerOpen && selectedMood) {
-            _linkedChip = `<p style="text-align:center;font-size:0.82em;color:var(--brand-primary);font-weight:600;margin-top:12px;margin-bottom:0;">${BB.t('journal.ui.alsoPick')}</p>
-              <p style="text-align:center;font-size:0.72em;color:#adb5bd;margin-top:6px;margin-bottom:0;"><button onclick="showMoodInfo(selectedMood)" style="${_linkBtnCss}">${BB.t('journal.ui.aboutMood', { mood: _moodLabelOf(selectedMood) })}</button> &nbsp;·&nbsp; <button onclick="_fmCloseAlsoPicker(false)" style="${_linkBtnCss}">${BB.t('common.cancel')}</button></p>`;
+            _linkedChip = `<p style="text-align:center;font-size:0.82em;color:var(--brand-ink);font-weight:600;margin-top:12px;margin-bottom:0;">${BB.t('journal.ui.alsoPick')}</p>
+              <p style="text-align:center;font-size:0.72em;color:var(--text-muted-ink);margin-top:6px;margin-bottom:0;"><button onclick="showMoodInfo(selectedMood)" style="${_linkBtnCss}">${BB.t('journal.ui.aboutMood', { mood: _moodLabelOf(selectedMood) })}</button> &nbsp;·&nbsp; <button onclick="_fmCloseAlsoPicker(false)" style="${_linkBtnCss}">${BB.t('common.cancel')}</button></p>`;
           } else if (selectedMood && !selectedLinkedMoods.length) {
-            _linkedChip = `<p style="text-align:center;font-size:0.72em;color:#adb5bd;margin-top:8px;margin-bottom:0;">${BB.t('journal.ui.holdForMore')}</p>`;
+            _linkedChip = `<p style="text-align:center;font-size:0.72em;color:var(--text-muted-ink);margin-top:8px;margin-bottom:0;">${BB.t('journal.ui.holdForMore')}</p>`;
           }
           // Continue: shown once another mood is picked (and when coming back
           // to a day that already has some). In the picker it closes it too.
@@ -6836,9 +6907,9 @@ function _tt(k, vars, fallback) {
           if (!_wheelMode()) {
             const _hintSvg = `<svg width="24" height="22" viewBox="0 0 24 22" fill="none"><path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/><polyline points="7,6 12,1 17,6" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
             const _chooseHint = _showChooseMoodHint ? `<div id="_fmChooseMoodHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:10px;">
-              ${_hintSvg}<span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span></div>` : '';
+              ${_hintSvg}<span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span></div>` : '';
             const _tapHoldHint = _showFmTip ? `<div id="_fmTapHoldHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:12px;">
-              ${_hintSvg}<span style="font-size:0.78em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.tapHold').replace(/&/g, '&amp;')}</span></div>` : '';
+              ${_hintSvg}<span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-ink);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.tapHold').replace(/&/g, '&amp;')}</span></div>` : '';
             let _moodControl;
             if (_spectrumEnabled()) {
               // 0–10 spectrum uses the same slider as the classic form (it postdates
@@ -6851,7 +6922,7 @@ function _tt(k, vars, fallback) {
                 <div class="msc-readout">
                   <img id="fmMscImg" class="msc-img" src="${_moodImg(_initN)}" alt="">
                   <div class="msc-text">
-                    <div id="fmMscValue" class="msc-value" style="color:${_sCol};">${_fmtMoodNum(_initN)}</div>
+                    <div id="fmMscValue" class="msc-value" style="color:${_readableInk(_sCol)};">${_fmtMoodNum(_initN)}</div>
                     <div id="fmMscLabel" class="msc-label">${_moodLabelOf(_initN)}</div>
                   </div>
                 </div>
@@ -6896,7 +6967,7 @@ function _tt(k, vars, fallback) {
                 <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
                 <polyline points="7,6 12,1 17,6" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
               </svg>
-              <span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span>
+              <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span>
             </div>` : ''}${_fmDayFillBtnHtml()}`;
           }
           const _initMood = selectedMood || 'stable';
@@ -6919,14 +6990,14 @@ function _tt(k, vars, fallback) {
               <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
               <polyline points="7,6 12,1 17,6" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
-            <span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span>
+            <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.chooseMood')}</span>
           </div>` : ''}
           ${_showFmTip ? `<div id="_fmTapHoldHintEl" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:12px;">
             <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
               <path d="M 12,20 Q 8,10 12,2" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
               <polyline points="7,6 12,1 17,6" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
             </svg>
-            <span style="font-size:0.78em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.tapHold').replace(/&/g, '&amp;')}</span>
+            <span style="font-size:0.78em;font-weight:700;font-style:italic;color:var(--brand-ink);white-space:nowrap;font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.tapHold').replace(/&/g, '&amp;')}</span>
           </div>` : ''}${_fmDayFillBtnHtml()}`;
         }
 
@@ -6935,7 +7006,7 @@ function _tt(k, vars, fallback) {
           // Plain mode (wheel BETA off) — the original pre-wheel horizontal card
           // grid (emoji + label per card).
           if (!_wheelMode()) {
-            const _stepsSyncBtn = (BB.storage.get('HealthSyncEnabled') === '1' && _fmStepsResult) ? `<button onclick="importStepsFromHealth()" style="width:100%;padding:11px 16px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">📱 ${BB.t('journal.sync.steps', { n: _fmStepsResult })} — ${BB.t('common.change')}</button>` : '';
+            const _stepsSyncBtn = (BB.storage.get('HealthSyncEnabled') === '1' && _fmStepsResult) ? `<button onclick="importStepsFromHealth()" style="width:100%;padding:11px 16px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">📱 ${BB.t('journal.sync.steps', { n: _fmStepsResult })} — ${BB.t('common.change')}</button>` : '';
             // Full spectrum: 0–10 on one slider (5 = normal) instead of five cards.
             if (_spectrumEnabled()) {
               const _initE = _committedEnergy !== null ? _fmClampEnergy(_committedEnergy)
@@ -6945,7 +7016,7 @@ function _tt(k, vars, fallback) {
                   <div class="msc-readout">
                     <div id="fmEnscEmoji" class="msc-emoji">${_m.emoji}</div>
                     <div class="msc-text">
-                      <div id="fmEnscValue" class="msc-value" style="color:${_m.color};">${_initE}</div>
+                      <div id="fmEnscValue" class="msc-value" style="color:${_readableInk(_m.color)};">${_initE}</div>
                       <div id="fmEnscLabel" class="msc-label">${_m.label}</div>
                     </div>
                   </div>
@@ -6960,9 +7031,9 @@ function _tt(k, vars, fallback) {
               const isSugg = _fmEnergySuggestion === l.val;
               const [emoji, ...rest] = l.label.split(' ');
               return `<button class="fm-card-btn ${isSel?'sel':''}" onclick="selectedEnergy=${l.val}; _fmEnergyClear=false; _fmAdvance();"
-                onmouseenter="if(window.matchMedia('(pointer:fine)').matches && !this.classList.contains('sel')){this.style.borderColor='${l.color}';this.style.background='${l.color}18';this.style.color='${l.color}';}"
+                onmouseenter="if(window.matchMedia('(pointer:fine)').matches && !this.classList.contains('sel')){this.style.borderColor='${l.color}';this.style.background='${l.color}18';this.style.color='${_readableInk(l.color)}';}"
                 onmouseleave="if(window.matchMedia('(pointer:fine)').matches && !this.classList.contains('sel')){this.style.borderColor='';this.style.background='';this.style.color='';}"
-                style="${isSel ? `border-color:${l.color};background:${l.color}22;color:${l.color};` : ''}">
+                style="${isSel ? `border-color:${l.color};background:${l.color}22;color:${_readableInk(l.color)};` : ''}">
                 <span class="fm-card-emoji">${emoji}</span>
                 <span class="fm-card-label">${rest.join(' ')}${isSugg && !isSel ? '<br><span style="font-size:0.72em;opacity:0.65;">✓</span>' : ''}</span>
               </button>`;
@@ -7012,7 +7083,7 @@ function _tt(k, vars, fallback) {
             return `<div style="text-align:center;padding:18px 8px;">
                 <div style="font-size:2.6em;margin-bottom:10px;line-height:1;">🌙</div>
                 <p style="font-size:0.98em;color:#495057;font-weight:600;margin:0 0 6px;">${BB.t('journal.fm.sleepNotYet')}</p>
-                <p style="font-size:0.83em;color:#adb5bd;margin:0 0 18px;">${BB.t('journal.fm.sleepNotYetSub')}</p>
+                <p style="font-size:0.83em;color:var(--text-muted-ink);margin:0 0 18px;">${BB.t('journal.fm.sleepNotYetSub')}</p>
                 <button onclick="_fmAdvance()" style="width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.continue')} →</button>
               </div>`;
           }
@@ -7026,15 +7097,15 @@ function _tt(k, vars, fallback) {
             const _syncText = _fmSleepError === 'fail' ? '❌ Sync failed — try again'
               : _fmSleepError === 'nodata' ? '🤷 No sleep data found — try again'
               : '📱 ' + _syncSourceLabel();
-            const _syncBtn = _showSleepSyncBtn ? `<button onclick="importSleepFromHealth()" style="width:100%;padding:11px 16px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_syncText}</button>` : '';
+            const _syncBtn = _showSleepSyncBtn ? `<button onclick="importSleepFromHealth()" style="width:100%;padding:11px 16px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_syncText}</button>` : '';
             const _syncedRange = (_sleepHealthSynced && !_fmSleepClear) ? _FM_SLEEP_RANGES.find(r => r.val === _committedBucket) : null;
             const _bannerCol = _syncedRange ? _syncedRange.color : '#51cf66';
             const _syncedBanner = (_sleepHealthSynced && !_fmSleepClear)
               ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:10px;background:${_bannerCol}18;border:1.5px solid ${_bannerCol}55;border-radius:10px;">
-                  <span style="font-size:0.9em;font-weight:600;color:${_bannerCol};">😴 ${selectedSleep}h — ${_syncSourceLabel()}</span>
+                  <span style="font-size:0.9em;font-weight:600;color:${_readableInk(_bannerCol)};">😴 ${selectedSleep}h — ${_syncSourceLabel()}</span>
                   <div style="display:flex;align-items:center;gap:4px;">
-                    ${_autoSyncSleep ? `<button onclick="importSleepFromHealth()" style="background:none;border:1px solid #adb5bd;color:#adb5bd;font-size:0.75em;cursor:pointer;padding:2px 8px;border-radius:6px;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button>` : ''}
-                    <button onclick="_fmUndoSleepSync()" style="background:none;border:none;color:#adb5bd;font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:2px 6px;">✕</button>
+                    ${_autoSyncSleep ? `<button onclick="importSleepFromHealth()" style="background:none;border:1px solid #adb5bd;color:var(--text-muted-ink);font-size:0.75em;cursor:pointer;padding:2px 8px;border-radius:6px;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button>` : ''}
+                    <button onclick="_fmUndoSleepSync()" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;padding:2px 6px;">✕</button>
                   </div>
                  </div>` : '';
             // Full spectrum: one slider across ≤4h … ≥12h instead of five buckets.
@@ -7050,7 +7121,7 @@ function _tt(k, vars, fallback) {
                   <div class="msc-readout">
                     <div id="fmSlscEmoji" class="msc-emoji">${_m.emoji}</div>
                     <div class="msc-text">
-                      <div id="fmSlscValue" class="msc-value" style="color:${_m.color};">${_m.label}</div>
+                      <div id="fmSlscValue" class="msc-value" style="color:${_readableInk(_m.color)};">${_m.label}</div>
                       <div id="fmSlscLabel" class="msc-label">${_m.band}</div>
                     </div>
                   </div>
@@ -7062,7 +7133,7 @@ function _tt(k, vars, fallback) {
                 // A slider has nothing to long-press, so sleep quality — reachable
                 // by holding a card/pill everywhere else — gets an explicit link
                 // here. Without it the step would be unreachable in this mode.
-                + `<p style="text-align:center;margin:10px 0 0;"><button onclick="_fmSleepSliderQuality(document.getElementById('fmSlscSlider').value)" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.sleepQualityAdd')}</button></p>`;
+                + `<p style="text-align:center;margin:10px 0 0;"><button onclick="_fmSleepSliderQuality(document.getElementById('fmSlscSlider').value)" style="background:none;border:none;color:var(--brand-ink);font-size:0.8em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.sleepQualityAdd')}</button></p>`;
             }
             const _sleepCards = `<div class="fm-card-grid">${_FM_SLEEP_RANGES.map(r => {
               const isSel = _committedBucket === r.val;
@@ -7080,7 +7151,7 @@ function _tt(k, vars, fallback) {
                 <span class="fm-card-label">${text}</span>
               </button>`;
             }).join('')}</div>`;
-            const _sqHint = `<p style="text-align:center;font-size:0.78em;color:#adb5bd;margin-top:8px;margin-bottom:0;">${BB.t('journal.sleepQualityHint')}</p>`;
+            const _sqHint = `<p style="text-align:center;font-size:0.78em;color:var(--text-muted-ink);margin-top:8px;margin-bottom:0;">${BB.t('journal.sleepQualityHint')}</p>`;
             return _syncBtn + _syncedBanner + _sleepCards + _sqHint;
           }
           const _initBucket = _committedBucket !== null ? _committedBucket
@@ -7111,7 +7182,7 @@ function _tt(k, vars, fallback) {
               };
             }), _sqHint);
             const _retryLinkFull = (BB.storage.get('HealthSyncEnabled') === '1' && _fmSleepError)
-              ? `<p style="text-align:center;margin:0;"><button onclick="importSleepFromHealth()" style="background:none;border:none;color:var(--brand-primary);font-size:0.82em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_fmSleepError === 'nodata' ? '🤷 No sleep data found — try again' : '❌ Sync failed — try again'}</button></p>` : '';
+              ? `<p style="text-align:center;margin:0;"><button onclick="importSleepFromHealth()" style="background:none;border:none;color:var(--brand-ink);font-size:0.82em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_fmSleepError === 'nodata' ? '🤷 No sleep data found — try again' : '❌ Sync failed — try again'}</button></p>` : '';
             return _fmHeroHtml() + _retryLinkFull + _fullSleepWheel;
           }
           const _sleepWheel = _fmWheelHtml(_FM_SLEEP_RANGES.map(r => {
@@ -7133,7 +7204,7 @@ function _tt(k, vars, fallback) {
           }), _sqHint);
           // Small retry link when the auto-import errored (sync on, nothing pulled in)
           const _retryLink = (BB.storage.get('HealthSyncEnabled') === '1' && _fmSleepError)
-            ? `<p style="text-align:center;margin:0;"><button onclick="importSleepFromHealth()" style="background:none;border:none;color:var(--brand-primary);font-size:0.82em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_fmSleepError === 'nodata' ? '🤷 No sleep data found — try again' : '❌ Sync failed — try again'}</button></p>` : '';
+            ? `<p style="text-align:center;margin:0;"><button onclick="importSleepFromHealth()" style="background:none;border:none;color:var(--brand-ink);font-size:0.82em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_fmSleepError === 'nodata' ? '🤷 No sleep data found — try again' : '❌ Sync failed — try again'}</button></p>` : '';
           return _fmHeroHtml() + _retryLink + _sleepWheel;
         }
 
@@ -7153,7 +7224,7 @@ function _tt(k, vars, fallback) {
           // Plain mode (wheel BETA off) — the original pre-wheel 3-up card grid.
           if (!_wheelMode()) {
             const _sqCls = { bad:'sq-bad', unsure:'sq-ok', good:'sq-good' };
-            const _sqSelStyle = { bad:'border-color:#dc3545;background:#dc354522;color:#dc3545;', unsure:'border-color:#adb5bd;background:#adb5bd22;color:#adb5bd;', good:'border-color:#51cf66;background:#51cf6622;color:#51cf66;' };
+            const _sqSelStyle = { bad:'border-color:#dc3545;background:#dc354522;color:#dc3545;', unsure:'border-color:#adb5bd;background:#adb5bd22;color:var(--text-muted-ink);', good:'border-color:#51cf66;background:#51cf6622;color:#51cf66;' };
             return `<div class="fm-card-grid" style="grid-template-columns:repeat(3,1fr);">${[_sqBad, _sqOk, _sqGd].map(o => {
               const isSel = selectedSleepQuality === o.val;
               return `<button class="fm-card-btn ${_sqCls[o.val]} ${isSel?'sel':''}" onclick="selectedSleepQuality='${o.val}'; _fmAdvance();"
@@ -7193,7 +7264,7 @@ function _tt(k, vars, fallback) {
             const _ml = JSON.parse(localStorage.getItem('currentMedList') || '[]');
             const _valid = _ml.filter(m => m && m.name);
             if (_valid.length) {
-              medListHtml = `<div style="text-align:center;margin:0 0 10px;display:flex;flex-direction:column;gap:3px;">${_valid.map(m => `<span style="font-size:0.85em;color:#6c757d;">💊 ${String(m.name)}${m.dosage ? ' ' + String(m.dosage) : ''}</span>`).join('')}</div>`;
+              medListHtml = `<div style="text-align:center;margin:0 0 10px;display:flex;flex-direction:column;gap:3px;">${_valid.map(m => `<span style="font-size:0.85em;color:var(--text-muted-ink);">💊 ${String(m.name)}${m.dosage ? ' ' + String(m.dosage) : ''}</span>`).join('')}</div>`;
             }
           } catch(e) {}
           const _medHintDone = BB.storage.get('MedHintDone') === '1';
@@ -7203,8 +7274,8 @@ function _tt(k, vars, fallback) {
           if (!_wheelMode()) {
             const _mdManage = `${medListHtml}
               <div style="text-align:center;margin-bottom:${_medHintDone ? '14' : '4'}px;">
-                <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
-                ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;margin-bottom:10px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
+                <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-ink);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
+                ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;margin-bottom:10px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
               </div>${_mrPill}`;
             const _mdOpts = [
               { val:'not-taken', label:BB.t('journal.med.notTaken'), hover:'fm-hover-orange', color:'var(--brand-primary)' },
@@ -7220,8 +7291,8 @@ function _tt(k, vars, fallback) {
           // user's med list directly above the "Manage medications" link.
           const _manageRow = `<div class="fm-meds-manage">
               ${medListHtml}
-              <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
-              ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-primary);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
+              <button id="manageMedsBtn" onclick="_dismissMedHint();showMedicationList()" style="background:none;border:none;color:var(--brand-ink);font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.manageMeds')}</button>
+              ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
               ${_mrPill}
             </div>`;
           // Built as a real 5-pill wheel — Not taken, Not taken, Unsure,
@@ -7266,7 +7337,7 @@ function _tt(k, vars, fallback) {
             style="border-left:4px solid ${o.color};${i>0?'margin-top:8px;':''}">
             <span>${o.label}</span></button>`).join('') +
           `<div style="text-align:center;margin-top:14px;">
-            <button onclick="showGoalsList()" style="background:none;border:none;color:var(--brand-primary);font-size:0.85em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.viewEditGoals')}</button>
+            <button onclick="showGoalsList()" style="background:none;border:none;color:var(--brand-ink);font-size:0.85em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.viewEditGoals')}</button>
           </div>`;
 
         case 'anxiety':
@@ -7328,7 +7399,7 @@ function _tt(k, vars, fallback) {
                 <button onclick="showBudgetModal()" style="padding:4px 12px;background:var(--brand-btn);color:white;border:none;border-radius:8px;font-size:0.8em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button>
               </div>`
             : `<div style="text-align:center;margin-bottom:14px;">
-                <button onclick="showBudgetModal()" style="padding:8px 18px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-primary);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>
+                <button onclick="showBudgetModal()" style="padding:8px 18px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>
               </div>`;
           return _budgetInfo + [
             {val:'no',  label:BB.t('journal.budgetOver'),   color:'var(--brand-primary)'},
@@ -7349,14 +7420,14 @@ function _tt(k, vars, fallback) {
             });
           } catch(e) {}
           // Helper: section label
-          const _ql = t => `<div style="font-size:0.78em;font-weight:700;color:#adb5bd;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:7px;">${t}</div>`;
+          const _ql = t => `<div style="font-size:0.78em;font-weight:700;color:var(--text-muted-ink);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:7px;">${t}</div>`;
           // Helper: horizontal row of answer buttons
           const _btns = opts => opts.map((o, i) => {
             const _hc = i === 0 ? 'fm-hover-orange' : i === opts.length - 1 ? 'fm-hover-green' : 'fm-hover-grey';
             const _sc = i === 0 ? 'var(--brand-primary)' : i === opts.length - 1 ? '#51cf66' : '#adb5bd';
             const _clr = o.clr || o.set.replace(/='[^']*'/, '=null');
             const _click = o.sel ? _clr : o.set;
-            return `<button class="${_hc}" onclick="${_click}" style="flex:1;padding:8px 4px;border:1.5px solid ${o.sel?_sc:'#dee2e6'};border-radius:10px;background:${o.sel?_sc+'22':'white'};color:${o.sel?'#212529':'#6c757d'};font-size:0.82em;font-weight:${o.sel?'600':'400'};cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center;line-height:1.3;">${o.label}</button>`;
+            return `<button type="button" class="${_hc}" aria-pressed="${!!o.sel}" onclick="${_click}" style="flex:1;padding:8px 4px;border:1.5px solid ${o.sel?_sc:'#dee2e6'};border-radius:10px;background:${o.sel?_sc+'22':'white'};color:${o.sel?'#212529':'#6c757d'};font-size:0.82em;font-weight:${o.sel?'600':'400'};cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center;line-height:1.3;">${o.label}</button>`;
           }).join('');
           const _hr  = opts => `<div style="display:flex;gap:6px;margin-bottom:14px;">${_btns(opts)}</div>`;
           const _ilr = (lbl, opts) => `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${lbl}</span><div style="display:flex;gap:6px;">${_btns(opts)}</div>`;
@@ -7367,7 +7438,7 @@ function _tt(k, vars, fallback) {
               const _goalItems = JSON.parse(localStorage.getItem('dailyGoals') || '[]');
               const _goalsDetail = _goalItems.length > 0
                 ? (() => { const _dg = _goalItems.map(g => `<span style="display:inline-block;background:rgba(255,149,0,0.12);border-radius:6px;padding:2px 7px;margin:2px;font-size:0.8em;color:#495057;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g}</span>`).join(''); return `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${_dg}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">${BB.t('common.change')}</button></div>`; })()
-                : `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
+                : `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-ink);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
               const _goalsTitleClick = _goalItems.length > 0
                 ? "var el=document.getElementById('fmGoalsDetail');el.style.display=el.style.display==='none'?'':'none';"
                 : "showGoalsList()";
@@ -7429,7 +7500,7 @@ function _tt(k, vars, fallback) {
               const _bv = localStorage.getItem('dailyBudget') || '';
               const _budgetDetail = _bv
                 ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.85em;color:#495057;">${BB.t('t143.j.dailyBudget')} <b>${_esc(_bv)}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`
-                : `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
+                : `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-ink);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
               const _budgetTitleClick = _bv
                 ? "var el=document.getElementById('fmBudgetDetail');el.style.display=el.style.display==='none'?'':'none';"
                 : "showBudgetModal()";
@@ -7463,22 +7534,22 @@ function _tt(k, vars, fallback) {
           const _showCfHint = !BB.storage.get('CustomFieldHintDone');
           const _cfHintHtml = _showCfHint
             ? `<div id="fmCustomFieldHint" style="display:flex;flex-direction:column;align-items:center;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;margin-top:6px;">
-                <span style="font-size:0.72em;font-weight:700;font-style:italic;color:rgba(255,149,0,0.9);white-space:nowrap;font-family:'Georgia',serif;">${BB.t('journal.ui.customiseFields')}</span>
+                <span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);white-space:nowrap;font-family:'Georgia',serif;">${BB.t('journal.ui.customiseFields')}</span>
                 <svg width="24" height="22" viewBox="0 0 24 22" fill="none">
                   <path d="M12,2 Q8,12 12,20" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" fill="none"/>
                   <polyline points="7,16 12,21 17,16" stroke="rgba(255,149,0,0.7)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                 </svg>
               </div>` : '';
           if (!_builtIn.length && !_custFields.length)
-            return `<p style="text-align:center;color:#6c757d;font-size:0.9em;margin:0 0 16px;">${BB.t('journal.ui.wouldYouTrack')}</p>
+            return `<p style="text-align:center;color:var(--text-muted-ink);font-size:0.9em;margin:0 0 16px;">${BB.t('journal.ui.wouldYouTrack')}</p>
               <div style="text-align:center;margin-bottom:12px;">
                 ${_cfHintHtml}
-                <button onclick="showFieldPicker()" style="padding:10px 22px;background:rgba(255,149,0,0.08);border:2px dashed var(--brand-primary);border-radius:12px;color:var(--brand-primary);font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.addTrackingFields')}</button>
+                <button onclick="showFieldPicker()" style="padding:10px 22px;background:rgba(255,149,0,0.08);border:2px dashed var(--brand-primary);border-radius:12px;color:var(--brand-ink);font-size:0.9em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.addTrackingFields')}</button>
               </div>`;
-          return `<div style="display:grid;grid-template-columns:min-content 1fr;gap:8px 10px;align-items:center;">${_md}</div>
+          return `<div class="fm-md-grid" style="display:grid;grid-template-columns:min-content 1fr;gap:8px 10px;align-items:center;">${_md}</div>
             <div style="display:flex;flex-direction:column;align-items:center;margin-top:10px;">
               ${_cfHintHtml}
-              <button onclick="showFieldPicker()" style="width:36px;height:36px;min-width:36px;min-height:36px;flex-shrink:0;border-radius:50%;background:rgba(255,149,0,0.08);color:var(--brand-primary);font-size:1.3em;border:2px dashed var(--brand-primary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;-webkit-tap-highlight-color:transparent;box-sizing:border-box;">+</button>
+              <button onclick="showFieldPicker()" aria-label="${BB.t('a11y.addField')}" style="width:36px;height:36px;min-width:36px;min-height:36px;flex-shrink:0;border-radius:50%;background:rgba(255,149,0,0.08);color:var(--brand-ink);font-size:1.3em;border:2px dashed var(--brand-primary);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;line-height:1;-webkit-tap-highlight-color:transparent;box-sizing:border-box;">+</button>
             </div>`;
         }
 
@@ -7494,10 +7565,10 @@ function _tt(k, vars, fallback) {
             style="width:100%;min-height:130px;border:2px solid #e9ecef;border-radius:12px;padding:12px;
             font-size:0.95em;font-family:inherit;resize:none;box-sizing:border-box;outline:none;transition:border-color 0.15s;"
             oninput="_fmNotesInput(this)">${_notesInitVal}</textarea>
-            <div id="fmWordCount" style="text-align:right;font-size:0.8em;color:#6c757d;margin-top:5px;">${BB.t('t143.j.words', { count: _initWords })}</div>
+            <div id="fmWordCount" style="text-align:right;font-size:0.8em;color:var(--text-muted-ink);margin-top:5px;">${BB.t('t143.j.words', { count: _initWords })}</div>
             ${localStorage.getItem('intentionEnabled') === 'true' ? `<details style="margin-top:14px;" ${selectedIntention ? 'open' : ''}>
               <summary style="font-size:0.85em;font-weight:600;color:#495057;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;padding:2px 0;">
-                <span style="font-size:0.75em;color:#adb5bd;transition:transform 0.2s;" class="bb-int-chev">▶</span>
+                <span style="font-size:0.75em;color:var(--text-muted-ink);transition:transform 0.2s;" class="bb-int-chev">▶</span>
                 ${BB.t('journal.intentionLabel')}
               </summary>
               <textarea id="fmIntentionInput" placeholder="${BB.t('journal.placeholder.intention')}"
@@ -7538,15 +7609,15 @@ function _tt(k, vars, fallback) {
             // Sleep first — mirrors the ask order of the steps.
             selectedSleep != null
               ? { text:`${BB.t('journal.ui.sleepLabel')} ${sLabel}${selectedSleepQuality ? ` · ${selectedSleepQuality === 'good' ? BB.t('journal.ui.sleepGood') : selectedSleepQuality === 'unsure' ? BB.t('journal.ui.sleepOk') : BB.t('journal.ui.sleepBad')}` : ''}`, step:'sleep', note:_sn('sleep') }
-              : { text:`<span style="color:#adb5bd;">${BB.t('journal.ui.sleepLabel')} —</span>`, step:'sleep' },
+              : { text:`<span style="color:var(--text-muted-ink);">${BB.t('journal.ui.sleepLabel')} —</span>`, step:'sleep' },
             _fmEnergyClear
-              ? { text:`<span style="color:#adb5bd;">${BB.t('journal.ui.energyLabel')} —</span>`, step:'energy' }
+              ? { text:`<span style="color:var(--text-muted-ink);">${BB.t('journal.ui.energyLabel')} —</span>`, step:'energy' }
               : { text:`${BB.t('journal.ui.energyLabel')} ${eLabel}${_doneStepsStr}`, step:'energy', note:_sn('energy') },
             selectedMedication
               ? { text:selectedMedication==='taken'?BB.t('journal.ui.medTaken'):selectedMedication==='unsure'?BB.t('journal.ui.medUnsure'):BB.t('journal.ui.medNotTaken'), step:'medication', note:_sn('medication') }
-              : { text:`<span style="color:#adb5bd;">${BB.t('journal.ui.medicationLabel')} —</span>`, step:'medication' },
+              : { text:`<span style="color:var(--text-muted-ink);">${BB.t('journal.ui.medicationLabel')} —</span>`, step:'medication' },
             (()=>{
-              const _G='#2ECC40',_R='#FF4136',_N='#adb5bd';
+              const _G='var(--ok-ink)',_R='var(--bad-ink)',_N='var(--text-muted-ink)';
               const _tc = (k) => (window.BB && BB.t) ? BB.t(k) : k;
               const _yes = _tc('journal.value.yes'), _no = _tc('journal.value.no');
               const _more = _tc('journal.chip.more'), _normal = _tc('journal.chip.normal'), _less = _tc('journal.chip.less');
@@ -7569,9 +7640,9 @@ function _tt(k, vars, fallback) {
             intentionVal && intentionVal.trim() ? { text:`🌅 ${intentionVal.trim()}`, step:'notes', wrap:true } : null,
           ].filter(Boolean);
           const _est = _estimateMoodState();
-          const _estColor  = _FM_MOOD_COLORS[_est.mood] || 'var(--brand-primary)';
+          const _estColor  = _fmMoodInk(_est.mood);
           const _estLabel  = _FM_MOOD_LABELS[_est.mood];
-          const _est2Color = _est.secondMood ? (_FM_MOOD_COLORS[_est.secondMood] || 'var(--brand-primary)') : null;
+          const _est2Color = _est.secondMood ? _fmMoodInk(_est.secondMood) : null;
           const _est2Label = _est.secondMood ? _FM_MOOD_LABELS[_est.secondMood] : null;
           const _mkMoodBtn = (m, lbl, col) => {
             if (!m) return '';
@@ -7584,34 +7655,34 @@ function _tt(k, vars, fallback) {
               <div style="display:flex;align-items:center;background:rgba(255,149,0,0.06);">
                 <button onclick="var p=this.parentElement.nextElementSibling;p.style.display=p.style.display==='none'?'block':'none';this.querySelector('.bb-chev').style.transform=p.style.display==='none'?'rotate(0deg)':'rotate(180deg)';"
                   style="flex:1;padding:11px 14px;background:none;border:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;-webkit-tap-highlight-color:transparent;">
-                  <span style="font-size:0.88em;color:#6c757d;font-weight:500;">${BB.t('journal.ui.bbThinksMightBe')}</span>
-                  <button onclick="document.getElementById('moodCalcInfoModal').classList.add('active')" style="background:none;border:none;color:#adb5bd;font-size:0.82em;cursor:pointer;padding:0 4px;-webkit-tap-highlight-color:transparent;line-height:1;flex-shrink:0;" title="${BB.t('journal.ui.howCalculated')}">ℹ️</button>
-                  <span class="bb-chev" style="font-size:0.7em;color:#adb5bd;transition:transform 0.2s;margin-left:6px;">▼</span>
+                  <span style="font-size:0.88em;color:var(--text-muted-ink);font-weight:500;">${BB.t('journal.ui.bbThinksMightBe')}</span>
+                  <button onclick="document.getElementById('moodCalcInfoModal').classList.add('active')" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;padding:0 4px;-webkit-tap-highlight-color:transparent;line-height:1;flex-shrink:0;" title="${BB.t('journal.ui.howCalculated')}">ℹ️</button>
+                  <span class="bb-chev" style="font-size:0.7em;color:var(--text-muted-ink);transition:transform 0.2s;margin-left:6px;">▼</span>
                 </button>
                 <button onclick="document.getElementById('hideSuggestionModal').classList.add('active')"
-                  style="padding:8px 12px;background:none;border:none;color:#adb5bd;font-size:1em;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1;">✕</button>
+                  style="padding:8px 12px;background:none;border:none;color:var(--text-muted-ink);font-size:1em;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1;">✕</button>
               </div>
               <div style="display:none;padding:10px 14px 12px;background:rgba(255,149,0,0.06);">
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
                   <span style="font-weight:700;font-size:1em;color:${_estColor};">${_estLabel}</span>
                   ${_mkMoodBtn(_est.mood, _estLabel, _estColor)}
-                  ${_est.secondMood ? `<span style="font-size:0.82em;color:#adb5bd;">${BB.t('t143.j.or')}</span><span style="font-weight:700;font-size:1em;color:${_est2Color};">${_est2Label}</span>${_mkMoodBtn(_est.secondMood, _est2Label, _est2Color)}` : ''}
+                  ${_est.secondMood ? `<span style="font-size:0.82em;color:var(--text-muted-ink);">${BB.t('t143.j.or')}</span><span style="font-weight:700;font-size:1em;color:${_est2Color};">${_est2Label}</span>${_mkMoodBtn(_est.secondMood, _est2Label, _est2Color)}` : ''}
                 </div>
-                <div style="font-size:0.72em;color:#adb5bd;line-height:1.4;">${BB.t('journal.ui.experimentalFeedback2')}</div>
+                <div style="font-size:0.72em;color:var(--text-muted-ink);line-height:1.4;">${BB.t('journal.ui.experimentalFeedback2')}</div>
               </div>
             </div>`;
           const _incogOn = localStorage.getItem('incognitoMode') === 'true';
           const _privBorder = selectedPdfHide ? 'border:1.5px solid var(--brand-primary);' : 'border:1.5px solid #e9ecef;';
           const _privRow = _incogOn ? `
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:10px 14px;background:#f8f9fa;border-radius:12px;${_privBorder}">
-              <span style="font-size:0.88em;color:#6c757d;">${BB.t('journal.ui.hideFromPdf')}</span>
+              <span style="font-size:0.88em;color:var(--text-muted-ink);">${BB.t('journal.ui.hideFromPdf')}</span>
               <label class="bb-switch" style="margin:0;"><input type="checkbox" ${selectedPdfHide?'checked':''} onchange="_fmTogglePdfHide()"><span class="bb-slider"></span></label>
             </div>` : '';
           const _doneDate = (() => { try { const _dv = document.getElementById('entryDate')?.value; if (!_dv) return ''; const _dd = new Date(_dv+'T00:00:00'); return _bbDate(_dd,{weekday:'short',day:'numeric',month:'short',year:'numeric'}); } catch(_){return '';} })();
           // Auto-filled from Health and untouched since: say so here, where the
           // user is looking at the values just before saving them.
           const _dayFillNote = _fmDayFillIntact()
-            ? `<div style="background:var(--brand-tint,#fff6ec);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:0.82em;color:#6c757d;line-height:1.45;text-align:left;">${BB.t('journal.autofill.dayReview')}</div>`
+            ? `<div style="background:var(--brand-tint,#fff6ec);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:0.82em;color:var(--text-muted-ink);line-height:1.45;text-align:left;">${BB.t('journal.autofill.dayReview')}</div>`
             : '';
           // Bear hero: the chosen mood shown big, instead of as a summary row.
           // Other moods felt that day: a smaller line under the main one.
@@ -7621,7 +7692,7 @@ function _tt(k, vars, fallback) {
               <div class="fm-hero-emoji-wrap">${_fmSparksHtml()}<div class="fm-aura" data-type="${_doneAura}">${_AURA_HTML[_doneAura] || ''}</div>
                 <div class="fm-hero-emoji"><img src="${_moodImg(selectedMood)}" alt=""></div>
               </div>
-              <div class="fm-hero-value" style="color:${mc};">${_moodLabelNum(selectedMood)}</div>${_linkedHero}
+              <div class="fm-hero-value" style="color:${_fmMoodInk(_moodCat(selectedMood))};">${_moodLabelNum(selectedMood)}</div>${_linkedHero}
             </div>`;
           // Delete + Save styled as wheel pills, sitting in the wheel slot.
           const _noChanges = editingEntry && !_hasEditChanges();
@@ -7636,8 +7707,8 @@ function _tt(k, vars, fallback) {
                 <span class="fm-wheel-emoji">${_saveEmoji}</span><span class="fm-wheel-label">${_saveLabel}</span>
               </button>
             </div>`;
-          return `${_heroHtml}${_doneDate ? `<div style="text-align:center;font-size:0.92em;color:#6c757d;margin-bottom:10px;">📅 ${_doneDate}</div>` : ''}${_dayFillNote}<div class="fm-done-list" style="display:block;background:#f8f9fa;border-radius:14px;padding:16px;border-left:4px solid ${mc};max-width:100%;text-align:left;">
-            ${rows.map(r=>{const idx=_fmSteps.findIndex(s=>s.id===r.step);const editBtn=idx>=0?`<button onclick="_fmReturnToDone=true;_fmGoTo(${idx})" style="background:none;border:none;color:#6c757d;font-size:0.82em;cursor:pointer;padding:2px 4px;-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="${BB.t('journal.ui.editTitle')}">✏️</button>`:'';if(r.note){return `<details style="padding:3px 0;"><summary style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;">${r.wrap?`<span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>`:`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>`}${editBtn}<span style="font-size:0.65em;color:#adb5bd;flex-shrink:0;margin-left:2px;transition:transform 0.15s;" class="bb-note-chev">▶</span></summary><div style="font-size:0.82em;color:#495057;padding:5px 0 3px 12px;font-style:italic;word-break:break-word;line-height:1.4;">📝 ${r.note}</div></details>`;}return r.wrap?`<div style="padding:3px 0;"><div style="display:flex;align-items:center;gap:8px;font-size:0.9em;color:#495057;"><span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>${editBtn}</div></div>`:`<div style="padding:3px 0;"><div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>${editBtn}</div></div>`;}).join('')}
+          return `${_heroHtml}${_doneDate ? `<div style="text-align:center;font-size:0.92em;color:var(--text-muted-ink);margin-bottom:10px;">📅 ${_doneDate}</div>` : ''}${_dayFillNote}<div class="fm-done-list" style="display:block;background:#f8f9fa;border-radius:14px;padding:16px;border-left:4px solid ${mc};max-width:100%;text-align:left;">
+            ${rows.map(r=>{const idx=_fmSteps.findIndex(s=>s.id===r.step);const editBtn=idx>=0?`<button onclick="_fmReturnToDone=true;_fmGoTo(${idx})" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;padding:2px 4px;-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="${BB.t('journal.ui.editTitle')}">✏️</button>`:'';if(r.note){return `<details style="padding:3px 0;"><summary style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;">${r.wrap?`<span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>`:`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>`}${editBtn}<span style="font-size:0.65em;color:var(--text-muted-ink);flex-shrink:0;margin-left:2px;transition:transform 0.15s;" class="bb-note-chev">▶</span></summary><div style="font-size:0.82em;color:#495057;padding:5px 0 3px 12px;font-style:italic;word-break:break-word;line-height:1.4;">📝 ${r.note}</div></details>`;}return r.wrap?`<div style="padding:3px 0;"><div style="display:flex;align-items:center;gap:8px;font-size:0.9em;color:#495057;"><span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>${editBtn}</div></div>`:`<div style="padding:3px 0;"><div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>${editBtn}</div></div>`;}).join('')}
           </div>${_privRow}${_suggestion}${_actions}`;
         }
 
@@ -7739,6 +7810,17 @@ function _tt(k, vars, fallback) {
           const words = notes.trim().split(/\s+/).filter(Boolean).length;
           html = words > 0 ? BB.t('t143.j.wordsShort', { n: words }) : '📝'; borderColor = '#adb5bd';
         }
+        // VoiceOver name for the chip: "<step>: <answer>" — the chips are
+        // mostly emoji (⚡, 💊 ✅, 🛌 7–9h), which read badly on their own.
+        let _chipSpeak = html ? String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+        if (s.id === 'energy' && !_fmEnergyClear) {
+          const _lv = _FM_ENERGY_LEVELS.find(l => l.val === selectedEnergy);
+          _chipSpeak = _lv ? _lv.label.replace(/^\S+\s*/, '') : (selectedEnergy != null ? _fmEnergyMeta(selectedEnergy).label || _chipSpeak : _chipSpeak);
+        } else if (s.id === 'medication' && selectedMedication) {
+          _chipSpeak = BB.t(selectedMedication === 'taken' ? 'journal.ui.medTaken' : selectedMedication === 'unsure' ? 'journal.ui.medUnsure' : 'journal.ui.medNotTaken').replace(/^\W+/, '');
+        } else if (s.id === 'more_data' || (s.id === 'notes' && !/\d/.test(_chipSpeak))) {
+          _chipSpeak = s.id === 'more_data' ? BB.t('a11y.additional') : '';
+        }
         // For steps that were visited but not answered, show a blank dashed chip
         // so the user can see the gap and tap back to fill it in.
         if (isCurrent && _pv != null) {
@@ -7746,14 +7828,16 @@ function _tt(k, vars, fallback) {
         }
         const _canBeBlank = ['mood','energy','sleep','medication'].includes(s.id);
         const _isBlank = html === null && _canBeBlank;
-        if (_isBlank) { html = '—'; borderColor = '#dee2e6'; }
+        if (_isBlank) { html = '—'; borderColor = '#dee2e6'; _chipSpeak = BB.t('a11y.notAnswered'); }
+        const _stepName = (_FM_EYEBROWS[s.id] ? _FM_EYEBROWS[s.id]() : '') || '';
+        const _chipLabel = _esc([_stepName, _chipSpeak].filter(Boolean).join(': '));
         if (html !== null) {
           const _chipBorder = _isBlank ? `1.5px dashed ${borderColor}` : (isCurrent ? `2px solid ${borderColor}` : `1.5px solid ${borderColor}`);
-          const _chipColor = _isBlank ? '#adb5bd' : '#495057';
+          const _chipColor = _isBlank ? 'var(--text-muted-ink)' : '#495057';
           if (isCurrent) {
             chips.push(`<span style="border:${_chipBorder};border-radius:20px;padding:3px 9px;font-size:0.72em;background:white;color:${_chipColor};display:inline-flex;align-items:center;opacity:1;">${html}</span>`);
           } else {
-            chips.push(`<button onclick="_fmReturnToDone=true;_fmGoTo(${i})" style="border:${_chipBorder};border-radius:20px;padding:3px 9px;font-size:0.72em;cursor:pointer;background:white;color:${_chipColor};display:inline-flex;align-items:center;-webkit-tap-highlight-color:transparent;">${html}</button>`);
+            chips.push(`<button type="button" aria-label="${_chipLabel}" onclick="_fmReturnToDone=true;_fmGoTo(${i})" style="border:${_chipBorder};border-radius:20px;padding:3px 9px;font-size:0.72em;cursor:pointer;background:white;color:${_chipColor};display:inline-flex;align-items:center;-webkit-tap-highlight-color:transparent;">${html}</button>`);
           }
         }
       }
@@ -7896,7 +7980,16 @@ function _tt(k, vars, fallback) {
 
     // Called after each inline more_data answer: re-render and auto-advance when all done
     function _fmCheckMoreData() {
+      // The step re-renders on every answer; keep keyboard / VoiceOver focus
+      // on the same button rather than dropping it to the top of the page.
+      const _fc = document.getElementById('fmContent');
+      const _ae = document.activeElement;
+      const _fi = (_fc && _ae && _fc.contains(_ae)) ? Array.prototype.indexOf.call(_fc.querySelectorAll('button'), _ae) : -1;
       _renderFocusedStep();
+      if (_fi >= 0) {
+        const _nb = document.querySelectorAll('#fmContent button')[_fi];
+        if (_nb) { try { _nb.focus({ preventScroll: true }); } catch (_) {} }
+      }
       const step = _fmSteps[_fmStepIndex];
       if (!step || step.id !== 'more_data') return;
       const _builtIn = step.extras || [];
@@ -8002,7 +8095,7 @@ function _tt(k, vars, fallback) {
         const colors = { bad:'#dc3545', unsure:'#adb5bd', good:'#2ECC40' };
         b.style.borderColor = active ? colors[v] : '#dee2e6';
         b.style.background  = active ? colors[v] + '22' : 'white';
-        b.style.color       = active ? '#212529' : '#6c757d';
+        b.style.color       = active ? '#212529' : 'var(--text-muted-ink)';
         b.style.fontWeight  = active ? '600' : '400';
       });
       scheduleDraftSave();
@@ -8013,7 +8106,7 @@ function _tt(k, vars, fallback) {
       if (selectedSleepQuality) _setSleepQuality(selectedSleepQuality); // re-apply to trigger no-op toggle
       else ['bad','unsure','good'].forEach(v => {
         const b = document.getElementById('sq' + v.charAt(0).toUpperCase() + v.slice(1));
-        if (b) { b.style.borderColor='#dee2e6'; b.style.background='white'; b.style.color='#6c757d'; b.style.fontWeight='400'; }
+        if (b) { b.style.borderColor='#dee2e6'; b.style.background='white'; b.style.color='var(--text-muted-ink)'; b.style.fontWeight='400'; }
       });
     }
 
@@ -8064,13 +8157,25 @@ function _tt(k, vars, fallback) {
       if (_fmSteps[index] && _fmSteps[index].id === 'sleep') _fmWantsSleepQuality = false;
       _fmStepIndex = index;
       if (index > _fmHighWater) _fmHighWater = index;
+      // Was focus inside the check-in (a pill, Next, a chip)? The re-render
+      // removes that element, so put focus somewhere sensible on the new step:
+      // the wheel's current pill for a keyboard user, else the question
+      // (VoiceOver reads it out).
+      const _hadFocus = (() => { const c = document.getElementById('focusedModeCard'); const a = document.activeElement; return !!(c && a && a !== document.body && c.contains(a)); })();
       _renderFocusedStep();
       const card = document.getElementById('focusedModeCard');
       if (card) {
         card.scrollTop = 0;
+        const _rm = window.BB && BB.a11y && BB.a11y.reducedMotion();
         setTimeout(() => {
           const top = card.getBoundingClientRect().top + window.scrollY - 16;
-          window.scrollTo({ top, behavior: 'smooth' });
+          window.scrollTo({ top, behavior: _rm ? 'auto' : 'smooth' });
+          if (_hadFocus && !card.contains(document.activeElement)) {
+            const kbd = window.BB && BB.a11y && BB.a11y.keyboardMode;
+            const pill = kbd && card.querySelector('#fmWheel [role="radio"][tabindex="0"]');
+            const t = pill || document.getElementById('fmTitle');
+            if (t) { if (!pill) t.setAttribute('tabindex', '-1'); try { t.focus({ preventScroll: true }); } catch (_) {} }
+          }
         }, 50);
       }
     }
@@ -8558,7 +8663,7 @@ function _tt(k, vars, fallback) {
       const sorted = [...pool].sort((a, b) => new Date(a.date) - new Date(b.date));
 
       if (sorted.length < 7) {
-        body.innerHTML = `<div style="text-align:center;padding:30px 0;color:#6c757d;">
+        body.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text-muted-ink);">
           <div style="font-size:2em;margin-bottom:12px;">📊</div>
           <div>${BB.t('journal.ui.keepJournalling7')}</div>
         </div>`;
@@ -8567,12 +8672,12 @@ function _tt(k, vars, fallback) {
       }
 
       const insights = computeInsights(sorted);
-      const _basis = `<div style="font-size:0.8em;color:#868e96;text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">${_fbRange === 'all'
+      const _basis = `<div style="font-size:0.8em;color:var(--text-muted-ink);text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">${_fbRange === 'all'
         ? BB.t('journal.feedback.basedAll', { n: sorted.length })
         : BB.t('journal.feedback.basedDays', { days: _fbRange, n: sorted.length })}</div>`;
 
       if (insights.length === 0) {
-        body.innerHTML = _basis + `<div style="text-align:center;padding:30px 0;color:#6c757d;">
+        body.innerHTML = _basis + `<div style="text-align:center;padding:30px 0;color:var(--text-muted-ink);">
           <div style="font-size:2em;margin-bottom:12px;">📊</div>
           <div>${BB.t('journal.ui.noStrongPatterns')}</div>
         </div>`;
@@ -8866,8 +8971,8 @@ function _tt(k, vars, fallback) {
         const unlocked = stored.includes(a.id);
         return `<div style="text-align:center;padding:12px 8px;background:${unlocked ? 'rgba(255,149,0,0.1)' : '#f8f9fa'};border:1.5px solid ${unlocked ? 'var(--brand-primary)' : '#e9ecef'};border-radius:12px;opacity:${unlocked ? '1' : '0.4'};">
           <div style="font-size:1.8em;margin-bottom:4px;filter:${unlocked ? 'none' : 'grayscale(1)'};">${a.emoji}</div>
-          <div style="font-weight:700;font-size:0.78em;color:${unlocked ? 'var(--brand-primary-dark)' : '#6c757d'};line-height:1.2;margin-bottom:2px;">${a.title}</div>
-          <div style="font-size:0.7em;color:#6c757d;line-height:1.3;">${a.desc}</div>
+          <div style="font-weight:700;font-size:0.78em;color:${unlocked ? 'var(--brand-ink)' : 'var(--text-muted-ink)'};line-height:1.2;margin-bottom:2px;">${a.title}</div>
+          <div style="font-size:0.7em;color:var(--text-muted-ink);line-height:1.3;">${a.desc}</div>
         </div>`;
       }).join('');
     }
@@ -9318,7 +9423,7 @@ function _tt(k, vars, fallback) {
       } else {
         btn.textContent = _t('journal.save.fmClose');
         btn.style.background = '#adb5bd';
-        btn.style.color = 'white';
+        btn.style.color = '#1a1300';
         btn.style.border = '2px solid #adb5bd';
       }
     }
@@ -9496,8 +9601,8 @@ function _tt(k, vars, fallback) {
         const title = BB.t(partial ? 't143.cal.boxTitlePartial' : 't143.cal.boxTitle', { month: _bbDate(new Date(sp.year, sp.month, 1), { month: 'long', year: 'numeric' }), n: logged, count: total });
         return `<button type="button" onclick="_openMonthFromBox(${sp.year},${sp.month})" title="${title}"
             style="flex:1 1 0;min-width:74px;background:${color}1a;border:${isOpen ? `2.5px solid ${color}` : `1.5px solid ${color}66`};border-radius:12px;padding:8px 6px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;">
-            <span style="font-size:0.8em;font-weight:700;color:${color};">${name}</span>
-            <span style="font-size:0.72em;font-weight:600;color:#6c757d;">${complete ? '✓' : `${logged}/${total}`}</span>
+            <span style="font-size:0.8em;font-weight:700;color:${_readableInk(color)};">${name}</span>
+            <span style="font-size:0.72em;font-weight:600;color:var(--text-muted-ink);">${complete ? '✓' : `${logged}/${total}`}</span>
           </button>`;
       }).join('');
       return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;">${boxes}</div>`;
@@ -9543,21 +9648,33 @@ function _tt(k, vars, fallback) {
 
       // Monday-first narrow weekday names in the app language (1 Jan 2024 was a Monday).
       const dayHeaders = [0,1,2,3,4,5,6].map(i => _bbDate(new Date(2024, 0, 1 + i), { weekday: 'narrow' })).map(
-        h => `<div style="text-align:center;font-size:0.72em;color:#adb5bd;font-weight:600;">${h}</div>`
+        h => `<div style="text-align:center;font-size:0.72em;color:var(--text-muted-ink);font-weight:600;">${h}</div>`
       ).join('');
 
       // Fill trailing days from previous month (dimmed, clickable if entry exists)
       const prevYear = month === 0 ? year - 1 : year;
       const prevMonth = month === 0 ? 11 : month - 1;
       const prevMonthLastDay = new Date(year, month, 0).getDate();
+      // Accessibility (2026-10-16): day numbers are dark ink on every mood
+      // fill (white was 1.9–4.3:1; dark is 5–9.8:1 — "low" uses the next violet
+      // up, #9775fa, so it reaches 5.4:1), and every day says its date and mood
+      // to VoiceOver, so the calendar doesn't rely on colour alone.
+      const _calFill = (cat) => (cat === 'low' ? '#9775fa' : moodColors[cat]);
+      const _calInk = '#1a1300';
+      const _calLabel = (date, entry) => {
+        const ds = _bbDate(date, { weekday: 'long', day: 'numeric', month: 'long' });
+        return _esc(entry ? `${ds}: ${_moodCatLabel(_moodCat(entry.mood))}` : `${ds}: ${BB.t('a11y.noEntry')}`);
+      };
       let cells = '';
       for (let i = startDow - 1; i >= 0; i--) {
         const d = prevMonthLastDay - i;
         const key = `${prevYear}-${String(prevMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const entry = moodByDate[key];
-        const bg = entry ? moodColors[_moodCat(entry.mood)] : '#e9ecef';
+        // Days of the month before: a faded fill (not a faded number), so the
+        // number stays readable.
+        const bg = entry ? _calFill(_moodCat(entry.mood)) + '66' : '#f1f3f5';
         const clickable = !!entry;
-        cells += `<div ${clickable ? `onclick="showCalDayDetail('${key}')" class="cal-cell"` : ''} style="aspect-ratio:1;background:${bg};border-radius:6px;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:0.7em;color:${entry?'white':'#c8ced4'};font-weight:600;opacity:0.4;${clickable?'cursor:pointer;':''}">${d}</div>`;
+        cells += `<div ${clickable ? `onclick="showCalDayDetail('${key}')" class="cal-cell" role="button" tabindex="0"` : 'aria-hidden="true"'} aria-label="${_calLabel(new Date(prevYear, prevMonth, d), entry)}" style="aspect-ratio:1;background:${bg};border-radius:6px;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:0.7em;color:#212529;font-weight:600;${clickable?'cursor:pointer;':''}">${d}</div>`;
       }
 
       for (let d = 1; d <= lastDay; d++) {
@@ -9570,9 +9687,9 @@ function _tt(k, vars, fallback) {
         const isFuture = date > today;
         const isCurrentMonth = _monthCalOffset === 0;
         const isBirthday = birthday && date.getMonth() === birthday.month && d === birthday.day;
-        const bg = entry ? moodColors[_moodCat(entry.mood)] : (isFuture && !isCurrentMonth) ? 'transparent' : '#e9ecef';
+        const bg = entry ? _calFill(_moodCat(entry.mood)) : (isFuture && !isCurrentMonth) ? 'transparent' : '#e9ecef';
         const border = isToday ? '2px solid var(--brand-primary)' : isBirthday ? '2px dashed #e91e8c' : '2px solid transparent';
-        const color = entry ? 'white' : (isFuture && !isCurrentMonth) ? 'transparent' : '#adb5bd';
+        const color = entry ? _calInk : (isFuture && !isCurrentMonth) ? 'transparent' : 'var(--text-muted-ink)';
         const opacity = (isFuture && !isCurrentMonth) ? 0.25 : 1;
         let displayText = d;
         let extraStyle = '';
@@ -9584,7 +9701,7 @@ function _tt(k, vars, fallback) {
           else if (isTomorrow) displayText = `<span style="line-height:1;">${d}</span><span style="font-size:0.55em;line-height:1;">${BB.t('journal.ui.tomorrow')}</span>`;
           else if (isBirthday) displayText = `<span style="line-height:1;">${d}</span><span style="font-size:0.8em;line-height:1;">🎂</span>`;
         }
-        cells += `<div ${!isFuture ? `onclick="showCalDayDetail('${key}')" class="cal-cell"` : ''} style="aspect-ratio:1;overflow:hidden;background:${bg};border-radius:6px;border:${border};display:flex;align-items:center;justify-content:center;${extraStyle}font-size:0.7em;color:${color};font-weight:600;opacity:${opacity};${!isFuture?'cursor:pointer;':''}">${displayText}</div>`;
+        cells += `<div ${!isFuture ? `onclick="showCalDayDetail('${key}')" class="cal-cell" role="button" tabindex="0"` : ''} aria-label="${_calLabel(date, entry)}"${isToday ? ' aria-current="date"' : ''} style="aspect-ratio:1;overflow:hidden;background:${bg};border-radius:6px;border:${border};display:flex;align-items:center;justify-content:center;${extraStyle}font-size:0.7em;color:${color};font-weight:600;opacity:${opacity};${!isFuture?'cursor:pointer;':''}">${displayText}</div>`;
       }
 
       const _mCounts = {};
@@ -9593,19 +9710,19 @@ function _tt(k, vars, fallback) {
       const legend = Object.entries(_mCounts)
         .sort((a, b) => b[1] - a[1])
         .map(([mood, cnt]) => {
-          const color = moodColors[mood];
-          return `<span onclick="showStatDetail('moodSummary')" style="display:flex;align-items:center;gap:3px;cursor:pointer;" title="${BB.t('t143.cal.days', { count: cnt })}"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;"></span><span style="font-size:0.72em;color:#6c757d;">${_moodCatLabel(mood)}</span></span>`;
+          const color = _calFill(mood);
+          return `<span onclick="showStatDetail('moodSummary')" role="button" tabindex="0" style="display:flex;align-items:center;gap:3px;cursor:pointer;" title="${BB.t('t143.cal.days', { count: cnt })}"><span aria-hidden="true" style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;"></span><span style="font-size:0.72em;color:var(--text-muted-ink);">${_moodCatLabel(mood)}</span></span>`;
         }).join('');
 
       const canGoForward = _monthCalOffset < 0;
-      const navBtn = `background:none;border:none;color:#6c757d;font-size:1.1em;cursor:pointer;padding:0 6px;line-height:1;`;
+      const navBtn = `background:none;border:none;color:var(--text-muted-ink);font-size:1.1em;cursor:pointer;padding:0 6px;line-height:1;`;
 
       container.innerHTML = `
         <div style="background:#f8f9fa;border-radius:15px;padding:16px;margin-top:12px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <button onclick="navigateMonthCal(-1)" style="${navBtn}">‹</button>
+            <button onclick="navigateMonthCal(-1)" aria-label="${BB.t('a11y.prevMonth')}" style="${navBtn}">‹</button>
             <button onclick="openCalMonthPicker()" style="font-weight:600;color:#495057;font-size:0.95em;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px;text-decoration:underline dotted;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;">${monthName}</button>
-            <button onclick="navigateMonthCal(1)" style="${navBtn}opacity:${canGoForward?1:0.25};" ${canGoForward?'':'disabled'}>›</button>
+            <button onclick="navigateMonthCal(1)" aria-label="${BB.t('a11y.nextMonth')}" style="${navBtn}opacity:${canGoForward?1:0.25};" ${canGoForward?'':'disabled'}>›</button>
           </div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">${dayHeaders}</div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cells}</div>
@@ -9667,7 +9784,7 @@ function _tt(k, vars, fallback) {
     function _calRow(icon, label, value) {
       return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f0f2f4;">
         <span style="font-size:1em;width:20px;text-align:center;">${icon}</span>
-        <span style="color:#6c757d;font-size:0.88em;flex:1;">${label}</span>
+        <span style="color:var(--text-muted-ink);font-size:0.88em;flex:1;">${label}</span>
         <span style="font-weight:600;font-size:0.88em;color:#495057;">${value}</span>
       </div>`;
     }
@@ -9708,13 +9825,16 @@ function _tt(k, vars, fallback) {
       let html = `<div style="font-weight:700;color:#495057;margin-bottom:14px;font-size:0.95em;">🗓️ ${dateStr}</div>`;
 
       if (!entry) {
-        html += `<div style="color:#adb5bd;text-align:center;padding:10px 0 12px;font-size:0.9em;">${_t('journal.calendar.noEntry')}</div>
+        html += `<div style="color:var(--text-muted-ink);text-align:center;padding:10px 0 12px;font-size:0.9em;">${_t('journal.calendar.noEntry')}</div>
           <div style="text-align:center;">
             <button onclick="openFormForNewEntry('${key}')" class="confirm-btn confirm-btn-no" style="font-size:0.85em;">${_t('journal.calendar.addEntry')}</button>
           </div>`;
       } else {
         const color = moodColors[_moodCat(entry.mood)] || '#adb5bd';
-        html += `<div style="background:${color};color:white;border-radius:10px;padding:10px 14px;font-weight:700;font-size:1em;margin-bottom:10px;">${_moodEmoji(entry.mood)} ${_moodLabelNum(entry.mood)}</div>`;
+        // Dark label on the mood fill (white was 2.0:1 on stable green); "low"
+        // takes the lighter violet the calendar uses, so it reads at 5.4:1.
+        const _dayFill = _moodCat(entry.mood) === 'low' ? '#9775fa' : color;
+        html += `<div style="background:${_dayFill};color:#1a1300;border-radius:10px;padding:10px 14px;font-weight:700;font-size:1em;margin-bottom:10px;">${_moodEmoji(entry.mood)} ${_moodLabelNum(entry.mood)}</div>`;
         html += `<div>`;
         if (entry.energy !== undefined) {
           const _stepsStr = entry.steps != null ? ` | 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps/1000)+'k' : entry.steps}` : '';
@@ -9745,30 +9865,30 @@ function _tt(k, vars, fallback) {
           const _intClean = _intRaw.split(/\n?_{3,}\n/)[0].trim();
           const _intEsc = _intClean.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
           if (_intClean) {
-            html += `<div style="background:var(--brand-tint);border-radius:8px;padding:10px;font-size:0.85em;color:#6c757d;line-height:1.4;margin-top:8px;">🌅 <b>${BB.t('t143.j.intentionColon')}</b> ${_intEsc}</div>`;
+            html += `<div style="background:var(--brand-tint);border-radius:8px;padding:10px;font-size:0.85em;color:var(--text-muted-ink);line-height:1.4;margin-top:8px;">🌅 <b>${BB.t('t143.j.intentionColon')}</b> ${_intEsc}</div>`;
           }
         }
         // Bipolar Bear thought — collapsible, only shown when suggestion feature enabled
         if (localStorage.getItem('showMoodSuggestion') === '1') {
           const _est = _estimateMoodFromEntry(entry);
           if (_est.mood === 'stable') _est.secondMood = null;
-          const _estColor  = _FM_MOOD_COLORS[_est.mood] || 'var(--brand-primary)';
+          const _estColor  = _fmMoodInk(_est.mood);
           const _estLabel  = _FM_MOOD_LABELS[_est.mood] || cap(_est.mood);
-          const _est2Color = _est.secondMood ? (_FM_MOOD_COLORS[_est.secondMood] || 'var(--brand-primary)') : null;
+          const _est2Color = _est.secondMood ? _fmMoodInk(_est.secondMood) : null;
           const _est2Label = _est.secondMood ? (_FM_MOOD_LABELS[_est.secondMood] || cap(_est.secondMood)) : null;
           html += `<div style="margin-top:10px;border-radius:10px;border:1px solid rgba(255,149,0,0.2);overflow:hidden;">
             <button onclick="var b=this.nextElementSibling;var open=b.style.display!=='none';b.style.display=open?'none':'block';this.querySelector('.bb-chev-d').style.transform=open?'rotate(0deg)':'rotate(180deg)';"
-              style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(255,149,0,0.06);border:none;cursor:pointer;font-size:0.85em;color:#6c757d;-webkit-tap-highlight-color:transparent;">
+              style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(255,149,0,0.06);border:none;cursor:pointer;font-size:0.85em;color:var(--text-muted-ink);-webkit-tap-highlight-color:transparent;">
               <span>${BB.t('journal.ui.bbThought')}</span>
-              <span class="bb-chev-d" style="font-size:0.7em;color:#adb5bd;transition:transform 0.2s;">▼</span>
+              <span class="bb-chev-d" style="font-size:0.7em;color:var(--text-muted-ink);transition:transform 0.2s;">▼</span>
             </button>
             <div style="display:none;padding:10px 12px;background:rgba(255,149,0,0.04);">
               <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
                 <img src="images/moods/${_est.mood}.png" style="width:26px;height:26px;object-fit:contain;">
                 <span style="font-weight:700;color:${_estColor};">${_estLabel}</span>
-                ${_est.secondMood ? `<span style="font-size:0.82em;color:#adb5bd;">${BB.t('t143.j.or')}</span><img src="images/moods/${_est.secondMood}.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-weight:700;color:${_est2Color};">${_est2Label}</span>` : ''}
+                ${_est.secondMood ? `<span style="font-size:0.82em;color:var(--text-muted-ink);">${BB.t('t143.j.or')}</span><img src="images/moods/${_est.secondMood}.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-weight:700;color:${_est2Color};">${_est2Label}</span>` : ''}
               </div>
-              <div style="font-size:0.72em;color:#adb5bd;line-height:1.4;">${BB.t('journal.ui.experimentalFeedback1')}</div>
+              <div style="font-size:0.72em;color:var(--text-muted-ink);line-height:1.4;">${BB.t('journal.ui.experimentalFeedback1')}</div>
             </div>
           </div>`;
         }
@@ -9867,7 +9987,7 @@ function _tt(k, vars, fallback) {
       if (defaultEnergyBtn) {
         defaultEnergyBtn.classList.add('selected');
         defaultEnergyBtn.style.background = defaultEnergyBtn.dataset.color || getEnergyColor(5);
-        defaultEnergyBtn.style.color = 'white';
+        defaultEnergyBtn.style.color = _onFillInk(defaultEnergyBtn.dataset.color || getEnergyColor(5));
       }
 
       _sleepSuggestedVal = null;
@@ -9882,7 +10002,7 @@ function _tt(k, vars, fallback) {
       if (defaultSleepBtn) {
         defaultSleepBtn.classList.add('selected');
         defaultSleepBtn.style.background = defaultSleepBtn.dataset.color || getSleepColor(8);
-        defaultSleepBtn.style.color = 'white';
+        defaultSleepBtn.style.color = _onFillInk(defaultSleepBtn.dataset.color || getSleepColor(8));
       }
 
       document.querySelectorAll('.medication-btn').forEach(b => b.classList.remove('selected'));
@@ -10102,7 +10222,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const month = firstDayOfWeek.getMonth();
         if (month !== lastMonth && firstDayOfWeek.getDate() <= 7) {
           const leftPos = weekIndex * (squareSize + gapSize);
-          monthLabels += `<div style="position: absolute; left: ${leftPos}px; top: -20px; font-size: 10px; color: #6c757d; font-weight: 600;">${months[month]}</div>`;
+          monthLabels += `<div style="position: absolute; left: ${leftPos}px; top: -20px; font-size: 10px; color: var(--text-muted-ink); font-weight: 600;">${months[month]}</div>`;
           lastMonth = month;
         }
         weekIndex++;
@@ -10124,7 +10244,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
                   const cnt = _yCounts[mood] || 0;
                   return `<div onclick="showStatDetail('moodSummary')" style="display:flex;align-items:center;gap:5px;cursor:pointer;" title="${cnt} days">
                     <div style="width:12px;height:12px;background:${color};border-radius:2px;flex-shrink:0;"></div>
-                    <span style="color:#6c757d;">${_moodCatLabel(mood)}</span>
+                    <span style="color:var(--text-muted-ink);">${_moodCatLabel(mood)}</span>
                   </div>`;
                 }).join('');
             })()}
@@ -10359,9 +10479,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         _visibleCount++;
         const on = _defaultOn.has(k);
         b.dataset.on = on ? '1' : '0';
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
         b.style.border = on ? '1.5px solid var(--brand-primary)' : '1.5px solid #adb5bd';
         b.style.background = on ? 'rgba(255,149,0,0.1)' : 'rgba(0,0,0,0.04)';
-        b.style.color = on ? 'var(--brand-primary)' : '#adb5bd';
+        b.style.color = on ? 'var(--brand-ink)' : 'var(--text-muted-ink)';
       });
 
       // Show/hide the no-data message
@@ -10393,15 +10514,16 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           setTimeout(() => {
             btn.style.border = '1.5px solid #adb5bd';
             btn.style.background = 'rgba(0,0,0,0.04)';
-            btn.style.color = '#adb5bd';
+            btn.style.color = 'var(--text-muted-ink)';
           }, 600);
           return;
         }
       }
       btn.dataset.on = turningOn ? '1' : '0';
+      btn.setAttribute('aria-pressed', turningOn ? 'true' : 'false');
       btn.style.border = turningOn ? '1.5px solid var(--brand-primary)' : '1.5px solid #adb5bd';
       btn.style.background = turningOn ? 'rgba(255,149,0,0.1)' : 'rgba(0,0,0,0.04)';
-      btn.style.color = turningOn ? 'var(--brand-primary)' : '#adb5bd';
+      btn.style.color = turningOn ? 'var(--brand-ink)' : 'var(--text-muted-ink)';
     }
     window._togglePdfChart = _togglePdfChart;
 
@@ -12616,7 +12738,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const listContainer = document.getElementById('medicationList');
 
       if (medications.length === 0) {
-        listContainer.innerHTML = '<div style="text-align: center; color: #6c757d; padding: 20px;">' + BB.t('journal.ui.noMedsYet') + '</div>';
+        listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted-ink); padding: 20px;">' + BB.t('journal.ui.noMedsYet') + '</div>';
         return;
       }
 
@@ -12918,7 +13040,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const sel = parseFloat(b.dataset.energy) === entry.energy;
         b.classList.toggle('selected', sel);
         b.style.background = sel ? b.dataset.color : '#f8f9fa';
-        b.style.color = sel ? 'white' : '#495057';
+        b.style.color = sel ? _onFillInk(b.dataset.color) : '#495057';
       });
 
       // Select sleep
@@ -12932,7 +13054,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const sel = parseFloat(b.dataset.sleep) === entry.sleep;
         b.classList.toggle('selected', sel);
         b.style.background = sel ? b.dataset.color : '#f8f9fa';
-        b.style.color = sel ? 'white' : '#495057';
+        b.style.color = sel ? _onFillInk(b.dataset.color) : '#495057';
       });
 
       // Select medication
@@ -13120,7 +13242,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const goals = JSON.parse(localStorage.getItem('dailyGoals') || '[]');
       const container = document.getElementById('goalsList');
       if (goals.length === 0) {
-        container.innerHTML = '<p style="color:#6c757d; text-align:center; font-style:italic;">' + BB.t('journal.ui.noGoalsYet') + '</p>';
+        container.innerHTML = '<p style="color:var(--text-muted-ink); text-align:center; font-style:italic;">' + BB.t('journal.ui.noGoalsYet') + '</p>';
         return;
       }
       container.innerHTML = goals.map((g, i) => `
@@ -13148,7 +13270,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       if (!el) return;
       const goals = JSON.parse(localStorage.getItem('dailyGoals') || '[]');
       if (goals.length === 0) {
-        el.innerHTML = `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
+        el.innerHTML = `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-ink);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
       } else {
         const chips = goals.map(g => `<span style="display:inline-block;background:rgba(255,149,0,0.12);border-radius:6px;padding:2px 7px;margin:2px;font-size:0.8em;color:#495057;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g}</span>`).join('');
         el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${chips}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">${BB.t('common.edit')}</button></div>`;
@@ -13170,7 +13292,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       if (!el) return;
       const val = localStorage.getItem('dailyBudget') || '';
       if (!val) {
-        el.innerHTML = `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
+        el.innerHTML = `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-ink);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
       } else {
         el.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.9em;color:#495057;">💰 Daily budget: <b>${val}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`;
       }
@@ -13640,7 +13762,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             <span style="flex:1; min-width:0;">
               <span style="display:block; font-weight:600; color:#333;">${_esc(dateStr)}</span>
               <span style="display:block; color:#495057; font-size:0.88em;">${_esc(bits.join(' · '))}</span>
-              <span style="display:block; color:#adb5bd; font-size:0.78em;">${_esc(source)}</span>
+              <span style="display:block; color:var(--text-muted-ink); font-size:0.78em;">${_esc(source)}</span>
             </span>
           </label>`;
       }).join('');
@@ -13761,7 +13883,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         statusEl.innerHTML =
           `<div style="font-size:1.8em; margin-bottom:8px;">✅</div>` +
           `<div style="font-weight:700; color:#333; margin-bottom:8px;">${_esc(BB.t('journal.autofill.doneTitle', { count: chosen.length }))}</div>` +
-          `<div style="color:#6c757d; font-size:0.9em; line-height:1.5;">${_esc(BB.t('journal.autofill.doneBody'))}</div>`;
+          `<div style="color:var(--text-muted-ink); font-size:0.9em; line-height:1.5;">${_esc(BB.t('journal.autofill.doneBody'))}</div>`;
         document.getElementById('autoFillDoneActions').style.display = '';
         _autoFillPlan = null;
       } catch (error) {
@@ -13878,7 +14000,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         if (!msg) {
           msg = document.createElement('div');
           msg.id = 'sleepNotYetMsg';
-          msg.style.cssText = 'text-align:center;padding:12px 8px;color:#6c757d;font-size:0.92em;font-weight:600;';
+          msg.style.cssText = 'text-align:center;padding:12px 8px;color:var(--text-muted-ink);font-size:0.92em;font-weight:600;';
           sec.appendChild(msg);
         }
         msg.textContent = '🌙 ' + ((window.BB && BB.t) ? BB.t('journal.fm.sleepNotYet') : "You haven't slept yet");
@@ -14532,9 +14654,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const _pulsing = _hintActive && t.id === 'more_data';
         const _borderColor = _pulsing ? 'var(--brand-primary)' : (on ? 'var(--brand-primary)' : '#dee2e6');
         const _bg = _pulsing ? 'rgba(255,149,0,0.18)' : (on ? 'rgba(255,149,0,0.1)' : 'white');
-        const _color = on ? 'var(--brand-primary)' : '#adb5bd';
+        const _color = on ? 'var(--brand-ink)' : 'var(--text-muted-ink)';
         const _extraStyle = _dimmed ? 'opacity:0.3;pointer-events:none;' : (_pulsing ? 'animation:hintFade 1.6s ease-in-out infinite;box-shadow:0 0 0 3px rgba(255,149,0,0.35);' : '');
-        return `<button${_idAttr} onclick="_toggleStep('${t.id}')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid ${_borderColor};background:${_bg};color:${_color};cursor:pointer;font-size:0.82em;font-weight:600;min-width:52px;-webkit-tap-highlight-color:transparent;${_extraStyle}"><span style="font-size:1.3em;">${t.icon}</span><span>${BB.t(t.key)}</span></button>`;
+        return `<button${_idAttr} type="button" aria-pressed="${on}" onclick="_toggleStep('${t.id}')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid ${_borderColor};background:${_bg};color:${_color};cursor:pointer;font-size:0.82em;font-weight:600;min-width:52px;-webkit-tap-highlight-color:transparent;${_extraStyle}"><span style="font-size:1.3em;">${t.icon}</span><span>${BB.t(t.key)}</span></button>`;
       }).join('');
     }
     window._renderStepToggles = _renderStepToggles;
@@ -14602,12 +14724,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       // The left slot is always there (empty when there's nothing to do), so
       // names and switches line up down the list (James, 2026-10-13).
       const _sw = (key, active, name) => `<label class="bb-switch" style="flex-shrink:0;" onclick="event.stopPropagation()"><input type="checkbox"${active ? ' checked' : ''} onchange="toggleField('${key}')" aria-label="${String(name).replace(/"/g, '&quot;')}"><span class="bb-slider"></span></label>`;
-      const _iconBtn = (onclick, glyph, label, size) => `<button onclick="event.stopPropagation();${onclick}" aria-label="${label}" title="${label}" style="background:none;border:none;color:#adb5bd;font-size:${size || '1em'};cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;">${glyph}</button>`;
+      const _iconBtn = (onclick, glyph, label, size) => `<button onclick="event.stopPropagation();${onclick}" aria-label="${label}" title="${label}" style="background:none;border:none;color:var(--text-muted-ink);font-size:${size || '1em'};cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;">${glyph}</button>`;
       const _row = (key, active, leadHtml, name, sub) => `<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
           <div style="width:36px;flex-shrink:0;display:flex;justify-content:center;">${leadHtml || ''}</div>
           <div onclick="toggleField('${key}')" style="flex:1;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;">
             <div style="font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${name}</div>
-            ${sub ? `<div style="font-size:0.74em;color:#868e96;margin-top:1px;line-height:1.3;">${sub}</div>` : ''}
+            ${sub ? `<div style="font-size:0.74em;color:var(--text-muted-ink);margin-top:1px;line-height:1.3;">${sub}</div>` : ''}
           </div>
           ${_sw(key, active, name)}
         </div>`;
@@ -15385,7 +15507,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       BB.storage.set('MedHintDone', '1');
       document.getElementById('medHintEl')?.remove();
       const _mb = document.getElementById('manageMedsBtn');
-      if (_mb) _mb.style.color = 'var(--brand-primary)';
+      if (_mb) _mb.style.color = 'var(--brand-ink)';
       _applyJournalOnboardingGating();
     }
     window._dismissMedHint = _dismissMedHint;
@@ -16122,7 +16244,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               });
               b.classList.add('selected');
               b.style.background = b.dataset.color || getEnergyColor(_sugEn);
-              b.style.color = 'white';
+              b.style.color = _onFillInk(b.dataset.color || getEnergyColor(_sugEn));
               selectedEnergy = _sugEn;
             }
           });
@@ -16269,7 +16391,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             });
             closestBtn.classList.add('selected');
             closestBtn.style.background = closestBtn.dataset.color || getSleepColor(_sleepSuggestedVal);
-            closestBtn.style.color = 'white';
+            closestBtn.style.color = _onFillInk(closestBtn.dataset.color || getSleepColor(_sleepSuggestedVal));
             selectedSleep = roundedH; // store actual hours, not bucket
             _sleepHealthSynced = true;
             _updateSleepHero();
@@ -16559,7 +16681,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           Track offline, faster loading, app-like experience
         </div>
         <div style="display: flex; gap: 10px; justify-content: center;">
-          <button id="pwa-install-btn" style="background: white; color: var(--brand-primary); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+          <button id="pwa-install-btn" style="background: white; color: var(--brand-ink); border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">
             Install Now
           </button>
           <button id="pwa-dismiss-btn" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;">

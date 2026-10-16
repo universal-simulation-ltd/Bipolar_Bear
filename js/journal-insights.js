@@ -757,7 +757,7 @@
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">' +
         '<div>' +
           '<div style="font-weight:600;color:#495057;font-size:0.95em;">' + esc(tr('earlyWarn.settingTitle')) + '</div>' +
-          '<div style="color:#6c757d;font-size:0.82em;margin-top:2px;">' + esc(tr('earlyWarn.settingDesc')) + '</div>' +
+          '<div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;">' + esc(tr('earlyWarn.settingDesc')) + '</div>' +
         '</div>' +
         '<label class="bb-switch"><input type="checkbox" id="earlyWarnToggle"><span class="bb-slider"></span></label>' +
       '</div>';

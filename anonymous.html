@@ -40,6 +40,7 @@
   <script src="js/shared/debug.js"></script>
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/a11y.js"></script>
   <script src="js/shared/crisis.js"></script>
   <script src="js/shared/translate.js"></script>
   <script src="js/shared/medications.js"></script>
@@ -84,12 +85,12 @@
       <div class="card-sub" data-i18n="anon.verify.sub">A moderated peer-support community for people living with bipolar. You post under a name you make up: no real name needed.</div>
 
       <!-- Shared error display for both steps -->
-      <div id="verify-error" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(220,53,69,0.08);border:1.5px solid rgba(220,53,69,0.25);border-radius:10px;font-size:13px;color:#dc3545;line-height:1.45;"></div>
+      <div id="verify-error" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(220,53,69,0.08);border:1.5px solid rgba(220,53,69,0.25);border-radius:10px;font-size:0.8125rem;color:#dc3545;line-height:1.45;"></div>
 
       <div id="step-email">
         <!-- What to do first, and why the email: said once, above the field
              (the code step has its own "Code sent to …" line). -->
-        <div id="verify-how" style="font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 12px;" data-i18n="anon.verify.how">To join, enter your email and we'll send you a 6-digit code. Other members never see your email.</div>
+        <div id="verify-how" style="font-size:0.8125rem;color:var(--muted);line-height:1.45;margin:0 0 12px;" data-i18n="anon.verify.how">To join, enter your email and we'll send you a 6-digit code. Other members never see your email.</div>
         <input id="email-input" type="email" class="bb-input" placeholder="your@email.com" autocomplete="email" data-i18n-placeholder="anon.misc.emailPlaceholder">
         <!-- App Store guideline 1.2: users must affirmatively agree to terms
              with an explicit zero-tolerance clause before account creation.
@@ -106,24 +107,24 @@
       </div>
 
       <div id="step-code" style="display:none">
-        <div id="code-sent-label" style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.45;"></div>
+        <div id="code-sent-label" style="font-size:0.8125rem;color:var(--muted);margin-bottom:14px;line-height:1.45;"></div>
         <div class="code-boxes">
-          <input class="code-box" type="tel" maxlength="1" inputmode="numeric">
-          <input class="code-box" type="tel" maxlength="1" inputmode="numeric">
-          <input class="code-box" type="tel" maxlength="1" inputmode="numeric">
-          <input class="code-box" type="tel" maxlength="1" inputmode="numeric">
-          <input class="code-box" type="tel" maxlength="1" inputmode="numeric">
-          <input class="code-box" type="tel" maxlength="1" inputmode="numeric">
+          <input class="code-box" type="tel" maxlength="1" inputmode="numeric" aria-label="Code digit 1 of 6">
+          <input class="code-box" type="tel" maxlength="1" inputmode="numeric" aria-label="Code digit 2 of 6">
+          <input class="code-box" type="tel" maxlength="1" inputmode="numeric" aria-label="Code digit 3 of 6">
+          <input class="code-box" type="tel" maxlength="1" inputmode="numeric" aria-label="Code digit 4 of 6">
+          <input class="code-box" type="tel" maxlength="1" inputmode="numeric" aria-label="Code digit 5 of 6">
+          <input class="code-box" type="tel" maxlength="1" inputmode="numeric" aria-label="Code digit 6 of 6">
         </div>
         <button id="verify-btn" class="btn-primary" disabled data-i18n="anon.verify.verify">Verify →</button>
         <div style="display:flex;justify-content:space-between;margin-top:14px;">
-          <button id="back-to-email-btn" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent;" data-i18n="anon.verify.changeEmail">← Change email</button>
-          <button id="resend-btn" style="background:none;border:none;color:var(--yellow-ink);font-size:13px;font-weight:700;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent;text-decoration:underline;" data-i18n="anon.verify.resend">Resend code</button>
+          <button id="back-to-email-btn" style="background:none;border:none;color:var(--muted);font-size:0.8125rem;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent;" data-i18n="anon.verify.changeEmail">← Change email</button>
+          <button id="resend-btn" style="background:none;border:none;color:var(--yellow-ink);font-size:0.8125rem;font-weight:700;cursor:pointer;padding:0;font-family:inherit;-webkit-tap-highlight-color:transparent;text-decoration:underline;" data-i18n="anon.verify.resend">Resend code</button>
         </div>
       </div>
       <!-- Crisis help before joining: the board's 🛟 Help sheet (#ov-help) is
            otherwise only reachable from inside the board. -->
-      <button type="button" id="verify-help-btn" style="display:block;margin:16px auto 0;background:none;border:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;padding:10px 12px;min-height:44px;font-family:inherit;-webkit-tap-highlight-color:transparent;"><span aria-hidden="true">🛟 </span><span data-i18n="anon.ux.helpBtn">Need help now?</span></button>
+      <button type="button" id="verify-help-btn" style="display:block;margin:16px auto 0;background:none;border:none;color:var(--muted);font-size:0.8125rem;font-weight:700;cursor:pointer;padding:10px 12px;min-height:44px;font-family:inherit;-webkit-tap-highlight-color:transparent;"><span aria-hidden="true">🛟 </span><span data-i18n="anon.ux.helpBtn">Need help now?</span></button>
     </div>
   </div>
 </div>
@@ -177,11 +178,11 @@
       <div class="monika-preview" id="monika-preview">
         <div class="avatar" id="monika-av"></div>
         <div>
-          <div style="font-size:13px;font-weight:700;color:var(--dark);" id="monika-preview-name"></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;" data-i18n="anon.monika.postPreview">Your posts will look like this</div>
+          <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" id="monika-preview-name"></div>
+          <div style="font-size:0.6875rem;color:var(--muted);margin-top:2px;" data-i18n="anon.monika.postPreview">Your posts will look like this</div>
         </div>
       </div>
-      <div id="monika-error" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(220,53,69,0.08);border:1.5px solid rgba(220,53,69,0.25);border-radius:10px;font-size:13px;color:#dc3545;line-height:1.45;"></div>
+      <div id="monika-error" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(220,53,69,0.08);border:1.5px solid rgba(220,53,69,0.25);border-radius:10px;font-size:0.8125rem;color:#dc3545;line-height:1.45;"></div>
       <button id="monika-btn" class="btn-primary" disabled data-i18n="anon.monika.btn">That's me →</button>
     </div>
   </div>
@@ -230,7 +231,7 @@
       </div>
       <button id="anon-med-add" class="btn-outline" style="width:100%;margin-bottom:20px;" data-i18n="anon.medDefine.addBtn">+ Add</button>
       <button id="anon-med-continue" class="btn-primary" data-i18n="anon.medDefine.continueBtn">Continue →</button>
-      <button id="anon-med-skip" style="background:none;border:none;color:var(--muted);font-size:13px;margin-top:12px;cursor:pointer;width:100%;padding:8px;font-family:inherit;" data-i18n="anon.medDefine.skipBtn">Skip for now</button>
+      <button id="anon-med-skip" style="background:none;border:none;color:var(--muted);font-size:0.8125rem;margin-top:12px;cursor:pointer;width:100%;padding:8px;font-family:inherit;" data-i18n="anon.medDefine.skipBtn">Skip for now</button>
     </div>
   </div>
 </div>
@@ -255,10 +256,10 @@
     <!-- Community size. Hidden until js/anonymous.js resolves
          counters/anonUserCount (or its cached value) — never shows a zero. -->
     <div id="member-count" class="member-count" style="display:none;"></div>
-    <div class="board-tabs">
-      <button class="board-tab" id="tab-ann" data-tab="announcements" data-i18n="anon.board.announcements">📢 Announcements</button>
-      <button class="board-tab active" id="tab-gen" data-tab="general" data-i18n="anon.board.general">💬 General</button>
-      <button class="board-tab" id="tab-wiki" data-tab="wiki" data-i18n="anon.board.wiki">📖 Wiki</button>
+    <div class="board-tabs" role="tablist">
+      <button class="board-tab" id="tab-ann" role="tab" aria-selected="false" data-tab="announcements" data-i18n="anon.board.announcements">📢 Announcements</button>
+      <button class="board-tab active" id="tab-gen" role="tab" aria-selected="true" data-tab="general" data-i18n="anon.board.general">💬 General</button>
+      <button class="board-tab" id="tab-wiki" role="tab" aria-selected="false" data-tab="wiki" data-i18n="anon.board.wiki">📖 Wiki</button>
     </div>
   </div>
 
@@ -283,10 +284,10 @@
     <div class="fab-hint" id="fab-hint"></div>
     <div class="fab-bar">
       <button class="fab-btn" id="fab-home"    title="About Bipolar Anonymous" data-i18n-title="anon.tips.about">ℹ️</button>
-      <button class="fab-btn" id="fab-ann"     title="Announcements" data-i18n-title="anon.tips.announcements">📢</button>
+      <button class="fab-btn" id="fab-ann"     title="Announcements" data-i18n-title="anon.tips.announcements" aria-pressed="false">📢</button>
       <button class="fab-btn-compose" id="fab-compose" title="Write a post" data-i18n-title="anon.tips.compose">✏️</button>
       <button class="fab-btn-compose" id="fab-search" title="Search the wiki" data-i18n-title="anon.tips.search" style="display:none;">🔍</button>
-      <button class="fab-btn active" id="fab-gen" title="General Chat" data-i18n-title="anon.tips.general">💬</button>
+      <button class="fab-btn active" id="fab-gen" title="General Chat" data-i18n-title="anon.tips.general" aria-pressed="true">💬</button>
       <button class="fab-btn" id="fab-e2ee"    title="Privacy info" data-i18n-title="anon.tips.privacy">🔒</button>
     </div>
   </div>
@@ -296,7 +297,7 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- OVERLAY: Compose                                               -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<div id="ov-compose" class="overlay hidden">
+<div id="ov-compose" class="overlay hidden" aria-label="Write a post" data-i18n-aria-label="anon.tips.compose">
   <div class="sheet">
     <!-- Shown only in suggestion mode (a member composing on the announcements
          tab). setComposeMode() in js/anonymous.js fills and reveals it. -->
@@ -324,7 +325,7 @@
 <div id="ov-firstpost" class="overlay hidden">
   <div class="sheet">
     <div class="sheet-icon">🎉</div>
-    <div class="sheet-title" style="font-size:20px;font-weight:800;" data-i18n="anon.firstPost.title">Thanks for posting!</div>
+    <div class="sheet-title" style="font-size:1.25rem;font-weight:800;" data-i18n="anon.firstPost.title">Thanks for posting!</div>
     <div class="sheet-sub" data-i18n="anon.firstPost.sub">Your post is now live for the community. Keep being you 💛</div>
     <button class="btn-primary" id="fp-yes" style="margin-bottom:8px;" data-i18n="anon.firstPost.awesome">Awesome 🐻</button>
     <button class="btn-secondary" id="fp-no" style="width:100%;" data-i18n="anon.firstPost.close">Close</button>
@@ -384,7 +385,7 @@
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- OVERLAY: Post / comment actions (the ⋯ menu, or press and hold) -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<div id="ov-actions" class="overlay hidden">
+<div id="ov-actions" class="overlay hidden" aria-label="Post options" data-i18n-aria-label="a11y.postActions">
   <div class="sheet">
     <div id="actions-preview" class="action-preview"></div>
     <div id="actions-list"></div>
@@ -437,13 +438,13 @@
 <div id="ov-e2ee" class="overlay hidden">
   <div class="sheet">
     <div class="sheet-icon">🔒</div>
-    <div class="sheet-title" style="font-size:20px;font-weight:800;" data-i18n="anon.e2ee.title">Your privacy, explained</div>
+    <div class="sheet-title" style="font-size:1.25rem;font-weight:800;" data-i18n="anon.e2ee.title">Your privacy, explained</div>
     <div class="sheet-sub" data-i18n="anon.e2ee.sub">Here's exactly how Bipolar Anonymous handles your data:</div>
     <div class="e2ee-row"><span class="e2ee-row-icon">💬</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.messagesTitle">Posts are public to the community</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.messagesSub">Anyone in the community can read what you post — that's how peer support works. Share only what you're comfortable being seen.</div></div></div>
     <div class="e2ee-row"><span class="e2ee-row-icon">👤</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.identityTitle">No real identity</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.identitySub">No real name, profile or photo. Your email is only used to send your sign-in code: the code's record holds it until the code is used (an unused code is deleted within 25 hours). Your board profile is filed under a code made from your email with a secret key only our server has, and the address stays on this device to keep you signed in.</div></div></div>
     <div class="e2ee-row"><span class="e2ee-row-icon">🚫</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.noSellTitle">Never sold</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.noSellSub">We will never sell your data or use it for advertising. A few services run the app for us: Google Firebase (the board and sign-in), Resend (sign-in emails) and Google Cloud Translation (translating posts). The privacy policy says what each one receives.</div></div></div>
     <div class="e2ee-row"><span class="e2ee-row-icon">🔒</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.secureTitle">Encrypted in transit & at rest</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.secureSub">Your data travels over encrypted connections and is stored encrypted on secure Google Cloud servers.</div></div></div>
-    <p style="text-align:center;font-size:13px;margin:4px 0 14px;"><a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacyFull">Read the full privacy policy →</a></p>
+    <p style="text-align:center;font-size:0.8125rem;margin:4px 0 14px;"><a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacyFull">Read the full privacy policy →</a></p>
     <button class="btn-primary" onclick="closeOv('ov-e2ee')" style="margin-top:6px;" data-i18n="anon.e2ee.gotIt">Got it 👍</button>
   </div>
 </div>
@@ -459,9 +460,9 @@
          here from the header pill (30 Sep 2026); filled by _paintMsStats(). -->
     <div id="ms-stats" class="ms-stats" style="display:none;"></div>
 
-    <span class="sheet-label" data-i18n="anon.monikaSettings.monikaName">Moniker Name</span>
+    <span class="sheet-label" id="ms-monika-lbl" data-i18n="anon.monikaSettings.monikaName">Moniker Name</span>
     <div class="input-wrap" style="margin-bottom:16px;">
-      <input id="ms-monika" type="text" class="bb-input" maxlength="10" style="margin-bottom:0;">
+      <input id="ms-monika" type="text" class="bb-input" maxlength="10" style="margin-bottom:0;" aria-labelledby="ms-monika-lbl">
       <span class="input-counter" id="ms-monika-counter">0/10</span>
     </div>
 
@@ -474,106 +475,106 @@
     <div id="ms-preview" style="display:flex;align-items:center;gap:10px;background:var(--yellow-bg);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
       <div id="ms-av" class="avatar"></div>
       <div>
-        <div id="ms-av-name" style="font-size:13px;font-weight:700;color:var(--dark);"></div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;" data-i18n="anon.monikaSettings.preview">Preview</div>
+        <div id="ms-av-name" style="font-size:0.8125rem;font-weight:700;color:var(--dark);"></div>
+        <div style="font-size:0.6875rem;color:var(--muted);margin-top:2px;" data-i18n="anon.monikaSettings.preview">Preview</div>
       </div>
     </div>
 
     <!-- Bipolar Bear birthday — populated by openMonikaSettings() -->
     <div id="ms-birthday" style="display:none;background:var(--yellow-bg);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;"><span id="ms-birthday-label">🎂 Bipolar Bear birthday:</span> <span id="ms-birthday-date"></span></div>
-      <div style="font-size:11px;color:var(--muted);" id="ms-birthday-age"></div>
+      <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);margin-bottom:2px;"><span id="ms-birthday-label">🎂 Bipolar Bear birthday:</span> <span id="ms-birthday-date"></span></div>
+      <div style="font-size:0.6875rem;color:var(--muted);" id="ms-birthday-age"></div>
     </div>
 
     <!-- Notifications quick-access -->
     <button id="ms-notif-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">🔔</span>
+      <span style="font-size:1.25rem;">🔔</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.notif.title">Notifications</div>
-        <div id="ms-notif-status" style="font-size:11px;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.notif.title">Notifications</div>
+        <div id="ms-notif-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Language & translation quick-access -->
     <button id="ms-lang-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">🌐</span>
+      <span style="font-size:1.25rem;">🌐</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.xlate.title">Language &amp; translation</div>
-        <div id="ms-lang-status" style="font-size:11px;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.xlate.title">Language &amp; translation</div>
+        <div id="ms-lang-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Medication quick-access -->
     <button id="ms-med-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">💊</span>
+      <span style="font-size:1.25rem;">💊</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.monikaSettings.medication">Medication</div>
-        <div id="ms-med-status" style="font-size:11px;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.monikaSettings.medication">Medication</div>
+        <div id="ms-med-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Saved posts -->
     <button id="ms-saved-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">🔖</span>
+      <span style="font-size:1.25rem;">🔖</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.savedTitle">Saved posts</div>
-        <div id="ms-saved-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.ux.savedTitle">Saved posts</div>
+        <div id="ms-saved-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;"></div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Daily check-in: show / hide "How are you today?" on the board -->
     <button id="ms-checkin-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
       <img src="images/moods/sm/stable.png" alt="" style="width:22px;height:22px;object-fit:contain;">
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.moodAsk">How are you today?</div>
-        <div id="ms-checkin-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.ux.moodAsk">How are you today?</div>
+        <div id="ms-checkin-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;"></div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Bipolar Bear accounts only: let the journal answer the check-in -->
     <button id="ms-jcheckin-btn" style="display:none;width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">📔</span>
+      <span style="font-size:1.25rem;">📔</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.journalCheckinTitle">Check in from my journal</div>
-        <div id="ms-jcheckin-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.ux.journalCheckinTitle">Check in from my journal</div>
+        <div id="ms-jcheckin-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;"></div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Appearance: tap to cycle automatic → light → dark -->
     <button id="ms-theme-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">🌗</span>
+      <span style="font-size:1.25rem;">🌗</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.ux.theme">Appearance</div>
-        <div id="ms-theme-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.ux.theme">Appearance</div>
+        <div id="ms-theme-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;"></div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Admin only: post under your moniker instead of as "Bipolar Bear Admin".
          Shown by _paintAsMemberStatus(). -->
     <button id="ms-asmember-btn" style="display:none;width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">🕶️</span>
+      <span style="font-size:1.25rem;">🕶️</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.admin.asMemberTitle">Post as a member</div>
-        <div id="ms-asmember-status" style="font-size:11px;color:var(--muted);margin-top:1px;"></div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.admin.asMemberTitle">Post as a member</div>
+        <div id="ms-asmember-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;"></div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <!-- Stability counter quick-access -->
     <button id="ms-stable-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-family:inherit;">
-      <span style="font-size:20px;">🧘</span>
+      <span style="font-size:1.25rem;">🧘</span>
       <div style="flex:1;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);" data-i18n="anon.monikaSettings.stability">Stability Counter</div>
-        <div id="ms-stable-status" style="font-size:11px;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.monikaSettings.stability">Stability Counter</div>
+        <div id="ms-stable-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;" data-i18n="anon.monikaSettings.loading">Loading…</div>
       </div>
-      <span style="color:var(--muted);font-size:16px;font-weight:300;">›</span>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
 
     <div class="btn-row" style="margin-bottom:10px;">
@@ -584,12 +585,12 @@
     <!-- Standalone-only: sign out clears the email-code session. Hidden
          when the user signed in via the BipolarBear app — they sign out
          from the main app instead. -->
-    <button id="ms-signout" style="display:none;width:100%;margin-top:10px;background:transparent;color:#dc3545;border:1.5px solid rgba(220,53,69,0.35);border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;" data-i18n="anon.monikaSettings.signOut">Sign Out</button>
+    <button id="ms-signout" style="display:none;width:100%;margin-top:10px;background:transparent;color:#dc3545;border:1.5px solid rgba(220,53,69,0.35);border-radius:10px;padding:12px;font-size:0.875rem;font-weight:700;cursor:pointer;font-family:inherit;" data-i18n="anon.monikaSettings.signOut">Sign Out</button>
     <!-- Standalone-only: permanently delete the anonymous account (profile,
          monika reservation and all posts). Hidden for BipolarBear-app users,
          who delete their account from the main app. Required by App Store
          guideline 5.1.1(v). -->
-    <button id="ms-delete" style="display:none;width:100%;margin-top:10px;background:transparent;color:#b71c1c;border:none;text-decoration:underline;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" data-i18n="anon.monikaSettings.deleteAccount">Delete my account</button>
+    <button id="ms-delete" style="display:none;width:100%;margin-top:10px;background:transparent;color:#b71c1c;border:none;text-decoration:underline;padding:8px;font-size:0.8125rem;font-weight:600;cursor:pointer;font-family:inherit;" data-i18n="anon.monikaSettings.deleteAccount">Delete my account</button>
   </div>
 </div>
 
@@ -631,7 +632,7 @@
     </div>
     <button id="med-ov-add" class="btn-outline" style="width:100%;margin-bottom:18px;" data-i18n="anon.medOv.add">+ Add</button>
 
-    <div id="med-ov-bb-note" style="display:none;font-size:12px;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;" data-i18n="anon.medOv.bbNote">
+    <div id="med-ov-bb-note" style="display:none;font-size:0.75rem;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;" data-i18n="anon.medOv.bbNote">
       💡 You're signed in to BipolarBear — saving will also update your medication in the main app.
     </div>
 
@@ -667,7 +668,7 @@
     <div id="notif-rows" class="notif-rows"></div>
     <!-- Shown when the OS is refusing notifications, or this build can't
          send them yet — populated by openNotifSettings(). -->
-    <div id="notif-note" style="display:none;font-size:12px;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;"></div>
+    <div id="notif-note" style="display:none;font-size:0.75rem;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;"></div>
     <button class="btn-primary" id="notif-close" style="width:100%;" data-i18n="anon.notif.done">Done ✓</button>
   </div>
 </div>
@@ -687,7 +688,7 @@
     <div id="xlate-rows" class="notif-rows"></div>
     <!-- Shown when the translation backend has told us it can't help
          (Cloud Translation API not enabled, or the daily budget is spent). -->
-    <div id="xlate-note" style="display:none;font-size:12px;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;"></div>
+    <div id="xlate-note" style="display:none;font-size:0.75rem;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;"></div>
     <button class="btn-primary" id="xlate-close" style="width:100%;" data-i18n="anon.xlate.done">Done</button>
   </div>
 </div>
@@ -709,16 +710,16 @@
     <!-- BB App users: streak computed automatically from journal -->
     <div id="stable-ov-bb-section" style="display:none;">
       <div style="background:var(--yellow-bg);border-radius:10px;padding:12px 14px;margin-bottom:14px;line-height:1.6;">
-        <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px;">🧘 <span id="stable-ov-bb-count">0</span> consecutive stable days</div>
-        <div style="font-size:12px;color:var(--muted);" data-i18n="anon.stableOv.bbAuto">Automatically calculated from your BipolarBear journal — consecutive days where you logged Stable mood up to your most recent entry.</div>
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);margin-bottom:4px;">🧘 <span id="stable-ov-bb-count">0</span> consecutive stable days</div>
+        <div style="font-size:0.75rem;color:var(--muted);" data-i18n="anon.stableOv.bbAuto">Automatically calculated from your BipolarBear journal — consecutive days where you logged Stable mood up to your most recent entry.</div>
       </div>
     </div>
 
     <!-- Standalone users: manual "stable since" date -->
     <div id="stable-ov-manual-section" style="display:none;">
-      <span class="sheet-label" data-i18n="anon.stableOv.stableSince">Stable since</span>
-      <input id="stable-ov-date" type="date" class="bb-input" style="margin-bottom:6px;">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;" data-i18n="anon.stableOv.stableSinceDesc">Enter the date your current stable period started. Your counter will show days since that date.</div>
+      <span class="sheet-label" id="stable-ov-date-lbl" data-i18n="anon.stableOv.stableSince">Stable since</span>
+      <input id="stable-ov-date" type="date" class="bb-input" style="margin-bottom:6px;" aria-labelledby="stable-ov-date-lbl">
+      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:16px;" data-i18n="anon.stableOv.stableSinceDesc">Enter the date your current stable period started. Your counter will show days since that date.</div>
     </div>
 
     <div class="btn-row">
@@ -780,8 +781,8 @@
 <div id="ov-thread" class="overlay hidden">
   <div class="sheet thread-sheet">
     <div class="thread-header">
-      <button id="thread-close" class="thread-close-btn">✕</button>
-      <div class="sheet-title" style="margin:0;flex:1;text-align:left;font-size:16px;" data-i18n="anon.thread.title">Comments</div>
+      <button id="thread-close" class="thread-close-btn" aria-label="Close" data-i18n-aria-label="a11y.close">✕</button>
+      <div class="sheet-title" style="margin:0;flex:1;text-align:left;font-size:1rem;" data-i18n="anon.thread.title">Comments</div>
     </div>
     <div class="thread-scroll">
       <div id="thread-original-post"></div>
@@ -804,16 +805,16 @@
   <div class="sheet" style="text-align:left;">
     <div style="text-align:center;margin-bottom:14px;">
       <div class="sheet-icon" style="margin-bottom:6px;">📜</div>
-      <div style="font-size:18px;font-weight:800;color:var(--dark);" data-i18n="anon.terms.title">Community Guidelines &amp; Terms</div>
+      <div style="font-size:1.125rem;font-weight:800;color:var(--dark);" data-i18n="anon.terms.title">Community Guidelines &amp; Terms</div>
     </div>
 
     <div style="background:rgba(220,53,69,0.06);border:1.5px solid rgba(220,53,69,0.25);border-radius:12px;padding:12px 14px;margin-bottom:16px;">
-      <div style="font-size:13px;color:var(--dark);line-height:1.6;font-weight:700;" data-i18n="anon.terms.zeroTitle">⚠️ Zero tolerance for objectionable content and abusive users.</div>
-      <div style="font-size:12px;color:var(--dark);line-height:1.6;margin-top:6px;" data-i18n="anon.terms.zeroBody">You must be 18 or older to use Bipolar Anonymous. Posting hateful, harassing, threatening, sexually explicit or otherwise objectionable content, or abusing other members, gets your content removed and you banned permanently.</div>
+      <div style="font-size:0.8125rem;color:var(--dark);line-height:1.6;font-weight:700;" data-i18n="anon.terms.zeroTitle">⚠️ Zero tolerance for objectionable content and abusive users.</div>
+      <div style="font-size:0.75rem;color:var(--dark);line-height:1.6;margin-top:6px;" data-i18n="anon.terms.zeroBody">You must be 18 or older to use Bipolar Anonymous. Posting hateful, harassing, threatening, sexually explicit or otherwise objectionable content, or abusing other members, gets your content removed and you banned permanently.</div>
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.rulesTitle">The rules</div>
-    <div style="font-size:13px;color:var(--dark);line-height:1.8;margin-bottom:16px;" data-i18n-html="anon.terms.rulesList">
+    <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.rulesTitle">The rules</div>
+    <div style="font-size:0.8125rem;color:var(--dark);line-height:1.8;margin-bottom:16px;" data-i18n-html="anon.terms.rulesList">
       💛 &nbsp;Be kind — everyone here is doing their best<br>
       🔒 &nbsp;Respect privacy — never share personal details, yours or others'<br>
       🚫 &nbsp;No objectionable content: hate, harassment, threats, spam, explicit material<br>
@@ -821,18 +822,18 @@
       🙈 &nbsp;Mute anyone you'd rather not hear from
     </div>
 
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.modTitle">Moderation</div>
-    <p style="font-size:12px;color:var(--dark);line-height:1.6;margin-bottom:16px;" data-i18n="anon.terms.modBody">Reported content is reviewed and acted on within 24 hours, and anything that breaks the rules is removed. A zero-tolerance breach means a permanent ban; any other breach means a temporary ban. You can remove your own posts at any time, and mute anyone with "Mute this user" in the ⋯ menu on their post (unmute them from the About screen).</p>
+    <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.modTitle">Moderation</div>
+    <p style="font-size:0.75rem;color:var(--dark);line-height:1.6;margin-bottom:16px;" data-i18n="anon.terms.modBody">Reported content is reviewed and acted on within 24 hours, and anything that breaks the rules is removed. A zero-tolerance breach means a permanent ban; any other breach means a temporary ban. You can remove your own posts at any time, and mute anyone with "Mute this user" in the ⋯ menu on their post (unmute them from the About screen).</p>
 
     <div style="background:var(--yellow-bg);border-radius:12px;padding:12px 14px;margin-bottom:18px;">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;" data-i18n="anon.terms.reportTitle">Report a problem</div>
-      <p style="font-size:13px;color:var(--dark);line-height:1.6;margin:0;">
+      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;" data-i18n="anon.terms.reportTitle">Report a problem</div>
+      <p style="font-size:0.8125rem;color:var(--dark);line-height:1.6;margin:0;">
         <span data-i18n="anon.terms.reportBody">To report inappropriate content or an abusive user, use 🚨 Report in the ⋯ menu on any post, or email us:</span>
         <a class="ink-link" href="mailto:bipolar@unisim.co.uk?subject=Bipolar%20Anonymous%20%E2%80%94%20report">bipolar@unisim.co.uk</a>
       </p>
     </div>
 
-    <p style="font-size:12px;color:var(--dark);line-height:1.6;margin:0 0 18px;text-align:center;">
+    <p style="font-size:0.75rem;color:var(--dark);line-height:1.6;margin:0 0 18px;text-align:center;">
       <a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacy">Privacy policy</a>
     </p>
 
@@ -844,15 +845,15 @@
   <div class="sheet" style="text-align:left;">
     <div style="text-align:center;margin-bottom:18px;">
       <img src="icons/AppIcon_anonymous.png" alt="Bipolar Anonymous" style="width:60px;height:60px;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,0.15);margin-bottom:10px;">
-      <div style="font-size:18px;font-weight:800;color:var(--dark);">Bipolar Anonymous</div>
-      <div style="font-size:13px;color:var(--muted);margin-top:3px;" data-i18n="anon.about.subtitle">A safe space for people living with bipolar</div>
+      <div style="font-size:1.125rem;font-weight:800;color:var(--dark);">Bipolar Anonymous</div>
+      <div style="font-size:0.8125rem;color:var(--muted);margin-top:3px;" data-i18n="anon.about.subtitle">A safe space for people living with bipolar</div>
     </div>
 
-    <p style="font-size:13px;color:var(--dark);line-height:1.65;margin-bottom:16px;" data-i18n="anon.about.body">This is an anonymous peer community for people living with bipolar disorder. You join with a name you make up: you never give your real name, and other members never see your email.</p>
+    <p style="font-size:0.8125rem;color:var(--dark);line-height:1.65;margin-bottom:16px;" data-i18n="anon.about.body">This is an anonymous peer community for people living with bipolar disorder. You join with a name you make up: you never give your real name, and other members never see your email.</p>
 
     <div style="background:var(--yellow-bg);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.guidelinesTitle">Community guidelines</div>
-      <div style="font-size:13px;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.guidelinesList">
+      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.guidelinesTitle">Community guidelines</div>
+      <div style="font-size:0.8125rem;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.guidelinesList">
         ⚠️ &nbsp;Zero tolerance for objectionable content or abusive users (18+)<br>
         💛 &nbsp;Be kind — everyone here is doing their best<br>
         🔒 &nbsp;Respect others' privacy — don't share personal details<br>
@@ -860,7 +861,7 @@
         🚨 &nbsp;Report posts that break the rules — reviewed within 24 hours<br>
         🙈 &nbsp;Mute anyone you'd rather not hear from — their posts disappear for you
       </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--dark);line-height:1.6;">
+      <div style="margin-top:12px;font-size:0.75rem;color:var(--dark);line-height:1.6;">
         <button type="button" id="about-terms-link" class="ink-link" data-i18n="anon.about.viewTerms">View full Terms</button>
         &nbsp;·&nbsp; <a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacy">Privacy policy</a>
         <br><span data-i18n="anon.about.reportProblem">Report a problem:</span>
@@ -869,8 +870,8 @@
     </div>
 
     <div style="background:var(--yellow-bg);border-radius:12px;padding:14px 16px;margin-bottom:18px;">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.postActionsTitle">Post actions</div>
-      <div style="font-size:13px;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.postActionsList">
+      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.postActionsTitle">Post actions</div>
+      <div style="font-size:0.8125rem;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.postActionsList">
         💛 &nbsp;<strong>Like</strong> — show a post some love (you can't like your own)<br>
         💬 &nbsp;<strong>Comment</strong> — read replies and join the conversation (pulses when there are new replies)<br>
         🆘 &nbsp;<strong>SOS</strong> — quietly alert a moderator if you're worried about someone<br>
@@ -878,10 +879,10 @@
         🙈 &nbsp;<strong>Mute</strong> — hide everything from a user, just on your device<br>
         🗑️ &nbsp;<strong>Remove</strong> — delete one of your own posts (shown faintly on your posts)
       </div>
-      <div style="margin-top:10px;font-size:12px;color:var(--muted);line-height:1.6;" data-i18n="anon.ux.aboutMore">Tap ⋯ on a post, or press and hold it, for Save, SOS, Report and Mute. Swipe a reply to the right to answer it.</div>
+      <div style="margin-top:10px;font-size:0.75rem;color:var(--muted);line-height:1.6;" data-i18n="anon.ux.aboutMore">Tap ⋯ on a post, or press and hold it, for Save, SOS, Report and Mute. Swipe a reply to the right to answer it.</div>
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
-        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.about.moderatorsTitle">Moderators only</div>
-        <div style="font-size:13px;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.moderatorsList">
+        <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.about.moderatorsTitle">Moderators only</div>
+        <div style="font-size:0.8125rem;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.moderatorsList">
           📌 &nbsp;<strong>Pin</strong> — pin a post to the top of the tab (tap again to unpin)<br>
           🗑️ &nbsp;<strong>Delete</strong> — remove any post from the board<br>
           🚫 &nbsp;<strong>Ban</strong> — stop a user posting: permanently for a zero-tolerance breach, for 7 days for anything else
@@ -890,20 +891,20 @@
     </div>
 
     <div id="about-muted-wrap" style="background:var(--yellow-bg);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:none;">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.mutedTitle">Muted users</div>
-      <div id="about-muted-list" style="font-size:13px;color:var(--dark);"></div>
+      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.mutedTitle">Muted users</div>
+      <div id="about-muted-list" style="font-size:0.8125rem;color:var(--dark);"></div>
     </div>
 
     <div style="border-top:1px solid var(--line);padding-top:16px;margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.poweredTitle">Powered by BipolarBear</div>
-      <p style="font-size:13px;color:var(--dark);line-height:1.6;margin-bottom:12px;" data-i18n="anon.about.poweredBody">
+      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.poweredTitle">Powered by BipolarBear</div>
+      <p style="font-size:0.8125rem;color:var(--dark);line-height:1.6;margin-bottom:12px;" data-i18n="anon.about.poweredBody">
         BipolarBear is a free mood journal and survival kit for people with bipolar disorder — track mood, energy, sleep and medication daily.
       </p>
-      <a href="https://bipolarbear.app" target="_blank" rel="noopener" style="display:block;background:var(--yellow);color:var(--on-yellow);font-weight:700;font-size:13px;border-radius:10px;padding:11px;text-align:center;text-decoration:none;" data-i18n="anon.about.discover">🐻 Discover BipolarBear →</a>
+      <a href="https://bipolarbear.app" target="_blank" rel="noopener" style="display:block;background:var(--yellow);color:var(--on-yellow);font-weight:700;font-size:0.8125rem;border-radius:10px;padding:11px;text-align:center;text-decoration:none;" data-i18n="anon.about.discover">🐻 Discover BipolarBear →</a>
     </div>
 
     <button id="about-close" class="btn-secondary" style="width:100%;" data-i18n="anon.about.close">Close</button>
-    <div id="about-version" style="text-align:center;font-size:11px;color:var(--muted);margin-top:14px;letter-spacing:0.3px;"></div>
+    <div id="about-version" style="text-align:center;font-size:0.6875rem;color:var(--muted);margin-top:14px;letter-spacing:0.3px;"></div>
   </div>
 </div>
 
