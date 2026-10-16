@@ -270,11 +270,11 @@
           </div>
         </div>
         <input type="range" id="mscSlider" class="msc-slider" min="0" max="10" step="1" value="5"
-               oninput="_onSpectrumChange(this.value)" aria-label="Mood on a 0 to 10 spectrum">
+               oninput="_onSpectrumChange(this.value)" aria-label="Mood on a 0 to 10 spectrum" data-i18n-aria-label="t143.j.ariaMood">
         <div class="msc-scale">
-          <span>0 · Severely down</span>
-          <span>5 · Stable</span>
-          <span>10 · Manic</span>
+          <span data-i18n="t143.j.scale0">0 · Severely down</span>
+          <span data-i18n="t143.j.scale5">5 · Stable</span>
+          <span data-i18n="t143.j.scale10">10 · Manic</span>
         </div>
         <div id="mscHint" class="msc-hint">Slide to choose your mood</div>
       </div>
@@ -282,9 +282,9 @@
       <div id="moodSelectorTip" style="display:none;text-align:center;font-size:0.82em;color:#6c757d;margin-bottom:8px;"></div>
 
       <div class="form-group hidden-until-mood" id="sleepSection">
-        <label id="sleepLabel" style="display:none;">😴 Sleep Hours</label>
+        <label id="sleepLabel" style="display:none;" data-i18n="t143.j.sleepHours">😴 Sleep Hours</label>
         <div id="sleepBtnRow" style="position:relative;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">
-          <span id="healthSleepBtn" style="font-weight:600;color:#495057;font-size:0.9em;">😴 Sleep Hours</span>
+          <span id="healthSleepBtn" style="font-weight:600;color:#495057;font-size:0.9em;" data-i18n="t143.j.sleepHours">😴 Sleep Hours</span>
         </div>
         <div class="step-hero" id="sleepStepHero" style="display:none;">
           <div class="step-hero-emoji" id="sleepHeroEmoji"></div>
@@ -305,7 +305,7 @@
             </div>
           </div>
           <input type="range" id="slscSlider" class="msc-slider msc-sleep" min="4" max="12" step="1" value="8"
-                 oninput="_onSleepSpectrumChange(this.value)" aria-label="Hours of sleep from 4 or fewer to 12 or more">
+                 oninput="_onSleepSpectrumChange(this.value)" aria-label="Hours of sleep from 4 or fewer to 12 or more" data-i18n-aria-label="t143.j.ariaSleep">
           <div class="msc-scale"><span>≤4h</span><span>8h</span><span>≥12h</span></div>
           <p style="text-align:center;margin:10px 0 0;"><button type="button" onclick="_revealSleepQuality()" style="background:none;border:none;color:var(--brand-primary);font-size:0.8em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.sleepQualityAdd">+ Add sleep quality</button></p>
         </div>
@@ -320,7 +320,7 @@
       </div>
 
       <div class="form-group hidden-until-mood" id="energySection">
-        <span id="healthEnergyBtn" style="display:block;margin-bottom:5px;font-weight:600;color:#495057;font-size:0.9em;"><span id="healthEnergyBtnText">⚡ Energy</span></span>
+        <span id="healthEnergyBtn" style="display:block;margin-bottom:5px;font-weight:600;color:#495057;font-size:0.9em;"><span id="healthEnergyBtnText" data-i18n="t143.j.energyBtn">⚡ Energy</span></span>
         <div class="step-hero" id="energyStepHero" style="display:none;">
           <div class="step-hero-emoji" id="energyHeroEmoji"></div>
           <div class="step-hero-value" id="energyHeroValue"></div>
@@ -337,7 +337,7 @@
             </div>
           </div>
           <input type="range" id="enscSlider" class="msc-slider msc-energy" min="0" max="10" step="1" value="5"
-                 oninput="_onEnergySpectrumChange(this.value)" aria-label="Energy on a 0 to 10 scale where 5 is normal">
+                 oninput="_onEnergySpectrumChange(this.value)" aria-label="Energy on a 0 to 10 scale where 5 is normal" data-i18n-aria-label="t143.j.ariaEnergy">
           <div class="msc-scale"><span>0</span><span>5</span><span>10</span></div>
         </div>
       </div>
@@ -618,38 +618,38 @@
   <!-- Mood Calculation Info Modal -->
   <div class="confirm-modal" id="moodCalcInfoModal" style="z-index:1200;" onclick="if(event.target===this)this.classList.remove('active')">
     <div class="confirm-content" style="max-width:420px;">
-      <h3 style="margin-bottom:6px;">🐻 How does the Bear think?</h3>
+      <h3 style="margin-bottom:6px;" data-i18n="t143.calc.title">🐻 How does the Bear think?</h3>
       <!-- Page 1 -->
       <div id="moodCalcPage1">
-        <p style="color:#6c757d;font-size:0.85em;line-height:1.5;margin-bottom:10px;">The Bear analyses the data you've logged and gives each signal a score. Only the fields you actually filled in are counted — unanswered fields are excluded so they don't skew the result.</p>
+        <p style="color:#6c757d;font-size:0.85em;line-height:1.5;margin-bottom:10px;" data-i18n="t143.calc.intro">The Bear analyses the data you've logged and gives each signal a score. Only the fields you actually filled in are counted — unanswered fields are excluded so they don't skew the result.</p>
         <div style="font-size:0.83em;color:#495057;line-height:1.65;">
-          <div style="margin-bottom:5px;"><b>⚡ Energy</b> — carries the most weight. Very low = depressed direction; very high = manic direction.</div>
-          <div style="margin-bottom:5px;"><b>😴 Sleep</b> — too little sleep = manic signal; too much = depressed signal.</div>
-          <div style="margin-bottom:5px;"><b>💊 Medication</b> — taken = stabilising; missed = slightly destabilising.</div>
-          <div style="margin-bottom:5px;"><b>😤 Irritability</b> — more than usual = manic signal.</div>
-          <div style="margin-bottom:5px;"><b>😰 Anxiety / 😬 Stress</b> — high levels = depressed direction.</div>
-          <div style="margin-bottom:5px;"><b>🍺 Alcohol</b> — drinking = slight manic signal.</div>
-          <div style="margin-bottom:5px;"><b>🏅 Goals</b> — achieved = positive; missed = negative signal.</div>
-          <div style="margin-bottom:5px;"><b>🏃 Steps</b> — very high = manic signal; very low = depressed signal.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.energy"><b>⚡ Energy</b> — carries the most weight. Very low = depressed direction; very high = manic direction.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.sleep"><b>😴 Sleep</b> — too little sleep = manic signal; too much = depressed signal.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.med"><b>💊 Medication</b> — taken = stabilising; missed = slightly destabilising.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.irrit"><b>😤 Irritability</b> — more than usual = manic signal.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.anx"><b>😰 Anxiety / 😬 Stress</b> — high levels = depressed direction.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.alcohol"><b>🍺 Alcohol</b> — drinking = slight manic signal.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.goals"><b>🏅 Goals</b> — achieved = positive; missed = negative signal.</div>
+          <div style="margin-bottom:5px;" data-i18n-html="t143.calc.steps"><b>🏃 Steps</b> — very high = manic signal; very low = depressed signal.</div>
         </div>
         <div class="confirm-buttons" style="margin-top:14px;">
-          <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage1').style.display='none';document.getElementById('moodCalcPage2').style.display='';">More info →</button>
-          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active')" style="background:var(--brand-btn);color:white;">Got it</button>
+          <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage1').style.display='none';document.getElementById('moodCalcPage2').style.display='';" data-i18n="t143.calc.more">More info →</button>
+          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active')" style="background:var(--brand-btn);color:white;" data-i18n="common.gotIt">Got it</button>
         </div>
       </div>
       <!-- Page 2 -->
       <div id="moodCalcPage2" style="display:none;">
-        <p style="color:#6c757d;font-size:0.85em;line-height:1.5;margin-bottom:10px;">Here's how the scores are combined into a suggestion:</p>
+        <p style="color:#6c757d;font-size:0.85em;line-height:1.5;margin-bottom:10px;" data-i18n="t143.calc.combined">Here's how the scores are combined into a suggestion:</p>
         <div style="font-size:0.83em;color:#495057;line-height:1.65;">
-          <div style="margin-bottom:8px;"><b>Weighted average</b> — each signal is weighted by importance (energy has the highest weight) and all filled-in scores are averaged together into a single number on a scale from depressed → manic.</div>
-          <div style="margin-bottom:8px;"><b>Normalisation</b> — only fields you answered count. If you only fill in energy and sleep, the result is based purely on those two. This means missing data never drags the score toward "stable" artificially.</div>
-          <div style="margin-bottom:8px;"><b>Middle moods are harder</b> — "Stable" and "Low" are narrow bands in the middle of the scale. When signals are mixed, the Bear may land on either. The extremes (Manic, Elevated, Depressed) are easier to detect.</div>
-          <div style="margin-bottom:8px;"><b>It's not a diagnosis</b> — this is a pattern-spotting tool, not a clinical assessment. It works best over time as a prompt to reflect, not as a definitive label for how you feel.</div>
+          <div style="margin-bottom:8px;" data-i18n-html="t143.calc.weighted"><b>Weighted average</b> — each signal is weighted by importance (energy has the highest weight) and all filled-in scores are averaged together into a single number on a scale from depressed → manic.</div>
+          <div style="margin-bottom:8px;" data-i18n-html="t143.calc.norm"><b>Normalisation</b> — only fields you answered count. If you only fill in energy and sleep, the result is based purely on those two. This means missing data never drags the score toward "stable" artificially.</div>
+          <div style="margin-bottom:8px;" data-i18n-html="t143.calc.middle"><b>Middle moods are harder</b> — "Stable" and "Low" are narrow bands in the middle of the scale. When signals are mixed, the Bear may land on either. The extremes (Manic, Elevated, Depressed) are easier to detect.</div>
+          <div style="margin-bottom:8px;" data-i18n-html="t143.calc.notDiag"><b>It's not a diagnosis</b> — this is a pattern-spotting tool, not a clinical assessment. It works best over time as a prompt to reflect, not as a definitive label for how you feel.</div>
         </div>
-        <p style="color:#6c757d;font-size:0.76em;margin-top:8px;">Experimental — accuracy improves as more fields are filled in each day.</p>
+        <p style="color:#6c757d;font-size:0.76em;margin-top:8px;" data-i18n="t143.calc.experimental">Experimental — accuracy improves as more fields are filled in each day.</p>
         <div class="confirm-buttons" style="margin-top:14px;">
-          <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';">← Back</button>
-          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active');document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" style="background:var(--brand-btn);color:white;">Got it</button>
+          <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" data-i18n="t143.calc.back">← Back</button>
+          <button class="confirm-btn" onclick="document.getElementById('moodCalcInfoModal').classList.remove('active');document.getElementById('moodCalcPage2').style.display='none';document.getElementById('moodCalcPage1').style.display='';" style="background:var(--brand-btn);color:white;" data-i18n="common.gotIt">Got it</button>
         </div>
       </div>
     </div>
@@ -658,16 +658,16 @@
   <!-- Personalised Feedback Modal -->
   <div class="confirm-modal" id="feedbackModal" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="confirm-content" style="max-width:500px;">
-      <h3 style="margin-bottom:4px;"><img src="images/moods/AI_Bear.png" style="max-width: 50px" ><br>Personalised Feedback</h3>
-      <p style="color:#6c757d;font-size:0.8em;margin-bottom:8px;">Based on your journal data only — not medical advice.</p>
+      <h3 style="margin-bottom:4px;"><img src="images/moods/AI_Bear.png" style="max-width: 50px" ><br><span data-i18n="t143.fb.title">Personalised Feedback</span></h3>
+      <p style="color:#6c757d;font-size:0.8em;margin-bottom:8px;" data-i18n="t143.fb.sub">Based on your journal data only — not medical advice.</p>
       <div id="feedbackRanges" class="fb-ranges" role="group" aria-label="Time range" data-i18n-title="journal.lifeChart.rangeLabel"></div>
       <div id="feedbackBody" style="max-height:62vh;overflow-y:auto;"></div>
       <p onclick="const b=document.getElementById('rInfoBox');const open=b.style.display!=='none';b.style.display=open?'none':'block';document.getElementById('rInfoChevron').textContent=open?'▼':'▲';if(!open)this.scrollIntoView({behavior:'smooth',block:'start'});" style="color:#6c757d;font-size:0.8em;margin-top:12px;margin-bottom:0;cursor:pointer;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;">
         <span>ℹ️</span>
-        <span style="flex:1;">What does r = … mean?</span>
+        <span style="flex:1;" data-i18n="t143.fb.rQ">What does r = … mean?</span>
         <span id="rInfoChevron">▼</span>
       </p>
-      <div id="rInfoBox" style="display:none;background:var(--brand-tint);border:1px solid #ffd6a0;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:0.82em;color:#495057;line-height:1.6;">
+      <div id="rInfoBox" style="display:none;background:var(--brand-tint);border:1px solid #ffd6a0;border-radius:10px;padding:10px 14px;margin-top:8px;font-size:0.82em;color:#495057;line-height:1.6;" data-i18n-html="t143.fb.rInfo">
         <strong>What does r = … mean?</strong><br>
         r is the <em>correlation coefficient</em> — a number between −1 and +1 that measures how consistently two things move together in your data.<br><br>
         <strong>r = +1</strong> — perfect positive link (e.g. more sleep always means better mood)<br>
@@ -676,7 +676,7 @@
         As a rough guide: |r| ≥ 0.5 is strong, 0.3–0.5 is moderate, below 0.3 is weak. These patterns are from <em>your</em> data only and are not medical advice.
       </div>
       <div class="confirm-buttons" style="margin-top:16px;">
-        <button class="confirm-btn confirm-btn-no" onclick="closeFeedbackModal()">Close</button>
+        <button class="confirm-btn confirm-btn-no" onclick="closeFeedbackModal()" data-i18n="common.close">Close</button>
       </div>
     </div>
   </div>
@@ -717,59 +717,59 @@
   <!-- PDF Export Options Modal -->
   <div class="confirm-modal" id="pdfExportModal" onclick="if(event.target===this)this.classList.remove('active')">
     <div class="confirm-content" style="max-width:340px;">
-      <h3 style="margin-bottom:6px;text-align:center;">📄 Export PDF</h3>
-      <p style="font-size:0.82em;color:#6c757d;margin-bottom:18px;text-align:center;">Choose the comparison periods for each column</p>
+      <h3 style="margin-bottom:6px;text-align:center;" data-i18n="journal.ui.exportPdf">📄 Export PDF</h3>
+      <p style="font-size:0.82em;color:#6c757d;margin-bottom:18px;text-align:center;" data-i18n="t143.pdfx.choose">Choose the comparison periods for each column</p>
       <div style="display:flex;gap:12px;margin-bottom:20px;">
         <div style="flex:1;">
-          <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:6px;">Left column</div>
+          <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:6px;" data-i18n="t143.pdfx.left">Left column</div>
           <select id="pdfLeftPeriod" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.88em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
-            <option value="alltime">All-time</option>
-            <option value="365d">Last year</option>
-            <option value="180d">Last 180 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="60d">Last 60 days</option>
-            <option value="30d" selected>Last 30 days</option>
+            <option value="alltime" data-i18n="t143.pdfx.alltime">All-time</option>
+            <option value="365d" data-i18n="t143.pdfx.lastYear">Last year</option>
+            <option value="180d" data-i18n="t143.pdfx.last180">Last 180 days</option>
+            <option value="90d" data-i18n="t143.pdfx.last90">Last 90 days</option>
+            <option value="60d" data-i18n="t143.pdfx.last60">Last 60 days</option>
+            <option value="30d" selected data-i18n="t143.pdfx.last30">Last 30 days</option>
           </select>
         </div>
         <div style="flex:1;">
-          <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:6px;">Right column</div>
+          <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:6px;" data-i18n="t143.pdfx.right">Right column</div>
           <select id="pdfRightPeriod" style="width:100%;padding:9px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.88em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
-            <option value="alltime" selected>All-time</option>
-            <option value="365d">Last year</option>
-            <option value="180d">Last 180 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="60d">Last 60 days</option>
-            <option value="30d">Last 30 days</option>
+            <option value="alltime" selected data-i18n="t143.pdfx.alltime">All-time</option>
+            <option value="365d" data-i18n="t143.pdfx.lastYear">Last year</option>
+            <option value="180d" data-i18n="t143.pdfx.last180">Last 180 days</option>
+            <option value="90d" data-i18n="t143.pdfx.last90">Last 90 days</option>
+            <option value="60d" data-i18n="t143.pdfx.last60">Last 60 days</option>
+            <option value="30d" data-i18n="t143.pdfx.last30">Last 30 days</option>
           </select>
         </div>
       </div>
       <hr style="border:none;border-top:1px solid #e9ecef;margin:4px 0 14px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div style="font-size:0.8em;font-weight:600;color:#495057;">Show recent entries</div>
+        <div style="font-size:0.8em;font-weight:600;color:#495057;" data-i18n="t143.pdfx.showRecent">Show recent entries</div>
         <select id="pdfRecentEntries" style="padding:7px 10px;border:2px solid #e9ecef;border-radius:10px;font-size:0.85em;color:#495057;background:white;-webkit-appearance:none;appearance:none;outline:none;">
-          <option value="none">None</option>
-          <option value="7d">1 Week</option>
-          <option value="30d" selected>1 Month</option>
-          <option value="all">All (not recommended)</option>
+          <option value="none" data-i18n="t143.pdfx.none">None</option>
+          <option value="7d" data-i18n="t143.pdfx.week1">1 Week</option>
+          <option value="30d" selected data-i18n="t143.pdfx.month1">1 Month</option>
+          <option value="all" data-i18n="t143.pdfx.allNotRec">All (not recommended)</option>
         </select>
       </div>
       <hr style="border:none;border-top:1px solid #e9ecef;margin:4px 0 14px;">
       <div id="pdfChartSection">
-      <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:8px;">12-month charts (5 Max)</div>
-      <div id="pdfChartsNoData" style="display:none;font-size:0.82em;color:#6c757d;margin-bottom:18px;text-align:center;">You require 3 months+ of data for this feature</div>
+      <div style="font-size:0.8em;font-weight:600;color:#495057;margin-bottom:8px;" data-i18n="t143.pdfx.charts12">12-month charts (5 Max)</div>
+      <div id="pdfChartsNoData" style="display:none;font-size:0.82em;color:#6c757d;margin-bottom:18px;text-align:center;" data-i18n="t143.pdfx.needs3m">You require 3 months+ of data for this feature</div>
       <div id="pdfChartButtons" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
-        <button id="pdfChartMood" data-on="1" onclick="_togglePdfChart('Mood')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">📊</span><span>Mood</span></button>
-        <button id="pdfChartSleep" data-on="1" onclick="_togglePdfChart('Sleep')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🛌</span><span>Sleep</span></button>
-        <button id="pdfChartEnergy" data-on="1" onclick="_togglePdfChart('Energy')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">⚡️</span><span>Energy</span></button>
-        <button id="pdfChartSteps" data-on="1" onclick="_togglePdfChart('Steps')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🚶</span><span>Steps</span></button>
-        <button id="pdfChartSleepQ" data-on="1" onclick="_togglePdfChart('SleepQ')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💤</span><span>Sleep Q</span></button>
-        <button id="pdfChartGoals" data-on="1" onclick="_togglePdfChart('Goals')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🏅</span><span>Goals</span></button>
-        <button id="pdfChartBudget" data-on="1" onclick="_togglePdfChart('Budget')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💰</span><span>Budget</span></button>
+        <button id="pdfChartMood" data-on="1" onclick="_togglePdfChart('Mood')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">📊</span><span data-i18n="journal.label.mood">Mood</span></button>
+        <button id="pdfChartSleep" data-on="1" onclick="_togglePdfChart('Sleep')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🛌</span><span data-i18n="journal.label.sleep">Sleep</span></button>
+        <button id="pdfChartEnergy" data-on="1" onclick="_togglePdfChart('Energy')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">⚡️</span><span data-i18n="journal.label.energy">Energy</span></button>
+        <button id="pdfChartSteps" data-on="1" onclick="_togglePdfChart('Steps')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🚶</span><span data-i18n="t143.pdfx.steps">Steps</span></button>
+        <button id="pdfChartSleepQ" data-on="1" onclick="_togglePdfChart('SleepQ')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💤</span><span data-i18n="t143.pdfx.sleepQ">Sleep Q</span></button>
+        <button id="pdfChartGoals" data-on="1" onclick="_togglePdfChart('Goals')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">🏅</span><span data-i18n="journal.label.goals">Goals</span></button>
+        <button id="pdfChartBudget" data-on="1" onclick="_togglePdfChart('Budget')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-primary);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💰</span><span data-i18n="journal.label.budget">Budget</span></button>
       </div>
       </div><!-- /pdfChartSection -->
       <div class="confirm-buttons">
-        <button class="confirm-btn confirm-btn-no" onclick="document.getElementById('pdfExportModal').classList.remove('active')">Cancel</button>
-        <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-btn);border-color:transparent;color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value)">Generate PDF</button>
+        <button class="confirm-btn confirm-btn-no" data-i18n="common.cancel" onclick="document.getElementById('pdfExportModal').classList.remove('active')">Cancel</button>
+        <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-btn);border-color:transparent;color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value)" data-i18n="t143.pdfx.generate">Generate PDF</button>
       </div>
     </div>
   </div>
@@ -777,7 +777,7 @@
   <!-- Changelog Modal -->
   <div class="confirm-modal" id="changelogModal" style="z-index:1100;" onclick="if(event.target===this)document.getElementById('changelogModal').classList.remove('active')">
     <div class="confirm-content" style="max-width:480px;">
-      <h3 style="margin-bottom:16px;">📋 Changelog</h3>
+      <h3 style="margin-bottom:16px;" data-i18n="t143.j.changelog">📋 Changelog</h3>
       <div style="text-align:left; font-size:0.9em; color:#495057; line-height:1.7;">
         <div style="margin-bottom:14px;">
           <strong style="color:var(--brand-primary);">v1.39</strong><br>
@@ -1258,7 +1258,7 @@
   <!-- Edit Entry Modal -->
   <div class="confirm-modal" id="editEntryModal" onclick="if(event.target===this && !window._healthSyncInProgress)closeEditModal()">
     <div class="confirm-content" style="max-width: 480px; max-height: 90vh; overflow-y: auto;">
-      <h3>✏️ Edit Entry</h3>
+      <h3>✏️ <span data-i18n="journal.editTitle">Edit Entry</span></h3>
       <input type="hidden" id="editEntryId">
       <div style="margin-bottom: 12px;">
         <label style="font-weight:600; color:#495057;" data-i18n="journal.date">Date</label>
@@ -1549,7 +1549,7 @@
 
         <div style="margin-top:4px;text-align:center;">
           <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
-            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">Version: 1.4</span>
+            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
             <div class="settings-health-info"></div>
@@ -1670,7 +1670,7 @@
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
-            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">Version: 1.4</span>
+            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
             <div class="settings-health-info"></div>
@@ -1690,8 +1690,8 @@
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <div>
-            <div style="font-weight: 600; color: #495057; font-size: 0.95em;">🎚️ Full spectrum</div>
-            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;">Advanced: pick mood on a 0–10 scale (e.g. 4 = sad but stable), sleep hour by hour and energy 0–10, instead of a handful of fixed choices</div>
+            <div style="font-weight: 600; color: #495057; font-size: 0.95em;" data-i18n="t143.j.fullSpectrum">🎚️ Full spectrum</div>
+            <div style="color: #6c757d; font-size: 0.82em; margin-top: 2px;" data-i18n="t143.j.fullSpectrumDesc">Advanced: pick mood on a 0–10 scale (e.g. 4 = sad but stable), sleep hour by hour and energy 0–10, instead of a handful of fixed choices</div>
           </div>
           <label class="bb-switch"><input type="checkbox" id="moodSpectrumToggle" onchange="_toggleMoodSpectrum()"><span class="bb-slider"></span></label>
         </div>
@@ -1735,7 +1735,7 @@
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
-            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">Version: 1.4</span>
+            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
             <div class="settings-health-info"></div>
@@ -1757,8 +1757,8 @@
         <div style="margin-bottom: 16px;">
           <div style="font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.statsStartDate">🗓️ All-Time Stats Start Date</div>
           <div style="color: #6c757d; font-size: 0.82em; margin-bottom: 8px;" data-i18n="journal.settings.statsStartDateDesc">Stats, charts and PDF all-time column will start from this date without deleting old entries.</div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="date" id="statsStartDateInput" style="flex: 1; padding: 8px 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 0.95em; color: #495057;">
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+            <input type="date" id="statsStartDateInput" style="flex: 1 1 150px; min-width: 0; padding: 8px 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 0.95em; color: #495057;">
             <button onclick="clearStatsStartDate()" style="padding: 8px 12px; background: white; color: #6c757d; border: 2px solid #e9ecef; border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;" data-i18n="journal.settings.clear">Clear</button>
             <button onclick="saveStatsStartDate()" class="btn-outline-orange" style="padding: 8px 12px; background: white; color: var(--brand-primary); border: 2px solid var(--brand-primary); border-radius: 8px; cursor: pointer; font-size: 0.85em; font-weight: 600; white-space: nowrap;" data-i18n="common.save">Save</button>
           </div>
@@ -1771,7 +1771,7 @@
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
-            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">Version: 1.4</span>
+            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
             <div class="settings-health-info"></div>
@@ -1805,7 +1805,7 @@
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: #6c757d; font-size: 0.78em; line-height: 1.8;">
-            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">Version: 1.4</span>
+            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
             <span class="settings-platform-info"></span>
             <div class="settings-notif-info"></div>
             <div class="settings-health-info"></div>

@@ -51,6 +51,32 @@ window.addEventListener('pageshow', () => {
       if (cover) { cover.style.opacity = '0'; setTimeout(() => cover.remove(), 160); }
     });
 
+// ── App-language dates and strings ──
+// The app language as a BCP-47 tag (en → en-GB, zh → zh-Hans), so dates
+// follow the language picked in the app, not the phone's or en-US.
+function _bbLocale() {
+  const l = (window.BB && BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en';
+  return l === 'en' ? 'en-GB' : l === 'zh' ? 'zh-Hans' : l;
+}
+function _bbDate(d, opts) {
+  const x = d instanceof Date ? d : new Date(d);
+  try { return x.toLocaleDateString(_bbLocale(), opts); } catch (_) { return x.toLocaleDateString('en-GB', opts); }
+}
+function _bbTime(d, opts) {
+  const x = d instanceof Date ? d : new Date(d);
+  try { return x.toLocaleTimeString(_bbLocale(), opts); } catch (_) { return x.toLocaleTimeString('en-GB', opts); }
+}
+function _bbNum(n) {
+  try { return Number(n).toLocaleString(_bbLocale()); } catch (_) { return String(n); }
+}
+// BB.t with an English fallback for code that can run before i18n.js.
+function _tt(k, vars, fallback) {
+  if (window.BB && BB.t) return BB.t(k, vars);
+  let s = fallback != null ? fallback : k;
+  if (vars) Object.keys(vars).forEach(v => { s = s.replace(new RegExp('\\{' + v + '\\}', 'g'), String(vars[v])); });
+  return s;
+}
+
 // ── BLOCK 2: main journal application (Firebase init, auth, entries CRUD, stats, focused mode, etc.) ──
 // ── Capacitor detection helpers (hoisted function declarations) ──
     // isNative() / isIOS() / isAndroid() are now provided by js/shared/platform.js,
@@ -853,7 +879,7 @@ window.addEventListener('pageshow', () => {
     window._fabOpenAuth = () => { if (typeof _dismissSettingsHint === 'function') _dismissSettingsHint(); showSettingsModal(); };
     if (fab) {
       fab.textContent = '⚙️';
-      fab.title = 'Settings';
+      fab.title = BB.t('journal.settings.title').replace(/^\S+\s*/, '');
       fab.style.background = 'var(--brand-primary)';
       fab.style.color = 'white';
       fab.style.border = 'none';
@@ -1734,7 +1760,7 @@ window.addEventListener('pageshow', () => {
         });
         // Only show "Sleep | Xh" on the sync button if sleep actually came from a health sync
         const _draftSleepBtn = document.getElementById('healthSleepBtn');
-        if (_draftSleepBtn && draft.sleepSynced) _draftSleepBtn.textContent = `😴 Sleep | ${draft.sleep}h`;
+        if (_draftSleepBtn && draft.sleepSynced) _draftSleepBtn.textContent = BB.t('t143.j.sleepWithHours', { h: draft.sleep });
       }
 
       selectedSleepQuality = draft.sleepQuality || null;
@@ -1934,6 +1960,11 @@ window.addEventListener('pageshow', () => {
       9: 'Manic',
       10: 'Manic',
     };
+    // The band names in the app language, read when shown (English above is the fallback).
+    {
+      const _specKey = { 0: 'severe', 1: 'severe', 2: 'depressed', 3: 'depressed', 4: 'sadStable', 5: 'stable', 6: 'happyStable', 7: 'hypomanic', 8: 'hypomanic', 9: 'manic', 10: 'manic' };
+      Object.keys(_specKey).forEach(n => { const en = SPECTRUM_LABELS[n]; Object.defineProperty(SPECTRUM_LABELS, n, { get: () => _tt('t143.spec.' + _specKey[n], null, en), enumerable: true }); });
+    }
     function _spectrumEnabled() { return localStorage.getItem('moodSpectrumEnabled') === '1'; }
     // Focus mode's spinner-wheel experience. On by default for new users
     // (James, 2026-10-12) and for every tutorial run (2026-10-13); '0' → focus
@@ -2553,6 +2584,7 @@ window.addEventListener('pageshow', () => {
     }
 
     const _STEP_NOTE_LABELS = { sleep:'Sleep', sleepQuality:'Sleep quality', energy:'Energy', medication:'Medication', goals:'Goals', anxiety:'Anxiety', stress:'Stress', irritability:'Irritability', exercise:'Exercise', outside:'Outside', alcohol:'Alcohol', budget:'Budget' };
+    Object.keys(_STEP_NOTE_LABELS).forEach(k => { const en = _STEP_NOTE_LABELS[k]; Object.defineProperty(_STEP_NOTE_LABELS, k, { get: () => _tt('journal.label.' + k, null, en), set: v => { Object.defineProperty(_STEP_NOTE_LABELS, k, { value: v, writable: true, enumerable: true, configurable: true }); }, enumerable: true, configurable: true }); });
     // ── Sign-in readiness ──
     // Set once auth has settled: signed in with the encryption key loaded, or
     // definitely a guest. Until then `currentUser` is null for a signed-in user
@@ -2710,7 +2742,7 @@ window.addEventListener('pageshow', () => {
       // New account with local entries — migrate with encryption
       const count = guestEntries.length;
       const entriesEl = document.getElementById('entries');
-      if (entriesEl) entriesEl.innerHTML = `<div class="no-entries">Migrating ${count} entr${count === 1 ? 'y' : 'ies'} to your account…</div>`;
+      if (entriesEl) entriesEl.innerHTML = `<div class="no-entries">${BB.t('t143.j.migrating', { count })}</div>`;
       const loader = document.getElementById('entriesLoading');
       if (loader) loader.style.display = 'block';
 
@@ -2960,10 +2992,10 @@ window.addEventListener('pageshow', () => {
           return `
             <div class="entry" style="border-left-color: ${moodColors[_moodCat(entry.mood)]}">
               <div class="entry-header" style="margin-bottom:4px;">
-                <div class="entry-date" style="flex:1; min-width:0;">${date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${recordedStr}</div>
+                <div class="entry-date" style="flex:1; min-width:0;">${_bbDate(date, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}${recordedStr}</div>
                 <div style="display:flex; align-items:center; gap:8px; flex-shrink:0; margin-left:8px;">
                   <img src="${_moodImg(entry.mood)}" alt="${_moodLabelOf(entry.mood)}" class="entry-mood" style="width:32px;height:32px;object-fit:contain;">
-                  ${_linkedMoodsOf(entry).map(lm => `<img src="${_moodImg(lm)}" alt="${_moodLabelOf(lm)}" style="width:22px;height:22px;object-fit:contain;opacity:0.75;margin-left:-4px;" title="Also: ${_moodLabelOf(lm)}">`).join('')}
+                  ${_linkedMoodsOf(entry).map(lm => `<img src="${_moodImg(lm)}" alt="${_moodLabelOf(lm)}" style="width:22px;height:22px;object-fit:contain;opacity:0.75;margin-left:-4px;" title="${_tt('t143.j.alsoMood', { mood: _moodLabelOf(lm) }, 'Also: {mood}')}">`).join('')}
                   ${entry.pdfHide ? `<span style="font-size:1em;line-height:1;opacity:0.7;" title="${BB.t('journal.ui.privateTitle')}">🕵️</span>` : ''}
                   ${entry.autoFilled ? `<span style="font-size:0.6em;font-weight:700;letter-spacing:0.05em;color:var(--brand-primary);border:1.5px solid rgba(255,149,0,0.45);border-radius:6px;padding:2px 4px;line-height:1;" title="${BB.t('journal.autofill.badgeTitle')}">${BB.t('journal.autofill.badge')}</span>` : ''}
                   ${entry.favourite ? `<span style="font-size:1em;color:var(--brand-primary);line-height:1;" title="${BB.t('journal.ui.favouriteTitle')}">★</span>` : ''}
@@ -2974,20 +3006,21 @@ window.addEventListener('pageshow', () => {
               <div style="color: #6c757d; font-size: 0.9em; display:flex; flex-wrap:wrap; line-height:1.8;">${(() => {
                 const _G='#2ECC40',_R='#FF4136',_N='#adb5bd';
                 const _chips = [];
-                if (entry.medication) _chips.push([entry.medication==='taken'?'💊 Taken':entry.medication==='unsure'?'💊 Unsure':'💊 Not taken', entry.medication==='taken'?_G:entry.medication==='unsure'?_N:_R]);
-                if (entry.goals)      _chips.push([`🏅 ${entry.goals==='some'?'Yes':'No'}`, entry.goals==='some'?_G:_R]);
-                if (entry.budget)     _chips.push([`💰 ${entry.budget==='yes'?'Yes':'No'}`, entry.budget==='yes'?_G:_R]);
-                if (entry.exercise)   _chips.push([`🏋️ ${entry.exercise==='yes'?'Yes':'No'}`, entry.exercise==='yes'?_G:_R]);
-                if (entry.outside)    _chips.push([`🌤️ ${entry.outside==='yes'?'Yes':'No'}`, entry.outside==='yes'?_G:_R]);
-                if (entry.anxiety)    _chips.push([`😰 ${entry.anxiety==='high'?'More':entry.anxiety==='medium'?'Normal':'Less'}`, entry.anxiety==='low'?_G:entry.anxiety==='medium'?_N:_R]);
-                if (entry.stress)     _chips.push([`😓 ${entry.stress==='high'?'More':entry.stress==='medium'?'Normal':'Less'}`, entry.stress==='low'?_G:entry.stress==='medium'?_N:_R]);
-                if (entry.irritability) _chips.push([`😤 ${entry.irritability==='yes'?'More':entry.irritability==='medium'?'Normal':'Less'}`, entry.irritability==='no'?_G:entry.irritability==='medium'?_N:_R]);
-                if (entry.alcohol)    _chips.push([`🍺 ${entry.alcohol==='yes'?'Yes':'No'}`, entry.alcohol==='no'?_G:_R]);
-                if (entry.smoking)    _chips.push([`🚬 ${entry.smoking==='yes'?'Yes':'No'}`, entry.smoking==='no'?_G:_R]);
-                if (entry.drugs)      _chips.push([`🌿 ${entry.drugs==='yes'?'Yes':'No'}`, entry.drugs==='no'?_G:_R]);
-                Object.entries(entry.customFields||{}).forEach(([id,v])=>{if(!v)return;const cf=getCustomFields().find(f=>f.id===id);if(cf)_chips.push([`${cf.emoji||cf.label} ${v==='yes'?'Yes':'No'}`,_N]);});
+                const _Y = BB.t('journal.value.yes'), _No = BB.t('journal.value.no'), _Mo = BB.t('journal.chip.more'), _Nm = BB.t('journal.chip.normal'), _Le = BB.t('journal.chip.less');
+                if (entry.medication) _chips.push([entry.medication==='taken'?BB.t('t143.j.chipTaken'):entry.medication==='unsure'?BB.t('t143.j.chipUnsure'):BB.t('t143.j.chipNotTaken'), entry.medication==='taken'?_G:entry.medication==='unsure'?_N:_R]);
+                if (entry.goals)      _chips.push([`🏅 ${entry.goals==='some'?_Y:_No}`, entry.goals==='some'?_G:_R]);
+                if (entry.budget)     _chips.push([`💰 ${entry.budget==='yes'?_Y:_No}`, entry.budget==='yes'?_G:_R]);
+                if (entry.exercise)   _chips.push([`🏋️ ${entry.exercise==='yes'?_Y:_No}`, entry.exercise==='yes'?_G:_R]);
+                if (entry.outside)    _chips.push([`🌤️ ${entry.outside==='yes'?_Y:_No}`, entry.outside==='yes'?_G:_R]);
+                if (entry.anxiety)    _chips.push([`😰 ${entry.anxiety==='high'?_Mo:entry.anxiety==='medium'?_Nm:_Le}`, entry.anxiety==='low'?_G:entry.anxiety==='medium'?_N:_R]);
+                if (entry.stress)     _chips.push([`😓 ${entry.stress==='high'?_Mo:entry.stress==='medium'?_Nm:_Le}`, entry.stress==='low'?_G:entry.stress==='medium'?_N:_R]);
+                if (entry.irritability) _chips.push([`😤 ${entry.irritability==='yes'?_Mo:entry.irritability==='medium'?_Nm:_Le}`, entry.irritability==='no'?_G:entry.irritability==='medium'?_N:_R]);
+                if (entry.alcohol)    _chips.push([`🍺 ${entry.alcohol==='yes'?_Y:_No}`, entry.alcohol==='no'?_G:_R]);
+                if (entry.smoking)    _chips.push([`🚬 ${entry.smoking==='yes'?_Y:_No}`, entry.smoking==='no'?_G:_R]);
+                if (entry.drugs)      _chips.push([`🌿 ${entry.drugs==='yes'?_Y:_No}`, entry.drugs==='no'?_G:_R]);
+                Object.entries(entry.customFields||{}).forEach(([id,v])=>{if(!v)return;const cf=getCustomFields().find(f=>f.id===id);if(cf)_chips.push([`${_esc(cf.emoji||cf.label)} ${v==='yes'?_Y:_No}`,_N]);});
                 const _achStr = _chips.length ? `<span style="flex-basis:100%;font-size:0.88em;margin-top:1px;text-align:left;">${_chips.map(([t,c])=>`<span style="color:${c};font-weight:600">${t}</span>`).join('<span style="color:#dee2e6">  </span>')}</span>` : '';
-                const _eLabel = entry.energy == null ? '⚡️ —' : entry.energy === 0 ? '💀 Not enough' : entry.energy <= 4 ? '🪫 Less than usual' : entry.energy <= 6 ? '⚡️ Normal' : entry.energy <= 8 ? '🔋 More than usual' : '🚀 Too much';
+                const _eLabel = entry.energy == null ? '⚡️ —' : entry.energy === 0 ? BB.t('journal.energy.notEnough') : entry.energy <= 4 ? BB.t('journal.energy.less') : entry.energy <= 6 ? BB.t('journal.energy.normal') : entry.energy <= 8 ? BB.t('journal.energy.more') : BB.t('journal.energy.tooMuch');
                 const _sleepBuckets = new Set([5, 6.5, 8, 9.5, 11]);
                 const _sLabel = entry.sleep == null ? '?' : !_sleepBuckets.has(entry.sleep) ? `${entry.sleep}h` : entry.sleep <= 5 ? '≤5h' : entry.sleep < 7 ? '6-7h' : entry.sleep < 9 ? '7-9h' : entry.sleep < 10 ? '9-10h' : '10+h';
                 const _sqLabel = entry.sleepQuality === 'good' ? ' 😊' : entry.sleepQuality === 'bad' ? ' 😴' : entry.sleepQuality === 'unsure' ? ' 😐' : '';
@@ -3090,10 +3123,10 @@ window.addEventListener('pageshow', () => {
           if (_isRetry) {
             // Retry also failed — offer a full reload as last resort.
             // Set a flag so the fresh page knows to use longer timeouts while Firestore re-initialises.
-            document.getElementById('entries').innerHTML = '<div class="no-entries" onclick="sessionStorage.setItem(\'bbReload\',\'1\');window.location.reload()" style="cursor:pointer;">⚠️ Still having trouble — tap to reload</div>';
+            document.getElementById('entries').innerHTML = '<div class="no-entries" onclick="sessionStorage.setItem(\'bbReload\',\'1\');window.location.reload()" style="cursor:pointer;">' + BB.t('t143.j.stillTrouble') + '</div>';
           } else {
             // First timeout — invite user to retry (smarter retry with delay)
-            document.getElementById('entries').innerHTML = '<div class="no-entries" onclick="retryLoadEntries()" style="cursor:pointer;">⏱ Taking a while to connect — tap here to retry</div>';
+            document.getElementById('entries').innerHTML = '<div class="no-entries" onclick="retryLoadEntries()" style="cursor:pointer;">' + BB.t('t143.j.takingWhile') + '</div>';
           }
           updateDatePickerStatus([]);
         } else {
@@ -3119,7 +3152,7 @@ window.addEventListener('pageshow', () => {
       // IndexedDB leader election time to settle after rapid page navigation.
       _isRetry = true;
       const entriesEl = document.getElementById('entries');
-      if (entriesEl) entriesEl.innerHTML = '<div class="no-entries">🔄 Reconnecting…</div>';
+      if (entriesEl) entriesEl.innerHTML = '<div class="no-entries">' + BB.t('t143.j.reconnecting') + '</div>';
       const loader = document.getElementById('entriesLoading');
       if (loader) loader.style.display = 'block';
       setTimeout(loadEntries, 2000);
@@ -3303,9 +3336,9 @@ window.addEventListener('pageshow', () => {
         const sinceRaw = statsStartDate
           ? new Date(statsStartDate + 'T00:00:00')
           : new Date(entries[entries.length - 1].date);
-        sinceDateLabel = sinceRaw.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        sinceDateLabel = _bbDate(sinceRaw, { day: 'numeric', month: 'short', year: 'numeric' });
       } else {
-        sinceDateLabel = _rangeSince.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        sinceDateLabel = _bbDate(_rangeSince, { day: 'numeric', month: 'short', year: 'numeric' });
       }
 
       currentStatsEntries = statsEntries;
@@ -3328,7 +3361,7 @@ window.addEventListener('pageshow', () => {
       const html = `
         <div class="stat-card" style="${cardStyle}" onclick="showStatDetail('total')">
           <div class="stat-number">${_stabilityPct}%</div>
-          <div class="stat-label">${BB.t('journal.stats.stability', { period: timeframeLabel })}${statsTimeframe === 'all' && !statsStartDate && sinceDateLabel ? `<br><span style="font-size:0.78em;font-weight:400;opacity:0.75;">since ${sinceDateLabel}</span>` : ''}</div>
+          <div class="stat-label">${BB.t('journal.stats.stability', { period: timeframeLabel })}${statsTimeframe === 'all' && !statsStartDate && sinceDateLabel ? `<br><span style="font-size:0.78em;font-weight:400;opacity:0.75;">${BB.t('journal.lifeChart.sinceDate', { date: sinceDateLabel })}</span>` : ''}</div>
         </div>
         <div class="stat-card" style="${cardStyle}" onclick="showStatDetail('moodSummary')">
           <div class="stat-number">
@@ -3359,14 +3392,14 @@ window.addEventListener('pageshow', () => {
         </div>
         <div class="stat-card" style="${cardStyle}" onclick="showFavouritesModal()">
           <div class="stat-number">${statsEntries.filter(e => e.favourite).length}</div>
-          <div class="stat-label">Favourite Entries (${timeframeLabel})</div>
+          <div class="stat-label">${BB.t('t143.j.favEntries', { period: timeframeLabel })}</div>
         </div>
       `;
 
       document.getElementById('stats').innerHTML = html;
 
       // streak card lives inside the year calendar; show personalised feedback link for all timeframes (only when bear suggestion enabled)
-      const _pfLimitedNote = statsTimeframe === 30 ? `<div style="font-size:0.75em;color:#adb5bd;margin-top:2px;">Based on ${timeframeLabel} data — limited insights</div>` : '';
+      const _pfLimitedNote = statsTimeframe === 30 ? `<div style="font-size:0.75em;color:#adb5bd;margin-top:2px;">${BB.t('t143.j.pfLimited', { period: timeframeLabel })}</div>` : '';
       document.getElementById('streakStats').innerHTML = (localStorage.getItem('showMoodSuggestion') === '1' && statsEntries.length > 0)
         ? `<div style="text-align:center;margin:8px 0 16px;">
             <button onclick="showPersonalisedFeedback()" class="pf-link"><img src="images/moods/AI_Bear.png" style="max-width: 50px" > <br>${BB.t('journal.ui.personalisedFeedback')}</button><br>
@@ -3394,27 +3427,27 @@ window.addEventListener('pageshow', () => {
       if (type === 'energy') {
         title.textContent = BB.t('journal.stats.energyChart');
         body.innerHTML = sorted.map(e => {
-          const d = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+          const d = _bbDate(e.date,{day:'numeric',month:'short'});
           return row(d, `${e.energy}/10`, e.energy/10, 'var(--brand-primary)');
         }).join('');
       } else if (type === 'sleep') {
         title.textContent = BB.t('journal.stats.sleepChart');
         body.innerHTML = sorted.filter(e => e.sleep != null).map(e => {
-          const d = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+          const d = _bbDate(e.date,{day:'numeric',month:'short'});
           return row(d, `${e.sleep}h`, e.sleep/12, '#667eea');
         }).join('');
       } else if (type === 'mood') {
         title.textContent = BB.t('journal.stats.moodChart');
         body.innerHTML = sorted.map(e => {
-          const d = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+          const d = _bbDate(e.date,{day:'numeric',month:'short'});
           return row(d, `${moodImg(e.mood)} ${_moodLabelNum(e.mood)}`);
         }).join('');
       } else if (type === 'medication') {
         title.textContent = BB.t('journal.stats.medChart');
         body.innerHTML = sorted.map(e => {
-          const d = new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+          const d = _bbDate(e.date,{day:'numeric',month:'short'});
           const taken = e.medication === 'taken' || !e.medication;
-          return row(d, taken ? '✅ Taken' : '❌ No / Forgot');
+          return row(d, taken ? BB.t('journal.med.taken') : BB.t('journal.editMood.notTaken'));
         }).join('');
       } else if (type === 'moodSummary') {
         const _moodColors = { manic:'#FF4136', elevated:'#FF851B', stable:'#2ECC40', good:'#2ECC40', low:'#0074D9', depressed:'#7B68EE' };
@@ -3429,13 +3462,13 @@ window.addEventListener('pageshow', () => {
           _linkedMoodsOf(e).forEach(lm => { const _lc = _moodCat(lm); if (counts[_lc] !== undefined) counts[_lc]++; });
         });
         const sortedMoods = [...allMoods].sort((a, b) => counts[b] - counts[a]);
-        title.textContent = `🧠 Mood Breakdown`;
+        title.textContent = BB.t('t143.j.moodBreakdown');
         body.innerHTML = sortedMoods.map(mood => {
           const count = counts[mood];
           const pct = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
           const bar = total > 0 ? count / total : 0;
           const color = _moodColors[mood];
-          const value = `${count}d\u2009|\u2009${pct}%`;
+          const value = `${BB.t('t143.j.nDays', { n: count })}\u2009|\u2009${pct}%`;
           return `<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
               <div style="display:flex;align-items:center;gap:8px;">
@@ -3454,7 +3487,7 @@ window.addEventListener('pageshow', () => {
         const _moodLabels = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
         title.textContent = BB.t('journal.stats.trackedDays');
         body.innerHTML = sorted.map(e => {
-          const d = new Date(e.date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+          const d = _bbDate(e.date,{weekday:'short',day:'numeric',month:'short',year:'numeric'});
           const c = _moodColors[_moodCat(e.mood)] || 'var(--brand-primary)';
           const lbl = _moodLabelNum(e.mood);
           return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;margin-bottom:4px;border-radius:8px;background:${c}18;border-left:3px solid ${c};">
@@ -3486,7 +3519,7 @@ window.addEventListener('pageshow', () => {
       } else {
         el.innerHTML = favs.map(entry => {
           const d = new Date(entry.date);
-          const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+          const label = _bbDate(d, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
             ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.notes}</div>`
@@ -3498,7 +3531,7 @@ window.addEventListener('pageshow', () => {
                 <div style="font-weight:600;font-size:0.88em;">${label}</div>
                 ${notesPreview}
               </div>
-              <button onclick="openFavouriteDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-primary);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">Open</button>
+              <button onclick="openFavouriteDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-primary);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.open')}</button>
             </div>`;
         }).join('');
       }
@@ -3514,7 +3547,7 @@ window.addEventListener('pageshow', () => {
       if (!entry) return;
       closeFavouritesModal();
       const d = new Date(entry.date);
-      const dateLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const dateLabel = _bbDate(d, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
       document.getElementById('statDetailTitle').innerHTML =
         `<img src="${_moodImg(entry.mood)}" width="26" style="vertical-align:middle;margin-right:8px;">${dateLabel}`;
       document.getElementById('statDetailBody').innerHTML = _buildFavouriteDetailHTML(entry);
@@ -3523,24 +3556,27 @@ window.addEventListener('pageshow', () => {
 
     function _buildFavouriteDetailHTML(entry) {
       const rows = [];
-      const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '—';
-      rows.push(`<div style="margin-bottom:6px;"><b>Mood:</b> ${_moodLabelNum(entry.mood)}</div>`);
+      // Answer words in the app language (stored values are yes/no/some/high/medium/low…).
+      const _ansWord = { yes: 'journal.value.yes', no: 'journal.value.no', some: 'journal.value.yes', none: 'journal.value.no', high: 'journal.value.high', medium: 'journal.value.medium', low: 'journal.value.low', good: 'journal.value.good', ok: 'journal.value.ok', bad: 'journal.value.bad' };
+      const cap = s => !s ? '—' : _ansWord[s] ? BB.t(_ansWord[s]) : s.charAt(0).toUpperCase() + s.slice(1);
+      const _lb = k => BB.t('t143.j.labelColon', { label: BB.t('journal.label.' + k) });
+      rows.push(`<div style="margin-bottom:6px;"><b>${_lb('mood')}</b> ${_moodLabelNum(entry.mood)}</div>`);
       if (entry.energy != null) {
         const _stepsStr = entry.steps != null ? ` | 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps/1000)+'k' : entry.steps}` : '';
-        rows.push(`<div style="margin-bottom:6px;"><b>Energy:</b> ${entry.energy}/10${_stepsStr}</div>`);
+        rows.push(`<div style="margin-bottom:6px;"><b>${_lb('energy')}</b> ${entry.energy}/10${_stepsStr}</div>`);
       }
-      if (entry.sleep  != null) rows.push(`<div style="margin-bottom:6px;"><b>Sleep:</b> ${entry.sleep}h</div>`);
-      rows.push(`<div style="margin-bottom:6px;"><b>Medication:</b> ${entry.medication === 'not-taken' ? '❌ Not taken' : entry.medication === 'unsure' ? '🤷 Unsure' : '✅ Taken'}</div>`);
-      if (entry.goals)  rows.push(`<div style="margin-bottom:6px;"><b>Goals:</b> ${cap(entry.goals)}</div>`);
-      if (entry.budget) rows.push(`<div style="margin-bottom:6px;"><b>Budget:</b> ${entry.budget === 'yes' ? '✅ Kept budget' : '❌ Didn\'t keep budget'}</div>`);
-      if (entry.anxiety && entry.anxiety !== 'none')           rows.push(`<div style="margin-bottom:6px;"><b>Anxiety:</b> ${cap(entry.anxiety)}</div>`);
-      if (entry.stress && entry.stress !== 'none')             rows.push(`<div style="margin-bottom:6px;"><b>Stress:</b> ${cap(entry.stress)}</div>`);
-      if (entry.irritability && entry.irritability !== 'none') rows.push(`<div style="margin-bottom:6px;"><b>Irritability:</b> ${cap(entry.irritability)}</div>`);
-      if (entry.exercise)    rows.push(`<div style="margin-bottom:6px;"><b>Exercise:</b> ${cap(entry.exercise)}</div>`);
-      if (entry.outside)     rows.push(`<div style="margin-bottom:6px;"><b>Gone outside:</b> ${cap(entry.outside)}</div>`);
-      if (entry.alcohol)     rows.push(`<div style="margin-bottom:6px;"><b>Alcohol:</b> ${cap(entry.alcohol)}</div>`);
-      if (entry.smoking)     rows.push(`<div style="margin-bottom:6px;"><b>Smoking:</b> ${cap(entry.smoking)}</div>`);
-      if (entry.drugs)       rows.push(`<div style="margin-bottom:6px;"><b>Drugs:</b> ${cap(entry.drugs)}</div>`);
+      if (entry.sleep  != null) rows.push(`<div style="margin-bottom:6px;"><b>${_lb('sleep')}</b> ${entry.sleep}h</div>`);
+      rows.push(`<div style="margin-bottom:6px;"><b>${_lb('medication')}</b> ${entry.medication === 'not-taken' ? BB.t('journal.med.notTaken') : entry.medication === 'unsure' ? BB.t('journal.med.unsure') : BB.t('journal.med.taken')}</div>`);
+      if (entry.goals)  rows.push(`<div style="margin-bottom:6px;"><b>${_lb('goals')}</b> ${cap(entry.goals)}</div>`);
+      if (entry.budget) rows.push(`<div style="margin-bottom:6px;"><b>${_lb('budget')}</b> ${entry.budget === 'yes' ? BB.t('t143.j.keptBudget') : BB.t('t143.j.notKeptBudget')}</div>`);
+      if (entry.anxiety && entry.anxiety !== 'none')           rows.push(`<div style="margin-bottom:6px;"><b>${_lb('anxiety')}</b> ${cap(entry.anxiety)}</div>`);
+      if (entry.stress && entry.stress !== 'none')             rows.push(`<div style="margin-bottom:6px;"><b>${_lb('stress')}</b> ${cap(entry.stress)}</div>`);
+      if (entry.irritability && entry.irritability !== 'none') rows.push(`<div style="margin-bottom:6px;"><b>${_lb('irritability')}</b> ${cap(entry.irritability)}</div>`);
+      if (entry.exercise)    rows.push(`<div style="margin-bottom:6px;"><b>${_lb('exercise')}</b> ${cap(entry.exercise)}</div>`);
+      if (entry.outside)     rows.push(`<div style="margin-bottom:6px;"><b>${_lb('goneOutside')}</b> ${cap(entry.outside)}</div>`);
+      if (entry.alcohol)     rows.push(`<div style="margin-bottom:6px;"><b>${_lb('alcohol')}</b> ${cap(entry.alcohol)}</div>`);
+      if (entry.smoking)     rows.push(`<div style="margin-bottom:6px;"><b>${_lb('smoking')}</b> ${cap(entry.smoking)}</div>`);
+      if (entry.drugs)       rows.push(`<div style="margin-bottom:6px;"><b>${_lb('drugs')}</b> ${cap(entry.drugs)}</div>`);
       if (entry.customFields) {
         Object.entries(entry.customFields).forEach(([k, v]) => {
           if (v) rows.push(`<div style="margin-bottom:6px;"><b>${k}:</b> ${v}</div>`);
@@ -3579,20 +3615,20 @@ window.addEventListener('pageshow', () => {
       _anniversaryModal_month = month;
       _anniversaryModal_day = day;
       const moodColors = { manic:'#FF4136', elevated:'#FF851B', stable:'#2ECC40', good:'#2ECC40', low:'#0074D9', depressed:'#7B68EE' };
-      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const _annDate = _bbDate(new Date(2000, month - 1, day), { day: 'numeric', month: 'short' });
       const favs = (_allEntries || []).filter(e => {
         if (!e.favourite) return false;
         const d = new Date(e.date);
         return d.getMonth() + 1 === month && d.getDate() === day;
       }).sort((a, b) => b.timestamp - a.timestamp);
-      document.getElementById('favAnniversaryTitle').textContent = `⭐ On this day — ${monthNames[month-1]} ${day}`;
+      document.getElementById('favAnniversaryTitle').textContent = BB.t('t143.j.onThisDay', { date: _annDate });
       const el = document.getElementById('favAnniversaryList');
       if (favs.length === 0) {
         el.innerHTML = '<p style="text-align:center;color:#6c757d;font-style:italic;margin:16px 0;">' + BB.t('journal.ui.noFavForDate') + '</p>';
       } else {
         el.innerHTML = favs.map(entry => {
           const d = new Date(entry.date);
-          const label = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+          const label = _bbDate(d, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
           const color = moodColors[_moodCat(entry.mood)] || 'var(--brand-primary)';
           const notesPreview = entry.notes
             ? `<div style="font-size:0.82em;color:#6c757d;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${entry.notes}</div>`
@@ -3604,7 +3640,7 @@ window.addEventListener('pageshow', () => {
                 <div style="font-weight:600;font-size:0.88em;">${label}</div>
                 ${notesPreview}
               </div>
-              <button onclick="openFavAnniversaryDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-primary);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">Open</button>
+              <button onclick="openFavAnniversaryDetail('${entry.id || ''}')" style="flex-shrink:0;padding:6px 14px;background:white;border:1.5px solid var(--brand-primary);color:var(--brand-primary);border-radius:8px;font-weight:600;font-size:0.82em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.open')}</button>
             </div>`;
         }).join('');
       }
@@ -3620,7 +3656,7 @@ window.addEventListener('pageshow', () => {
       if (!entry) return;
       closeFavAnniversaryModal();
       const d = new Date(entry.date);
-      const dateLabel = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      const dateLabel = _bbDate(d, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
       document.getElementById('statDetailTitle').innerHTML =
         `<img src="${_moodImg(entry.mood)}" width="26" style="vertical-align:middle;margin-right:8px;">${dateLabel}`;
       document.getElementById('statDetailBody').innerHTML = _buildFavouriteDetailHTML(entry);
@@ -4492,11 +4528,11 @@ window.addEventListener('pageshow', () => {
       const title = document.getElementById('pinSetupTitle');
       const desc = document.getElementById('pinSetupDesc');
       if (enabled) {
-        title.textContent = '🔒 Change or Disable PIN';
-        desc.textContent = 'Enter your current PIN to continue.';
+        title.textContent = BB.t('t143.pin.changeTitle');
+        desc.textContent = BB.t('t143.pin.enterCurrent');
       } else {
-        title.textContent = '🔒 Set PIN';
-        desc.textContent = 'Choose a 4-digit PIN.';
+        title.textContent = BB.t('journal.mods.setPinTitle');
+        desc.textContent = BB.t('t143.pin.choose');
       }
       document.getElementById('pinSetupError').textContent = '';
       _renderPinDots('pinSetupDots', 0, true);
@@ -4530,8 +4566,8 @@ window.addEventListener('pageshow', () => {
           BB.pin.clearFailures();
           _pinSetupBuffer = '';
           _pinSetupStep = 'set';
-          document.getElementById('pinSetupTitle').textContent = '🔒 New PIN';
-          desc.textContent = 'Enter your new 4-digit PIN.';
+          document.getElementById('pinSetupTitle').textContent = BB.t('t143.pin.newTitle');
+          desc.textContent = BB.t('t143.pin.enterNew');
           errEl.textContent = '';
           // Add a "Disable PIN" option prompt
           _renderPinDots('pinSetupDots', 0, true);
@@ -4547,7 +4583,7 @@ window.addEventListener('pageshow', () => {
         _pinSetupFirst = _pinSetupBuffer;
         _pinSetupBuffer = '';
         _pinSetupStep = 'confirm';
-        desc.textContent = 'Re-enter PIN to confirm.';
+        desc.textContent = BB.t('t143.pin.reenter');
         errEl.textContent = '';
         _renderPinDots('pinSetupDots', 0, true);
       } else if (_pinSetupStep === 'confirm') {
@@ -4568,8 +4604,8 @@ window.addEventListener('pageshow', () => {
               closePinSetup();
               _updateNativePinBtn();
             } catch(e) {
-              errEl.textContent = 'Failed to save PIN. Try again.';
-              setTimeout(() => { _pinSetupBuffer = ''; _pinSetupFirst = ''; _pinSetupStep = 'set'; desc.textContent = 'Choose a 4-digit PIN.'; _renderPinDots('pinSetupDots', 0, true); errEl.textContent = ''; }, 1200);
+              errEl.textContent = BB.t('t143.pin.saveFail');
+              setTimeout(() => { _pinSetupBuffer = ''; _pinSetupFirst = ''; _pinSetupStep = 'set'; desc.textContent = BB.t('t143.pin.choose'); _renderPinDots('pinSetupDots', 0, true); errEl.textContent = ''; }, 1200);
             }
           } else {
           BB.storage.set('PinCode', await BB.pin.hash(_pinSetupFirst));
@@ -4589,7 +4625,7 @@ window.addEventListener('pageshow', () => {
             _pinSetupBuffer = '';
             _pinSetupFirst = '';
             _pinSetupStep = 'set';
-            desc.textContent = 'Enter your new 4-digit PIN.';
+            desc.textContent = BB.t('t143.pin.enterNew');
             _renderPinDots('pinSetupDots', 0, true);
             errEl.textContent = '';
           }, 800);
@@ -4622,8 +4658,8 @@ window.addEventListener('pageshow', () => {
       _pinSetupBuffer = '';
       _pinSetupFirst = '';
       _pinSetupStep = 'set';
-      document.getElementById('pinSetupTitle').textContent = enabled ? '🔒 Change or Disable PIN' : '🔒 Set App PIN';
-      document.getElementById('pinSetupDesc').textContent = 'Choose a 4-digit PIN to lock the app.';
+      document.getElementById('pinSetupTitle').textContent = enabled ? BB.t('t143.pin.changeTitle') : '🔒 Set App PIN';
+      document.getElementById('pinSetupDesc').textContent = BB.t('t143.pin.chooseLock');
       document.getElementById('pinSetupError').textContent = '';
       _renderPinDots('pinSetupDots', 0, true);
       const disableBtn = document.getElementById('pinDisableBtn');
@@ -5476,11 +5512,14 @@ window.addEventListener('pageshow', () => {
       const desc = document.getElementById('healthSyncDesc');
       if (!label || !desc) return;
       if (isIOS()) {
-        label.textContent = '❤️ Apple Health sync';
-        desc.textContent = 'Import steps & sleep hours from Apple Health (HealthKit)';
+        label.textContent = BB.t('t143.j.syncApple');
+        desc.textContent = BB.t('t143.j.syncAppleDesc');
       } else if (isAndroid()) {
-        label.textContent = '📱 Health Connect sync';
-        desc.textContent = 'Import steps & sleep hours from Google Health Connect';
+        label.textContent = BB.t('t143.j.syncAndroid');
+        desc.textContent = BB.t('t143.j.syncAndroidDesc');
+      } else {
+        label.textContent = BB.t('journal.settings.syncHealth');
+        desc.textContent = BB.t('journal.settings.syncHealthDesc');
       }
     })();
 
@@ -6392,7 +6431,7 @@ window.addEventListener('pageshow', () => {
         }
       }
       if (step.id === 'energy' && isCommitted && _heroSteps != null) {
-        valueHtml = BB.t('journal.sync.steps', { n: Number(_heroSteps).toLocaleString() });
+        valueHtml = BB.t('journal.sync.steps', { n: _bbNum(_heroSteps) });
         badge = { cls: '', text: '✓ ' + _syncSourceLabel() };
       } else if (step.id === 'sleep' && isCommitted && _sleepHealthSynced) {
         valueHtml = _fmFmtSleepHM(selectedSleep);
@@ -7282,6 +7321,7 @@ window.addEventListener('pageshow', () => {
           const _hr  = opts => `<div style="display:flex;gap:6px;margin-bottom:14px;">${_btns(opts)}</div>`;
           const _ilr = (lbl, opts) => `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${lbl}</span><div style="display:flex;gap:6px;">${_btns(opts)}</div>`;
           let _md = '';
+          const _vY = BB.t('journal.value.yes'), _vN = BB.t('journal.value.no'), _vMore = BB.t('journal.chip.more'), _vNorm = BB.t('journal.chip.normal'), _vLess = BB.t('journal.chip.less'), _vTrack = BB.t('journal.value.onTrack'), _vOver = BB.t('t143.j.over');
           for (const ex of _builtIn) {
             if (ex.id === 'goals') {
               const _goalItems = JSON.parse(localStorage.getItem('dailyGoals') || '[]');
@@ -7297,31 +7337,31 @@ window.addEventListener('pageshow', () => {
                 : '';
               _md += `<span onclick="${_goalsTitleClick}" style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.goalProgress')}</span>
               <div style="display:flex;gap:6px;">${_btns([
-                  {label:'❌<br>No',  color:'var(--brand-primary)', sel:selectedGoals==='none', set:"selectedGoals='none';_fmCheckMoreData()"},
-                  {label:'✅<br>On track', color:'var(--brand-primary)', sel:selectedGoals==='some', set:"selectedGoals='some';_fmCheckMoreData()"},
+                  {label:'❌<br>'+_vN,  color:'var(--brand-primary)', sel:selectedGoals==='none', set:"selectedGoals='none';_fmCheckMoreData()"},
+                  {label:'✅<br>'+_vTrack, color:'var(--brand-primary)', sel:selectedGoals==='some', set:"selectedGoals='some';_fmCheckMoreData()"},
                 ])}</div>
               ${_goalsNoteHtml}
               <div id="fmGoalsDetail" style="grid-column:1/-1;display:none;">${_goalsDetail}</div>`;
             } else if (ex.id === 'anxiety') {
-              _md += _ilr('😰 Anxiety', [
-                {label:'😰<br>More',   color:'var(--brand-primary)', sel:selectedAnxiety==='high',   set:"selectedAnxiety='high';_fmCheckMoreData()"},
-                {label:'😐<br>Normal', color:'var(--brand-primary)', sel:selectedAnxiety==='medium', set:"selectedAnxiety='medium';_fmCheckMoreData()"},
-                {label:'😌<br>Less',   color:'var(--brand-primary)', sel:selectedAnxiety==='low',    set:"selectedAnxiety='low';_fmCheckMoreData()"},
+              _md += _ilr('😰 ' + BB.t('journal.label.anxiety'), [
+                {label:'😰<br>'+_vMore,   color:'var(--brand-primary)', sel:selectedAnxiety==='high',   set:"selectedAnxiety='high';_fmCheckMoreData()"},
+                {label:'😐<br>'+_vNorm, color:'var(--brand-primary)', sel:selectedAnxiety==='medium', set:"selectedAnxiety='medium';_fmCheckMoreData()"},
+                {label:'😌<br>'+_vLess,   color:'var(--brand-primary)', sel:selectedAnxiety==='low',    set:"selectedAnxiety='low';_fmCheckMoreData()"},
               ]);
-              _md += _ilr('😓 Stress', [
-                {label:'😰<br>More',   color:'var(--brand-primary)', sel:selectedStress==='high',   set:"selectedStress='high';_fmCheckMoreData()"},
-                {label:'😐<br>Normal', color:'var(--brand-primary)', sel:selectedStress==='medium', set:"selectedStress='medium';_fmCheckMoreData()"},
-                {label:'😌<br>Less',   color:'var(--brand-primary)', sel:selectedStress==='low',    set:"selectedStress='low';_fmCheckMoreData()"},
+              _md += _ilr('😓 ' + BB.t('journal.label.stress'), [
+                {label:'😰<br>'+_vMore,   color:'var(--brand-primary)', sel:selectedStress==='high',   set:"selectedStress='high';_fmCheckMoreData()"},
+                {label:'😐<br>'+_vNorm, color:'var(--brand-primary)', sel:selectedStress==='medium', set:"selectedStress='medium';_fmCheckMoreData()"},
+                {label:'😌<br>'+_vLess,   color:'var(--brand-primary)', sel:selectedStress==='low',    set:"selectedStress='low';_fmCheckMoreData()"},
               ]);
-              _md += _ilr('😤 Irritability', [
-                {label:'😤<br>More',   color:'var(--brand-primary)', sel:selectedIrritability==='yes',    set:"selectedIrritability='yes';_fmCheckMoreData()"},
-                {label:'😐<br>Normal', color:'var(--brand-primary)', sel:selectedIrritability==='medium', set:"selectedIrritability='medium';_fmCheckMoreData()"},
-                {label:'😌<br>Less',   color:'var(--brand-primary)', sel:selectedIrritability==='no',     set:"selectedIrritability='no';_fmCheckMoreData()"},
+              _md += _ilr('😤 ' + BB.t('journal.label.irritability'), [
+                {label:'😤<br>'+_vMore,   color:'var(--brand-primary)', sel:selectedIrritability==='yes',    set:"selectedIrritability='yes';_fmCheckMoreData()"},
+                {label:'😐<br>'+_vNorm, color:'var(--brand-primary)', sel:selectedIrritability==='medium', set:"selectedIrritability='medium';_fmCheckMoreData()"},
+                {label:'😌<br>'+_vLess,   color:'var(--brand-primary)', sel:selectedIrritability==='no',     set:"selectedIrritability='no';_fmCheckMoreData()"},
               ]);
             } else if (ex.id === 'exercise') {
-              _md += _ilr('🏋️ Exercise', [
-                {label:'🛋️<br>No',  color:'var(--brand-primary)', sel:selectedExercise==='no',  set:"selectedExercise='no';_fmCheckMoreData()"},
-                {label:'🏋️<br>Yes', color:'var(--brand-primary)', sel:selectedExercise==='yes', set:"selectedExercise='yes';_fmCheckMoreData()"},
+              _md += _ilr('🏋️ ' + BB.t('journal.label.exercise'), [
+                {label:'🛋️<br>'+_vN,  color:'var(--brand-primary)', sel:selectedExercise==='no',  set:"selectedExercise='no';_fmCheckMoreData()"},
+                {label:'🏋️<br>'+_vY, color:'var(--brand-primary)', sel:selectedExercise==='yes', set:"selectedExercise='yes';_fmCheckMoreData()"},
               ]);
             } else if (ex.id === 'outside') {
               const _outsideNoteVal = selectedStepNotes['outside'] || '';
@@ -7330,8 +7370,8 @@ window.addEventListener('pageshow', () => {
                 : '';
               _md += `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${BB.t('journal.ui.outside')}</span>
               <div style="display:flex;gap:6px;">${_btns([
-                  {label:'🏠<br>No',  color:'var(--brand-primary)', sel:selectedOutside==='no',  set:"selectedOutside='no';_fmCheckMoreData()"},
-                  {label:'🌤️<br>Yes', color:'var(--brand-primary)', sel:selectedOutside==='yes', set:"selectedOutside='yes';_fmCheckMoreData()"},
+                  {label:'🏠<br>'+_vN,  color:'var(--brand-primary)', sel:selectedOutside==='no',  set:"selectedOutside='no';_fmCheckMoreData()"},
+                  {label:'🌤️<br>'+_vY, color:'var(--brand-primary)', sel:selectedOutside==='yes', set:"selectedOutside='yes';_fmCheckMoreData()"},
                 ])}</div>
               ${_outsideNoteHtml}`;
             } else if (ex.id === 'alcohol') {
@@ -7339,16 +7379,16 @@ window.addEventListener('pageshow', () => {
               const _alcoholNoteHtml = localStorage.getItem('elaborateResponsesEnabled') === 'true' && selectedAlcohol === 'yes'
                 ? `<div style="grid-column:1/-1;margin-bottom:4px;"><input type="text" id="fmAlcoholNoteInput" placeholder="${BB.t('journal.placeholder.howMuch')}" value="${_alcoholNoteVal.replace(/"/g,'&quot;')}" style="width:100%;border:1.5px solid #e9ecef;border-radius:10px;padding:6px 10px;font-size:0.85em;font-family:inherit;box-sizing:border-box;outline:none;" oninput="selectedStepNotes['alcohol']=this.value;saveDraft();"></div>`
                 : '';
-              _md += `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${_getBuiltinFieldLabel('trackAlcohol','🍺 Alcohol')}</span>
+              _md += `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${_getBuiltinFieldLabel('trackAlcohol','🍺 ' + BB.t('journal.label.alcohol'))}</span>
               <div style="display:flex;gap:6px;">${_btns([
-                  {label:'🍺<br>Yes', color:'var(--brand-primary)', sel:selectedAlcohol==='yes', set:"selectedAlcohol='yes';_fmCheckMoreData()"},
-                  {label:'✅<br>No',  color:'var(--brand-primary)', sel:selectedAlcohol==='no',  set:"selectedAlcohol='no';_fmCheckMoreData()"},
+                  {label:'🍺<br>'+_vY, color:'var(--brand-primary)', sel:selectedAlcohol==='yes', set:"selectedAlcohol='yes';_fmCheckMoreData()"},
+                  {label:'✅<br>'+_vN,  color:'var(--brand-primary)', sel:selectedAlcohol==='no',  set:"selectedAlcohol='no';_fmCheckMoreData()"},
                 ])}</div>
               ${_alcoholNoteHtml}`;
             } else if (ex.id === 'budget') {
               const _bv = localStorage.getItem('dailyBudget') || '';
               const _budgetDetail = _bv
-                ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.85em;color:#495057;">💰 Daily budget: <b>${_bv}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`
+                ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);"><span style="font-size:0.85em;color:#495057;">${BB.t('t143.j.dailyBudget')} <b>${_esc(_bv)}</b></span><button onclick="showBudgetModal()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.change')}</button></div>`
                 : `<button onclick="showBudgetModal()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyBudget')}</button>`;
               const _budgetTitleClick = _bv
                 ? "var el=document.getElementById('fmBudgetDetail');el.style.display=el.style.display==='none'?'':'none';"
@@ -7359,8 +7399,8 @@ window.addEventListener('pageshow', () => {
                 : '';
               _md += `<span onclick="${_budgetTitleClick}" style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:2px;">${BB.t('journal.ui.budgetOnTrack')}</span>
               <div style="display:flex;gap:6px;">${_btns([
-                  {label:'❌<br>Over',     color:'var(--brand-primary)', sel:selectedBudget==='no',  set:"selectedBudget='no';_fmCheckMoreData()"},
-                  {label:'✅<br>On track', color:'var(--brand-primary)', sel:selectedBudget==='yes', set:"selectedBudget='yes';_fmCheckMoreData()"},
+                  {label:'❌<br>'+_vOver,     color:'var(--brand-primary)', sel:selectedBudget==='no',  set:"selectedBudget='no';_fmCheckMoreData()"},
+                  {label:'✅<br>'+_vTrack, color:'var(--brand-primary)', sel:selectedBudget==='yes', set:"selectedBudget='yes';_fmCheckMoreData()"},
                 ])}</div>
               ${_budgetNoteHtml}
               <div id="fmBudgetDetail" style="grid-column:1/-1;display:none;">${_budgetDetail}</div>`;
@@ -7368,8 +7408,8 @@ window.addEventListener('pageshow', () => {
           }
           for (const f of _custFields) {
             const _fPosNo = f.positive === 'no';
-            const _noOpt  = {label:`${_fPosNo?'✅':'✗'}<br>No`,               color:'var(--brand-primary)',  sel:selectedCustom[f.id]==='no',  set:`selectedCustom['${f.id}']='no';_fmCheckMoreData()`};
-            const _yesOpt = {label:`${_fPosNo&&f.emoji?f.emoji:'✅'}<br>Yes`, color:_fPosNo?'#dc3545':'var(--brand-primary)', sel:selectedCustom[f.id]==='yes', set:`selectedCustom['${f.id}']='yes';_fmCheckMoreData()`};
+            const _noOpt  = {label:`${_fPosNo?'✅':'✗'}<br>${_vN}`,               color:'var(--brand-primary)',  sel:selectedCustom[f.id]==='no',  set:`selectedCustom['${f.id}']='no';_fmCheckMoreData()`};
+            const _yesOpt = {label:`${_fPosNo&&f.emoji?f.emoji:'✅'}<br>${_vY}`, color:_fPosNo?'#dc3545':'var(--brand-primary)', sel:selectedCustom[f.id]==='yes', set:`selectedCustom['${f.id}']='yes';_fmCheckMoreData()`};
             _STEP_NOTE_LABELS[f.id] = `${f.emoji||''} ${f.label}`.trim();
             const _cfNegSel = _fPosNo ? selectedCustom[f.id]==='yes' : selectedCustom[f.id]==='no';
             const _cfNoteVal = selectedStepNotes[f.id] || '';
@@ -7414,7 +7454,7 @@ window.addEventListener('pageshow', () => {
             style="width:100%;min-height:130px;border:2px solid #e9ecef;border-radius:12px;padding:12px;
             font-size:0.95em;font-family:inherit;resize:none;box-sizing:border-box;outline:none;transition:border-color 0.15s;"
             oninput="_fmNotesInput(this)">${_notesInitVal}</textarea>
-            <div id="fmWordCount" style="text-align:right;font-size:0.8em;color:#6c757d;margin-top:5px;">✍️ ${_initWords} word${_initWords===1?'':'s'}</div>
+            <div id="fmWordCount" style="text-align:right;font-size:0.8em;color:#6c757d;margin-top:5px;">${BB.t('t143.j.words', { count: _initWords })}</div>
             ${localStorage.getItem('intentionEnabled') === 'true' ? `<details style="margin-top:14px;" ${selectedIntention ? 'open' : ''}>
               <summary style="font-size:0.85em;font-weight:600;color:#495057;cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;-webkit-tap-highlight-color:transparent;padding:2px 0;">
                 <span style="font-size:0.75em;color:#adb5bd;transition:transform 0.2s;" class="bb-int-chev">▶</span>
@@ -7496,7 +7536,7 @@ window.addEventListener('pageshow', () => {
           const _mkMoodBtn = (m, lbl, col) => {
             if (!m) return '';
             if (_fmPrevMood && selectedMood === m) return `<button onclick="_fmUndoSuggestedMood()" style="padding:4px 10px;background:#6c757d;color:white;border:none;border-radius:8px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.ui.undo')}</button>`;
-            if (selectedMood !== m) return `<button onclick="_fmApplySuggestedMood('${m}')" style="padding:4px 10px;background:${col};color:white;border:none;border-radius:8px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Use ${lbl}</button>`;
+            if (selectedMood !== m) return `<button onclick="_fmApplySuggestedMood('${m}')" style="padding:4px 10px;background:${col};color:white;border:none;border-radius:8px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('t143.j.useMood', { mood: lbl })}</button>`;
             return '';
           };
           const _suggestion = (localStorage.getItem('showMoodSuggestion') !== '1' || _spectrumEnabled()) ? '' : `
@@ -7515,7 +7555,7 @@ window.addEventListener('pageshow', () => {
                 <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
                   <span style="font-weight:700;font-size:1em;color:${_estColor};">${_estLabel}</span>
                   ${_mkMoodBtn(_est.mood, _estLabel, _estColor)}
-                  ${_est.secondMood ? `<span style="font-size:0.82em;color:#adb5bd;">or</span><span style="font-weight:700;font-size:1em;color:${_est2Color};">${_est2Label}</span>${_mkMoodBtn(_est.secondMood, _est2Label, _est2Color)}` : ''}
+                  ${_est.secondMood ? `<span style="font-size:0.82em;color:#adb5bd;">${BB.t('t143.j.or')}</span><span style="font-weight:700;font-size:1em;color:${_est2Color};">${_est2Label}</span>${_mkMoodBtn(_est.secondMood, _est2Label, _est2Color)}` : ''}
                 </div>
                 <div style="font-size:0.72em;color:#adb5bd;line-height:1.4;">${BB.t('journal.ui.experimentalFeedback2')}</div>
               </div>
@@ -7527,7 +7567,7 @@ window.addEventListener('pageshow', () => {
               <span style="font-size:0.88em;color:#6c757d;">${BB.t('journal.ui.hideFromPdf')}</span>
               <label class="bb-switch" style="margin:0;"><input type="checkbox" ${selectedPdfHide?'checked':''} onchange="_fmTogglePdfHide()"><span class="bb-slider"></span></label>
             </div>` : '';
-          const _doneDate = (() => { try { const _dv = document.getElementById('entryDate')?.value; if (!_dv) return ''; const _dd = new Date(_dv+'T00:00:00'); return _dd.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}); } catch(_){return '';} })();
+          const _doneDate = (() => { try { const _dv = document.getElementById('entryDate')?.value; if (!_dv) return ''; const _dd = new Date(_dv+'T00:00:00'); return _bbDate(_dd,{weekday:'short',day:'numeric',month:'short',year:'numeric'}); } catch(_){return '';} })();
           // Auto-filled from Health and untouched since: say so here, where the
           // user is looking at the values just before saving them.
           const _dayFillNote = _fmDayFillIntact()
@@ -7566,8 +7606,8 @@ window.addEventListener('pageshow', () => {
             const f = step.customField;
             const cur = selectedCustom[f.id]||null;
             return [
-              {val:'no',  label:'❌ No',  color:'#6c757d'},
-              {val:'yes', label:'✅ Yes', color:'#2ECC40'},
+              {val:'no',  label:'❌ ' + BB.t('journal.value.no'),  color:'#6c757d'},
+              {val:'yes', label:'✅ ' + BB.t('journal.value.yes'), color:'#2ECC40'},
             ].map((o,i) => `<button class="fm-opt ${cur===o.val?'sel':''}"
               onclick="selectedCustom['${f.id}']='${o.val}'; _fmAdvance();"
               style="border-left:4px solid ${o.color};${i>0?'margin-top:8px;':''}">
@@ -7657,7 +7697,7 @@ window.addEventListener('pageshow', () => {
         } else if (s.id === 'notes') {
           const notes = document.getElementById('notes')?.value || '';
           const words = notes.trim().split(/\s+/).filter(Boolean).length;
-          html = words > 0 ? `📝 ${words}w` : '📝'; borderColor = '#adb5bd';
+          html = words > 0 ? BB.t('t143.j.wordsShort', { n: words }) : '📝'; borderColor = '#adb5bd';
         }
         // For steps that were visited but not answered, show a blank dashed chip
         // so the user can see the gap and tap back to fill it in.
@@ -7907,7 +7947,7 @@ window.addEventListener('pageshow', () => {
       ta.style.borderColor = 'var(--brand-primary)';
       const w = ta.value.trim() ? ta.value.trim().split(/\s+/).length : 0;
       const el = document.getElementById('fmWordCount');
-      if (el) el.textContent = '✍️ ' + w + ' word' + (w === 1 ? '' : 's');
+      if (el) el.textContent = BB.t('t143.j.words', { count: w });
       const _hero = document.getElementById('fmHeroEmoji');
       if (_hero) _hero.classList.toggle('ghost', !ta.value.trim());
     }
@@ -8154,18 +8194,20 @@ window.addEventListener('pageshow', () => {
       // Convert numeric mood score (1–6) to a readable label
       const moodLabel = n => {
         const v = parseFloat(n);
-        if (v >= 4.5) return 'Manic';
-        if (v >= 3.5) return 'Elevated';
-        if (v >= 2.5) return 'Stable';
-        if (v >= 1.5) return 'Low';
-        return 'Depressed';
+        if (v >= 4.5) return _moodCatLabel('manic');
+        if (v >= 3.5) return _moodCatLabel('elevated');
+        if (v >= 2.5) return _moodCatLabel('stable');
+        if (v >= 1.5) return _moodCatLabel('low');
+        return _moodCatLabel('depressed');
       };
+      // Insight text in the app language: t143.ins.<key> with {vars}.
+      const T = (k, v) => BB.t('t143.ins.' + k, v);
       // Format a numeric score with its mood label, e.g. "3.2 (Stable)"
       const msFmt = n => `${n} (${moodLabel(n)})`;
 
       function strength(r) {
         const a = Math.abs(r);
-        return a >= 0.5 ? 'strong' : a >= 0.3 ? 'moderate' : 'weak';
+        return BB.t('t143.ins.str.' + (a >= 0.5 ? 'strong' : a >= 0.3 ? 'moderate' : 'weak'));
       }
 
       // accent hex → RGB for PDF
@@ -8202,11 +8244,11 @@ window.addEventListener('pageshow', () => {
           if (hi.length >= 3 && lo.length >= 3) {
             const avgHi = (hi.reduce((s, p) => s + p.nextMood, 0) / hi.length).toFixed(1);
             const avgLo = (lo.reduce((s, p) => s + p.nextMood, 0) / lo.length).toFixed(1);
-            detail = `After 7h+ sleep: next-day mood avg ${msFmt(avgHi)}  ·  After <7h: ${msFmt(avgLo)}`;
+            detail = T('sleepMoodDetail', { hi: msFmt(avgHi), lo: msFmt(avgLo) });
           }
           const accent = r >= 0.3 ? '#51cf66' : r <= -0.3 ? '#ff6b6b' : '#adb5bd';
-          results.push(ins('😴', 'Sleep & Next-Day Mood',
-            `A ${strength(r)} relationship (r = ${r.toFixed(2)}): ${r >= 0 ? 'more sleep tends to lift your mood the following day' : 'sleep and next-day mood show an inverse trend — worth watching'}.`,
+          results.push(ins('😴', T('sleepMoodTitle'),
+            T(r >= 0 ? 'sleepMoodPos' : 'sleepMoodNeg', { strength: strength(r), r: r.toFixed(2) }),
             accent, detail));
         }
       }
@@ -8222,8 +8264,8 @@ window.addEventListener('pageshow', () => {
       if (lagEnergy.length >= 8) {
         const r = pearson(lagEnergy.map(p => p.sleep), lagEnergy.map(p => p.nextEnergy));
         if (r !== null && Math.abs(r) >= 0.2) {
-          results.push(ins('⚡', 'Sleep & Next-Day Energy',
-            `A ${strength(r)} link (r = ${r.toFixed(2)}): ${r >= 0 ? 'more sleep tends to mean higher energy the next day' : 'an unexpected inverse trend between sleep and next-day energy'}.`,
+          results.push(ins('⚡', T('sleepEnergyTitle'),
+            T(r >= 0 ? 'sleepEnergyPos' : 'sleepEnergyNeg', { strength: strength(r), r: r.toFixed(2) }),
             Math.abs(r) >= 0.3 ? 'var(--brand-primary)' : '#adb5bd'));
         }
       }
@@ -8232,8 +8274,8 @@ window.addEventListener('pageshow', () => {
       if (sorted.length >= 7) {
         const r = pearson(sorted.map(e => e.energy), sorted.map(e => ms(e.mood)));
         if (r !== null && Math.abs(r) >= 0.1) {
-          results.push(ins('💫', 'Energy & Mood',
-            `Your energy and mood are ${strength(r)}ly correlated (r = ${r.toFixed(2)}). ${Math.abs(r) >= 0.5 ? 'They tend to rise and fall together.' : 'They sometimes diverge — tracking both helps spot the difference.'}`,
+          results.push(ins('💫', T('energyMoodTitle'),
+            T(Math.abs(r) >= 0.5 ? 'energyMoodTogether' : 'energyMoodDiverge', { strength: strength(r), r: r.toFixed(2) }),
             Math.abs(r) >= 0.4 ? '#667eea' : '#adb5bd'));
         }
       }
@@ -8247,16 +8289,16 @@ window.addEventListener('pageshow', () => {
         const diff = avgT - avgM;
         let text, accent;
         if (diff > 0.3) {
-          text   = `Mood averages ${Math.abs(diff).toFixed(1)} pts higher on days medication was taken (${medTaken.length} vs ${medMissed.length} days).`;
+          text   = T('medHigher', { d: Math.abs(diff).toFixed(1), a: medTaken.length, b: medMissed.length });
           accent = '#51cf66';
         } else if (diff < -0.3) {
-          text   = `Mood is ${Math.abs(diff).toFixed(1)} pts higher on days medication was missed — worth mentioning to your doctor.`;
+          text   = T('medLower', { d: Math.abs(diff).toFixed(1) });
           accent = '#ff6b6b';
         } else {
-          text   = `Mood is similar whether or not medication was taken (difference: ${Math.abs(diff).toFixed(1)} pts). Longer-term consistency may matter more.`;
+          text   = T('medSame', { d: Math.abs(diff).toFixed(1) });
           accent = '#adb5bd';
         }
-        results.push(ins('💊', 'Medication & Mood', text, accent));
+        results.push(ins('💊', T('medTitle'), text, accent));
       }
 
       // ── 5. Consecutive low-sleep runs ──
@@ -8271,9 +8313,9 @@ window.addEventListener('pageshow', () => {
       }
       if (runCount >= 2) {
         const avg = (afterRunTotal / afterRunN).toFixed(1);
-        const word = parseFloat(avg) >= 4.5 ? 'elevated' : parseFloat(avg) >= 3.5 ? 'stable' : parseFloat(avg) >= 2.5 ? 'mixed' : 'lower';
-        results.push(ins('🔴', '3+ Nights of Low Sleep',
-          `${runCount} runs of 3+ consecutive nights under 6h detected. The day after such a run, mood tended to be ${word} (avg ${msFmt(avg)}).`,
+        const word = T('runWord.' + (parseFloat(avg) >= 4.5 ? 'elevated' : parseFloat(avg) >= 3.5 ? 'stable' : parseFloat(avg) >= 2.5 ? 'mixed' : 'lower'));
+        results.push(ins('🔴', T('runTitle'),
+          T('runText', { n: runCount, word, avg: msFmt(avg) }),
           parseFloat(avg) < 3 ? '#ff6b6b' : 'var(--brand-primary)'));
       }
 
@@ -8281,13 +8323,14 @@ window.addEventListener('pageshow', () => {
       if (sorted.length >= 14) {
         const dowBuckets = Array(7).fill(null).map(() => []);
         sorted.forEach(e => dowBuckets[new Date(e.date).getDay()].push(ms(e.mood)));
-        const names = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        // 7 Jan 2024 was a Sunday: getDay() order, in the app language.
+        const names = [0,1,2,3,4,5,6].map(i => _bbDate(new Date(2024, 0, 7 + i), { weekday: 'long' }));
         const avgs = dowBuckets
           .map((arr, i) => arr.length >= 2 ? { day: names[i], avg: arr.reduce((s, v) => s + v, 0) / arr.length } : null)
           .filter(Boolean).sort((a, b) => b.avg - a.avg);
         if (avgs.length >= 4 && (avgs[0].avg - avgs[avgs.length - 1].avg) >= 0.5) {
-          results.push(ins('🗓️', 'Day-of-Week Patterns',
-            `Best on ${avgs[0].day}s (avg ${msFmt(avgs[0].avg.toFixed(1))}), lowest on ${avgs[avgs.length - 1].day}s (avg ${msFmt(avgs[avgs.length - 1].avg.toFixed(1))}).`,
+          results.push(ins('🗓️', T('dowTitle'),
+            T('dowText', { best: avgs[0].day, bestAvg: msFmt(avgs[0].avg.toFixed(1)), worst: avgs[avgs.length - 1].day, worstAvg: msFmt(avgs[avgs.length - 1].avg.toFixed(1)) }),
             '#764ba2'));
         }
       }
@@ -8297,8 +8340,8 @@ window.addEventListener('pageshow', () => {
       if (withSteps.length >= 10) {
         const r = pearson(withSteps.map(e => e.steps), withSteps.map(e => ms(e.mood)));
         if (r !== null && Math.abs(r) >= 0.15) {
-          results.push(ins('👟', 'Steps & Mood',
-            `A ${strength(r)} relationship between daily steps and mood (r = ${r.toFixed(2)}): ${r >= 0 ? 'more steps tends to coincide with better mood' : 'an unexpected inverse trend — may be worth exploring'}.`,
+          results.push(ins('👟', T('stepsTitle'),
+            T(r >= 0 ? 'stepsPos' : 'stepsNeg', { strength: strength(r), r: r.toFixed(2) }),
             r >= 0.2 ? '#51cf66' : '#adb5bd'));
         }
       }
@@ -8311,10 +8354,10 @@ window.addEventListener('pageshow', () => {
         const avgNoEx = noExerciseDays.reduce((s, e) => s + ms(e.mood), 0) / noExerciseDays.length;
         const diff = avgEx - avgNoEx;
         if (Math.abs(diff) >= 0.3) {
-          results.push(ins('🏋️', 'Exercise & Mood',
+          results.push(ins('🏋️', T('exerciseTitle'),
             diff > 0
-              ? `Your mood averages ${diff.toFixed(1)} pts higher on days you exercise (${exercisedDays.length} vs ${noExerciseDays.length} non-exercise days).`
-              : `Mood was ${Math.abs(diff).toFixed(1)} pts lower on exercise days — this could reflect exercising when already struggling, or delayed recovery.`,
+              ? T('exercisePos', { d: diff.toFixed(1), a: exercisedDays.length, b: noExerciseDays.length })
+              : T('exerciseNeg', { d: Math.abs(diff).toFixed(1) }),
             diff > 0 ? '#51cf66' : '#adb5bd'));
         }
       }
@@ -8336,10 +8379,10 @@ window.addEventListener('pageshow', () => {
           const avgSober = soberDays.reduce((s, p) => s + p.nextMood, 0) / soberDays.length;
           const diff = avgDrank - avgSober;
           if (Math.abs(diff) >= 0.3) {
-            results.push(ins('🍺', 'Alcohol & Next-Day Mood',
+            results.push(ins('🍺', T('alcoholTitle'),
               diff < 0
-                ? `Next-day mood averages ${Math.abs(diff).toFixed(1)} pts lower after drinking (avg ${msFmt(avgDrank.toFixed(1))} vs ${msFmt(avgSober.toFixed(1))} on sober days).`
-                : `No notable drop in next-day mood after drinking (avg ${msFmt(avgDrank.toFixed(1))} vs ${msFmt(avgSober.toFixed(1))} on sober days).`,
+                ? T('alcoholLower', { d: Math.abs(diff).toFixed(1), a: msFmt(avgDrank.toFixed(1)), b: msFmt(avgSober.toFixed(1)) })
+                : T('alcoholSame', { a: msFmt(avgDrank.toFixed(1)), b: msFmt(avgSober.toFixed(1)) }),
               diff < -0.3 ? '#ff6b6b' : '#adb5bd'));
           }
         }
@@ -8362,10 +8405,10 @@ window.addEventListener('pageshow', () => {
           const avgNoSmoke = noSmokeDays.reduce((s, p) => s + p.nextMood, 0) / noSmokeDays.length;
           const diff = avgSmoked - avgNoSmoke;
           if (Math.abs(diff) >= 0.3) {
-            results.push(ins('🚬', 'Smoking & Next-Day Mood',
+            results.push(ins('🚬', T('smokingTitle'),
               diff < 0
-                ? `Next-day mood averages ${Math.abs(diff).toFixed(1)} pts lower after smoking (avg ${msFmt(avgSmoked.toFixed(1))} vs ${msFmt(avgNoSmoke.toFixed(1))} on non-smoking days).`
-                : `No notable drop in next-day mood after smoking (avg ${msFmt(avgSmoked.toFixed(1))} vs ${msFmt(avgNoSmoke.toFixed(1))} on non-smoking days).`,
+                ? T('smokingLower', { d: Math.abs(diff).toFixed(1), a: msFmt(avgSmoked.toFixed(1)), b: msFmt(avgNoSmoke.toFixed(1)) })
+                : T('smokingSame', { a: msFmt(avgSmoked.toFixed(1)), b: msFmt(avgNoSmoke.toFixed(1)) }),
               diff < -0.3 ? '#ff6b6b' : '#adb5bd'));
           }
         }
@@ -8381,9 +8424,9 @@ window.addEventListener('pageshow', () => {
           const loAnx   = withAnxiety.filter(e => e.anxiety === 'low');
           const avgHi   = hiAnx.length  ? (hiAnx.reduce((s, e) => s + ms(e.mood), 0) / hiAnx.length).toFixed(1)  : null;
           const avgLo   = loAnx.length  ? (loAnx.reduce((s, e) => s + ms(e.mood), 0) / loAnx.length).toFixed(1)  : null;
-          const detail  = avgHi && avgLo ? `High-anxiety days avg mood: ${msFmt(avgHi)} vs low-anxiety days: ${msFmt(avgLo)}.` : '';
-          results.push(ins('😰', 'Anxiety & Mood',
-            `A ${strength(r)} link between anxiety and mood (r = ${r.toFixed(2)}): ${r < 0 ? 'higher anxiety correlates with lower mood' : 'unexpectedly, anxiety appears linked to higher mood — may reflect productive energy vs. anxious activation'}.`,
+          const detail  = avgHi && avgLo ? T('anxietyDetail', { hi: msFmt(avgHi), lo: msFmt(avgLo) }) : '';
+          results.push(ins('😰', T('anxietyTitle'),
+            T(r < 0 ? 'anxietyNeg' : 'anxietyPos', { strength: strength(r), r: r.toFixed(2) }),
             r < -0.2 ? '#ff6b6b' : '#adb5bd', detail));
         }
       }
@@ -8398,9 +8441,9 @@ window.addEventListener('pageshow', () => {
           const loStr   = withStress.filter(e => e.stress === 'low');
           const avgHi   = hiStr.length ? (hiStr.reduce((s, e) => s + ms(e.mood), 0) / hiStr.length).toFixed(1) : null;
           const avgLo   = loStr.length ? (loStr.reduce((s, e) => s + ms(e.mood), 0) / loStr.length).toFixed(1) : null;
-          const detail  = avgHi && avgLo ? `High-stress days avg mood: ${msFmt(avgHi)} vs low-stress days: ${msFmt(avgLo)}.` : '';
-          results.push(ins('😓', 'Stress & Mood',
-            `A ${strength(r)} link between stress and mood (r = ${r.toFixed(2)}): ${r < 0 ? 'higher stress days tend to have lower mood' : 'stress doesn\'t seem to suppress mood for you — possibly a sign of resilience'}.`,
+          const detail  = avgHi && avgLo ? T('stressDetail', { hi: msFmt(avgHi), lo: msFmt(avgLo) }) : '';
+          results.push(ins('😓', T('stressTitle'),
+            T(r < 0 ? 'stressNeg' : 'stressPos', { strength: strength(r), r: r.toFixed(2) }),
             r < -0.2 ? 'var(--brand-primary)' : '#adb5bd', detail));
         }
       }
@@ -8413,10 +8456,10 @@ window.addEventListener('pageshow', () => {
         const avgIn  = insideDays.reduce((s, e) => s + ms(e.mood), 0) / insideDays.length;
         const diff   = avgOut - avgIn;
         if (Math.abs(diff) >= 0.3) {
-          results.push(ins('🌤️', 'Going Outside & Mood',
+          results.push(ins('🌤️', T('outsideTitle'),
             diff > 0
-              ? `Mood averages ${diff.toFixed(1)} pts higher on days you go outside (${msFmt(avgOut.toFixed(1))} vs ${msFmt(avgIn.toFixed(1))} on indoor days).`
-              : `Mood was ${Math.abs(diff).toFixed(1)} pts lower on days you went outside — this may reflect going out when already low, or other confounding factors.`,
+              ? T('outsidePos', { d: diff.toFixed(1), a: msFmt(avgOut.toFixed(1)), b: msFmt(avgIn.toFixed(1)) })
+              : T('outsideNeg', { d: Math.abs(diff).toFixed(1) }),
             diff > 0 ? '#51cf66' : '#adb5bd'));
         }
       }
@@ -8429,10 +8472,10 @@ window.addEventListener('pageshow', () => {
         const avgCalm   = calmDays.reduce((s, e) => s + ms(e.mood), 0) / calmDays.length;
         const diff = avgIrrit - avgCalm;
         if (Math.abs(diff) >= 0.3) {
-          results.push(ins('😤', 'Irritability Patterns',
+          results.push(ins('😤', T('irritTitle'),
             diff > 0
-              ? `Irritable days correlate with higher mood scores (avg ${msFmt(avgIrrit.toFixed(1))} vs ${msFmt(avgCalm.toFixed(1))} on calm days) — irritability may signal elevated or mixed states for you.`
-              : `Mood is ${Math.abs(diff).toFixed(1)} pts lower on irritable days (avg ${msFmt(avgIrrit.toFixed(1))} vs ${msFmt(avgCalm.toFixed(1))}) — irritability tends to accompany low mood.`,
+              ? T('irritPos', { a: msFmt(avgIrrit.toFixed(1)), b: msFmt(avgCalm.toFixed(1)) })
+              : T('irritNeg', { d: Math.abs(diff).toFixed(1), a: msFmt(avgIrrit.toFixed(1)), b: msFmt(avgCalm.toFixed(1)) }),
             diff > 0.5 ? 'var(--brand-primary)' : '#ff6b6b'));
         }
       }
@@ -8540,6 +8583,14 @@ window.addEventListener('pageshow', () => {
       { id: 'logo_easter_egg',   emoji: '🎨', title: 'Easter Egg Found',    desc: 'Discover the hidden logo easter egg.' },
       { id: 'tutorial_complete', emoji: '🎓', title: 'All Set Up!',          desc: 'Complete the full onboarding tutorial.' },
     ];
+    // Titles and descriptions in the app language, read when shown (the
+    // English above is the fallback). The Survival Kit's own five reuse sk.ach.*.
+    const _ACH_SK_TITLE = { first_definition: 'sk.ach.firstDefinition', first_coping: 'sk.ach.firstCoping', first_medication: 'sk.ach.firstMedication', first_goal: 'sk.ach.firstGoal', survival_kit: 'sk.ach.survivalKit' };
+    ACHIEVEMENTS.forEach(a => {
+      const enTitle = a.title, enDesc = a.desc;
+      Object.defineProperty(a, 'title', { get: () => _tt(_ACH_SK_TITLE[a.id] || ('t143.ach.' + a.id + '.title'), null, enTitle) });
+      Object.defineProperty(a, 'desc', { get: () => _tt('t143.ach.' + a.id + '.desc', null, enDesc) });
+    });
 
     function _achCurrentStreak(entries) {
       const today = new Date(); today.setHours(0,0,0,0);
@@ -8724,7 +8775,7 @@ window.addEventListener('pageshow', () => {
         if (existing) existing.remove();
         const toast = document.createElement('div');
         toast.id = 'achievementToast';
-        const extraLabel = totalUnlocked > 1 ? `<div style="font-size:0.75em;color:rgba(255,255,255,0.8);margin-top:4px;">+${totalUnlocked - 1} more — tap to view all</div>` : '<div style="font-size:0.75em;color:rgba(255,255,255,0.8);margin-top:4px;">' + BB.t('journal.ui.tapToView') + '</div>';
+        const extraLabel = totalUnlocked > 1 ? `<div style="font-size:0.75em;color:rgba(255,255,255,0.8);margin-top:4px;">${BB.t('t143.ach.moreTapAll', { n: totalUnlocked - 1 })}</div>` : '<div style="font-size:0.75em;color:rgba(255,255,255,0.8);margin-top:4px;">' + BB.t('journal.ui.tapToView') + '</div>';
         toast.innerHTML = `<div style="font-size:2em;margin-bottom:4px;">${ach.emoji}</div><div style="font-weight:700;font-size:0.95em;margin-bottom:2px;">${BB.t('journal.ui.achievementUnlocked')}</div><div style="font-weight:600;font-size:0.88em;">${ach.title}</div><div style="font-size:0.78em;color:rgba(255,255,255,0.85);margin-top:2px;">${ach.desc}</div>${extraLabel}`;
         Object.assign(toast.style, {
           position:'fixed', bottom:'90px', left:'50%', transform:'translateX(-50%) translateY(10px)',
@@ -8750,7 +8801,7 @@ window.addEventListener('pageshow', () => {
     function _updateAchNotifBtn() {
       const enabled = localStorage.getItem('achievementToastsEnabled') !== 'false';
       const btn = document.getElementById('achNotifToggleBtn');
-      if (btn) btn.textContent = enabled ? '🔔 Turn off notifications' : '🔕 Turn on notifications';
+      if (btn) btn.textContent = BB.t(enabled ? 't143.j.achNotifOff' : 't143.j.achNotifOn');
     }
 
     function toggleAchievementNotifications() {
@@ -8769,7 +8820,7 @@ window.addEventListener('pageshow', () => {
       document.getElementById('settingsMainPanel').style.display = 'none';
       document.getElementById('settingsAchievementsPanel').style.display = '';
       const unlockedCount = ACHIEVEMENTS.filter(a => stored.includes(a.id)).length;
-      document.getElementById('achievementsCount').textContent = `${unlockedCount} / ${ACHIEVEMENTS.length} unlocked`;
+      document.getElementById('achievementsCount').textContent = BB.t('t143.ach.count', { n: unlockedCount, total: ACHIEVEMENTS.length });
       _updateAchNotifBtn();
       document.getElementById('achievementsGrid').innerHTML = ACHIEVEMENTS.map(a => {
         const unlocked = stored.includes(a.id);
@@ -9396,13 +9447,13 @@ window.addEventListener('pageshow', () => {
         }
         const complete = total > 0 && logged === total;
         const color = complete ? '#2ECC40' : '#FF851B';
-        const name = new Date(sp.year, sp.month, 1).toLocaleString('en-GB', { month: 'long' });
+        const name = _bbDate(new Date(sp.year, sp.month, 1), { month: 'long' });
         const isOpen = sp.year === openYear && sp.month === openMonth;
         // The month is only PART of the window at the oldest end, so say how many
         // days were actually judged — otherwise "12/23" for a 31-day month reads
         // like a bug rather than the window starting mid-month.
         const partial = sp.from.getDate() !== 1 || (sp.to.getDate() !== new Date(sp.year, sp.month + 1, 0).getDate());
-        const title = `${name} ${sp.year}: ${logged} of ${total} day${total === 1 ? '' : 's'} logged${partial ? ' (within the selected window, up to yesterday)' : ''}`;
+        const title = BB.t(partial ? 't143.cal.boxTitlePartial' : 't143.cal.boxTitle', { month: _bbDate(new Date(sp.year, sp.month, 1), { month: 'long', year: 'numeric' }), n: logged, count: total });
         return `<button type="button" onclick="_openMonthFromBox(${sp.year},${sp.month})" title="${title}"
             style="flex:1 1 0;min-width:74px;background:${color}1a;border:${isOpen ? `2.5px solid ${color}` : `1.5px solid ${color}66`};border-radius:12px;padding:8px 6px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;">
             <span style="font-size:0.8em;font-weight:700;color:${color};">${name}</span>
@@ -9435,7 +9486,7 @@ window.addEventListener('pageshow', () => {
       const displayDate = new Date(today.getFullYear(), today.getMonth() + _monthCalOffset, 1);
       const year = displayDate.getFullYear();
       const month = displayDate.getMonth();
-      const monthName = displayDate.toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+      const monthName = _bbDate(displayDate, { month: 'long', year: 'numeric' });
       const lastDay = new Date(year, month + 1, 0).getDate();
 
       // Build date → entry map
@@ -9450,7 +9501,8 @@ window.addEventListener('pageshow', () => {
       let startDow = new Date(year, month, 1).getDay();
       startDow = startDow === 0 ? 6 : startDow - 1;
 
-      const dayHeaders = ['M','T','W','T','F','S','S'].map(
+      // Monday-first narrow weekday names in the app language (1 Jan 2024 was a Monday).
+      const dayHeaders = [0,1,2,3,4,5,6].map(i => _bbDate(new Date(2024, 0, 1 + i), { weekday: 'narrow' })).map(
         h => `<div style="text-align:center;font-size:0.72em;color:#adb5bd;font-weight:600;">${h}</div>`
       ).join('');
 
@@ -9502,7 +9554,7 @@ window.addEventListener('pageshow', () => {
         .sort((a, b) => b[1] - a[1])
         .map(([mood, cnt]) => {
           const color = moodColors[mood];
-          return `<span onclick="showStatDetail('moodSummary')" style="display:flex;align-items:center;gap:3px;cursor:pointer;" title="${cnt} days"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;"></span><span style="font-size:0.72em;color:#6c757d;">${mood.charAt(0).toUpperCase()+mood.slice(1)}</span></span>`;
+          return `<span onclick="showStatDetail('moodSummary')" style="display:flex;align-items:center;gap:3px;cursor:pointer;" title="${BB.t('t143.cal.days', { count: cnt })}"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;"></span><span style="font-size:0.72em;color:#6c757d;">${_moodCatLabel(mood)}</span></span>`;
         }).join('');
 
       const canGoForward = _monthCalOffset < 0;
@@ -9533,7 +9585,7 @@ window.addEventListener('pageshow', () => {
       const current = new Date(now.getFullYear(), now.getMonth() + _monthCalOffset, 1);
       const monthSel = document.getElementById('calPickerMonth');
       const yearSel = document.getElementById('calPickerYear');
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const monthNames = [0,1,2,3,4,5,6,7,8,9,10,11].map(i => _bbDate(new Date(2024, i, 1), { month: 'long' }));
       monthSel.innerHTML = monthNames.map((m, i) => `<option value="${i}"${i === current.getMonth() ? ' selected' : ''}>${m}</option>`).join('');
       // Show years from first entry year to 2 years in future
       const minYear = _monthCalEntries && _monthCalEntries.length
@@ -9593,7 +9645,7 @@ window.addEventListener('pageshow', () => {
 
       const [y, m, d] = key.split('-').map(Number);
       const date = new Date(y, m - 1, d);
-      const dateStr = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      const dateStr = _bbDate(date, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       const entry = moodByDate[key];
 
       const moodEmojis = { terrible: '😞', bad: '😔', okay: '😐', good: '🙂', great: '😄' };
@@ -9653,7 +9705,7 @@ window.addEventListener('pageshow', () => {
           const _intClean = _intRaw.split(/\n?_{3,}\n/)[0].trim();
           const _intEsc = _intClean.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
           if (_intClean) {
-            html += `<div style="background:var(--brand-tint);border-radius:8px;padding:10px;font-size:0.85em;color:#6c757d;line-height:1.4;margin-top:8px;">🌅 <b>Intention for tomorrow:</b> ${_intEsc}</div>`;
+            html += `<div style="background:var(--brand-tint);border-radius:8px;padding:10px;font-size:0.85em;color:#6c757d;line-height:1.4;margin-top:8px;">🌅 <b>${BB.t('t143.j.intentionColon')}</b> ${_intEsc}</div>`;
           }
         }
         // Bipolar Bear thought — collapsible, only shown when suggestion feature enabled
@@ -9674,7 +9726,7 @@ window.addEventListener('pageshow', () => {
               <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
                 <img src="images/moods/${_est.mood}.png" style="width:26px;height:26px;object-fit:contain;">
                 <span style="font-weight:700;color:${_estColor};">${_estLabel}</span>
-                ${_est.secondMood ? `<span style="font-size:0.82em;color:#adb5bd;">or</span><img src="images/moods/${_est.secondMood}.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-weight:700;color:${_est2Color};">${_est2Label}</span>` : ''}
+                ${_est.secondMood ? `<span style="font-size:0.82em;color:#adb5bd;">${BB.t('t143.j.or')}</span><img src="images/moods/${_est.secondMood}.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-weight:700;color:${_est2Color};">${_est2Label}</span>` : ''}
               </div>
               <div style="font-size:0.72em;color:#adb5bd;line-height:1.4;">${BB.t('journal.ui.experimentalFeedback1')}</div>
             </div>
@@ -9737,16 +9789,16 @@ window.addEventListener('pageshow', () => {
       _fmDayFillSnapshot = null;
       _fmDayFillMsg      = null;
       const _sleepBtn = document.getElementById('healthSleepBtn');
-      if (_sleepBtn) _sleepBtn.textContent = '😴 Sleep Hours';
+      if (_sleepBtn) _sleepBtn.textContent = BB.t('t143.j.sleepHours');
       const _energyBtnText = document.getElementById('healthEnergyBtnText');
-      if (_energyBtnText) _energyBtnText.textContent = '⚡ Energy';
+      if (_energyBtnText) _energyBtnText.textContent = BB.t('t143.j.energyBtn');
       const _ehReset = document.getElementById('energyStepHero');
       if (_ehReset) _ehReset.style.display = 'none';
       const _shReset = document.getElementById('sleepStepHero');
       if (_shReset) _shReset.style.display = 'none';
       // steps result is now shown inside the energy button text — reset it
       const _ebtReset = document.getElementById('healthEnergyBtnText');
-      if (_ebtReset && _ebtReset.textContent !== '⚡ Energy') _ebtReset.textContent = '⚡ Energy';
+      if (_ebtReset && _ebtReset.textContent !== BB.t('t143.j.energyBtn')) _ebtReset.textContent = BB.t('t143.j.energyBtn');
       const _sleepLabel = document.getElementById('sleepLabel');
       if (_sleepLabel) _sleepLabel.style.display = 'none';
       const _sleepBtnRow = document.getElementById('sleepBtnRow');
@@ -9899,10 +9951,10 @@ window.addEventListener('pageshow', () => {
         return `
           <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
             <div class="chart-bar" style="height: ${heightPx}px; background: ${moodColors[_moodCat(entry.mood)]}"
-                 title="Mood: ${_moodLabelNum(entry.mood)}
-Energy: ${entry.energy}/10
-Sleep: ${entry.sleep}h${entry.steps != null ? `\nSteps: ${entry.steps.toLocaleString()}` : ''}
-Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medication === 'unsure' ? 'Unsure' : (entry.medication || 'taken')}"></div>
+                 title="${BB.t('t143.j.labelColon', { label: BB.t('journal.label.mood') })} ${_moodLabelNum(entry.mood)}
+${BB.t('t143.j.labelColon', { label: BB.t('journal.label.energy') })} ${entry.energy}/10
+${BB.t('t143.j.labelColon', { label: BB.t('journal.label.sleep') })} ${entry.sleep}h${entry.steps != null ? `\n${BB.t('t143.j.labelColon', { label: BB.t('t143.pdfx.steps') })} ${_bbNum(entry.steps)}` : ''}
+${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken')}"></div>
             <div class="chart-label">${date.getDate()}/${date.getMonth() + 1}</div>
           </div>
         `;
@@ -10000,7 +10052,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const gapSize = squareSize >= 10 ? 2 : 1; // smaller gap for mobile
 
       // Month labels
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const months = [0,1,2,3,4,5,6,7,8,9,10,11].map(i => _bbDate(new Date(2024, i, 1), { month: 'short' }));
       let monthLabels = '';
       let lastMonth = -1;
       let weekIndex = 0;
@@ -10047,8 +10099,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                     <div style="display: flex; flex-direction: column; gap: ${gapSize}px;">
                       ${week.map(day => {
                         const tooltipText = day.entry ?
-                          `${day.date.toLocaleDateString()}: ${_moodLabelNum(day.mood)}\\nEnergy: ${day.entry.energy}/10, Sleep: ${day.entry.sleep}h` :
-                          day.date.toLocaleDateString();
+                          `${_bbDate(day.date)}: ${_moodLabelNum(day.mood)}\\n${BB.t('journal.label.energy')}: ${day.entry.energy}/10, ${BB.t('journal.label.sleep')}: ${day.entry.sleep}h` :
+                          _bbDate(day.date);
                         return `
                         <div style="
                           width: ${squareSize}px;
@@ -10141,7 +10193,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
             const base64 = btoa(binary);
             const result = await Filesystem.writeFile({ path: filename, data: base64, directory: 'DOCUMENTS' });
             if (Share) {
-              await Share.share({ title: 'BipolarBear Backup', url: result.uri, dialogTitle: 'Save or Share Your Backup' });
+              await Share.share({ title: BB.t('t143.j.shareBackup'), url: result.uri, dialogTitle: BB.t('t143.j.shareBackupDialog') });
             } else {
               alert(BB.t('journal.dlg.backupSavedDocs') + filename);
             }
@@ -10214,7 +10266,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
             const bytes = new TextEncoder().encode(csvStr);
             let binary = ''; bytes.forEach(b => binary += String.fromCharCode(b));
             const result = await Filesystem.writeFile({ path: filename, data: btoa(binary), directory: 'DOCUMENTS' });
-            if (Share) await Share.share({ title: 'BipolarBear CSV Export', url: result.uri, dialogTitle: 'Save or Share Your Export' });
+            if (Share) await Share.share({ title: BB.t('t143.j.shareCsv'), url: result.uri, dialogTitle: BB.t('t143.j.shareCsvDialog') });
             else alert(BB.t('journal.dlg.csvSavedDocs') + filename);
           } else { alert(BB.t('journal.dlg.fsPluginNA')); }
         } else {
@@ -10405,7 +10457,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
             const barW = Math.max(pct * barMaxW, 1);
             // label
             doc.setFontSize(7); doc.setFont(undefined, 'normal'); setColor(grey);
-            doc.text(mood.charAt(0).toUpperCase() + mood.slice(1), x, y + 2.5);
+            doc.text(_moodCatLabel(mood), x, y + 2.5);
             // bar
             drawBar(x + 18, y - 1, barW, 4, moodColor(mood));
             // pct - keep inside box
@@ -10424,7 +10476,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           return arr.filter(e => e.timestamp >= cutoff);
         };
         const _periodLabel = period => {
-          if (period === 'alltime') return statsStartDate ? `${BB.t('journal.pdf.periodAllTimeFrom')} ${statsStartDate})` : BB.t('journal.pdf.periodAllTime');
+          if (period === 'alltime') return statsStartDate ? `${BB.t('journal.pdf.periodAllTimeFrom')} ${_bbDate(statsStartDate + 'T00:00:00', { day: 'numeric', month: 'short', year: 'numeric' })})` : BB.t('journal.pdf.periodAllTime');
           if (period === '365d') return BB.t('journal.pdf.periodLastYear');
           return `${parseInt(period)}${BB.t('journal.pdf.periodDaySuffix')}`;
         };
@@ -10451,8 +10503,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const goalsRecentDone = recent.filter(e=>e.goals==='completed').length;
         const allWithSteps = allEntries.filter(e => e.steps != null && e.steps > 0);
         const recentWithSteps = recent.filter(e => e.steps != null && e.steps > 0);
-        const avgStepsAll = allWithSteps.length ? Math.round(allWithSteps.reduce((s,e) => s + e.steps, 0) / allWithSteps.length).toLocaleString() : null;
-        const avgStepsRecent = recentWithSteps.length ? Math.round(recentWithSteps.reduce((s,e) => s + e.steps, 0) / recentWithSteps.length).toLocaleString() : null;
+        const avgStepsAll = allWithSteps.length ? _bbNum(Math.round(allWithSteps.reduce((s,e) => s + e.steps, 0) / allWithSteps.length)) : null;
+        const avgStepsRecent = recentWithSteps.length ? _bbNum(Math.round(recentWithSteps.reduce((s,e) => s + e.steps, 0) / recentWithSteps.length)) : null;
 
         // ════════════════════════════
         // PAGE 1
@@ -10600,11 +10652,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         doc.setFontSize(8); doc.setFont(undefined, 'bold'); setColor(dark);
         doc.text(BB.t('journal.pdf.reportInformation').toUpperCase(), margin + 4, y + 5);
         doc.setFont(undefined, 'normal'); setColor(grey); doc.setFontSize(7.5);
-        const genDate = new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
-        doc.text(`Generated: ${genDate}`, margin + 4, y + 10);
-        const firstDate = new Date(entries[0].date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
-        const lastDate = new Date(entries[entries.length-1].date).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
-        doc.text(`Period: ${firstDate} – ${lastDate} (${entries.length} entries)`, margin + 4, y + 14.5);
+        const genDate = _bbDate(new Date(), {day:'numeric',month:'long',year:'numeric'});
+        doc.text(BB.t('t143.pdf.generated', { date: genDate }), margin + 4, y + 10);
+        const firstDate = _bbDate(entries[0].date, {day:'numeric',month:'short',year:'numeric'});
+        const lastDate = _bbDate(entries[entries.length-1].date, {day:'numeric',month:'short',year:'numeric'});
+        doc.text(BB.t('t143.pdf.period', { from: firstDate, to: lastDate, count: entries.length }), margin + 4, y + 14.5);
         y += 24;
 
         // ── TWO COLUMN STATS (Medical style) ──
@@ -10627,7 +10679,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         doc.setFont(undefined, 'normal'); setColor(grey);
         doc.text(BB.t('journal.pdf.mostCommonMood'),margin + 4, ly);
         setColor(dark); doc.setFont(undefined, 'bold');
-        doc.text(mostCommonAll ? mostCommonAll[0] : '-', margin + colW - 4, ly, { align: 'right' });
+        doc.text(mostCommonAll ? _moodCatLabel(mostCommonAll[0]) : '-', margin + colW - 4, ly, { align: 'right' });
         ly += 5;
         
         doc.setFont(undefined, 'normal'); setColor(grey);
@@ -10681,7 +10733,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         doc.setFont(undefined, 'normal'); setColor(grey);
         doc.text(BB.t('journal.pdf.mostCommonMood'),col2 + 4, ry);
         setColor(dark); doc.setFont(undefined, 'bold');
-        doc.text(mostCommonRecent ? mostCommonRecent[0] : '-', col2 + colW - 4, ry, { align: 'right' });
+        doc.text(mostCommonRecent ? _moodCatLabel(mostCommonRecent[0]) : '-', col2 + colW - 4, ry, { align: 'right' });
         ry += 5;
         
         doc.setFont(undefined, 'normal'); setColor(grey);
@@ -10789,7 +10841,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                 const untN = allEntries.length - yesN - noN;
                 setColor(grey); doc.setFont(undefined, 'normal'); doc.text(f.label, margin + 4, ay);
                 setColor(dark); doc.setFont(undefined, 'bold');
-                doc.text(`${yesN} yes · ${noN} no · ${untN} untracked`, margin + colW - 4, ay, { align: 'right' });
+                doc.text(BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), margin + colW - 4, ay, { align: 'right' });
                 ay += 5;
               });
               allCustomTracked.forEach(f => {
@@ -10798,7 +10850,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                 const untN = allEntries.length - yesN - noN;
                 setColor(grey); doc.setFont(undefined, 'normal'); doc.text(f.label, margin + 4, ay);
                 setColor(dark); doc.setFont(undefined, 'bold');
-                doc.text(`${yesN} yes · ${noN} no · ${untN} untracked`, margin + colW - 4, ay, { align: 'right' });
+                doc.text(BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), margin + colW - 4, ay, { align: 'right' });
                 ay += 5;
               });
             }
@@ -10820,7 +10872,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                 const untN = recent.length - yesN - noN;
                 setColor(grey); doc.setFont(undefined, 'normal'); doc.text(f.label, col2 + 4, ry);
                 setColor(dark); doc.setFont(undefined, 'bold');
-                doc.text(`${yesN} yes · ${noN} no · ${untN} untracked`, col2 + colW - 4, ry, { align: 'right' });
+                doc.text(BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), col2 + colW - 4, ry, { align: 'right' });
                 ry += 5;
               });
               recentCustomTracked.forEach(f => {
@@ -10829,7 +10881,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                 const untN = recent.length - yesN - noN;
                 setColor(grey); doc.setFont(undefined, 'normal'); doc.text(f.label, col2 + 4, ry);
                 setColor(dark); doc.setFont(undefined, 'bold');
-                doc.text(`${yesN} yes · ${noN} no · ${untN} untracked`, col2 + colW - 4, ry, { align: 'right' });
+                doc.text(BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), col2 + colW - 4, ry, { align: 'right' });
                 ry += 5;
               });
             }
@@ -10846,7 +10898,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const months = [];
         for (let mi = 11; mi >= 0; mi--) {
           const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - mi);
-          months.push({ label: d.toLocaleDateString('en-GB',{month:'short'}), year: d.getFullYear(), month: d.getMonth(), counts: {}, sleeps: [], energies: [], steps: [], sleepQualities: [], goalsOnTrack: [], budgetKept: [] });
+          months.push({ label: _bbDate(d,{month:'short'}), year: d.getFullYear(), month: d.getMonth(), counts: {}, sleeps: [], energies: [], steps: [], sleepQualities: [], goalsOnTrack: [], budgetKept: [] });
         }
         entries.forEach(e => {
           const d = new Date(e.date);
@@ -10930,7 +10982,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           moodOrder.forEach(mood => {
             setFill(moodColor(mood)); doc.rect(keyX, chartY - 2.5, 2.5, 2.5, 'F');
             setColor(grey); doc.setFont(undefined, 'normal');
-            doc.text(mood.charAt(0).toUpperCase()+mood.slice(1), keyX + 4, chartY);
+            doc.text(_moodCatLabel(mood), keyX + 4, chartY);
             keyX += keyItemWidth;
           });
           y += chartBoxHeight + 4;
@@ -11109,11 +11161,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const _recentCutoff = recentEntriesPeriod === 'all' ? 0
           : recentEntriesPeriod === '7d'  ? now - 7  * 86400000
           : /* 30d default */               now - 30 * 86400000;
-        const _recentLabel = recentEntriesPeriod === 'all' ? 'ALL' : recentEntriesPeriod === '7d' ? '7 DAYS' : '30 DAYS';
+        const _recentLabel = BB.t(recentEntriesPeriod === 'all' ? 't143.pdf.recentAll' : recentEntriesPeriod === '7d' ? 't143.pdf.recent7' : 't143.pdf.recent30');
         doc.addPage();
         y = margin;
         doc.setFontSize(8); doc.setFont(undefined, 'bold'); setColor([60,60,60]);
-        doc.text(`RECENT ENTRIES (${_recentLabel})`, margin + 4, y);
+        doc.text(BB.t('t143.pdf.recentHeading', { period: _recentLabel }).toUpperCase(), margin + 4, y);
         setDraw(orange); doc.setLineWidth(0.4);
         doc.line(margin + 4, y + 1, pageW - margin - 4, y + 1);
         y += 8;
@@ -11122,13 +11174,13 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const hiddenCount = entries.filter(e => e.pdfHidden && (recentEntriesPeriod === 'all' || e.timestamp >= _recentCutoff)).length;
         if (hiddenCount > 0) {
           doc.setFontSize(7); doc.setFont(undefined, 'italic'); setColor(grey);
-          doc.text(`${hiddenCount} entr${hiddenCount === 1 ? 'y' : 'ies'} hidden · manage in ⊕ More data or Settings`, margin + 4, y);
+          doc.text(BB.t('t143.pdf.hidden', { count: hiddenCount }), margin + 4, y);
           y += 6;
         }
         last30.forEach(entry => {
           if (y > pageH - 20) { doc.addPage(); y = margin + 10; }
           const d = new Date(entry.date);
-          const dateStr = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+          const dateStr = _bbDate(d, { weekday:'short', day:'numeric', month:'short' });
 
           // Mood colour dot - properly positioned
           const mc = moodColor(entry.mood);
@@ -11140,29 +11192,31 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
           doc.setFont(undefined, 'normal'); setColor(grey);
           const recordedPart = entry.recordedAt
-            ? `  ·  ${new Date(entry.recordedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}${entry.recordedTz ? ' ' + entry.recordedTz : ''}`
+            ? `  ·  ${_bbTime(entry.recordedAt, { hour: '2-digit', minute: '2-digit' })}${entry.recordedTz ? ' ' + entry.recordedTz : ''}`
             : '';
-          const stepsStr    = entry.steps    != null ? `  ·  Steps ${Number(entry.steps).toLocaleString()}` : '';
+          // "Label: value" in the app language (French puts a space before the colon).
+          const _kv = (labelKey, val) => `  ·  ${BB.t('t143.j.labelColon', { label: BB.t(labelKey) })} ${val}`;
+          const stepsStr    = entry.steps    != null ? `  ·  ${BB.t('t143.pdfx.steps')} ${_bbNum(entry.steps)}` : '';
           // Flag estimated days explicitly — a clinician reading this must not
           // mistake an auto-filled guess for something the user reported.
           const autoStr     = entry.autoFilled ? `  ·  ${BB.t('journal.autofill.pdfNote')}` : '';
-          const alcoholStr      = entry.alcohol     ? `  ·  Alcohol: ${entry.alcohol === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
-          const smokingStr      = entry.smoking     ? `  ·  Smoked: ${entry.smoking === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
-          const drugsStr        = entry.drugs       ? `  ·  Drugs: ${entry.drugs === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
-          const exerciseStr     = entry.exercise    ? `  ·  Exercise: ${entry.exercise === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
+          const alcoholStr      = entry.alcohol     ? _kv('journal.label.alcohol', entry.alcohol === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
+          const smokingStr      = entry.smoking     ? _kv('journal.label.smoked', entry.smoking === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
+          const drugsStr        = entry.drugs       ? _kv('journal.label.drugs', entry.drugs === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
+          const exerciseStr     = entry.exercise    ? _kv('journal.label.exercise', entry.exercise === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
           const _relLabel = v => v === 'high' ? BB.t('journal.value.moreThanUsual') : v === 'medium' ? BB.t('journal.value.normal') : BB.t('journal.value.lessThanUsual');
-          const anxietyStr      = entry.anxiety     ? `  ·  Anxiety: ${_relLabel(entry.anxiety)}` : '';
-          const irritabilityStr = entry.irritability ? `  ·  Irritability: ${entry.irritability === 'yes' ? BB.t('journal.value.moreThanUsual') : entry.irritability === 'medium' ? BB.t('journal.value.normal') : BB.t('journal.value.lessThanUsual')}` : '';
-          const stressStr2      = entry.stress      ? `  ·  Stress: ${_relLabel(entry.stress)}` : '';
-          const outsideStr      = entry.outside     ? `  ·  Outside: ${entry.outside === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
-          const sleepQualityStr = entry.sleepQuality ? `  ·  Sleep quality: ${entry.sleepQuality === 'good' ? BB.t('journal.value.good') : entry.sleepQuality === 'bad' ? BB.t('journal.value.bad') : BB.t('journal.value.ok')}` : '';
+          const anxietyStr      = entry.anxiety     ? _kv('journal.label.anxiety', _relLabel(entry.anxiety)) : '';
+          const irritabilityStr = entry.irritability ? _kv('journal.label.irritability', entry.irritability === 'yes' ? BB.t('journal.value.moreThanUsual') : entry.irritability === 'medium' ? BB.t('journal.value.normal') : BB.t('journal.value.lessThanUsual')) : '';
+          const stressStr2      = entry.stress      ? _kv('journal.label.stress', _relLabel(entry.stress)) : '';
+          const outsideStr      = entry.outside     ? _kv('journal.label.outside', entry.outside === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
+          const sleepQualityStr = entry.sleepQuality ? _kv('journal.label.sleepQuality', entry.sleepQuality === 'good' ? BB.t('journal.value.good') : entry.sleepQuality === 'bad' ? BB.t('journal.value.bad') : BB.t('journal.value.ok')) : '';
           const customStr = Object.entries(entry.customFields || {})
             .map(([id, val]) => {
               const cf = getCustomFields().find(f => f.id === id);
               return cf ? `  ·  ${cf.label}: ${val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
             }).filter(Boolean).join('');
           const _moodLabel = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
-          const detail = `${_moodLabelNum(entry.mood)}  ·  Energy ${entry.energy}/10  ·  Sleep ${entry.sleep}h${sleepQualityStr}${stepsStr}  ·  Meds: ${entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : (entry.medication || 'taken')}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
+          const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${entry.energy}/10  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken'))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
           const detailLines = doc.splitTextToSize(detail, pageW - margin - (dotX + 35));
           doc.text(detailLines, dotX + 35, y);
           y += (detailLines.length - 1) * 4;
@@ -11177,7 +11231,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           if (entry.intention && entry.intention.trim()) {
             y += 4;
             doc.setFontSize(7); doc.setFont(undefined, 'italic'); setColor([160,160,160]);
-            const iLines = doc.splitTextToSize(`Intention: ${entry.intention.trim()}`, pageW - margin * 2 - 12);
+            const iLines = doc.splitTextToSize(`${BB.t('t143.j.intentionColon')} ${entry.intention.trim()}`, pageW - margin * 2 - 12);
             doc.text(iLines, dotX + 5, y);
             y += iLines.length * 3.5;
           }
@@ -11196,7 +11250,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           doc.line(margin, pageH - 12, pageW - margin, pageH - 12);
           doc.setFontSize(6); setColor([120,120,120]); doc.setFont(undefined, 'normal');
           doc.text(BB.t('journal.pdf.footerClinical'), margin, pageH - 8);
-          doc.text(`Page ${p} of ${totalPages}`, pageW - margin, pageH - 8, { align: 'right' });
+          doc.text(BB.t('t143.pdf.page', { p, total: totalPages }), pageW - margin, pageH - 8, { align: 'right' });
           doc.setFontSize(5.5); setColor([150,150,150]);
           doc.text(BB.t('journal.pdf.footerReview'), margin, pageH - 4);
         }
@@ -11224,10 +11278,10 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               // Try to share/open it
               if (Share) {
                 await Share.share({
-                  title: 'Mood Tracking Report',
-                  text: 'Your BipolarBear mood report',
+                  title: BB.t('t143.pdf.shareTitle'),
+                  text: BB.t('t143.pdf.shareText'),
                   url: result.uri,
-                  dialogTitle: 'Save or Share Your Report'
+                  dialogTitle: BB.t('t143.pdf.shareDialog')
                 });
               } else {
                 alert(BB.t('journal.dlg.pdfSavedDocs') + filename);
@@ -12526,8 +12580,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       const meds = JSON.parse(localStorage.getItem('currentMedList') || '[]');
       const btn = document.getElementById('medLabelBtn');
       if (!btn) return;
-      btn.textContent = meds.length > 0 ? `💊 My Meds | ${meds.length}x` : '💊 My Meds';
+      btn.textContent = meds.length > 0 ? BB.t('t143.j.myMedsCount', { n: meds.length }) : BB.t('t143.j.myMeds');
     }
+    // The button's first paint is the English in journal.html: label it in the app language.
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { try { _updateMedBtn(); } catch (_) {} });
+    else { try { _updateMedBtn(); } catch (_) {} }
 
     function syncMedListToFirestore(list) {
       if (currentUser && db) {
@@ -12740,7 +12797,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (_isOldEntry) {
         if (_sleepLbl) {
           _sleepLbl.style.display = '';
-          _sleepLbl.textContent = entry.sleep != null ? `😴 Sleep | ${entry.sleep}h` : '😴 Sleep Hours';
+          _sleepLbl.textContent = entry.sleep != null ? BB.t('t143.j.sleepWithHours', { h: entry.sleep }) : BB.t('t143.j.sleepHours');
         }
         if (_sleepBtnRowEl) _sleepBtnRowEl.style.display = 'none';
       } else {
@@ -12748,7 +12805,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         if (_sleepBtnRowEl) _sleepBtnRowEl.style.display = '';
         // Update sleep button text if sleep data exists
         const _sleepBtn = document.getElementById('healthSleepBtn');
-        if (_sleepBtn && entry.sleep != null) _sleepBtn.textContent = `😴 Sleep | ${entry.sleep}h`;
+        if (_sleepBtn && entry.sleep != null) _sleepBtn.textContent = BB.t('t143.j.sleepWithHours', { h: entry.sleep });
       }
 
       // Show steps inside energy button when editing an entry that has step data
@@ -12757,9 +12814,9 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         if (_hasSteps) {
           const s = entry.steps;
           const stepsLabel = s >= 1000 ? Math.round(s / 1000) + 'k' : s;
-          _ebt.textContent = `⚡ Energy | 🏃 ${stepsLabel}`;
+          _ebt.textContent = BB.t('t143.j.energyWithSteps', { steps: stepsLabel });
         } else {
-          _ebt.textContent = '⚡ Energy';
+          _ebt.textContent = BB.t('t143.j.energyBtn');
         }
       }
 
@@ -13027,7 +13084,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         el.innerHTML = `<button onclick="showGoalsList()" style="padding:7px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:10px;color:var(--brand-primary);font-weight:600;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('journal.btn.setDailyGoals')}</button>`;
       } else {
         const chips = goals.map(g => `<span style="display:inline-block;background:rgba(255,149,0,0.12);border-radius:6px;padding:2px 7px;margin:2px;font-size:0.8em;color:#495057;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${g}</span>`).join('');
-        el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${chips}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">Edit</button></div>`;
+        el.innerHTML = `<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:8px 12px;background:var(--brand-tint);border-radius:10px;border:1.5px solid rgba(255,149,0,0.3);gap:8px;"><div style="flex:1;min-width:0;flex-wrap:wrap;display:flex;align-items:center;">${chips}</div><button onclick="showGoalsList()" style="padding:3px 10px;background:var(--brand-btn);color:white;border:none;border-radius:7px;font-size:0.78em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">${BB.t('common.edit')}</button></div>`;
       }
     }
 
@@ -13183,7 +13240,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // Change Add button to Save
       const addBtn = document.querySelector('#medicationModal .confirm-btn');
       const originalHTML = addBtn.innerHTML;
-      addBtn.innerHTML = 'Save Changes';
+      addBtn.textContent = BB.t('journal.saveChanges');
       addBtn.onclick = () => {
         const name = document.getElementById('newMedName').value.trim();
         const dosage = document.getElementById('newMedDose').value.trim();
@@ -13502,7 +13559,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         // 'en-US', not the device locale: this list sits directly on top of the
         // missing-dates list, which formats its dates the same way, and the two
         // reading differently for the same day is worse than either format is.
-        const dateStr = p.date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+        const dateStr = _bbDate(p.date, { weekday: 'short', day: 'numeric', month: 'short' });
         const source  = BB.t(p.source === 'health' ? 'journal.autofill.fromHealth' : 'journal.autofill.fromTypical');
         const bits = [
           `${_moodEmoji(p.mood)} ${_moodCatLabel(p.mood)}`,
@@ -13904,7 +13961,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         try {
           const { available } = await Health.isHealthAvailable();
           if (!available) {
-            _setHealthInfo('Health data: ❌ Unavailable');
+            _setHealthInfo(BB.t('t143.st.healthUnavailable'));
           } else {
             const result = await Health.checkHealthPermissions({ permissions: ['READ_SLEEP', 'READ_STEPS'] });
             const sleepOk = result?.permissions?.READ_SLEEP === true;
@@ -13920,8 +13977,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
               // query returns data: if recent steps/sleep come back, read access is
               // genuinely working, so we can honestly say "Connected".
               if (!asked) {
-                _setHealthInfo('Health data: ⚠️ Not yet authorised — enable the toggle above',
-                  'Health data: ⚠️ Not yet authorised — turn on Apple Health sync in Advanced');
+                _setHealthInfo(BB.t('t143.st.healthNotYetAbove'),
+                  BB.t('t143.st.healthNotYetAdvanced'));
               } else {
                 let _connected = false;
                 try {
@@ -13945,19 +14002,19 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
                   }
                 } catch (e) {}
                 _setHealthInfo(_connected
-                  ? 'Health data: ✅ Connected to Apple Health'
-                  : 'Health data: Requested · manage in Apple Health');
+                  ? BB.t('t143.st.healthConnected')
+                  : BB.t('t143.st.healthRequested'));
               }
             } else {
               // Android (Health Connect) reports the real granted set accurately.
-              _setHealthInfo(`Health data: ${granted ? '✅ Authorised' : asked ? '⚠️ Partially authorised' : '⚠️ Not yet authorised'}`);
+              _setHealthInfo(BB.t(granted ? 't143.st.healthAuthorised' : asked ? 't143.st.healthPartial' : 't143.st.healthNotYet'));
             }
           }
         } catch(e) {
-          _setHealthInfo('Health data: ❓ Unknown');
+          _setHealthInfo(BB.t('t143.st.healthUnknown'));
         }
       } else {
-        _setHealthInfo('Health data: ❌ Unavailable');
+        _setHealthInfo(BB.t('t143.st.healthUnavailable'));
       }
     }
 
@@ -13990,9 +14047,9 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (_loginStatusEl) {
         if (!_isGuest) {
           const _emailSnip = currentUser.email.length > 10 ? currentUser.email.substring(0, 10) + '…' : currentUser.email;
-          _loginStatusEl.textContent = 'Logged in (' + _emailSnip + ')';
+          _loginStatusEl.textContent = BB.t('t143.j.loggedIn', { email: _emailSnip });
         } else {
-          _loginStatusEl.textContent = 'Guest mode';
+          _loginStatusEl.textContent = BB.t('t143.j.guestMode');
         }
       }
       // Guest-only "Sign in to back up" prompt — customising never needs an account.
@@ -14055,7 +14112,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       // Version label — driven by the canonical window._APP_VERSION (set in
       // js/shared/brand-config.js) so it can never drift from the home page.
       if (window._APP_VERSION) {
-        document.querySelectorAll('.settings-version-info').forEach(el => el.textContent = 'Version: ' + window._APP_VERSION);
+        document.querySelectorAll('.settings-version-info').forEach(el => el.textContent = BB.t('t143.j.version', { v: window._APP_VERSION }));
       }
 
       // If not native, show download prompt instead of native settings
@@ -14103,15 +14160,15 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           try {
             const { display } = await LocalNotifications.checkPermissions();
             _setNotifInfo(
-              display === 'granted' ? 'Notifications: ✅ Authorised' :
-              display === 'denied'  ? 'Notifications: ❌ Blocked in iOS Settings' :
-                                      'Notifications: ⚠️ Not yet authorised'
+              display === 'granted' ? BB.t('t143.st.notifAuthorised') :
+              display === 'denied'  ? BB.t('t143.st.notifBlockedIos') :
+                                      BB.t('t143.st.notifNotYet')
             );
           } catch (e) {
-            _setNotifInfo('Notifications: ❓ Unknown');
+            _setNotifInfo(BB.t('t143.st.notifUnknown'));
           }
         } else {
-          _setNotifInfo('Notifications: ❌ Unavailable');
+          _setNotifInfo(BB.t('t143.st.notifUnavailable'));
         }
 
         // Check health data authorisation
@@ -14120,7 +14177,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         // (no reminderStatus element)
         document.getElementById('reminderEnabled').disabled = true;
         document.getElementById('reminderTime').disabled = true;
-        document.querySelectorAll('.settings-health-info').forEach(el => el.textContent = 'Health data: Unavailable on web');
+        document.querySelectorAll('.settings-health-info').forEach(el => el.textContent = BB.t('t143.st.healthWeb'));
       }
 
       document.getElementById('settingsModal').classList.add('active');
@@ -14243,13 +14300,13 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const _heading = _resetEl.querySelector('div:first-child');
         const _desc    = _resetEl.querySelector('div:nth-child(2)');
         const _btn     = _resetEl.querySelector('button');
-        if (_heading) _heading.textContent = _isSignedIn ? '🗑️ Delete Account' : '🗑️ Full Reset';
+        if (_heading) _heading.textContent = _isSignedIn ? BB.t('t143.j.dangerDeleteTitle') : BB.t('journal.settings.fullReset');
         if (_desc) {
           _desc.textContent = _isSignedIn
-            ? 'Permanently delete your BipolarBear account, all journal entries, and reset the app. This cannot be undone.'
-            : 'Permanently delete all journal entries and reset all settings to their defaults. This cannot be undone.';
+            ? BB.t('t143.j.dangerDeleteDesc')
+            : BB.t('journal.settings.fullResetDesc');
         }
-        if (_btn) _btn.innerHTML = _isSignedIn ? '🗑️ Delete Account' : '🗑️ Delete All Data &amp; Reset Settings';
+        if (_btn) _btn.textContent = _isSignedIn ? BB.t('t143.j.dangerDeleteTitle') : BB.t('journal.settings.fullResetBtn');
       }
     }
     function closeAdvancedMore2() {
@@ -14331,18 +14388,18 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (aGrp)   aGrp.style.display   = trackAlcohol      ? '' : 'none';
       // Apply custom labels for renameable built-in fields
       const _alcoRow = document.querySelector('#alcoholTrackRow > span');
-      if (_alcoRow) _alcoRow.textContent = (_getBuiltinFieldLabel && _getBuiltinFieldLabel('trackAlcohol', '🍺 Alcohol?')) || '🍺 Alcohol?';
+      if (_alcoRow) _alcoRow.textContent = (_getBuiltinFieldLabel && _getBuiltinFieldLabel('trackAlcohol', BB.t('journal.q.alcohol'))) || BB.t('journal.q.alcohol');
       // Custom tracking rows
       if (typeof renderCustomTrackingRows === 'function') renderCustomTrackingRows();
       _applyStepVisibility();
     }
 
     const _CORE_STEP_TOGGLES = [
-      { id:'energy',     icon:'⚡', label:'Energy' },
-      { id:'sleep',      icon:'🛌', label:'Sleep' },
-      { id:'medication', icon:'💊', label:'Meds' },
-      { id:'more_data',  icon:'➕', label:'Additional' },
-      { id:'notes',      icon:'📝', label:'Notes' },
+      { id:'energy',     icon:'⚡', label:'Energy',     key:'journal.label.energy' },
+      { id:'sleep',      icon:'🛌', label:'Sleep',      key:'journal.label.sleep' },
+      { id:'medication', icon:'💊', label:'Meds',       key:'journal.lifeChart.meds' },
+      { id:'more_data',  icon:'➕', label:'Additional', key:'t143.j.stepAdditional' },
+      { id:'notes',      icon:'📝', label:'Notes',      key:'journal.notes' },
     ];
 
     function _getDisabledSteps() {
@@ -14410,7 +14467,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const _bg = _pulsing ? 'rgba(255,149,0,0.18)' : (on ? 'rgba(255,149,0,0.1)' : 'white');
         const _color = on ? 'var(--brand-primary)' : '#adb5bd';
         const _extraStyle = _dimmed ? 'opacity:0.3;pointer-events:none;' : (_pulsing ? 'animation:hintFade 1.6s ease-in-out infinite;box-shadow:0 0 0 3px rgba(255,149,0,0.35);' : '');
-        return `<button${_idAttr} onclick="_toggleStep('${t.id}')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid ${_borderColor};background:${_bg};color:${_color};cursor:pointer;font-size:0.82em;font-weight:600;min-width:52px;-webkit-tap-highlight-color:transparent;${_extraStyle}"><span style="font-size:1.3em;">${t.icon}</span><span>${t.label}</span></button>`;
+        return `<button${_idAttr} onclick="_toggleStep('${t.id}')" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid ${_borderColor};background:${_bg};color:${_color};cursor:pointer;font-size:0.82em;font-weight:600;min-width:52px;-webkit-tap-highlight-color:transparent;${_extraStyle}"><span style="font-size:1.3em;">${t.icon}</span><span>${BB.t(t.key)}</span></button>`;
       }).join('');
     }
     window._renderStepToggles = _renderStepToggles;
@@ -14443,6 +14500,13 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     const DEFAULT_CUSTOM_FIELDS = [
       { id: 'addedSugar', label: 'Added Sugar', emoji: '🍫', positive: 'no', builtin: true },
     ];
+    // Field names in the app language, read when shown (English above is the fallback).
+    {
+      const _fpKeys = { trackGoals: () => BB.t('journal.field.goals'), trackBudget: () => BB.t('journal.field.budget'), trackAnxiety: () => '😰 ' + BB.t('journal.label.emotions'), trackAlcohol: () => BB.t('journal.field.alcohol'), trackCustom_addedSugar: () => '🍫 ' + BB.t('t143.j.addedSugar') };
+      FIELD_PICKER_FIELDS.forEach(f => { const en = f.label; if (_fpKeys[f.key]) Object.defineProperty(f, 'label', { get: () => (window.BB && BB.t) ? _fpKeys[f.key]() : en, enumerable: true }); });
+      const _sugar = DEFAULT_CUSTOM_FIELDS[0];
+      Object.defineProperty(_sugar, 'label', { get: () => _tt('t143.j.addedSugar', null, 'Added Sugar'), enumerable: true });
+    }
 
     function getCustomFields() {
       const deleted = JSON.parse(localStorage.getItem('deletedDefaultCustomFields') || '[]');
@@ -14750,7 +14814,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       _pendingDeleteFieldId = id;
       const label = `${field.emoji ? field.emoji + ' ' : ''}"${field.label}"`;
       const msg = document.getElementById('deleteCustomFieldMsg');
-      if (msg) msg.textContent = `Remove the ${label} field?`;
+      if (msg) msg.textContent = BB.t('t143.j.removeField', { label });
       document.getElementById('deleteCustomFieldModal').classList.add('active');
     }
 
@@ -14799,8 +14863,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const noSel = selectedCustom[f.id] === 'no';
         const yesSel = selectedCustom[f.id] === 'yes';
         const _posNo  = f.positive === 'no';
-        const yesLabel = _posNo && f.emoji ? `${f.emoji} Yes` : 'Yes';
-        const noBtn  = `<button type="button" class="medication-btn${noSel  ? ' selected' : ''}" onclick="selectCustomField('${f.id}','no')"  style="padding:10px 4px;flex:1;min-width:0;">No</button>`;
+        const yesLabel = _posNo && f.emoji ? `${f.emoji} ${BB.t('journal.value.yes')}` : BB.t('journal.value.yes');
+        const noBtn  = `<button type="button" class="medication-btn${noSel  ? ' selected' : ''}" onclick="selectCustomField('${f.id}','no')"  style="padding:10px 4px;flex:1;min-width:0;">${BB.t('journal.value.no')}</button>`;
         const yesBtn = `<button type="button" class="medication-btn${yesSel ? ' selected' : ''}" ${_posNo ? 'data-neg="1"' : ''} onclick="selectCustomField('${f.id}','yes')" style="padding:10px 4px;flex:1;min-width:0;">${yesLabel}</button>`;
         return `<div style="display:contents">
           <span style="font-size:0.9em;font-weight:600;color:#495057;">${f.emoji ? f.emoji + ' ' : ''}${f.label}?</span>
@@ -14916,7 +14980,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
       if (_allEntries) displayStats(_allEntries);
       try { _renderJourneyRanges(); } catch (_) {}
       const btn = document.getElementById('statsStartDateInput').nextElementSibling.nextElementSibling;
-      if (btn) { const orig = btn.textContent; btn.textContent = '✓ Saved'; setTimeout(() => { btn.textContent = orig; }, 1500); }
+      if (btn) { const orig = btn.textContent; btn.textContent = BB.t('t143.j.saved'); setTimeout(() => { btn.textContent = orig; }, 1500); }
     }
 
     function clearStatsStartDate() {
@@ -15027,11 +15091,11 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           alert(BB.t('journal.dlg.notifsBlocked'));
           // Refresh permission display in settings
           document.querySelectorAll('.settings-notif-info').forEach(el => el.textContent =
-            `Notifications: ❌ Blocked in phone settings`);
+            BB.t('t143.st.notifBlockedPhone'));
           return false;
         }
         document.querySelectorAll('.settings-notif-info').forEach(el => el.textContent =
-          `Notifications: ✅ Allowed`);
+          BB.t('t143.st.notifAllowed'));
         return true;
       } catch (e) {
         return true; // best-effort: don't block on plugin errors
@@ -15591,8 +15655,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         await LocalNotifications.schedule({
           notifications: [{
             id: 1,
-            title: '🐻 BipolarBear',
-            body: "Don't forget to log your mood today!",
+            title: '🐻 Bipolar Bear',
+            body: BB.t('t143.notif.daily'),
             schedule: {
               on: { hour, minute },
               repeats: true,
@@ -15640,13 +15704,13 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         const summaryEmoji = entryCount >= 7 ? '🎉' : '🙂';
 
         const body = entryCount === 0
-          ? "No entries this week — open the app to start tracking your mood!"
-          : `${entryCount}/7 days logged ${summaryEmoji} · Meds taken ${medsTaken}/${entryCount} days`;
+          ? BB.t('t143.notif.weeklyNone')
+          : BB.t('t143.notif.weeklyBody', { n: entryCount, emoji: summaryEmoji, meds: medsTaken });
 
         await LocalNotifications.schedule({
           notifications: [{
             id: 2,
-            title: '🐻 Your weekly summary',
+            title: BB.t('t143.notif.weeklyTitle'),
             body,
             schedule: {
               on: { weekday: 1, hour: 9, minute: 0 }, // Sunday 9am
@@ -15679,8 +15743,8 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         await LocalNotifications.schedule({
           notifications: [{
             id,
-            title: '⭐ BipolarBear · On this day',
-            body: `You have ${favCount} favourite entr${favCount === 1 ? 'y' : 'ies'} from this date — want to review them?`,
+            title: BB.t('t143.notif.annivTitle'),
+            body: BB.t('t143.notif.annivBody', { count: favCount }),
             schedule: { at: schedDate, allowWhileIdle: true },
             smallIcon: 'ic_notification',
             iconColor: 'var(--brand-primary)',
@@ -15901,7 +15965,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
     }
     async function importStepsFromHealth(isAuto) {
       const btnText = document.getElementById('healthEnergyBtnText');
-      const originalText = btnText ? btnText.textContent : '⚡ Energy Level';
+      const originalText = btnText ? btnText.textContent : BB.t('t143.j.energyBtn');
       function showFail()   { if (btnText) { btnText.textContent = '❌';   setTimeout(() => { btnText.textContent = originalText; }, 2000); } }
       function showNoData() { if (btnText) { btnText.textContent = '🤷‍♀️'; setTimeout(() => { btnText.textContent = originalText; }, 2000); } }
 
@@ -15954,13 +16018,13 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
 
         const stepsEl = document.getElementById('healthStepsResult');
         if (stepsEl) {
-          stepsEl.textContent = `🏃 ${s >= 1000 ? Math.round(s / 1000) + 'k' : s} steps`;
+          stepsEl.textContent = '🏃 ' + BB.t('journal.sync.steps', { n: s >= 1000 ? Math.round(s / 1000) + 'k' : s });
           stepsEl.style.display = '';
         }
         nativeHaptic('success');
         if (btnText) {
           const stepsLabel = s >= 1000 ? Math.round(s / 1000) + 'k' : s;
-          btnText.textContent = `⚡ Energy | 🏃 ${stepsLabel}`;
+          btnText.textContent = BB.t('t143.j.energyWithSteps', { steps: stepsLabel });
         }
         _fmStepsRaw = s;
         // Update focused mode if active
@@ -16112,7 +16176,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
         if (closestBtn) {
           nativeHaptic('success');
           const roundedH = Math.round(hours * 10) / 10;
-          btn.textContent = `😴 Sleep | ${roundedH}h`;
+          btn.textContent = BB.t('t143.j.sleepWithHours', { h: roundedH });
           btn.disabled = false;
           if (typeof _fmActive !== 'undefined' && _fmActive) {
             // Focused mode: store exact imported value, highlight range bucket
@@ -16245,7 +16309,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
           const _ebt = document.getElementById('healthEnergyBtnText');
           if (_ebt) {
             const stepsLabel = s >= 1000 ? Math.round(s / 1000) + 'k' : s;
-            _ebt.textContent = `⚡ Energy | 🏃 ${stepsLabel}`;
+            _ebt.textContent = BB.t('t143.j.energyWithSteps', { steps: stepsLabel });
           }
         }
 
