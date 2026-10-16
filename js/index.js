@@ -1932,7 +1932,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
          'bbSurvivalBtnEnabled','bbAnonBtnEnabled','bbHomeStatsEnabled','bbHomeQuickCheckin',
-         'bbCustomiseNewPending','bbCustomiseNewSeen',
+         'bbCustomiseNewPending','bbCustomiseNewSeen','bbSkVisited',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',
          'personalEmergencyContact','personalNotes',
@@ -2536,7 +2536,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         if (!_prog) return;
         const _arr = k => { try { const v = JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v) && v.length > 0; } catch(e){ return false; } };
         const _obj = k => { try { const v = JSON.parse(localStorage.getItem(k)||'{}'); return Object.values(v).some(a => Array.isArray(a) && a.length > 0); } catch(e){ return false; } };
-        let _c = 4; // mood-scale, books, media, spiritual — always complete
+        // Info-only sections count once opened in the kit (bbSkVisited, js/survival-kit.js).
+        let _c = 0;
+        try { const _v = JSON.parse(localStorage.getItem('bbSkVisited') || '[]'); if (Array.isArray(_v)) _c += ['mood-scale','books','media','spiritual'].filter(id => _v.indexOf(id) !== -1).length; } catch (e) {}
         if (_arr('currentMedList')) _c++;
         if (_arr('dailyGoals')) _c++;
         if (_arr('survivalGratitude')) _c++;

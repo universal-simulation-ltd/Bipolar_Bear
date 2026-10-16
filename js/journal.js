@@ -12090,7 +12090,7 @@ Medication: ${entry.medication === 'not-taken' ? 'No / Forgot' : entry.medicatio
          // so the new install gets the first-run dock layout again.
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',
          'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
-         'bbLogoEasterEggFound','bbCustomFieldHintDone',
+         'bbLogoEasterEggFound','bbCustomFieldHintDone','bbSkVisited',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',
          'personalEmergencyContact','personalNotes',

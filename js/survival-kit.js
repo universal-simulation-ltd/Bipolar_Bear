@@ -154,6 +154,7 @@ function _sktMood(moodKey) {
       section.classList.remove('collapsed');
       container.classList.add('sk-focused');
       _skOpenId = id;
+      _skMarkVisited(id);
       if (opts.hash !== false) _skSetHash(id);
       updateActiveNav();
       if (opts.scroll !== false) _skScrollTo(document.getElementById('skBackBar'), false);
@@ -541,6 +542,18 @@ function _sktMood(moodKey) {
     window.prevSpiritQuote = prevSpiritQuote;
 
     // ── SECTION COMPLETION TICKS ──
+    // Info-only sections (nothing to fill in) the user has opened on this device.
+    const _SK_INFO_IDS = ['mood-scale', 'books', 'media', 'spiritual'];
+    function _skVisitedList() {
+      try { const v = JSON.parse(localStorage.getItem('bbSkVisited') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+    }
+    function _skVisited(id) { return _skVisitedList().indexOf(id) !== -1; }
+    function _skMarkVisited(id) {
+      if (_SK_INFO_IDS.indexOf(id) === -1 || _skVisited(id)) return;
+      try { localStorage.setItem('bbSkVisited', JSON.stringify(_skVisitedList().concat(id))); } catch (e) {}
+      _skUpdateTicks();
+    }
+
     function _skUpdateTicks() {
       const _check = (key, parse) => {
         try { const v = localStorage.getItem(key); return v && (!parse || parse(v)); } catch(e) { return false; }
@@ -554,11 +567,13 @@ function _sktMood(moodKey) {
         { id: 'memories',          done: () => { try { const mm = JSON.parse(localStorage.getItem('moodMemories')||'{}'); return Object.values(mm).some(a => Array.isArray(a) && a.length > 0); } catch(e){return false;} } },
         { id: 'steps',             done: () => { try { const sc = JSON.parse(localStorage.getItem('myCommitments')||'[]'); return Array.isArray(sc) && sc.length > 0; } catch(e){return false;} } },
         { id: 'faq',               done: () => { try { const cr = JSON.parse(localStorage.getItem('customReminders')||'[]'); return Array.isArray(cr) && cr.length > 0; } catch(e){return false;} } },
-        // Info-only sections — always complete
-        { id: 'mood-scale', done: () => true },
-        { id: 'books',      done: () => true },
-        { id: 'media',      done: () => true },
-        { id: 'spiritual',  done: () => true },
+        // Info-only sections count once opened (bbSkVisited, set by
+        // skOpenSection). They used to count as done from the start, so a new
+        // kit read 4 / 12. js/index.js and index.html's early paint count the same.
+        { id: 'mood-scale', done: () => _skVisited('mood-scale') },
+        { id: 'books',      done: () => _skVisited('books') },
+        { id: 'media',      done: () => _skVisited('media') },
+        { id: 'spiritual',  done: () => _skVisited('spiritual') },
       ];
       let _doneCount = 0;
       sections.forEach(({ id, done }) => {
@@ -1457,6 +1472,7 @@ function _sktMood(moodKey) {
       list.splice(index, 1);
       saveCustomReminders(list);
       renderCustomReminders();
+      _skUpdateTicks();
     }
 
     window.openAddReminderModal = openAddReminderModal;
