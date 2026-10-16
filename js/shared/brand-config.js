@@ -291,6 +291,21 @@ window.BB.loadJsPdf = function () {
 };
 
 /**
+ * A typed phone number as tel: digits (2026-10-16). "+44 (0)20 7946 0000"
+ * used to become tel:+4402079460000, which doesn't connect: a "(0)" after a
+ * country code is dropped, a leading 00 becomes +, and everything but the
+ * digits and a leading + goes. Returns '' when nothing dialable is left.
+ * Mirrored by telOf() in js/shared/safety-plan.js (kept self-contained).
+ */
+window.BB.telNumber = function (phone) {
+  var s = String(phone || '').trim();
+  if (/^(\+|00)/.test(s)) s = s.replace(/\(\s*0\s*\)/g, '');
+  s = s.replace(/^00/, '+');
+  s = s.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
+  return /\d{3,}/.test(s) ? s : '';
+};
+
+/**
  * Embed a Unicode font in a jsPDF doc and select it (2026-10-16). jsPDF's
  * built-in Helvetica is WinAnsi only, so Polish ą ę ł ś ż and every Chinese
  * character came out garbled. Noto Sans (Latin incl. Extended, ~62 KB a

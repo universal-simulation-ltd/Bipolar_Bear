@@ -2411,7 +2411,8 @@ function _sktMood(moodKey) {
       if (contact) {
         // Try to extract a phone number from the contact string
         const phoneMatch = contact.match(/[\d\s\+\-\(\)]{7,}/);
-        const phoneHref = phoneMatch ? `tel:${phoneMatch[0].replace(/\s/g,'')}` : null;
+        const _phoneNum = phoneMatch ? BB.telNumber(phoneMatch[0]) : '';
+        const phoneHref = _phoneNum ? `tel:${_phoneNum}` : null;
         area.innerHTML = `
           <div style="font-size:0.88em;color:rgba(255,255,255,0.85);margin-bottom:8px;font-weight:600;">${_esc(_skt('sk.crisis.ecLabel'))}</div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;">

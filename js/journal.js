@@ -1532,7 +1532,7 @@ window.addEventListener('pageshow', () => {
       if (_ec && _ecEl) {
         document.getElementById('depressedEmergencyText').textContent = _ec;
         const _ecNum = _ec.match(/[\d\s\+\-\(\)]{6,}/)?.[0]?.trim();
-        document.getElementById('depressedEmergencyLink').href = _ecNum ? 'tel:' + _ecNum.replace(/\s/g,'') : '#';
+        document.getElementById('depressedEmergencyLink').href = _ecNum ? ('tel:' + (BB.telNumber(_ecNum) || _ecNum.replace(/\s/g,''))) : '#';
         _ecEl.style.display = '';
       } else if (_ecEl) {
         _ecEl.style.display = 'none';
@@ -1578,7 +1578,7 @@ window.addEventListener('pageshow', () => {
         if (_ec && _ecEl) {
           document.getElementById('depressedEmergencyText').textContent = _ec;
           const _ecNum = _ec.match(/[\d\s\+\-\(\)]{6,}/)?.[0]?.trim();
-          document.getElementById('depressedEmergencyLink').href = _ecNum ? 'tel:' + _ecNum.replace(/\s/g,'') : '#';
+          document.getElementById('depressedEmergencyLink').href = _ecNum ? ('tel:' + (BB.telNumber(_ecNum) || _ecNum.replace(/\s/g,''))) : '#';
           _ecEl.style.display = '';
         } else if (_ecEl) {
           _ecEl.style.display = 'none';
