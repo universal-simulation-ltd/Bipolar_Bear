@@ -139,6 +139,23 @@
     html.theme-dark .highlight { background: #262019; }
     html.theme-dark .convenience-notice { background: #262019; color: #e3d5c3; }
     html.theme-dark footer { color: #a8977f; border-top-color: #4a3d30; }
+    /* "At a glance" table (2026-10-16): three columns on wide screens,
+       one card per row on phones. Colours are tints, so dark mode works. */
+    h3 { font-size: 1em; margin: 22px 0 8px; }
+    .glance-heading { font-size: 1.05em; color: #ff6b00; margin-top: 28px; }
+    .glance-wrap { margin: 0 0 16px; }
+    table.glance { width: 100%; border-collapse: collapse; font-size: 0.92em; line-height: 1.5; }
+    table.glance th, table.glance td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid rgba(128,128,128,0.25); }
+    table.glance thead th { background: rgba(255,149,0,0.12); font-size: 0.9em; }
+    table.glance tbody th { font-weight: 600; width: 34%; }
+    .glance-foot { font-size: 0.9em; opacity: 0.85; }
+    @media (max-width: 600px) {
+      table.glance thead { display: none; }
+      table.glance tr { display: block; border: 1px solid rgba(128,128,128,0.25); border-radius: 10px; margin-bottom: 10px; padding: 4px 0; }
+      table.glance th, table.glance td { display: block; width: auto; border: 0; padding: 4px 12px; }
+      table.glance tbody th { width: auto; }
+      table.glance td::before { content: attr(data-label); display: block; font-size: 0.78em; font-weight: 700; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.03em; }
+    }
   </style>
   <!-- Theme before first paint (must stay inline): same one-liner as the app
        pages — 'auto' / 'light' / 'dark' in localStorage.bbTheme. -->
@@ -253,6 +270,11 @@
       <li data-i18n="privacy.s2li10">On Bipolar Anonymous, poll votes and the daily mood check-in are stored only as totals. How you voted stays on your device. For the check-in we keep a note that your account has checked in that day, so it counts once; it does not record which mood you chose, and it is deleted after two days. If you turn on "Check in from my journal" under Your Moniker (it is off unless you turn it on), saving a Bipolar Bear journal entry for today or yesterday checks you in: only that entry's mood (one of the five mood names) is sent, and it is added to the day's totals in the same way.</li>
       <li data-i18n="privacy.s2li11">Bipolar Anonymous posts and replies are visible to other members and are not encrypted. They show your moniker, not your name or email, and they carry no account ID, so posts can't be traced back to your account. Your email address is used to send your sign-in code. Your board profile is stored under a key our server works out from it with a secret, so the address can't be used to look the profile up.</li>
     </ul>
+
+    <h3 class="glance-heading" data-i18n="privacy.glanceHeading">At a glance: what we keep, and who can read it</h3>
+    <p data-i18n="privacy.glanceIntro">The same list is on our App Store and Google Play privacy labels. We don't track you, show ads, sell data or use analytics.</p>
+    <div data-i18n-html="privacy.glanceTables"><h3>Bipolar Bear</h3><div class="glance-wrap"><table class="glance"><thead><tr><th scope="col">What</th><th scope="col">Why</th><th scope="col">Who can read it</th></tr></thead><tbody><tr><th scope="row" data-label="What">Your email address</th><td data-label="Why">To sign you in and sync your journal</td><td data-label="Who can read it">Us, so we can run your account</td></tr><tr><th scope="row" data-label="What">Your journal: mood, sleep, energy, notes, and steps and sleep from Apple Health or Health Connect</th><td data-label="Why">The journal itself</td><td data-label="Who can read it">Encrypted on your device first. In a Standard journal, you, and us only with our spare key. In a Private journal, only you</td></tr><tr><th scope="row" data-label="What">Personal details: name, phone, address, diagnosis and the rest you choose to enter</th><td data-label="Why">The header of your PDF report</td><td data-label="Who can read it">Encrypted on your device, like your journal</td></tr><tr><th scope="row" data-label="What">Your safety plan and survival kit lists</th><td data-label="Why">So they're there on every device</td><td data-label="Who can read it">Encrypted on your device, like your journal</td></tr><tr><th scope="row" data-label="What">An account ID</th><td data-label="Why">To keep your data with your account</td><td data-label="Who can read it">Us</td></tr><tr><th scope="row" data-label="What">Feedback and support messages you send</th><td data-label="Why">So we can reply</td><td data-label="Who can read it">Our team. Deleted after 12 months</td></tr><tr><th scope="row" data-label="What">A notification token</th><td data-label="Why">Only if you switch on board notifications</td><td data-label="Who can read it">Our server, to send them. Not linked to you</td></tr></tbody></table></div><h3>Bipolar Anonymous</h3><div class="glance-wrap"><table class="glance"><thead><tr><th scope="col">What</th><th scope="col">Why</th><th scope="col">Who can read it</th></tr></thead><tbody><tr><th scope="row" data-label="What">Your email address</th><td data-label="Why">To send your sign-in code</td><td data-label="Who can read it">Removed as soon as the code is used. An unused code goes within 25 hours</td></tr><tr><th scope="row" data-label="What">Your posts and replies</th><td data-label="Why">The board</td><td data-label="Who can read it">Every member: they are not encrypted. They show your moniker, not your name. Deleted after 7 days without activity</td></tr><tr><th scope="row" data-label="What">Medications or stability streak you choose to show</th><td data-label="Why">Shown on your posts</td><td data-label="Who can read it">Every member</td></tr><tr><th scope="row" data-label="What">An anonymous account ID</th><td data-label="Why">So you can post and edit your own posts</td><td data-label="Who can read it">Us. It isn't on your posts</td></tr></tbody></table></div></div>
+    <p class="glance-foot" data-i18n="privacy.glanceFoot">Not stored at all: "I needed this today" taps (a shared total only), and the live count (a random ID per open page, deleted within an hour).</p>
 
     <h2 data-i18n="privacy.s3Heading">3. How your data is stored</h2>
     <p data-i18n-html="privacy.s3p1">By default, all journal data is stored <strong>locally on your device</strong> using your browser's local storage. It never leaves your device unless you choose to create an account and enable cloud sync.</p>
