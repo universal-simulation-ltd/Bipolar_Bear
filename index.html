@@ -260,7 +260,7 @@
               var an = document.getElementById('anonymousSignInNote');
               if (an) an.style.display = 'none';
             }
-            if (hasUser || localStorage.getItem('bbGuestPinSalt')) return;
+            if (hasUser || localStorage.getItem('bbGuestPinSalt') || localStorage.getItem('bbGuestNoPin') === '1') return;
             var ids = ['journalStreakBadge', 'survivalProgress',
                        'anonMessagesBadge', 'anonStreakBadge'];
             for (var j = 0; j < ids.length; j++) {
@@ -307,7 +307,7 @@
               }
             }
             if (S.get('SignedInHint') === '1') hasUser = true; // see the script above
-            if (!hasUser && !S.get('GuestPinSalt')) return;
+            if (!hasUser && !S.get('GuestPinSalt') && S.get('GuestNoPin') !== '1') return; // a guest: with a PIN, or one who chose none (pin143)
 
             // Journal entry tick (✓ on the Mood Journal button). Paint it
             // synchronously from the cached status journal.html writes, so it

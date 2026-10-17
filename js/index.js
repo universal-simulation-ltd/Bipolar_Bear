@@ -714,7 +714,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           // localStorage data keep their badges — those are real local
           // stats, not residue from a sync. That covers the journal only:
           // the Bipolar Anonymous stats are the account's, so they always go.
-          if (!BB.storage.get('GuestPinSalt')) {
+          if (!_isRealGuest()) {
             _revealBadge(document.getElementById('journalStreakBadge'), 'none');
           }
           _revealBadge(document.getElementById('anonStreakBadge'),    'none');
@@ -1280,13 +1280,16 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     // Only render the cached streak/anon badges if the user is plausibly
     // signed in, or is a real guest (has guest-PIN data of their own). The
     // auth listener re-runs this once auth resolves.
-    if (_hasCachedFbUser() || BB.storage.get('GuestPinSalt')) {
+    // A guest with journal data of their own: a guest PIN, or "Continue
+    // without a PIN" (bbGuestNoPin, pin143).
+    function _isRealGuest() { return !!BB.storage.get('GuestPinSalt') || BB.storage.get('GuestNoPin') === '1'; }
+    if (_hasCachedFbUser() || _isRealGuest()) {
       _updateStreakBadge();
     }
     // The badges are built from strings, not data-i18n, so redraw them in the
     // new language (same gate as the first render above).
     document.addEventListener('bb:languagechange', () => {
-      if (window.currentUser || _hasCachedFbUser() || BB.storage.get('GuestPinSalt')) _updateStreakBadge();
+      if (window.currentUser || _hasCachedFbUser() || _isRealGuest()) _updateStreakBadge();
     });
 
     /**
@@ -1974,7 +1977,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
-          'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
+          'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
         ].forEach(k => localStorage.removeItem(k));
@@ -2057,6 +2060,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         BB.storage.remove('PinEnabled');
         BB.storage.remove('PinCode');
         BB.storage.remove('GuestPinSalt');
+        BB.storage.remove('GuestNoPin');
         sessionStorage.removeItem('bbPinUnlocked');
         try { window.Capacitor?.Plugins?.SecureStorage?.removeItem?.('bb_native_pin')?.catch?.(() => {}); } catch (e) {}
 

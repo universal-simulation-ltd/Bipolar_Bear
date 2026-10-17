@@ -684,6 +684,84 @@ listener resolves.
 - `bbPinLinkedUID` stores the Firebase Auth UID of the account that created the PIN
 - On `onAuthStateChanged`, if the signed-in UID doesn't match `bbPinLinkedUID`, all PIN keys are cleared and the overlay is hidden — prevents a different account from being locked out by another user's PIN
 
+#### A guest without a PIN, and the signed-in App lock (2026-10-17, v345)
+
+James: "Could we give the user the choice to NOT set a PIN? Maybe they prefer
+less security for the convenience", then "Can signed in users opt out of the
+pin lock screen?". Strings: `pin143.*`, all 10 languages.
+
+**Guests.** The guest PIN is the key their entries are encrypted with
+(`bbGuestPinSalt`, PBKDF2 → AES-GCM, `_guestEncrypt`). Now it's a choice:
+- The first save (also the import and missing-days auto-complete, which use
+  the same gate, `_guestStorageReady()`) opens `#guestPinSetupOverlay` on its
+  choice step: **Set a PIN (recommended)** (the keypad, as before), **Continue
+  without a PIN** with the line "Your entries stay on this phone without
+  encryption. Anyone who can open your phone can read them.", and **Not now**
+  (saves nothing; the entry stays open). Buttons only.
+- **Continue without a PIN** sets `bbGuestNoPin='1'` and is never asked
+  again. Entries are then plain JSON in `entry:<ts>`, as before the PIN.
+  `_guestStoreValue(plain)` is the one writer: encrypted when a salt exists
+  (and it throws if the PIN is locked, so a locked PIN never writes
+  plaintext), plain otherwise. Drafts (`bb_draft`) were never encrypted.
+- **Journal Settings → 🔒 PIN** (`#guestPinRow`, guests only).
+  - No PIN: **Set a PIN** goes straight to the keypad. The salt and PIN hash
+    are saved first, then `_guestEncryptAll` encrypts every plain entry.
+  - A PIN: **Remove PIN** asks for the PIN (same lockout as the keypad), then
+    `confirm(pin143.removeConfirm)`. `_guestDecryptAll` decrypts every entry,
+    and only then are the salt, `bbPinCode`, `bbPinEnabled` and the session
+    key removed and `bbGuestNoPin` set.
+- **Failure-safe.** Every entry is converted under its own key in one
+  `setItem`, so it is always either its old copy or its new one. A new
+  ciphertext is decrypted again and compared before it is written. An entry
+  that changed meanwhile is skipped. Already-converted entries are skipped, so
+  running it again finishes the job.
+  - Remove first opens every encrypted entry. If one won't open with this PIN,
+    nothing is written (`pin143.removeLocked`).
+  - Remove repeats until no encrypted entry is left. That covers one saved
+    while it ran. Then it drops the salt, with no `await` in between.
+  - A stop part-way says `pin143.failPartial` ("{done} of {total}… Nothing was
+    lost"). With a PIN set and unlocked, `loadEntries()` encrypts any plain
+    entries it finds (the sweep), so a stopped Set finishes on the next load.
+    `_guestConvertBusy` keeps the sweep away from a running Set / Remove.
+- **Unchanged.** The PIN lock screen, the 5-minute and background relocks, the
+  PIN gate one-liners, and the home mood strip and widget rule all key off
+  `bbGuestPinSalt`, so a guest without one simply has no lock and keeps the
+  strip. The journal's idle relock now checks the salt when it fires, so a PIN
+  set or removed in Settings counts without a reload.
+- **Elsewhere.** The home early-paint and badges treat `bbGuestNoPin` like a
+  guest PIN ("a real guest"). The sign-in migration already took plain guest
+  entries; it now also clears `bbGuestNoPin`. So do logout, Delete all and the
+  guest Forgot PIN wipe.
+- **Copy.** The 🔐 pop-up shows `pin143.securityNoPin` for such a guest and
+  hides the three lines that aren't true for them. Privacy §3 has
+  `pin143.privGuest`, and At a glance has a row for the journal without an
+  account (inside `fix143.privGlanceTables`; the static English copy also
+  lost a duplicated Bipolar Anonymous table and a stray `</div>`). The welcome
+  page's "Encrypted on your device" card uses `pin143.f4Desc`.
+
+**Signed in: Settings → 🔒 App lock (PIN)** (`#appLockRow`, off by default).
+There was no way in the UI to set or turn off a lock: `openPinSettings` /
+`openNativePinSettings` had no caller. It's one row with two backends:
+- **In the app**, it is this phone's lock screen. That is
+  `bbNativePinEnabled` with the PIN in the Keychain (`bb_native_pin`), which
+  locks home, the journal and the survival kit. **Set a PIN**; **Change PIN**
+  checks the current one first; **Turn off** asks for it, or **Forgot PIN?**
+  takes the phone's own lock or the account (`BB.pinReauth`), as the lock
+  screen does. The native PIN is per phone and isn't synced.
+- **The account PIN** (`bbPinEnabled` + `bbPinCode`, synced as
+  `userSettings.pinEnabled` + `pinHash`) is what older builds set. It doesn't
+  lock this build for a signed-in user, because the auth listener unlocks it
+  and only the journal flashed its overlay. So it is offered only to turn
+  off, and on the web the row shows only while it is on. Turning off clears
+  both and calls `_syncPinToFirestore()`, which writes `pinEnabled:false` and
+  deletes `pinHash`. The auth listener takes the account's value on every
+  load and never pushes its own, so every other device drops its copy on its
+  next load, and a stale local copy can't turn it back on.
+- Test: `node scripts/test-guest-pin.mjs` runs the real conversion, save and
+  migration functions with real WebCrypto, with failures injected. The browser
+  flows (first save, Set / Remove in Settings, a failing write, signed-in
+  App lock on web and native) were run with Playwright; see the commit.
+
 ### 2.8 Health Data Sync (iOS + Android)
 
 ```

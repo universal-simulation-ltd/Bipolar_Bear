@@ -1129,6 +1129,8 @@
         <button class="pin-key pin-key-dark" onclick="pinSetupKey('0')">0</button>
         <button class="pin-key pin-key-dark pin-key-del" onclick="pinSetupDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete">⌫</button>
       </div>
+      <!-- App lock off (pin143): the phone's own lock or the account stand in for a forgotten PIN (BB.pinReauth). -->
+      <button type="button" id="pinSetupForgotBtn" onclick="_appLockForgot()" style="display:none;background:none;border:none;color:var(--brand-ink);font-family:inherit;font-size:0.82em;cursor:pointer;padding:10px 12px;min-height:44px;margin:-8px auto 8px;text-decoration:underline;" data-i18n="pin.forgot">Forgot PIN?</button>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closePinSetup()" data-i18n="common.cancel">Cancel</button>
         <button id="pinDisableBtn" class="confirm-btn" onclick="disablePin()" style="display:none;background:white;color:#dc3545;border:2px solid #dc3545;" data-i18n="journal.mods.disablePin">Disable PIN</button>
@@ -1136,33 +1138,45 @@
     </div>
   </div>
 
-  <!-- Guest PIN Setup Overlay (mandatory on first entry save for guests) -->
-  <div id="guestPinSetupOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9998;flex-direction:column;align-items:center;justify-content:center;padding:24px;display:none;">
-    <img src="icons/AppIcon.png" width="72" height="72" style="border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+  <!-- Guest PIN sheet (js/journal.js _showGuestPinSetup). Before a guest's
+       first save it asks first (pin143, 2026-10-17): set a PIN (entries
+       encrypted with it) or continue without one (entries stored plain);
+       Settings → 🔒 PIN opens it straight on the keypad to set or remove one. -->
+  <div id="guestPinSetupOverlay" role="dialog" aria-modal="true" aria-labelledby="guestPinSetupTitle" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--brand-primary-light) 0%,var(--brand-primary-mid) 100%);z-index:9998;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;">
+    <img src="icons/AppIcon.png" width="72" height="72" alt="" style="border-radius:18px;margin-bottom:12px;box-shadow:0 4px 16px rgba(0,0,0,0.2);">
     <h2 id="guestPinSetupTitle" style="color:var(--brand-on);margin-bottom:6px;font-size:1.3em;text-align:center;" data-i18n="journal.mods.protectData">Protect your data</h2>
-    <p id="guestPinSetupDesc" style="color:var(--brand-on);font-size:0.88em;margin-bottom:28px;text-align:center;max-width:260px;" data-i18n="journal.mods.choosePinDesc">Choose a 4-digit PIN to lock your journal.</p>
-    <div id="guestPinSetupDots" style="display:flex;gap:12px;margin-bottom:24px;">
-      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    <p id="guestPinSetupDesc" style="color:var(--brand-on);font-size:0.88em;margin-bottom:24px;text-align:center;max-width:280px;" data-i18n="pin143.choiceDesc">A 4-digit PIN locks your journal and encrypts your entries on this phone.</p>
+    <!-- Step 1 (first save only): the choice. Buttons only. -->
+    <div id="guestPinChoice" style="display:none;flex-direction:column;align-items:center;width:100%;max-width:300px;">
+      <button type="button" id="guestPinChoiceSet" onclick="guestPinChooseSet()" style="width:100%;min-height:48px;padding:12px 18px;background:var(--brand-btn);color:#fff;border:none;border-radius:24px;font-family:inherit;font-size:0.98em;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.18);-webkit-tap-highlight-color:transparent;" data-i18n="pin143.setRecommended">Set a PIN (recommended)</button>
+      <button type="button" id="guestPinChoiceNone" onclick="guestPinChooseNone()" style="width:100%;min-height:48px;margin-top:12px;padding:10px 18px;background:rgba(255,255,255,0.2);border:1.5px solid var(--brand-on);color:var(--brand-on);border-radius:24px;font-family:inherit;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.continueNoPin">Continue without a PIN</button>
+      <p id="guestPinNoPinWarn" style="color:var(--brand-on);font-size:0.8em;text-align:center;line-height:1.5;margin:8px 4px 0;" data-i18n="pin143.noPinWarn">Your entries stay on this phone without encryption. Anyone who can open your phone can read them.</p>
+      <button type="button" onclick="guestPinSetupCancel()" style="background:none;border:none;color:var(--brand-on);font-family:inherit;font-size:0.85em;cursor:pointer;padding:10px 14px;min-height:44px;margin-top:14px;text-decoration:underline;-webkit-tap-highlight-color:transparent;" data-i18n="fix143.pinNotNow">Not now</button>
+      <p style="color:var(--brand-on);font-size:0.75em;text-align:center;max-width:260px;line-height:1.5;margin:0;" data-i18n="pin143.notNowNote">Not now keeps your entry open, not saved yet.</p>
     </div>
-    <div id="guestPinSetupError" style="color:var(--brand-on);font-weight:600;font-size:0.85em;min-height:20px;margin-bottom:8px;text-align:center;"></div>
-    <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:16px;">
-      <button class="pin-key" onclick="guestPinSetupKey('1')">1</button>
-      <button class="pin-key" onclick="guestPinSetupKey('2')">2</button>
-      <button class="pin-key" onclick="guestPinSetupKey('3')">3</button>
-      <button class="pin-key" onclick="guestPinSetupKey('4')">4</button>
-      <button class="pin-key" onclick="guestPinSetupKey('5')">5</button>
-      <button class="pin-key" onclick="guestPinSetupKey('6')">6</button>
-      <button class="pin-key" onclick="guestPinSetupKey('7')">7</button>
-      <button class="pin-key" onclick="guestPinSetupKey('8')">8</button>
-      <button class="pin-key" onclick="guestPinSetupKey('9')">9</button>
-      <div></div>
-      <button class="pin-key" onclick="guestPinSetupKey('0')">0</button>
-      <button class="pin-key pin-key-del" onclick="guestPinSetupDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete">⌫</button>
+    <!-- Step 2: the keypad (Set a PIN, or checking it to remove it). -->
+    <div id="guestPinPad" style="display:none;flex-direction:column;align-items:center;">
+      <div id="guestPinSetupDots" style="display:flex;gap:12px;margin-bottom:24px;">
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div id="guestPinSetupError" role="alert" style="color:var(--brand-on);font-weight:600;font-size:0.85em;min-height:20px;margin-bottom:8px;text-align:center;"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,72px);gap:10px;margin-bottom:16px;">
+        <button class="pin-key" onclick="guestPinSetupKey('1')">1</button>
+        <button class="pin-key" onclick="guestPinSetupKey('2')">2</button>
+        <button class="pin-key" onclick="guestPinSetupKey('3')">3</button>
+        <button class="pin-key" onclick="guestPinSetupKey('4')">4</button>
+        <button class="pin-key" onclick="guestPinSetupKey('5')">5</button>
+        <button class="pin-key" onclick="guestPinSetupKey('6')">6</button>
+        <button class="pin-key" onclick="guestPinSetupKey('7')">7</button>
+        <button class="pin-key" onclick="guestPinSetupKey('8')">8</button>
+        <button class="pin-key" onclick="guestPinSetupKey('9')">9</button>
+        <div></div>
+        <button class="pin-key" onclick="guestPinSetupKey('0')">0</button>
+        <button class="pin-key pin-key-del" onclick="guestPinSetupDel()" aria-label="Delete last digit" data-i18n-aria-label="a11y.pinDelete">⌫</button>
+      </div>
+      <button type="button" id="guestPinPadBack" onclick="guestPinPadBack()" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 22px;min-height:44px;font-family:inherit;font-size:0.9em;font-weight:700;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;" data-i18n="common.back">← Back</button>
+      <p id="guestPinPadNote" style="color:var(--brand-on);font-size:0.75em;text-align:center;max-width:240px;line-height:1.5;" data-i18n="journal.mods.pinEncryptNote">Your PIN encrypts your data on this device. If you forget your PIN, your entries cannot be recovered.</p>
     </div>
-    <!-- Back out of the guest PIN (2026-10-16): the entry stays open, unsaved. -->
-    <button type="button" onclick="guestPinSetupCancel()" style="background:rgba(255,255,255,0.2);border:1px solid var(--brand-on);color:var(--brand-on);border-radius:20px;padding:8px 22px;min-height:44px;font-family:inherit;font-size:0.9em;font-weight:700;cursor:pointer;margin-bottom:8px;-webkit-tap-highlight-color:transparent;" data-i18n="fix143.pinNotNow">Not now</button>
-    <p style="color:var(--brand-on);font-size:0.75em;text-align:center;max-width:260px;line-height:1.5;margin-bottom:8px;" data-i18n="fix143.pinNeededToSave">You need a PIN to save. Not now keeps your entry open, not saved yet.</p>
-    <p style="color:var(--brand-on);font-size:0.75em;text-align:center;max-width:240px;line-height:1.5;" data-i18n="journal.mods.pinEncryptNote">Your PIN encrypts your data on this device. If you forget your PIN, your entries cannot be recovered.</p>
   </div>
 
   <!-- Favourite Anniversary Modal -->
@@ -1548,6 +1562,38 @@
               <option value="dark" data-i18n="anon.ux.themeDark">Dark</option>
             </select>
           </details>
+        </div>
+
+        <!-- Guest-only PIN (pin143): Set a PIN encrypts every entry on this
+             phone; Remove PIN decrypts them. _syncGuestPinRow / _guestPinRowAction
+             in js/journal.js. Hidden when signed in (the account key encrypts). -->
+        <div id="guestPinRow" style="display:none;margin-bottom:16px;text-align:left;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="min-width:0;">
+              <div style="font-weight:600;color:#495057;font-size:0.95em;" data-i18n="pin143.rowTitle">🔒 PIN</div>
+              <div id="guestPinRowDesc" style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;"></div>
+            </div>
+            <button type="button" id="guestPinRowBtn" onclick="_guestPinRowAction()" style="flex-shrink:0;max-width:45%;padding:8px 12px;min-height:44px;background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;"></button>
+          </div>
+          <div id="guestPinRowStatus" role="status" aria-live="polite" style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;line-height:1.4;"></div>
+        </div>
+
+        <!-- Signed-in app lock (pin143, James 2026-10-17: "Can signed in users
+             opt out of the pin lock screen?"). Off by default. In the phone
+             app it is this phone's lock screen (bbNativePinEnabled, the PIN in
+             the Keychain); turning it off also clears the account PIN older
+             builds synced (userSettings pinEnabled/pinHash). On the web it
+             shows only while such an account PIN is on, to turn it off.
+             _syncAppLockRow / _appLockAction in js/journal.js. -->
+        <div id="appLockRow" style="display:none;margin-bottom:16px;text-align:left;">
+          <div style="font-weight:600;color:#495057;font-size:0.95em;" data-i18n="pin143.lockTitle">🔒 App lock (PIN)</div>
+          <div id="appLockRowDesc" style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;"></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+            <button type="button" id="appLockSetBtn" onclick="_appLockAction('set')" style="display:none;padding:8px 12px;min-height:44px;background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.set">Set a PIN</button>
+            <button type="button" id="appLockChangeBtn" onclick="_appLockAction('change')" style="display:none;padding:8px 12px;min-height:44px;background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.change">Change PIN</button>
+            <button type="button" id="appLockOffBtn" onclick="_appLockAction('off')" style="display:none;padding:8px 12px;min-height:44px;background:white;color:#b02a37;border:2px solid #dc3545;border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.turnOff">Turn off</button>
+          </div>
+          <div id="appLockRowStatus" role="status" aria-live="polite" style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;line-height:1.4;"></div>
         </div>
 
         <!-- Guest-only: signing in is optional and only backs up data (hidden once signed in) -->

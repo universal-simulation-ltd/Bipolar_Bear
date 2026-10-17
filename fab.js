@@ -479,6 +479,7 @@
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:12px;" data-i18n="fab.security.title">How your data stays safe</div>
           <div style="text-align:left;font-size:0.84em;color:#495057;line-height:1.65;margin-bottom:16px;">
             <p style="margin-bottom:8px;" data-i18n-html="fab.security.pinBody"><strong>🔑 Your PIN</strong> locks the app locally on your device. Without it, nobody can open Bipolar Bear — even if they have your phone.</p>
+            <p id="securityNoPinNote" style="display:none;margin-bottom:8px;" data-i18n-html="pin143.securityNoPin"><strong>📱 No PIN</strong>: without an account or a PIN, your entries are stored on this phone without encryption. Set a PIN in the journal's Settings to encrypt them.</p>
             <p style="margin-bottom:8px;" data-i18n-html="fab.security.passwordBody"><strong>🔒 Encrypted on your device</strong>: your journal entries are scrambled before they ever leave it.</p>
             <p style="margin-bottom:8px;" data-i18n-html="fab.security.firebaseBody"><strong>☁️ Firebase (our database)</strong> stores only the encrypted version. By default we keep a spare key, so your journal opens on your new devices. Turn on <strong>Private journal</strong> in Settings and only your journal password opens it: not even we can.</p>
             <p style="margin-bottom:0;" data-i18n-html="fab.security.e2eeBody"><strong>🛡️ Encrypted at every step</strong>: on your device, in transit, and in storage.</p>
@@ -1118,7 +1119,29 @@
   /** @returns {void} */
   window.closeChatModal = function () { document.getElementById('chatModal').classList.remove('open'); };
   /** @returns {void} */
-  window.openSecurityModal = function () { document.getElementById('securityModal').classList.add('open'); };
+  window.openSecurityModal = function () {
+    // A guest who chose "Continue without a PIN" (pin143): their entries are
+    // stored on this phone unencrypted, so say so here.
+    var note = document.getElementById('securityNoPinNote');
+    if (note) {
+      var noPin = false;
+      try {
+        var signed = !!window.currentUser || localStorage.getItem('bbSignedInHint') === '1';
+        for (var i = 0; !signed && i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf('firebase:authUser:') === 0 && localStorage.getItem(k)) signed = true;
+        }
+        noPin = !signed && localStorage.getItem('bbGuestNoPin') === '1' && !localStorage.getItem('bbGuestPinSalt');
+      } catch (_) {}
+      note.style.display = noPin ? '' : 'none';
+      // Without a PIN these three aren't true of this guest's entries.
+      ['fab.security.pinBody', 'fab.security.passwordBody', 'fab.security.e2eeBody'].forEach(function (k) {
+        var el = document.querySelector('#securityModal [data-i18n-html="' + k + '"]');
+        if (el) el.style.display = noPin ? 'none' : '';
+      });
+    }
+    document.getElementById('securityModal').classList.add('open');
+  };
   /** @returns {void} */
   window.closeSecurityModal = function () { document.getElementById('securityModal').classList.remove('open'); };
 

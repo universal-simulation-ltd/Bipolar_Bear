@@ -1115,7 +1115,7 @@ function _tt(k, vars, fallback) {
         'bbAdvancedBadgePending', 'bbAdvancedBadgeVisible',
         'bb_fmTapHoldHintPending', 'bb_fmTapHoldHintReady',
         'bbHasEntries', 'bbFeedbackFabHidden', 'bbWaFabHidden', 'bbReviewFabHidden', 'bbGameFabHidden', 'bbFooterHidden', 'bbFabStateAt',
-        'bbPinEnabled', 'bbPinCode',
+        'bbPinEnabled', 'bbPinCode', 'bbGuestNoPin',
         'bbWelcomeShown',
         'focusedModeEnabled', 'moreDataOpenByDefault', 'showMoodSuggestion',
         'moodLinkingEnabled', 'bb_draft',
@@ -2528,22 +2528,14 @@ function _tt(k, vars, fallback) {
             }
           }
         } else {
+          // Encrypted under the PIN key when the guest has a PIN (and never
+          // plaintext while it is locked); plain JSON when they chose to go
+          // without one (pin143, _guestStoreValue).
           if (editingEntry) {
             const key = editingEntry.id || `entry:${editingEntry.timestamp}`;
-            if (_guestCryptoKey) {
-              const enc = await _guestEncrypt(_guestCryptoKey, { ...editingEntry, ...entry });
-              localStorage.setItem(key, JSON.stringify(enc));
-            } else {
-              localStorage.setItem(key, JSON.stringify({ ...editingEntry, ...entry }));
-            }
+            localStorage.setItem(key, await _guestStoreValue({ ...editingEntry, ...entry }));
           } else {
-            const entryKey = `entry:${entry.timestamp}`;
-            if (_guestCryptoKey) {
-              const enc = await _guestEncrypt(_guestCryptoKey, entry);
-              localStorage.setItem(entryKey, JSON.stringify(enc));
-            } else {
-              localStorage.setItem(entryKey, JSON.stringify(entry));
-            }
+            localStorage.setItem(`entry:${entry.timestamp}`, await _guestStoreValue(entry));
           }
         }
         
@@ -2709,10 +2701,11 @@ function _tt(k, vars, fallback) {
       }
       // A signed-in account still being restored is not a guest.
       if (!currentUser && !(await _gateGuestSave())) { _savingEntry = false; return; }
-      // Guest PIN: require PIN creation before first save.
-      // Also triggers if bbPinEnabled='1' but no salt — stale data from the old optional
+      // Guest PIN: ask before the first save — set a PIN (entries encrypted)
+      // or continue without one (pin143: plain entries, bbGuestNoPin='1').
+      // Also asks if bbPinEnabled='1' but no salt — stale data from the old optional
       // PIN feature that has no encryption. Treat it as "no PIN" and set up fresh.
-      if (!currentUser && (BB.storage.get('PinEnabled') !== '1' || !BB.storage.get('GuestPinSalt'))) {
+      if (!currentUser && !_guestStorageReady()) {
         _savingEntry = false;
         _showGuestPinSetup(async () => {
           _savingEntry = true;
@@ -2818,6 +2811,7 @@ function _tt(k, vars, fallback) {
         // Remove local copies and clean up guest PIN data
         guestEntries.forEach(({ localKey }) => localStorage.removeItem(localKey));
         BB.storage.remove('GuestPinSalt');
+        BB.storage.remove('GuestNoPin'); // the guest's no-PIN choice goes with the entries
         BB.storage.remove('PinEnabled');
         BB.storage.remove('PinCode');
         sessionStorage.removeItem('bb_guest_key');
@@ -2908,6 +2902,7 @@ function _tt(k, vars, fallback) {
             _guestCryptoKey = await _guestImportKeyFromSession();
           }
           let _lockedEntryCount = 0;
+          let _guestPlainCount = 0;
           try {
             for (let i = 0; i < localStorage.length; i++) {
               const key = localStorage.key(i);
@@ -2925,6 +2920,9 @@ function _tt(k, vars, fallback) {
                         _lockedEntryCount++;
                       }
                     } else {
+                      // Plain: a guest without a PIN (pin143), or one from
+                      // before the PIN, or a Set / Remove PIN that stopped.
+                      _guestPlainCount++;
                       entries.push({ id: key, ...parsed });
                     }
                   }
@@ -2942,6 +2940,15 @@ function _tt(k, vars, fallback) {
             } catch(clearError) {
               alert(BB.t('journal.dlg.storageClearFail'));
             }
+          }
+          // A PIN is set and unlocked but some entries are still plain (a Set
+          // a PIN that stopped part-way, or entries older than the PIN):
+          // encrypt them now. Idempotent, and never beside a Set / Remove.
+          if (_guestPlainCount && _guestCryptoKey && _guestHasPin() && !_guestConvertBusy) {
+            _guestConvertBusy = true;
+            _guestEncryptAll(_guestCryptoKey)
+              .catch(e => console.warn('Guest entry encryption stopped; it carries on next load', e))
+              .finally(() => { _guestConvertBusy = false; });
           }
         }
 
@@ -4315,6 +4322,110 @@ function _tt(k, vars, fallback) {
     let _guestPinSetupFirst = '';
     let _guestPinSetupStep = 'set'; // 'set' | 'confirm'
     let _guestPinSetupCallback = null;
+    // 'first': the first-save sheet (choose: set a PIN, or go without one).
+    // 'set' / 'remove': Settings → 🔒 PIN, straight to the keypad.
+    let _guestPinSetupMode = 'first';
+    // true while every entry is being encrypted / decrypted (Set / Remove PIN,
+    // or the load sweep), so two of them never run at once.
+    var _guestConvertBusy = false;
+
+    // ── A guest with a PIN, or without one (pin143, James 2026-10-17) ──
+    // With a PIN (bbGuestPinSalt) every entry:* is encrypted with a key made
+    // from it. "Continue without a PIN" sets bbGuestNoPin='1' and entries are
+    // plain JSON, as guests' were before the PIN. Settings → 🔒 PIN switches
+    // between the two (_guestEncryptAll / _guestDecryptAll). DOCS §2.7.
+    function _guestHasPin() { return !!BB.storage.get('GuestPinSalt'); }
+    function _guestChoseNoPin() { return !_guestHasPin() && BB.storage.get('GuestNoPin') === '1'; }
+    /** May a guest save now without being asked first? */
+    function _guestStorageReady() {
+      return (BB.storage.get('PinEnabled') === '1' && _guestHasPin()) || _guestChoseNoPin();
+    }
+    /**
+     * The localStorage value for a guest entry: encrypted under the PIN key
+     * when there is a PIN (throws if it is locked: never plaintext then),
+     * plain JSON when there isn't.
+     */
+    async function _guestStoreValue(plain) {
+      if (_guestHasPin()) {
+        if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
+        if (!_guestCryptoKey) throw new Error('The PIN key is not unlocked');
+        return JSON.stringify(await _guestEncrypt(_guestCryptoKey, plain));
+      }
+      return JSON.stringify(plain);
+    }
+    /** Every entry:* key on this device, as [key, raw string]. */
+    function _guestEntryRaws() {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('entry:')) out.push([k, localStorage.getItem(k)]);
+      }
+      return out;
+    }
+    function _guestConvertError(e, done, total) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      err.done = done; err.total = total;
+      return err;
+    }
+    /**
+     * Set a PIN: encrypt every plain guest entry under `key`. Failure-safe:
+     * each entry is encrypted and opened again to check it, then written over
+     * its plain copy under the same key (setItem replaces a value in one
+     * step, so an entry is always its old copy or its new one, never
+     * neither), and only if nothing else changed it meanwhile. Entries that
+     * are already encrypted are skipped, so running it again finishes the
+     * job. Resolves { done, total }; throws with err.done / err.total.
+     */
+    async function _guestEncryptAll(key, onProgress) {
+      const todo = [];
+      for (const [k, raw] of _guestEntryRaws()) {
+        let p = null;
+        try { p = JSON.parse(raw || 'null'); } catch (_) { continue; } // unreadable: left as it is
+        if (p && typeof p === 'object' && !p._enc) todo.push([k, raw, p]);
+      }
+      const total = todo.length;
+      let done = 0;
+      for (const [k, raw, p] of todo) {
+        try {
+          const enc = await _guestEncrypt(key, p);
+          const back = await _guestDecrypt(key, enc);
+          if (JSON.stringify(back) !== JSON.stringify(p)) throw new Error('Encrypted copy did not match');
+          if (localStorage.getItem(k) === raw) localStorage.setItem(k, JSON.stringify(enc));
+        } catch (e) { throw _guestConvertError(e, done, total); }
+        done++;
+        if (onProgress) onProgress(done, total);
+      }
+      return { done, total };
+    }
+    /**
+     * Remove the PIN: decrypt every encrypted guest entry. First every one
+     * is opened with `key`; if any won't open, nothing is written (err.locked
+     * = how many), so removing the PIN can never strand an entry. Then each
+     * is written back plain over its encrypted copy, as _guestEncryptAll
+     * does. Idempotent. Resolves { done, total }; throws with err.done / err.total.
+     */
+    async function _guestDecryptAll(key, onProgress) {
+      const todo = [];
+      let locked = 0;
+      for (const [k, raw] of _guestEntryRaws()) {
+        let p = null;
+        try { p = JSON.parse(raw || 'null'); } catch (_) { continue; }
+        if (!p || typeof p !== 'object' || !p._enc) continue;
+        try { todo.push([k, raw, await _guestDecrypt(key, p)]); } catch (_) { locked++; }
+      }
+      if (locked) { const err = _guestConvertError(new Error('Some entries do not open with this PIN'), 0, todo.length + locked); err.locked = locked; throw err; }
+      const total = todo.length;
+      let done = 0;
+      for (const [k, raw, plain] of todo) {
+        try {
+          const v = JSON.stringify(plain);
+          if (localStorage.getItem(k) === raw) localStorage.setItem(k, v);
+        } catch (e) { throw _guestConvertError(e, done, total); }
+        done++;
+        if (onProgress) onProgress(done, total);
+      }
+      return { done, total };
+    }
 
     async function _guestDeriveKey(pin, saltB64) {
       const saltBytes = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
@@ -4360,19 +4471,99 @@ function _tt(k, vars, fallback) {
       } catch (e) { return null; }
     }
 
-    function _showGuestPinSetup(callback) {
+    /**
+     * The guest PIN sheet (#guestPinSetupOverlay).
+     *  • 'first' (default): before a guest's first save. It asks first: "Set a
+     *    PIN (recommended)" opens the keypad; "Continue without a PIN" saves
+     *    unencrypted from now on (bbGuestNoPin='1'); "Not now" saves nothing.
+     *    `callback` runs once a PIN is set or the guest went without one.
+     *  • 'set': Settings → Set a PIN. Keypad straight away; `callback` runs
+     *    once the PIN is saved (it encrypts every entry).
+     *  • 'remove': Settings → Remove PIN. Asks for the PIN; `callback(key)`
+     *    gets the PIN's key once it is right.
+     */
+    function _showGuestPinSetup(callback, mode) {
       _guestPinSetupCallback = callback;
+      _guestPinSetupMode = mode || 'first';
       _guestPinSetupBuffer = '';
       _guestPinSetupFirst = '';
       _guestPinSetupStep = 'set';
       const overlay = document.getElementById('guestPinSetupOverlay');
       if (overlay) {
-        document.getElementById('guestPinSetupTitle').textContent = BB.t('journal.mods.protectData');
-        document.getElementById('guestPinSetupDesc').textContent = BB.t('journal.mods.choosePinDesc');
-        document.getElementById('guestPinSetupError').textContent = '';
-        _renderPinDots('guestPinSetupDots', 0, false);
+        _guestPinSheetReset();
         overlay.style.display = 'flex';
       }
+    }
+
+    // Title, line and step for the sheet's mode (also after a mismatch / Back).
+    function _guestPinSheetReset() {
+      const mode = _guestPinSetupMode;
+      const titleEl = document.getElementById('guestPinSetupTitle');
+      const descEl = document.getElementById('guestPinSetupDesc');
+      if (mode === 'remove') {
+        titleEl.textContent = BB.t('pin143.removeTitle');
+        descEl.textContent = BB.t('pin143.removeEnter');
+      } else {
+        titleEl.textContent = BB.t('journal.mods.protectData');
+        descEl.textContent = BB.t(mode === 'first' ? 'pin143.choiceDesc' : 'journal.mods.choosePinDesc');
+      }
+      document.getElementById('guestPinSetupError').textContent = '';
+      _renderPinDots('guestPinSetupDots', 0, false);
+      const back = document.getElementById('guestPinPadBack');
+      if (back) back.textContent = BB.t(mode === 'first' ? 'common.back' : 'common.cancel');
+      const note = document.getElementById('guestPinPadNote');
+      if (note) note.style.display = mode === 'remove' ? 'none' : '';
+      _guestPinShowStep(mode === 'first' ? 'choice' : 'pad');
+    }
+
+    function _guestPinShowStep(step) {
+      const choice = document.getElementById('guestPinChoice');
+      const pad = document.getElementById('guestPinPad');
+      if (choice) choice.style.display = step === 'choice' ? 'flex' : 'none';
+      if (pad) pad.style.display = step === 'pad' ? 'flex' : 'none';
+      const focus = document.getElementById(step === 'choice' ? 'guestPinChoiceSet' : 'guestPinPadBack');
+      if (focus) { try { focus.focus({ preventScroll: true }); } catch (_) {} }
+    }
+
+    /** "Set a PIN (recommended)": the keypad, as before. */
+    function guestPinChooseSet() {
+      _guestPinSetupBuffer = '';
+      _guestPinSetupFirst = '';
+      _guestPinSetupStep = 'set';
+      document.getElementById('guestPinSetupDesc').textContent = BB.t('journal.mods.choosePinDesc');
+      document.getElementById('guestPinSetupError').textContent = '';
+      _renderPinDots('guestPinSetupDots', 0, false);
+      _guestPinShowStep('pad');
+    }
+
+    /**
+     * "Continue without a PIN": remembered (bbGuestNoPin), so the sheet
+     * doesn't ask again; this entry and the next ones are saved as plain
+     * JSON on this device. Settings → 🔒 PIN can add one later.
+     */
+    function guestPinChooseNone() {
+      BB.storage.set('GuestNoPin', '1');
+      _closeGuestPinSheet(true);
+    }
+
+    /** The keypad's Back (first save: to the choice) / Cancel (Settings). */
+    function guestPinPadBack() {
+      if (_guestPinSetupMode !== 'first') { guestPinSetupCancel(); return; }
+      _guestPinSetupBuffer = '';
+      _guestPinSetupFirst = '';
+      _guestPinSetupStep = 'set';
+      _guestPinSheetReset();
+    }
+
+    function _closeGuestPinSheet(runCallback, arg) {
+      const overlay = document.getElementById('guestPinSetupOverlay');
+      if (overlay) overlay.style.display = 'none';
+      const cb = _guestPinSetupCallback;
+      _guestPinSetupCallback = null;
+      _guestPinSetupBuffer = '';
+      _guestPinSetupFirst = '';
+      _guestPinSetupStep = 'set';
+      if (runCallback && cb) cb(arg);
     }
 
     function guestPinSetupDel() {
@@ -4382,6 +4573,9 @@ function _tt(k, vars, fallback) {
     }
 
     async function guestPinSetupKey(digit) {
+      const errEl = document.getElementById('guestPinSetupError');
+      // Removing the PIN starts by checking it: the same lockout as the keypad.
+      if (_guestPinSetupMode === 'remove' && BB.pin.guard(errEl)) return;
       if (_guestPinSetupBuffer.length >= 4) return;
       _guestPinSetupBuffer += digit;
       _renderPinDots('guestPinSetupDots', _guestPinSetupBuffer.length, false);
@@ -4389,7 +4583,29 @@ function _tt(k, vars, fallback) {
 
       const titleEl = document.getElementById('guestPinSetupTitle');
       const descEl = document.getElementById('guestPinSetupDesc');
-      const errEl = document.getElementById('guestPinSetupError');
+
+      if (_guestPinSetupMode === 'remove') {
+        const entered = _guestPinSetupBuffer;
+        let check = { ok: false };
+        try { check = await BB.pin.verify(entered, BB.storage.get('PinCode')); } catch (_) {}
+        const salt = BB.storage.get('GuestPinSalt');
+        if (check.ok && salt) {
+          BB.pin.clearFailures();
+          let key = null;
+          try { key = await _guestDeriveKey(entered, salt); } catch (e) { console.error('Guest key derive failed', e); }
+          _closeGuestPinSheet(!!key, key);
+        } else {
+          const locked = BB.pin.recordFailure();
+          errEl.textContent = BB.t('pin.incorrect');
+          setTimeout(() => {
+            _guestPinSetupBuffer = '';
+            _renderPinDots('guestPinSetupDots', 0, false);
+            errEl.textContent = '';
+            if (locked) BB.pin.guard(errEl);
+          }, 800);
+        }
+        return;
+      }
 
       if (_guestPinSetupStep === 'set') {
         _guestPinSetupFirst = _guestPinSetupBuffer;
@@ -4404,6 +4620,7 @@ function _tt(k, vars, fallback) {
           const saltBytes = crypto.getRandomValues(new Uint8Array(16));
           const saltB64 = btoa(String.fromCharCode(...saltBytes));
           BB.storage.set('GuestPinSalt', saltB64);
+          BB.storage.remove('GuestNoPin');
           BB.storage.set('PinEnabled', '1');
           BB.storage.set('PinCode', await BB.pin.hash(_guestPinSetupFirst));
           BB.pin.clearFailures();
@@ -4413,13 +4630,7 @@ function _tt(k, vars, fallback) {
           try { BB.platform.syncWidgetMoods(); } catch (_) {}
           _guestCryptoKey = await _guestDeriveKey(_guestPinSetupFirst, saltB64);
           await _guestExportKeyToSession(_guestCryptoKey);
-          const overlay = document.getElementById('guestPinSetupOverlay');
-          if (overlay) overlay.style.display = 'none';
-          if (_guestPinSetupCallback) {
-            const cb = _guestPinSetupCallback;
-            _guestPinSetupCallback = null;
-            cb();
-          }
+          _closeGuestPinSheet(true);
         } else {
           errEl.textContent = BB.t('journal.mods.pinMismatch');
           setTimeout(() => {
@@ -4441,7 +4652,7 @@ function _tt(k, vars, fallback) {
       const toDelete = [];
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k && (k.startsWith('entry:') || k === 'bbPinCode' || k === 'bbPinEnabled' || k === 'bbGuestPinSalt')) toDelete.push(k);
+        if (k && (k.startsWith('entry:') || k === 'bbPinCode' || k === 'bbPinEnabled' || k === 'bbGuestPinSalt' || k === 'bbGuestNoPin')) toDelete.push(k);
       }
       toDelete.forEach(k => localStorage.removeItem(k));
       sessionStorage.removeItem('bb_guest_key');
@@ -4453,24 +4664,122 @@ function _tt(k, vars, fallback) {
     }
 
     /**
-     * "Not now" on the guest PIN screen. Nothing is saved without the PIN (it
-     * is the key the entry is encrypted with), so the save simply doesn't run:
-     * the entry stays open as it was, and saveDraft() keeps a draft where
-     * drafts are allowed. The screen says so before the tap.
+     * "Not now" on the first-save sheet: neither choice is made, so the save
+     * doesn't run: the entry stays open as it was, and saveDraft() keeps a
+     * draft where drafts are allowed. The sheet says so before the tap.
+     * From Settings it is Cancel: nothing changes.
      */
     function guestPinSetupCancel() {
-      _guestPinSetupCallback = null;
-      _guestPinSetupBuffer = '';
-      _guestPinSetupFirst = '';
-      _guestPinSetupStep = 'set';
-      const overlay = document.getElementById('guestPinSetupOverlay');
-      if (overlay) overlay.style.display = 'none';
-      try { saveDraft(); } catch (_) {}
+      const wasFirst = _guestPinSetupMode === 'first';
+      _closeGuestPinSheet(false);
+      if (wasFirst) { try { saveDraft(); } catch (_) {} }
+    }
+
+    // ── Settings → 🔒 PIN (guests only) ──
+    // No PIN: "Set a PIN" asks for one, then encrypts every entry on this
+    // device. A PIN: "Remove PIN" asks for it, warns, decrypts every entry,
+    // then forgets the PIN. Both are failure-safe (see _guestEncryptAll /
+    // _guestDecryptAll): a stop part-way loses nothing, and doing it again
+    // finishes it. Drafts (bb_draft) were never encrypted, so they stay as
+    // they are.
+    function _syncGuestPinRow(status) {
+      const row = document.getElementById('guestPinRow');
+      if (!row) return;
+      row.style.display = currentUser ? 'none' : '';
+      if (currentUser) return;
+      const has = _guestHasPin();
+      const desc = document.getElementById('guestPinRowDesc');
+      const btn = document.getElementById('guestPinRowBtn');
+      if (desc) desc.textContent = BB.t(has ? 'pin143.rowOn' : 'pin143.rowOff');
+      if (btn) {
+        btn.textContent = BB.t(has ? 'pin143.remove' : 'pin143.set');
+        btn.disabled = !!_guestConvertBusy;
+      }
+      const st = document.getElementById('guestPinRowStatus');
+      if (st && status !== undefined) st.textContent = status;
+    }
+
+    async function _guestPinRowAction() {
+      if (currentUser || _guestConvertBusy) return;
+      if (!(await _gateGuestSave())) return; // an account still being restored is not a guest
+      if (_guestHasPin()) {
+        _showGuestPinSetup(key => { _guestRemovePin(key); }, 'remove');
+      } else {
+        _showGuestPinSetup(() => { _guestEncryptAfterSet(); }, 'set');
+      }
+    }
+
+    function _guestFailText(e) {
+      if (e && e.locked) return BB.t('pin143.removeLocked', { n: e.locked });
+      return BB.t('pin143.failPartial', { done: (e && e.done) || 0, total: (e && e.total) || 0 });
+    }
+
+    /** After Set a PIN in Settings: the PIN is saved; encrypt everything. */
+    async function _guestEncryptAfterSet() {
+      if (!_guestCryptoKey) return;
+      _guestConvertBusy = true;
+      _syncGuestPinRow(BB.t('pin143.working'));
+      let status = '';
+      try {
+        await _guestEncryptAll(_guestCryptoKey);
+        status = BB.t('pin143.setDone');
+      } catch (e) {
+        console.error('Encrypting guest entries stopped', e);
+        status = _guestFailText(e);
+        alert(status);
+      } finally {
+        _guestConvertBusy = false;
+        _syncGuestPinRow(status);
+        loadEntries();
+      }
+    }
+
+    /** After Remove PIN's keypad: warn, decrypt everything, then forget the PIN. */
+    async function _guestRemovePin(key) {
+      if (!key || !_guestHasPin()) return;
+      if (!confirm(BB.t('pin143.removeConfirm'))) return;
+      _guestConvertBusy = true;
+      _syncGuestPinRow(BB.t('pin143.working'));
+      let status = '';
+      try {
+        // An entry saved while this ran is encrypted too: go again until none
+        // is left, then forget the PIN with no await in between.
+        let left = true;
+        for (let pass = 0; pass < 3 && left; pass++) {
+          await _guestDecryptAll(key);
+          left = _guestEntryRaws().some(([, raw]) => { try { return !!(JSON.parse(raw || 'null') || {})._enc; } catch (_) { return false; } });
+        }
+        if (left) throw new Error('Entries were still being saved');
+        // Every entry is plain now: only then does the PIN go.
+        BB.storage.remove('GuestPinSalt');
+        BB.storage.remove('PinCode');
+        BB.storage.remove('PinEnabled');
+        BB.storage.remove('PinLinkedUID');
+        BB.storage.set('GuestNoPin', '1');
+        BB.pin.clearFailures();
+        sessionStorage.removeItem('bb_guest_key');
+        sessionStorage.setItem('bbPinUnlocked', '1');
+        _guestCryptoKey = null;
+        status = BB.t('pin143.removeDone');
+      } catch (e) {
+        console.error('Decrypting guest entries stopped', e);
+        status = _guestFailText(e);
+        alert(status);
+      } finally {
+        _guestConvertBusy = false;
+        _syncGuestPinRow(status);
+        await loadEntries(); // also writes the home mood strip again, now allowed
+        try { BB.platform.syncWidgetMoods(); } catch (_) {}
+      }
     }
 
     window.guestPinSetupKey = guestPinSetupKey;
     window.guestPinSetupDel = guestPinSetupDel;
     window.guestPinSetupCancel = guestPinSetupCancel;
+    window.guestPinChooseSet = guestPinChooseSet;
+    window.guestPinChooseNone = guestPinChooseNone;
+    window.guestPinPadBack = guestPinPadBack;
+    window._guestPinRowAction = _guestPinRowAction;
 
     // Widget deep link (bipolarbear://journal) while the journal is already
     // open: only the home page listened, so the tap did nothing visible. Here
@@ -4636,11 +4945,17 @@ function _tt(k, vars, fallback) {
       document.getElementById('pinSetupModal').classList.remove('active');
       _pinSetupBuffer = '';
       _nativePinSetupMode = false;
+      _appLockMode = null;
+      const forgotBtn = document.getElementById('pinSetupForgotBtn');
+      if (forgotBtn) forgotBtn.style.display = 'none';
+      _syncAppLockRow();
       const disableBtn = document.getElementById('pinDisableBtn');
       if (disableBtn) disableBtn.onclick = disablePin;
     }
 
     async function pinSetupKey(digit) {
+      // App lock (pin143): Turn off / Change start by checking the current PIN.
+      if (_appLockMode) { await _appLockKey(digit); return; }
       // Changing the PIN starts by checking the current one: same lockout.
       if (_pinSetupStep === 'confirm_old' && BB.pin.guard(document.getElementById('pinSetupError'))) return;
       if (_pinSetupBuffer.length >= 4) return;
@@ -4745,13 +5060,151 @@ function _tt(k, vars, fallback) {
     // ── Native app-wide PIN ──
     let _nativePinSetupMode = false;
 
+    // ── Settings → 🔒 App lock (PIN), signed in (pin143, 2026-10-17) ──
+    // One row for the lock screen a signed-in user can have:
+    //  • in the phone app, this phone's app PIN (bbNativePinEnabled, the PIN
+    //    in the Keychain as bb_native_pin), which locks home, the journal and
+    //    the survival kit. Per phone: it is never synced.
+    //  • the account PIN older builds kept (bbPinEnabled + bbPinCode, synced
+    //    as userSettings.pinEnabled + pinHash). This build only reads it, so
+    //    it is offered only to turn off; that syncs pinEnabled:false and
+    //    deletes pinHash, and every device clears its copy on its next load
+    //    (the auth listener takes the account's value, never pushes its own).
+    // Off by default. Turning it off or changing it asks for the current PIN
+    // first; "Forgot PIN?" there takes the phone's own lock or the account
+    // instead (BB.pinReauth), as the lock screen does.
+    var _appLockMode = null; // null | 'off' | 'change'
+    var _appLockTurnedOff = false;
+    function _appLockNativeOn() { return isNative() && BB.storage.get('NativePinEnabled') === '1'; }
+    function _appLockAccountOn() { return BB.storage.get('PinEnabled') === '1' && !!BB.storage.get('PinCode') && !_guestHasPin(); }
+    function _syncAppLockRow(status) {
+      const row = document.getElementById('appLockRow');
+      if (!row) return;
+      const nat = isNative();
+      const on = _appLockNativeOn() || _appLockAccountOn();
+      // On the web the row is only for turning an account PIN off; it stays
+      // up this session afterwards, to say it is done.
+      const show = !!currentUser && (nat || on || _appLockTurnedOff);
+      row.style.display = show ? '' : 'none';
+      if (!show) return;
+      const desc = document.getElementById('appLockRowDesc');
+      if (desc) desc.textContent = BB.t(on ? 'pin143.lockOn' : 'pin143.lockOff');
+      const vis = (id, v) => { const b = document.getElementById(id); if (b) b.style.display = v ? '' : 'none'; };
+      vis('appLockSetBtn', !on && nat);
+      vis('appLockChangeBtn', on && nat && _appLockNativeOn());
+      vis('appLockOffBtn', on);
+      const st = document.getElementById('appLockRowStatus');
+      if (st && status !== undefined) st.textContent = status;
+    }
+    function _appLockAction(what) {
+      if (!currentUser) return;
+      if (what === 'set') {
+        if (!isNative()) return;
+        openNativePinSettings();
+        const disableBtn = document.getElementById('pinDisableBtn');
+        if (disableBtn) disableBtn.style.display = 'none';
+        return;
+      }
+      if (!(_appLockNativeOn() || _appLockAccountOn())) { _syncAppLockRow(); return; }
+      _appLockMode = what === 'change' ? 'change' : 'off';
+      _nativePinSetupMode = false;
+      _pinSetupBuffer = '';
+      _pinSetupFirst = '';
+      _pinSetupStep = 'set';
+      document.getElementById('pinSetupTitle').textContent = BB.t(_appLockMode === 'off' ? 'pin143.lockOffTitle' : 't143.pin.changeTitle');
+      document.getElementById('pinSetupDesc').textContent = BB.t(_appLockMode === 'off' ? 'pin143.lockOffEnter' : 't143.pin.enterCurrent');
+      document.getElementById('pinSetupError').textContent = '';
+      _renderPinDots('pinSetupDots', 0, true);
+      const disableBtn = document.getElementById('pinDisableBtn');
+      if (disableBtn) disableBtn.style.display = 'none';
+      const forgotBtn = document.getElementById('pinSetupForgotBtn');
+      if (forgotBtn) forgotBtn.style.display = _appLockMode === 'off' ? 'block' : 'none';
+      document.getElementById('pinSetupModal').classList.add('active');
+      BB.pin.guard(document.getElementById('pinSetupError'));
+    }
+    /** Is `pin` the current app lock PIN? The phone's (Keychain) when it is on, else the account's. */
+    async function _appLockVerify(pin) {
+      if (_appLockNativeOn()) {
+        const _ss = window.Capacitor?.Plugins?.SecureStorage;
+        if (!_ss) return false;
+        const stored = await Promise.race([
+          _ss.getItem('bb_native_pin'),
+          new Promise(r => setTimeout(() => r(null), 3000)),
+        ]).catch(() => null);
+        return !!stored && pin === stored;
+      }
+      try { return (await BB.pin.verify(pin, BB.storage.get('PinCode'))).ok; } catch (_) { return false; }
+    }
+    async function _appLockKey(digit) {
+      const errEl = document.getElementById('pinSetupError');
+      if (BB.pin.guard(errEl)) return;
+      if (_pinSetupBuffer.length >= 4) return;
+      _pinSetupBuffer += digit;
+      _renderPinDots('pinSetupDots', _pinSetupBuffer.length, true);
+      if (_pinSetupBuffer.length < 4) return;
+      const entered = _pinSetupBuffer;
+      if (!(await _appLockVerify(entered))) {
+        const locked = BB.pin.recordFailure();
+        errEl.textContent = BB.t('pin.incorrect');
+        setTimeout(() => { _pinSetupBuffer = ''; _renderPinDots('pinSetupDots', 0, true); errEl.textContent = ''; if (locked) BB.pin.guard(errEl); }, 800);
+        return;
+      }
+      BB.pin.clearFailures();
+      _pinSetupBuffer = '';
+      if (_appLockMode === 'off') {
+        await _appLockTurnOff();
+        closePinSetup();
+        _syncAppLockRow(BB.t('pin143.lockOffDone'));
+        return;
+      }
+      // Change: the current PIN was right; now the new one, twice.
+      _appLockMode = null;
+      _nativePinSetupMode = true;
+      _pinSetupFirst = '';
+      _pinSetupStep = 'set';
+      document.getElementById('pinSetupTitle').textContent = BB.t('t143.pin.newTitle');
+      document.getElementById('pinSetupDesc').textContent = BB.t('t143.pin.enterNew');
+      errEl.textContent = '';
+      _renderPinDots('pinSetupDots', 0, true);
+    }
+    /** "Forgot PIN?" while turning the app lock off: the phone's lock or the account instead. */
+    async function _appLockForgot() {
+      if (_appLockMode !== 'off' || !BB.pinReauth) return;
+      const out = await BB.pinReauth.confirm({ device: isNative() });
+      if (out !== 'ok') return;
+      await _appLockTurnOff();
+      closePinSetup();
+      _syncAppLockRow(BB.t('pin143.lockOffDone'));
+    }
+    /** Both locks off: this phone's app PIN, and the account PIN (synced, so every device follows). */
+    async function _appLockTurnOff() {
+      if (BB.storage.get('NativePinEnabled') === '1') {
+        BB.storage.remove('NativePinEnabled');
+        await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
+      }
+      if (!_guestHasPin()) {
+        BB.storage.remove('PinCode');
+        BB.storage.remove('PinEnabled');
+        await _syncPinToFirestore(); // pinEnabled:false, pinHash deleted
+      }
+      BB.pin.clearFailures();
+      _appLockTurnedOff = true;
+      sessionStorage.setItem('bbPinUnlocked', '1');
+      _refreshRecentMoods(); // the home mood strip may show again
+      try { BB.platform.syncWidgetMoods(); } catch (_) {}
+      _updateNativePinBtn();
+      _updatePinSettingsBtn();
+    }
+    window._appLockAction = _appLockAction;
+    window._appLockForgot = _appLockForgot;
+
     function openNativePinSettings() {
       _nativePinSetupMode = true;
       const enabled = BB.storage.get('NativePinEnabled') === '1';
       _pinSetupBuffer = '';
       _pinSetupFirst = '';
       _pinSetupStep = 'set';
-      document.getElementById('pinSetupTitle').textContent = enabled ? BB.t('t143.pin.changeTitle') : '🔒 Set App PIN';
+      document.getElementById('pinSetupTitle').textContent = enabled ? BB.t('t143.pin.changeTitle') : BB.t('journal.mods.setPinTitle');
       document.getElementById('pinSetupDesc').textContent = BB.t('t143.pin.chooseLock');
       document.getElementById('pinSetupError').textContent = '';
       _renderPinDots('pinSetupDots', 0, true);
@@ -4805,11 +5258,14 @@ function _tt(k, vars, fallback) {
     }
 
     // ── Guest inactivity relock (5 min) ──
-    if (BB.storage.get('GuestPinSalt')) {
+    // Checked when it fires too: a PIN set or removed in Settings this
+    // session (pin143) counts without a reload.
+    {
       let _idleTimer;
       function _resetIdleTimer() {
         clearTimeout(_idleTimer);
         _idleTimer = setTimeout(() => {
+          if (currentUser || !_guestHasPin()) return;
           sessionStorage.removeItem('bbPinUnlocked');
           sessionStorage.removeItem('bb_guest_key');
           _guestCryptoKey = null;
@@ -11916,14 +12372,17 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       // Guests: the same PIN gate as a first save; the PIN overlay's callback
       // picks the import back up.
       if (!(await _gateGuestSave())) return false;
-      if (BB.storage.get('PinEnabled') !== '1' || !BB.storage.get('GuestPinSalt')) {
+      if (!_guestStorageReady()) {
         _showGuestPinSetup(() => { resume(); });
         return false;
       }
-      if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
-      if (!_guestCryptoKey) return false;
+      if (_guestHasPin()) {
+        if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
+        if (!_guestCryptoKey) return false;
+      }
+      // Encrypted under the PIN key, or plain for a guest without a PIN.
       for (const entry of entries) {
-        localStorage.setItem(`entry:${entry.timestamp}`, JSON.stringify(await _guestEncrypt(_guestCryptoKey, entry)));
+        localStorage.setItem(`entry:${entry.timestamp}`, await _guestStoreValue(entry));
       }
       return true;
     }
@@ -12696,7 +13155,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
-          'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
+          'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
         ].forEach(k => localStorage.removeItem(k));
@@ -12819,6 +13278,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         BB.storage.remove('PinEnabled');
         BB.storage.remove('PinCode');
         BB.storage.remove('GuestPinSalt');
+        BB.storage.remove('GuestNoPin');
         sessionStorage.removeItem('bbPinUnlocked');
         // Also clear the native Keychain PIN so it can't be reused after account reset
         try { window.Capacitor?.Plugins?.SecureStorage?.removeItem?.('bb_native_pin')?.catch?.(() => {}); } catch(e) {}
@@ -13593,8 +14053,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           const key = editingEntry.id || `entry:${editingEntry.timestamp}`;
           if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
           const { id: _lsId, ...plain } = updated;
-          if (BB.storage.get('PinEnabled') === '1' && !_guestCryptoKey) return; // PIN set but locked: never write plaintext
-          localStorage.setItem(key, JSON.stringify(_guestCryptoKey ? await _guestEncrypt(_guestCryptoKey, plain) : plain));
+          if ((BB.storage.get('PinEnabled') === '1' || _guestHasPin()) && !_guestCryptoKey) return; // PIN set but locked: never write plaintext
+          localStorage.setItem(key, await _guestStoreValue(plain));
         }
         closeEditModal();
         loadEntries();
@@ -14231,9 +14691,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         }
         await batch.commit();
       } else {
+        // Encrypted under the PIN key (throws if it is locked), or plain for
+        // a guest without a PIN.
         for (const entry of entries) {
-          const payload = _guestCryptoKey ? await _guestEncrypt(_guestCryptoKey, entry) : entry;
-          localStorage.setItem(`entry:${entry.timestamp}`, JSON.stringify(payload));
+          localStorage.setItem(`entry:${entry.timestamp}`, await _guestStoreValue(entry));
         }
       }
     }
@@ -14243,12 +14704,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const chosen = _autoFillPlan.filter(p => p.include);
       if (!chosen.length) return;
 
-      // Guests must set a PIN before their first save — it derives the key that
-      // encrypts localStorage entries. saveAndOpenJournal() gates on this too;
-      // without it these entries would be written in the clear. The PIN overlay
-      // sits above the modal, and its callback resumes the fill.
+      // Guests choose before their first save: a PIN (it derives the key that
+      // encrypts localStorage entries) or none (pin143). saveAndOpenJournal()
+      // gates on this too. The PIN sheet sits above the modal, and its
+      // callback resumes the fill.
       if (!currentUser && !(await _gateGuestSave())) return;
-      if (!currentUser && (BB.storage.get('PinEnabled') !== '1' || !BB.storage.get('GuestPinSalt'))) {
+      if (!currentUser && !_guestStorageReady()) {
         _showGuestPinSetup(() => { runAutoFill(); });
         return;
       }
@@ -14650,6 +15111,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       document.getElementById('settingsAdvancedMorePanel').style.display = 'none';
       document.getElementById('settingsAdvancedMore2Panel').style.display = 'none';
 
+      // Guest PIN row / signed-in App lock row (pin143).
+      _syncGuestPinRow('');
+      _syncAppLockRow('');
       // Incognito mode
       document.getElementById('incognitoModeToggle').checked = localStorage.getItem('incognitoMode') === 'true';
       // Private journal: signed in only, and read from the account each time

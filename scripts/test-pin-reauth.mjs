@@ -126,6 +126,8 @@ async function openPage(file, T, { native = null, local = {} } = {}) {
     const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'GET,POST,OPTIONS' };
     if (!u.startsWith(BASE) && route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
     const fulfill = o => route.fulfill({ ...o, headers: { ...CORS, ...(o.headers || {}) } });
+    // The Firebase SDKs are served from vendor/ since v316: stub them there too.
+    if (u.includes('firebasejs/')) return route.fulfill({ contentType: 'text/javascript', body: u.includes('firebase-app-compat') ? FIREBASE_STUB : '' });
     if (u.startsWith(BASE)) {
       if (/service-worker\.js|firebase-messaging-sw\.js/.test(u)) return route.abort();
       return route.continue();

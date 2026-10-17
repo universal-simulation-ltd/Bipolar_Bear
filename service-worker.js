@@ -1672,7 +1672,17 @@
 //   as switched-off trackers instead; nameless ones answered in the last 14
 //   days wait. Old trackers lists named trackers only; trk143.unnamed gone.
 //   BB.i18n.tAll(key). Touches js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v344';
+// v345: a guest can go without a PIN; signed-in App lock (pin143, James
+//   2026-10-17). First-save sheet: "Set a PIN (recommended)" / "Continue
+//   without a PIN" (bbGuestNoPin='1', entries stored plain) / "Not now".
+//   Journal Settings → 🔒 PIN (guests): Set a PIN encrypts every entry,
+//   Remove PIN decrypts them, both failure-safe and idempotent. Settings →
+//   🔒 App lock (PIN) (signed in): the native app PIN (set / change / turn
+//   off) and turning off the account PIN older builds synced. Privacy policy,
+//   welcome page and the 🔐 pop-up say entries are encrypted only with a PIN.
+//   Touches journal.html, js/journal.js, css/journal.css, js/index.js,
+//   index.html, fab.js, js/shared/i18n.js, privacy.html, welcome.html.
+const CACHE_NAME = 'bipolarbear-v345';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
