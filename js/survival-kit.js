@@ -941,7 +941,9 @@ function _skLocale() {
       return JSON.parse(localStorage.getItem('currentMedList') || '[]');
     }
 
-    function saveMedList(list) {
+    // opts: { rename: {from, to} } when an edit changed the name (medHistory, v343).
+    function saveMedList(list, opts) {
+      try { BB.medHistory.record(getMedList(), list, opts); } catch (_) {}
       localStorage.setItem('currentMedList', JSON.stringify(list));
       localStorage.setItem('_sk_savedAt', String(Date.now()));
       if (window.db && window.currentUser) {
@@ -1016,7 +1018,7 @@ function _skLocale() {
         const dosage = document.getElementById('medDosageInput').value.trim();
         if (!name) return;
         list[index] = { ...med, name, dosage };
-        saveMedList(list);
+        saveMedList(list, { rename: { from: med.name, to: name } });
         renderMedList();
         document.getElementById('medNameInput').value = '';
         document.getElementById('medDosageInput').value = '';
@@ -2536,7 +2538,7 @@ function _skLocale() {
         'personalDOB', 'personalMedicalNum', 'personalDiagnosis',
         'personalDiagnosisDate', 'personalAddress', 'personalMobile',
         'personalEmail', 'personalEmergencyContact', 'personalNotes',
-        'currentMedList', 'copingStrategies', 'moodDefinitions',
+        'currentMedList', 'medHistory', 'copingStrategies', 'moodDefinitions',
         'survivalGratitude',
         'bbFirstName', 'bipolarHelpedVoted', 'skAchievementUnlocked',
         // "Already counted in counters/{userCount,anonUserCount}" mirrors —

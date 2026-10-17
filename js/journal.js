@@ -1096,7 +1096,7 @@ function _tt(k, vars, fallback) {
       [
         'trackGoals', 'trackBudget', 'trackExercise', 'trackOutside',
         'trackAnxiety', 'trackAlcohol', 'trackEmotions',
-        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'dailyGoals', 'dailyBudget',
+        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'medHistory', 'dailyGoals', 'dailyBudget',
         'statsStartDate', 'unlockedAchievements',
         'bbOnboardingStep',
         'bbFavAnniShown',
@@ -10342,6 +10342,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           'moodLinkingEnabled', 'customTrackingFields', 'deletedDefaultCustomFields',
           'deletedBuiltinFields', 'trackGoals', 'trackBudget', 'trackExercise',
           'trackOutside', 'trackAnxiety', 'trackAlcohol', 'trackEmotions',
+          'medHistory', // the dated medication changes (v343); merged back in on import
         ];
         const settings = {};
         _settingsKeys.forEach(k => {
@@ -11991,7 +11992,18 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         }
 
         if (settings) {
-          Object.keys(settings).forEach(k => localStorage.setItem(k, settings[k]));
+          Object.keys(settings).forEach(k => { if (k !== 'medHistory') localStorage.setItem(k, settings[k]); });
+          // Medication history: merged with this device's, never replaced; an
+          // account gets it encrypted (js/shared/secure-store.js).
+          if (settings.medHistory) {
+            try {
+              const _mh = typeof settings.medHistory === 'string' ? JSON.parse(settings.medHistory) : settings.medHistory;
+              if (Array.isArray(_mh) && _mh.length) {
+                const _merged = BB.medHistory.mergeIn(_mh);
+                if (currentUser && window.db) BB.secure.saveSettings(currentUser.uid, { medHistory: _merged });
+              }
+            } catch (_) {}
+          }
           if (currentUser && window.db) {
             const _boolKey = v => v === 'true' ? true : v === 'false' ? false : v;
             const fsSettings = {};
@@ -12315,6 +12327,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const added = (meds || []).filter(x => !have.has(String(x.name).toLowerCase()));
         if (added.length) {
           const next = [...list, ...added];
+          _recordMedChange(next, { source: 'import' });
           localStorage.setItem('currentMedList', JSON.stringify(next));
           syncMedListToFirestore(next);
           if (typeof _updateMedBtn === 'function') _updateMedBtn();
@@ -12662,6 +12675,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         localStorage.removeItem('myCommitments');
         localStorage.removeItem('customReminders');
         localStorage.removeItem('currentMedList');
+        localStorage.removeItem('medHistory');
         localStorage.removeItem('dailyGoals');
         localStorage.removeItem('dailyBudget');
         localStorage.removeItem('logoVariant');
@@ -13122,6 +13136,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { try { _updateMedBtn(); } catch (_) {} });
     else { try { _updateMedBtn(); } catch (_) {} }
 
+    // Every change to the medication list goes in the dated medHistory first
+    // (js/shared/secure-store.js, v343); call it before the new list is stored.
+    function _recordMedChange(next, opts) {
+      try { BB.medHistory.record(JSON.parse(localStorage.getItem('currentMedList') || '[]'), next, opts); } catch (_) {}
+    }
+
     function syncMedListToFirestore(list) {
       if (currentUser && db) {
         BB.secure.saveSettings(currentUser.uid, { currentMedList: list });
@@ -13180,6 +13200,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
       const medications = JSON.parse(localStorage.getItem('currentMedList') || '[]');
       medications.push({ name, dosage });
+      _recordMedChange(medications);
       localStorage.setItem('currentMedList', JSON.stringify(medications));
       syncMedListToFirestore(medications);
 
@@ -13193,6 +13214,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
       const medications = JSON.parse(localStorage.getItem('currentMedList') || '[]');
       medications.splice(index, 1);
+      _recordMedChange(medications);
       localStorage.setItem('currentMedList', JSON.stringify(medications));
       syncMedListToFirestore(medications);
       loadMedicationList();
@@ -13793,6 +13815,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const dosage = document.getElementById('newMedDose').value.trim();
         if (!name || !dosage) { alert(BB.t('journal.dlg.fillBothFields')); return; }
         medications[index] = { ...med, name, dosage };
+        _recordMedChange(medications, { rename: { from: med.name, to: name } });
         localStorage.setItem('currentMedList', JSON.stringify(medications));
         syncMedListToFirestore(medications);
         addBtn.innerHTML = originalHTML;

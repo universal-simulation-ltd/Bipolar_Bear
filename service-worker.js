@@ -1655,7 +1655,16 @@
 //   name) and Delete data (the v340 counted confirm and purge, unchanged).
 //   trk143.old.* in 10 languages. Touches css/journal.css, js/journal.js,
 //   js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v342';
+// v343: medication history (groundwork for the 1.44 before/after comparison;
+//   nothing new on screen). BB.medHistory in js/shared/secure-store.js keeps a
+//   dated log (medHistory: baseline / add / stop / dose / rename, source user
+//   or import) of every change to the medication list, written by Survival
+//   Kit, the journal's Manage medications, the Bipolar UK import and the
+//   board's med list; a baseline per medicine on first run. Encrypted in
+//   userSettings.secureEnc only, merged across devices by union, in the
+//   backup, cleared with currentMedList. Touches js/shared/secure-store.js,
+//   js/survival-kit.js, js/journal.js, js/anonymous.js, js/index.js.
+const CACHE_NAME = 'bipolarbear-v343';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

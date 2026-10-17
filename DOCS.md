@@ -181,8 +181,8 @@ userSettings/
                                           moodDefinitions, moodMemories,
                                           copingStrategies, myCommitments,
                                           customReminders, survivalGratitude,
-                                          rememberThis — no longer stored as
-                                          plaintext fields
+                                          rememberThis, medHistory (v343) — no
+                                          longer stored as plaintext fields
     logoVariant         number          — 0|1|2 (easter egg logo index)
     onboardingStep      number          — highest tutorial step reached (0–12)
     tutorialToastShown  bool            — "tutorial complete" popup has been shown
@@ -456,6 +456,8 @@ logoVariant             "0"|"1"|"2"   — cached logo variant
 moodDefinitions         JSON object   — per-mood personal definitions
 copingStrategies        JSON object   — per-mood coping strategies
 currentMedList          JSON array    — cached medication list
+medHistory              JSON array    — dated medication-list changes (v343, §2.20);
+                                        device copy of the encrypted secureEnc field
 dailyGoals              JSON array    — cached goals
 personalName            string        — cached from personalDetails
 personalEmergencyContact string       — cached from personalDetails
@@ -1605,7 +1607,7 @@ edits in the page scripts. Rules tests: `scripts/firestore-rules`
 **Encrypted personal details and survival-kit lists** (`BB.secure`).
 `personalDetails/{uid}` and these `userSettings` fields — `currentMedList,
 moodDefinitions, moodMemories, copingStrategies, myCommitments,
-customReminders, survivalGratitude, rememberThis` — live only inside a
+customReminders, survivalGratitude, rememberThis, medHistory` — live only inside a
 `secureEnc` blob (`{_enc,_iv,v,updatedAt}`, AES-GCM under the journal data
 key, the safety-plan pattern). localStorage keeps the device copy under the
 same keys, so the pages render as before. The key comes from
@@ -1620,6 +1622,37 @@ newer and win; plaintext settings fill only fields the blob lacks (old builds
 re-upload stale device copies through their guest-data claim). The rules
 refuse new plaintext once `legacyClients()` is false. `guest-data.js` now
 claims only goals/budget; the sensitive fields are claimed by secure-store.
+
+**Medication history** (`BB.medHistory`, in `secure-store.js`, v343 — the
+groundwork for the 1.44 before/after mood comparison; nothing on screen
+yet). `medHistory` is a dated log of every change to `currentMedList`:
+`{at: ISO date-time, type: 'baseline'|'add'|'stop'|'dose'|'rename', name,
+from?, to?, source?: 'user'|'import'}`; `from`/`to` are dosages, except for a
+rename (old / new name). A dose change is the same name (case and spaces
+aside) with another dosage; a rename is an edit that changed the name (the
+caller passes `{rename: {from, to}}`). Every writer calls
+`BB.medHistory.record(prev, next, opts)` before storing the new list: Survival
+Kit `saveMedList` (add / edit / delete), the journal's Manage medications
+(`_recordMedChange`: add / edit / delete), the Bipolar UK Mood Tracker
+import (`source: 'import'`), and the board's med list in `anonymous.js`
+(`_anonSaveMedList`, against the account's decrypted list). **Baseline**:
+with no history but a list, one `baseline` event per medicine dated now —
+for a guest when Firebase auth resolves with no user, for an account right
+after the encrypted settings were read (`_settings`, so another device's
+history arrives first), and before the first change otherwise. Sensitive
+like the list: device copy in localStorage, the account copy only inside
+`userSettings.secureEnc` (in `SETTINGS`, so `resetPatch()` clears it); a
+`saveSettings` with `currentMedList` always carries it. Devices merge by
+**union on (at, type, name)** (`UNION_FIELDS` in `syncDoc`, when this device
+patches it or has it pending), oldest first. In the journal backup
+(`settings.medHistory`); a restore merges it in (`mergeIn`), never replaces.
+Cleared on logout and reset / account deletion with `currentMedList`. No
+rules change: it is never a plaintext field (the rules' `sensitiveSettings()`
+list only guards the fields older builds wrote in plaintext). Privacy policy:
+the existing medications line covers it. Test: `node
+scripts/test-med-history.mjs` (one event per add / dose / rename / stop,
+baseline once, backup round-trip, union across two devices, encrypted only,
+pending without a key).
 
 **Board documents carry no uid.** Posts, comments and `bbAnonMonikas` carry
 `owner = sha256(uid + '/' + document path)` — checkable by the rules

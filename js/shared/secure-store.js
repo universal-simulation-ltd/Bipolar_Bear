@@ -16,6 +16,7 @@
  * fields used to sit in Firestore in plaintext:
  *   currentMedList, moodDefinitions, moodMemories, copingStrategies,
  *   myCommitments, customReminders, survivalGratitude, rememberThis
+ * (plus medHistory, v343, which was never anything but encrypted)
  * They are now one AES-GCM blob each — personalDetails/{uid}.secureEnc and
  * userSettings/{uid}.secureEnc — under the journal's data key, the same key
  * and the same Standard / Private model as the journal entries and the safety
@@ -48,7 +49,9 @@
   var root = window;
 
   var SETTINGS = ['currentMedList', 'moodDefinitions', 'moodMemories', 'copingStrategies',
-    'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis'];
+    'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis', 'medHistory'];
+  // Merged rather than replaced when this device has something to add.
+  var UNION_FIELDS = { medHistory: function (a, b) { return mergeHistory(a, b); } };
   var STRING_FIELDS = { rememberThis: true };
   var PERSONAL = ['personalName', 'personalDOB', 'personalMedicalNum', 'personalDiagnosis',
     'personalDiagnosisDate', 'personalAddress', 'personalMobile', 'personalEmail',
@@ -189,11 +192,12 @@
         return decrypt(k, d.secureEnc).catch(function () { throw new Error('bad-key'); }).then(function (blob) {
           var write = {}, changed = false;
           fields.forEach(function (f) {
+            var U = kind === 'settings' && UNION_FIELDS[f];
             if (has(patch, f)) {
-              blob[f] = patch[f]; changed = true;
+              blob[f] = U ? U(blob[f], patch[f]) : patch[f]; changed = true;
             } else if (pend.indexOf(f) >= 0) {
               var lv = readLocal(kind, f);
-              if (lv !== undefined) { blob[f] = lv; changed = true; }
+              if (lv !== undefined) { blob[f] = U ? U(blob[f], lv) : lv; changed = true; }
             } else if (has(d, f)) {
               // Plaintext: unmigrated, or written by an older app build.
               if (kind === 'personal' || !has(blob, f)) { blob[f] = d[f]; changed = true; }
@@ -250,6 +254,8 @@
     return key(uid).then(function (k) {
       if (!k) return { view: plainView(d, 'settings', uid), status: 'no-key' };
       return syncDoc(uid, 'settings', k, null).then(function (blob) {
+        // The account's history is on the device now: start one if it has none.
+        if (ensureBaseline()) save(uid, 'settings', { medHistory: historyGet() });
         return { view: blob, status: 'ok' };
       });
     }).catch(function (e) {
@@ -259,6 +265,11 @@
   }
 
   function save(uid, kind, patch) {
+    // A new medication list always travels with its history.
+    if (kind === 'settings' && patch && has(patch, 'currentMedList') && !has(patch, 'medHistory')) {
+      var h = readLocal('settings', 'medHistory');
+      if (Array.isArray(h) && h.length) { patch = Object.assign({}, patch); patch.medHistory = h; }
+    }
     var fields = Object.keys(patch || {});
     if (!uid || !fields.length || !fs()) return Promise.resolve('error');
     return key(uid).then(function (k) {
@@ -315,6 +326,111 @@
     return out;
   }
 
+  // ── Medication history (v343) ──────────────────────────────────────────────
+  // localStorage `medHistory`: a dated log of every change to the medication
+  // list (currentMedList), the groundwork for comparing moods before / after a
+  // change. Events: {at: ISO date-time, type: 'baseline'|'add'|'stop'|'dose'|
+  // 'rename', name, from?, to?, source?: 'user'|'import'} — `from`/`to` are
+  // dosages, except for a rename, where they are the old / new name. Sensitive
+  // like the list itself: a device copy plus the encrypted secureEnc blob,
+  // never plaintext in Firestore. Devices merge by union on (at, type, name).
+  var MED_TYPES = { baseline: 1, add: 1, stop: 1, dose: 1, rename: 1 };
+  function _medNorm(s) { return String(s == null ? '' : s).trim().toLowerCase(); }
+  function _medDose(m) { return String((m && m.dosage) == null ? '' : m.dosage).trim(); }
+  function _medList(v) {
+    return Array.isArray(v) ? v.filter(function (m) { return m && typeof m === 'object' && String(m.name == null ? '' : m.name).trim(); }) : [];
+  }
+  function _validEvent(e) {
+    return !!e && typeof e === 'object' && typeof e.at === 'string' && !!MED_TYPES[e.type] && typeof e.name === 'string';
+  }
+  function _evKey(e) { return e.at + '|' + e.type + '|' + _medNorm(e.name); }
+  /** a ∪ b on (at, type, name), oldest first. */
+  function mergeHistory(a, b) {
+    var seen = {}, out = [];
+    [].concat(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []).forEach(function (e) {
+      if (!_validEvent(e)) return;
+      var k = _evKey(e);
+      if (seen[k]) return;
+      seen[k] = 1; out.push(e);
+    });
+    out.sort(function (x, y) { return x.at < y.at ? -1 : x.at > y.at ? 1 : 0; });
+    return out;
+  }
+  function historyGet() {
+    var v = readLocal('settings', 'medHistory');
+    return Array.isArray(v) ? v.filter(_validEvent) : [];
+  }
+  function _ev(at, type, name, extra) {
+    var e = { at: at, type: type, name: String(name).trim() };
+    Object.keys(extra || {}).forEach(function (k) { if (extra[k] !== undefined) e[k] = extra[k]; });
+    return e;
+  }
+  function _baselineFor(list, at) {
+    return _medList(list).map(function (m) { var d = _medDose(m); return _ev(at, 'baseline', m.name, d ? { to: d } : null); });
+  }
+  /**
+   * First run after the update: no history yet but a list → one 'baseline'
+   * per medicine, dated now (the person was on them from at least today).
+   * True when it wrote one.
+   */
+  function ensureBaseline() {
+    if (historyGet().length) return false;
+    var list = readLocal('settings', 'currentMedList');
+    if (!_medList(list).length) return false;
+    lsSet('medHistory', JSON.stringify(_baselineFor(list, new Date().toISOString())));
+    return true;
+  }
+  /**
+   * Record the change from `prev` to `next` (both [{name, dosage}]) in the
+   * device history. Call it before the new list is saved; the save that
+   * follows (saveSettings with currentMedList) carries the history up.
+   * opts.source: 'user' (default) | 'import'. opts.rename: {from, to} when an
+   * edit changed a medicine's name. Same name (case aside), other dosage =
+   * 'dose'. Returns the events written.
+   */
+  function record(prev, next, opts) {
+    opts = opts || {};
+    var source = opts.source === 'import' ? 'import' : 'user';
+    var before = _medList(prev).map(function (m) { return { name: String(m.name).trim(), dosage: _medDose(m) }; });
+    var after = _medList(next).map(function (m) { return { name: String(m.name).trim(), dosage: _medDose(m) }; });
+    var hist = historyGet();
+    var at = new Date().toISOString();
+    var out = hist.length ? [] : _baselineFor(before, at);
+    var rn = opts.rename;
+    if (rn && String(rn.from || '').trim() && String(rn.to || '').trim() && _medNorm(rn.from) !== _medNorm(rn.to)) {
+      for (var i = 0; i < before.length; i++) {
+        if (_medNorm(before[i].name) === _medNorm(rn.from)) {
+          out.push(_ev(at, 'rename', rn.to, { from: before[i].name, to: String(rn.to).trim(), source: source }));
+          before[i] = { name: String(rn.to).trim(), dosage: before[i].dosage };
+          break;
+        }
+      }
+    }
+    var used = before.map(function () { return false; });
+    after.forEach(function (m) {
+      for (var j = 0; j < before.length; j++) {
+        if (used[j] || _medNorm(before[j].name) !== _medNorm(m.name)) continue;
+        used[j] = true;
+        if (before[j].dosage !== m.dosage) out.push(_ev(at, 'dose', m.name, { from: before[j].dosage, to: m.dosage, source: source }));
+        return;
+      }
+      out.push(_ev(at, 'add', m.name, { to: m.dosage || undefined, source: source }));
+    });
+    before.forEach(function (m, j) {
+      if (!used[j]) out.push(_ev(at, 'stop', m.name, { from: m.dosage || undefined, source: source }));
+    });
+    var changes = out.filter(function (e) { return e.type !== 'baseline'; });
+    if (!changes.length) return [];
+    lsSet('medHistory', JSON.stringify(mergeHistory(hist, out)));
+    return out;
+  }
+  /** Fold events from elsewhere (a backup) into the device history. Returns the merged list. */
+  function mergeIn(events) {
+    var merged = mergeHistory(historyGet(), events);
+    if (merged.length) lsSet('medHistory', JSON.stringify(merged));
+    return merged;
+  }
+
   // Pending saves go up as soon as a key turns up (the journal puts it in
   // sessionStorage during its own auth listener), so keep trying for a while
   // after sign-in. Fires 'bb:secure-sync' with the views when anything synced.
@@ -339,7 +455,9 @@
       var f = fb();
       if (!f) return;
       f.auth().onAuthStateChanged(function (u) {
-        if (!u || u.isAnonymous) return;
+        // A guest's history lives on the device only: start it now. Accounts
+        // start theirs once the encrypted copy has been read (_settings).
+        if (!u || u.isAnonymous) { try { ensureBaseline(); } catch (_) {} return; }
         var tries = 0;
         (function attempt() {
           _flush(u.uid).then(function (r) {
@@ -352,6 +470,13 @@
   root.addEventListener('load', _watchAuth);
 
   root.BB = root.BB || {};
+  root.BB.medHistory = {
+    get: historyGet,
+    record: record,
+    ensureBaseline: ensureBaseline,
+    merge: mergeHistory,
+    mergeIn: mergeIn,
+  };
   root.BB.secure = {
     SETTINGS: SETTINGS.slice(),
     PERSONAL: PERSONAL.slice(),

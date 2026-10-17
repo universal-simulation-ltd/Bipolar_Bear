@@ -1963,6 +1963,14 @@ async function _anonSaveMedList(list) {
   // Sync back to BB App if the user is signed into BipolarBear
   if (_bbUser && db) {
     try {
+      // The account's list changes too, so it goes in the medication history
+      // (js/shared/secure-store.js, v343): against the account's current list.
+      try {
+        const sec = await BB.secure.settings(_bbUser.uid, null, { timeoutMs: 2500 });
+        let prev = sec && sec.view && sec.view.currentMedList;
+        if (!Array.isArray(prev)) { try { prev = JSON.parse(localStorage.getItem('currentMedList') || '[]'); } catch (_) { prev = []; } }
+        BB.medHistory.record(prev, list);
+      } catch (_) {}
       await BB.secure.saveSettings(_bbUser.uid, { currentMedList: list });
     } catch(e) { console.warn('[Anonymous] medList sync failed', e); }
   }
