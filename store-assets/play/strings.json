@@ -1,0 +1,3538 @@
+{
+ "_comment": "Every word on the Google Play graphics (build.mjs), per app and Play language. head: the headline (\\n breaks a line, *word* is the accent colour); cap: the line under it (on 08-privacy, the big line under the lock); chips: what the app does, hot = the highlighted one; foot: the footnote; ground: orange | yellow | cream | white | dark. tNN are the tablet screens (7\" and 10\"). fg: the feature graphic. The survival-kit word and the moniker word are the app's own in each language (js/shared/i18n.js: Survival-Kit in German, kit de survie in French, Moniker everywhere), chips use the app's own tab and wiki names, and every language speaks to the reader as du/tu/tú/você/jij/ty/你.",
+ "bear": {
+  "en": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Track your moods.\nUnderstand your mind."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Every high.\n*Every low.*",
+     "foot": "A private, encrypted mood journal.\nTrack the patterns, build your survival kit."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Track every\nmood in\nseconds",
+     "foot": "From depressed to manic: how the day really felt, in a couple of taps."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Spot your patterns",
+     "cap": "Connects everything you track",
+     "chips": [
+      "🍺 Alcohol",
+      "😴 Sleep",
+      "⚡ Energy",
+      "😰 Anxiety",
+      "🏃 Exercise",
+      "💊 Meds"
+     ],
+     "hot": 0,
+     "foot": "Insights stay private, worked out on your phone"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Sleep in a tap",
+     "cap": "Or let Health Connect fill it in",
+     "chips": [
+      "😴 Sleep",
+      "👟 Steps",
+      "⚡ Energy",
+      "💊 Meds"
+     ],
+     "hot": 0,
+     "foot": "Works with Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Build your own\n*survival kit*",
+     "cap": "One kit, all your tools",
+     "chips": [
+      "🧠 Coping",
+      "💊 Meds",
+      "🎯 Goals",
+      "🙏 Gratitude",
+      "📚 Reading",
+      "📸 Memories",
+      "🆘 Crisis help"
+     ],
+     "hot": 6,
+     "foot": "Build it your way"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "A plan for\n*the hard moments*",
+     "cap": "Write it while you feel OK",
+     "chips": [
+      "🌦️ Warning signs",
+      "🤝 People to call",
+      "🩺 Professionals",
+      "💛 Reasons to keep going"
+     ],
+     "hot": 1,
+     "foot": "Saved on your phone, there even offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Share your thoughts,\nnot your identity",
+     "cap": "People who actually get it",
+     "chips": [
+      "🙈 No real name",
+      "💬 Today's topic",
+      "💛 Kind replies"
+     ],
+     "hot": 0,
+     "foot": "An anonymous board, moderated"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Full privacy.",
+     "cap": "Encrypted on\nyour phone",
+     "foot": "Private journal: only you can read it"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Track every mood\nin seconds",
+     "cap": "From depressed to manic, in a couple of taps",
+     "chips": [
+      "🐻 Mood",
+      "😴 Sleep",
+      "⚡ Energy",
+      "💊 Meds"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Spot your patterns",
+     "cap": "Insights stay private, worked out on your tablet",
+     "chips": [
+      "🍺 Alcohol",
+      "😴 Sleep",
+      "⚡ Energy",
+      "😰 Anxiety"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Build your own\n*survival kit*",
+     "cap": "One kit, all your tools",
+     "chips": [
+      "🧠 Coping",
+      "💊 Meds",
+      "🎯 Goals",
+      "🙏 Gratitude",
+      "🆘 Crisis help"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Ready for\nthe hard days",
+     "cap": "What helps you, mood by mood",
+     "chips": [
+      "😔 Low",
+      "😞 Depressed",
+      "🤪 Manic"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "A plan for\n*the hard moments*",
+     "cap": "Write it while you feel OK",
+     "chips": [
+      "🌦️ Warning signs",
+      "🤝 People to call",
+      "💛 Reasons to keep going"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Share your thoughts,\nnot your identity",
+     "cap": "People who actually get it",
+     "chips": [
+      "🙈 No real name",
+      "💬 Today's topic",
+      "💛 Kind replies"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "es": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Registra tu ánimo.\nEntiende tu mente."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Cada euforia.\n*Cada bajón.*",
+     "foot": "Un diario de ánimo privado y cifrado.\nObserva los patrones, crea tu kit de supervivencia."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Registra\ncada estado\nen segundos",
+     "foot": "De la depresión a la manía: cómo fue de verdad el día, con un par de toques."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Descubre tus patrones",
+     "cap": "Relaciona todo lo que registras",
+     "chips": [
+      "🍺 Alcohol",
+      "😴 Sueño",
+      "⚡ Energía",
+      "😰 Ansiedad",
+      "🏃 Ejercicio",
+      "💊 Medicación"
+     ],
+     "hot": 0,
+     "foot": "Los análisis son privados y se hacen en tu móvil"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "El sueño, en un toque",
+     "cap": "O deja que Health Connect lo rellene",
+     "chips": [
+      "😴 Sueño",
+      "👟 Pasos",
+      "⚡ Energía",
+      "💊 Medicación"
+     ],
+     "hot": 0,
+     "foot": "Compatible con Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Crea tu propio\n*kit de supervivencia*",
+     "cap": "Un kit con todas tus herramientas",
+     "chips": [
+      "🧠 Afrontar",
+      "💊 Medicación",
+      "🎯 Metas",
+      "🙏 Gratitud",
+      "📚 Lectura",
+      "📸 Recuerdos",
+      "🆘 Ayuda en crisis"
+     ],
+     "hot": 6,
+     "foot": "Hazlo a tu manera"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Un plan para\n*los momentos difíciles*",
+     "cap": "Escríbelo cuando estés bien",
+     "chips": [
+      "🌦️ Señales de alerta",
+      "🤝 A quién llamar",
+      "🩺 Profesionales",
+      "💛 Razones para seguir"
+     ],
+     "hot": 1,
+     "foot": "Guardado en tu móvil, disponible sin conexión"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Comparte lo que piensas,\nno quién eres",
+     "cap": "Gente que de verdad te entiende",
+     "chips": [
+      "🙈 Sin nombre real",
+      "💬 Tema de hoy",
+      "💛 Respuestas amables"
+     ],
+     "hot": 0,
+     "foot": "Un tablón anónimo y moderado"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Privacidad total.",
+     "cap": "Cifrado en\ntu móvil",
+     "foot": "Diario privado: solo tú puedes leerlo"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Registra cada estado\nen segundos",
+     "cap": "De la depresión a la manía, con un par de toques",
+     "chips": [
+      "🐻 Ánimo",
+      "😴 Sueño",
+      "⚡ Energía",
+      "💊 Medicación"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Descubre tus patrones",
+     "cap": "Los análisis son privados y se hacen en tu tableta",
+     "chips": [
+      "🍺 Alcohol",
+      "😴 Sueño",
+      "⚡ Energía",
+      "😰 Ansiedad"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Crea tu propio\n*kit de supervivencia*",
+     "cap": "Un kit con todas tus herramientas",
+     "chips": [
+      "🧠 Afrontar",
+      "💊 Medicación",
+      "🎯 Metas",
+      "🙏 Gratitud",
+      "🆘 Ayuda en crisis"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Listo para\nlos días difíciles",
+     "cap": "Lo que te ayuda, según tu estado",
+     "chips": [
+      "😔 Bajo",
+      "😞 Deprimido",
+      "🤪 Maníaco"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Un plan para\n*los momentos difíciles*",
+     "cap": "Escríbelo cuando estés bien",
+     "chips": [
+      "🌦️ Señales de alerta",
+      "🤝 A quién llamar",
+      "💛 Razones para seguir"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Comparte lo que piensas,\nno quién eres",
+     "cap": "Gente que de verdad te entiende",
+     "chips": [
+      "🙈 Sin nombre real",
+      "💬 Tema de hoy",
+      "💛 Respuestas amables"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "fr": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Suis ton humeur.\nComprends ton esprit."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Chaque euphorie.\n*Chaque déprime.*",
+     "foot": "Un journal d'humeur privé et chiffré.\nRepère tes schémas, crée ton kit de survie."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Note chaque\nhumeur en\nquelques secondes",
+     "foot": "De la dépression à la manie : comment s'est vraiment passée ta journée, en deux touches."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Repère tes schémas",
+     "cap": "Relie tout ce que tu suis",
+     "chips": [
+      "🍺 Alcool",
+      "😴 Sommeil",
+      "⚡ Énergie",
+      "😰 Anxiété",
+      "🏃 Sport",
+      "💊 Médocs"
+     ],
+     "hot": 0,
+     "foot": "Les analyses restent privées, calculées sur ton téléphone"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Ton sommeil en une touche",
+     "cap": "Ou laisse Health Connect le remplir",
+     "chips": [
+      "😴 Sommeil",
+      "👟 Pas",
+      "⚡ Énergie",
+      "💊 Médocs"
+     ],
+     "hot": 0,
+     "foot": "Compatible avec Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Crée ton propre\n*kit de survie*",
+     "cap": "Un kit, tous tes outils",
+     "chips": [
+      "🧠 Stratégies",
+      "💊 Médocs",
+      "🎯 Objectifs",
+      "🙏 Gratitude",
+      "📚 Lecture",
+      "📸 Souvenirs",
+      "🆘 Aide en crise"
+     ],
+     "hot": 6,
+     "foot": "À ta façon"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Un plan pour\n*les moments durs*",
+     "cap": "Écris-le quand tu vas bien",
+     "chips": [
+      "🌦️ Signes d'alerte",
+      "🤝 Qui appeler",
+      "🩺 Professionnels",
+      "💛 Raisons de continuer"
+     ],
+     "hot": 1,
+     "foot": "Enregistré sur ton téléphone, même hors ligne"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Partage tes pensées,\npas ton identité",
+     "cap": "Des gens qui te comprennent vraiment",
+     "chips": [
+      "🙈 Pas de vrai nom",
+      "💬 Sujet du jour",
+      "💛 Réponses bienveillantes"
+     ],
+     "hot": 0,
+     "foot": "Un espace anonyme et modéré"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Confidentialité\ntotale.",
+     "cap": "Chiffré sur\nton téléphone",
+     "foot": "Journal privé : toi seul peux le lire"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Note chaque humeur\nen quelques secondes",
+     "cap": "De la dépression à la manie, en deux touches",
+     "chips": [
+      "🐻 Humeur",
+      "😴 Sommeil",
+      "⚡ Énergie",
+      "💊 Médocs"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Repère tes schémas",
+     "cap": "Les analyses restent privées, calculées sur ta tablette",
+     "chips": [
+      "🍺 Alcool",
+      "😴 Sommeil",
+      "⚡ Énergie",
+      "😰 Anxiété"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Crée ton propre\n*kit de survie*",
+     "cap": "Un kit, tous tes outils",
+     "chips": [
+      "🧠 Stratégies",
+      "💊 Médocs",
+      "🎯 Objectifs",
+      "🙏 Gratitude",
+      "🆘 Aide en crise"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Prêt pour\nles jours difficiles",
+     "cap": "Ce qui t'aide, humeur par humeur",
+     "chips": [
+      "😔 Bas",
+      "😞 Déprimé",
+      "🤪 Maniaque"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Un plan pour\n*les moments durs*",
+     "cap": "Écris-le quand tu vas bien",
+     "chips": [
+      "🌦️ Signes d'alerte",
+      "🤝 Qui appeler",
+      "💛 Raisons de continuer"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Partage tes pensées,\npas ton identité",
+     "cap": "Des gens qui te comprennent vraiment",
+     "chips": [
+      "🙈 Pas de vrai nom",
+      "💬 Sujet du jour",
+      "💛 Réponses bienveillantes"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "de": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Stimmung festhalten.\nDich selbst verstehen."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Jedes Hoch.\n*Jedes Tief.*",
+     "foot": "Ein privates, verschlüsseltes Stimmungstagebuch.\nErkenne Muster, bau dein Survival-Kit."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Jede Stimmung\nin Sekunden\nerfassen",
+     "foot": "Von depressiv bis manisch: wie der Tag wirklich war, mit zwei Tipps."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Erkenne deine Muster",
+     "cap": "Verknüpft alles, was du festhältst",
+     "chips": [
+      "🍺 Alkohol",
+      "😴 Schlaf",
+      "⚡ Energie",
+      "😰 Angst",
+      "🏃 Sport",
+      "💊 Medis"
+     ],
+     "hot": 0,
+     "foot": "Auswertungen bleiben privat, berechnet auf deinem Handy"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Schlaf mit einem Tipp",
+     "cap": "Oder lass Health Connect ihn eintragen",
+     "chips": [
+      "😴 Schlaf",
+      "👟 Schritte",
+      "⚡ Energie",
+      "💊 Medis"
+     ],
+     "hot": 0,
+     "foot": "Funktioniert mit Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Bau dein eigenes\n*Survival-Kit*",
+     "cap": "Ein Kit, all deine Werkzeuge",
+     "chips": [
+      "🧠 Strategien",
+      "💊 Medis",
+      "🎯 Ziele",
+      "🙏 Dankbarkeit",
+      "📚 Lesen",
+      "📸 Erinnerungen",
+      "🆘 Krisenhilfe"
+     ],
+     "hot": 6,
+     "foot": "Ganz nach deiner Art"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Ein Plan für\n*die schweren Momente*",
+     "cap": "Schreib ihn, wenn es dir gut geht",
+     "chips": [
+      "🌦️ Warnzeichen",
+      "🤝 Wen ich anrufe",
+      "🩺 Fachleute",
+      "💛 Gründe weiterzumachen"
+     ],
+     "hot": 1,
+     "foot": "Auf deinem Handy gespeichert, auch offline da"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Teile deine Gedanken,\nnicht deine Identität",
+     "cap": "Menschen, die dich wirklich verstehen",
+     "chips": [
+      "🙈 Kein echter Name",
+      "💬 Thema des Tages",
+      "💛 Freundliche Antworten"
+     ],
+     "hot": 0,
+     "foot": "Ein anonymes, moderiertes Forum"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Volle Privatsphäre.",
+     "cap": "Verschlüsselt auf\ndeinem Handy",
+     "foot": "Privates Tagebuch: nur du kannst es lesen"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Jede Stimmung\nin Sekunden erfassen",
+     "cap": "Von depressiv bis manisch, mit zwei Tipps",
+     "chips": [
+      "🐻 Stimmung",
+      "😴 Schlaf",
+      "⚡ Energie",
+      "💊 Medis"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Erkenne deine Muster",
+     "cap": "Auswertungen bleiben privat, berechnet auf deinem Tablet",
+     "chips": [
+      "🍺 Alkohol",
+      "😴 Schlaf",
+      "⚡ Energie",
+      "😰 Angst"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Bau dein eigenes\n*Survival-Kit*",
+     "cap": "Ein Kit, all deine Werkzeuge",
+     "chips": [
+      "🧠 Strategien",
+      "💊 Medis",
+      "🎯 Ziele",
+      "🙏 Dankbarkeit",
+      "🆘 Krisenhilfe"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Bereit für\ndie schweren Tage",
+     "cap": "Was dir hilft, Stimmung für Stimmung",
+     "chips": [
+      "😔 Niedrig",
+      "😞 Deprimiert",
+      "🤪 Manisch"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Ein Plan für\n*die schweren Momente*",
+     "cap": "Schreib ihn, wenn es dir gut geht",
+     "chips": [
+      "🌦️ Warnzeichen",
+      "🤝 Wen ich anrufe",
+      "💛 Gründe weiterzumachen"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Teile deine Gedanken,\nnicht deine Identität",
+     "cap": "Menschen, die dich wirklich verstehen",
+     "chips": [
+      "🙈 Kein echter Name",
+      "💬 Thema des Tages",
+      "💛 Freundliche Antworten"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "it": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Registra il tuo umore.\nCapisci la tua mente."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Ogni euforia.\n*Ogni caduta.*",
+     "foot": "Un diario dell'umore privato e cifrato.\nScopri gli schemi, crea il tuo kit di sopravvivenza."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Registra\nogni umore in\npochi secondi",
+     "foot": "Dalla depressione alla mania: com'è andata davvero la giornata, con un paio di tocchi."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Scopri i tuoi schemi",
+     "cap": "Collega tutto ciò che registri",
+     "chips": [
+      "🍺 Alcol",
+      "😴 Sonno",
+      "⚡ Energia",
+      "😰 Ansia",
+      "🏃 Esercizio",
+      "💊 Farmaci"
+     ],
+     "hot": 0,
+     "foot": "Le analisi restano private, calcolate sul tuo telefono"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Il sonno con un tocco",
+     "cap": "Oppure lascia che lo compili Health Connect",
+     "chips": [
+      "😴 Sonno",
+      "👟 Passi",
+      "⚡ Energia",
+      "💊 Farmaci"
+     ],
+     "hot": 0,
+     "foot": "Funziona con Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Crea il tuo\n*kit di sopravvivenza*",
+     "cap": "Un kit, tutti i tuoi strumenti",
+     "chips": [
+      "🧠 Strategie",
+      "💊 Farmaci",
+      "🎯 Obiettivi",
+      "🙏 Gratitudine",
+      "📚 Letture",
+      "📸 Ricordi",
+      "🆘 Aiuto in crisi"
+     ],
+     "hot": 6,
+     "foot": "Fallo a modo tuo"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Un piano per\n*i momenti difficili*",
+     "cap": "Scrivilo quando stai bene",
+     "chips": [
+      "🌦️ Segnali d'allarme",
+      "🤝 Chi chiamare",
+      "🩺 Professionisti",
+      "💛 Motivi per andare avanti"
+     ],
+     "hot": 1,
+     "foot": "Salvato sul tuo telefono, anche offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Condividi i pensieri,\nnon la tua identità",
+     "cap": "Persone che ti capiscono davvero",
+     "chips": [
+      "🙈 Nessun nome vero",
+      "💬 Argomento di oggi",
+      "💛 Risposte gentili"
+     ],
+     "hot": 0,
+     "foot": "Una bacheca anonima e moderata"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Privacy totale.",
+     "cap": "Cifrato sul\ntuo telefono",
+     "foot": "Diario privato: solo tu puoi leggerlo"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Registra ogni umore\nin pochi secondi",
+     "cap": "Dalla depressione alla mania, con un paio di tocchi",
+     "chips": [
+      "🐻 Umore",
+      "😴 Sonno",
+      "⚡ Energia",
+      "💊 Farmaci"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Scopri i tuoi schemi",
+     "cap": "Le analisi restano private, calcolate sul tuo tablet",
+     "chips": [
+      "🍺 Alcol",
+      "😴 Sonno",
+      "⚡ Energia",
+      "😰 Ansia"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Crea il tuo\n*kit di sopravvivenza*",
+     "cap": "Un kit, tutti i tuoi strumenti",
+     "chips": [
+      "🧠 Strategie",
+      "💊 Farmaci",
+      "🎯 Obiettivi",
+      "🙏 Gratitudine",
+      "🆘 Aiuto in crisi"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Pronto per\ni giorni difficili",
+     "cap": "Cosa ti aiuta, umore per umore",
+     "chips": [
+      "😔 Basso",
+      "😞 Depresso",
+      "🤪 Maniacale"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Un piano per\n*i momenti difficili*",
+     "cap": "Scrivilo quando stai bene",
+     "chips": [
+      "🌦️ Segnali d'allarme",
+      "🤝 Chi chiamare",
+      "💛 Motivi per andare avanti"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Condividi i pensieri,\nnon la tua identità",
+     "cap": "Persone che ti capiscono davvero",
+     "chips": [
+      "🙈 Nessun nome vero",
+      "💬 Argomento di oggi",
+      "💛 Risposte gentili"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "pt": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Regista o teu humor.\nCompreende a tua mente."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Cada euforia.\n*Cada queda.*",
+     "foot": "Um diário de humor privado e encriptado.\nVê os padrões, cria o teu kit de sobrevivência."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Regista\ncada humor\nem segundos",
+     "foot": "Da depressão à mania: como o dia foi mesmo, com um par de toques."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Descobre os teus padrões",
+     "cap": "Liga tudo o que registas",
+     "chips": [
+      "🍺 Álcool",
+      "😴 Sono",
+      "⚡ Energia",
+      "😰 Ansiedade",
+      "🏃 Exercício",
+      "💊 Medicação"
+     ],
+     "hot": 0,
+     "foot": "As análises ficam privadas, feitas no teu telemóvel"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "O sono num toque",
+     "cap": "Ou deixa o Health Connect preenchê-lo",
+     "chips": [
+      "😴 Sono",
+      "👟 Passos",
+      "⚡ Energia",
+      "💊 Medicação"
+     ],
+     "hot": 0,
+     "foot": "Funciona com o Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Cria o teu\n*kit de sobrevivência*",
+     "cap": "Um kit, todas as tuas ferramentas",
+     "chips": [
+      "🧠 Estratégias",
+      "💊 Medicação",
+      "🎯 Metas",
+      "🙏 Gratidão",
+      "📚 Leitura",
+      "📸 Memórias",
+      "🆘 Ajuda em crise"
+     ],
+     "hot": 6,
+     "foot": "À tua maneira"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Um plano para\n*os momentos difíceis*",
+     "cap": "Escreve-o quando estiveres bem",
+     "chips": [
+      "🌦️ Sinais de alerta",
+      "🤝 A quem ligar",
+      "🩺 Profissionais",
+      "💛 Razões para continuar"
+     ],
+     "hot": 1,
+     "foot": "Guardado no teu telemóvel, mesmo offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Partilha o que pensas,\nnão quem és",
+     "cap": "Pessoas que te percebem mesmo",
+     "chips": [
+      "🙈 Sem nome real",
+      "💬 Tema de hoje",
+      "💛 Respostas simpáticas"
+     ],
+     "hot": 0,
+     "foot": "Um fórum anónimo e moderado"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Privacidade total.",
+     "cap": "Encriptado no\nteu telemóvel",
+     "foot": "Diário privado: só tu o podes ler"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Regista cada humor\nem segundos",
+     "cap": "Da depressão à mania, com um par de toques",
+     "chips": [
+      "🐻 Humor",
+      "😴 Sono",
+      "⚡ Energia",
+      "💊 Medicação"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Descobre os teus padrões",
+     "cap": "As análises ficam privadas, feitas no teu tablet",
+     "chips": [
+      "🍺 Álcool",
+      "😴 Sono",
+      "⚡ Energia",
+      "😰 Ansiedade"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Cria o teu\n*kit de sobrevivência*",
+     "cap": "Um kit, todas as tuas ferramentas",
+     "chips": [
+      "🧠 Estratégias",
+      "💊 Medicação",
+      "🎯 Metas",
+      "🙏 Gratidão",
+      "🆘 Ajuda em crise"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Preparado para\nos dias difíceis",
+     "cap": "O que te ajuda, humor a humor",
+     "chips": [
+      "😔 Baixo",
+      "😞 Deprimido",
+      "🤪 Maníaco"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Um plano para\n*os momentos difíceis*",
+     "cap": "Escreve-o quando estiveres bem",
+     "chips": [
+      "🌦️ Sinais de alerta",
+      "🤝 A quem ligar",
+      "💛 Razões para continuar"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Partilha o que pensas,\nnão quem és",
+     "cap": "Pessoas que te percebem mesmo",
+     "chips": [
+      "🙈 Sem nome real",
+      "💬 Tema de hoje",
+      "💛 Respostas simpáticas"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "pt-BR": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Registre seu humor.\nEntenda sua mente."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Cada euforia.\n*Cada queda.*",
+     "foot": "Um diário de humor privado e criptografado.\nVeja padrões, monte seu kit de sobrevivência."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Registre\ncada humor\nem segundos",
+     "foot": "Da depressão à mania: como foi seu dia de verdade, com poucos toques."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Descubra seus padrões",
+     "cap": "Relaciona tudo o que você registra",
+     "chips": [
+      "🍺 Álcool",
+      "😴 Sono",
+      "⚡ Energia",
+      "😰 Ansiedade",
+      "🏃 Exercício",
+      "💊 Medicação"
+     ],
+     "hot": 0,
+     "foot": "As análises ficam privadas, feitas no seu celular"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "O sono em um toque",
+     "cap": "Ou deixe o Health Connect preencher",
+     "chips": [
+      "😴 Sono",
+      "👟 Passos",
+      "⚡ Energia",
+      "💊 Medicação"
+     ],
+     "hot": 0,
+     "foot": "Funciona com o Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Monte seu\n*kit de sobrevivência*",
+     "cap": "Um kit, todas as suas ferramentas",
+     "chips": [
+      "🧠 Estratégias",
+      "💊 Medicação",
+      "🎯 Metas",
+      "🙏 Gratidão",
+      "📚 Leitura",
+      "📸 Memórias",
+      "🆘 Ajuda na crise"
+     ],
+     "hot": 6,
+     "foot": "Do seu jeito"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Um plano para\n*os momentos difíceis*",
+     "cap": "Escreva quando estiver bem",
+     "chips": [
+      "🌦️ Sinais de alerta",
+      "🤝 Para quem ligar",
+      "🩺 Profissionais",
+      "💛 Razões para seguir"
+     ],
+     "hot": 1,
+     "foot": "Salvo no seu celular, até offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Compartilhe o que pensa,\nnão quem você é",
+     "cap": "Pessoas que entendem você de verdade",
+     "chips": [
+      "🙈 Sem nome real",
+      "💬 Tema de hoje",
+      "💛 Respostas gentis"
+     ],
+     "hot": 0,
+     "foot": "Um fórum anônimo e moderado"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Privacidade total.",
+     "cap": "Criptografado\nno seu celular",
+     "foot": "Diário privado: só você pode ler"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Registre cada humor\nem segundos",
+     "cap": "Da depressão à mania, com poucos toques",
+     "chips": [
+      "🐻 Humor",
+      "😴 Sono",
+      "⚡ Energia",
+      "💊 Medicação"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Descubra seus padrões",
+     "cap": "As análises ficam privadas, feitas no seu tablet",
+     "chips": [
+      "🍺 Álcool",
+      "😴 Sono",
+      "⚡ Energia",
+      "😰 Ansiedade"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Monte seu\n*kit de sobrevivência*",
+     "cap": "Um kit, todas as suas ferramentas",
+     "chips": [
+      "🧠 Estratégias",
+      "💊 Medicação",
+      "🎯 Metas",
+      "🙏 Gratidão",
+      "🆘 Ajuda na crise"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Pronto para\nos dias difíceis",
+     "cap": "O que ajuda você, humor a humor",
+     "chips": [
+      "😔 Baixo",
+      "😞 Deprimido",
+      "🤪 Maníaco"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Um plano para\n*os momentos difíceis*",
+     "cap": "Escreva quando estiver bem",
+     "chips": [
+      "🌦️ Sinais de alerta",
+      "🤝 Para quem ligar",
+      "💛 Razões para seguir"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Compartilhe o que pensa,\nnão quem você é",
+     "cap": "Pessoas que entendem você de verdade",
+     "chips": [
+      "🙈 Sem nome real",
+      "💬 Tema de hoje",
+      "💛 Respostas gentis"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "nl": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Volg je stemming.\nBegrijp je hoofd."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Elke piek.\n*Elk dal.*",
+     "foot": "Een privé, versleuteld stemmingsdagboek.\nZie je patronen, bouw je overlevingskit."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Leg elke\nstemming vast\nin seconden",
+     "foot": "Van depressief tot manisch: hoe de dag echt voelde, met een paar tikken."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Ontdek je patronen",
+     "cap": "Verbindt alles wat je bijhoudt",
+     "chips": [
+      "🍺 Alcohol",
+      "😴 Slaap",
+      "⚡ Energie",
+      "😰 Angst",
+      "🏃 Beweging",
+      "💊 Medicatie"
+     ],
+     "hot": 0,
+     "foot": "Inzichten blijven privé, berekend op je telefoon"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Je slaap met één tik",
+     "cap": "Of laat Health Connect hem invullen",
+     "chips": [
+      "😴 Slaap",
+      "👟 Stappen",
+      "⚡ Energie",
+      "💊 Medicatie"
+     ],
+     "hot": 0,
+     "foot": "Werkt met Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Bouw je eigen\n*overlevingskit*",
+     "cap": "Eén kit, al je hulpmiddelen",
+     "chips": [
+      "🧠 Strategieën",
+      "💊 Medicatie",
+      "🎯 Doelen",
+      "🙏 Dankbaarheid",
+      "📚 Lezen",
+      "📸 Herinneringen",
+      "🆘 Crisishulp"
+     ],
+     "hot": 6,
+     "foot": "Helemaal op jouw manier"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Een plan voor\n*de zware momenten*",
+     "cap": "Schrijf het als het goed gaat",
+     "chips": [
+      "🌦️ Waarschuwingssignalen",
+      "🤝 Wie ik bel",
+      "🩺 Hulpverleners",
+      "💛 Redenen om door te gaan"
+     ],
+     "hot": 1,
+     "foot": "Bewaard op je telefoon, ook offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Deel je gedachten,\nniet je identiteit",
+     "cap": "Mensen die je echt begrijpen",
+     "chips": [
+      "🙈 Geen echte naam",
+      "💬 Onderwerp van vandaag",
+      "💛 Vriendelijke reacties"
+     ],
+     "hot": 0,
+     "foot": "Een anoniem, gemodereerd forum"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Volledige privacy.",
+     "cap": "Versleuteld op\nje telefoon",
+     "foot": "Privé dagboek: alleen jij kunt het lezen"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Leg elke stemming\nvast in seconden",
+     "cap": "Van depressief tot manisch, met een paar tikken",
+     "chips": [
+      "🐻 Stemming",
+      "😴 Slaap",
+      "⚡ Energie",
+      "💊 Medicatie"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Ontdek je patronen",
+     "cap": "Inzichten blijven privé, berekend op je tablet",
+     "chips": [
+      "🍺 Alcohol",
+      "😴 Slaap",
+      "⚡ Energie",
+      "😰 Angst"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Bouw je eigen\n*overlevingskit*",
+     "cap": "Eén kit, al je hulpmiddelen",
+     "chips": [
+      "🧠 Strategieën",
+      "💊 Medicatie",
+      "🎯 Doelen",
+      "🙏 Dankbaarheid",
+      "🆘 Crisishulp"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Klaar voor\nde zware dagen",
+     "cap": "Wat je helpt, per stemming",
+     "chips": [
+      "😔 Laag",
+      "😞 Depressief",
+      "🤪 Manisch"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Een plan voor\n*de zware momenten*",
+     "cap": "Schrijf het als het goed gaat",
+     "chips": [
+      "🌦️ Waarschuwingssignalen",
+      "🤝 Wie ik bel",
+      "💛 Redenen om door te gaan"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Deel je gedachten,\nniet je identiteit",
+     "cap": "Mensen die je echt begrijpen",
+     "chips": [
+      "🙈 Geen echte naam",
+      "💬 Onderwerp van vandaag",
+      "💛 Vriendelijke reacties"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "pl": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Śledź swój nastrój.\nZrozum swój umysł."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Każdy szczyt.\n*Każdy dołek.*",
+     "foot": "Prywatny, szyfrowany dziennik nastroju.\nDostrzegaj wzorce, zbuduj swój zestaw przetrwania."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Zapisz\nkażdy nastrój\nw kilka sekund",
+     "foot": "Od depresji do manii: jaki naprawdę był dzień, w kilka dotknięć."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Odkryj swoje wzorce",
+     "cap": "Łączy wszystko, co zapisujesz",
+     "chips": [
+      "🍺 Alkohol",
+      "😴 Sen",
+      "⚡ Energia",
+      "😰 Lęk",
+      "🏃 Ruch",
+      "💊 Leki"
+     ],
+     "hot": 0,
+     "foot": "Analizy zostają prywatne, liczone na twoim telefonie"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Sen jednym\ndotknięciem",
+     "cap": "Albo niech Health Connect go uzupełni",
+     "chips": [
+      "😴 Sen",
+      "👟 Kroki",
+      "⚡ Energia",
+      "💊 Leki"
+     ],
+     "hot": 0,
+     "foot": "Działa z Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Zbuduj swój\n*zestaw przetrwania*",
+     "cap": "Jeden zestaw, wszystkie narzędzia",
+     "chips": [
+      "🧠 Strategie",
+      "💊 Leki",
+      "🎯 Cele",
+      "🙏 Wdzięczność",
+      "📚 Lektury",
+      "📸 Wspomnienia",
+      "🆘 Pomoc w kryzysie"
+     ],
+     "hot": 6,
+     "foot": "Po twojemu"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "Plan na\n*trudne chwile*",
+     "cap": "Napisz go, gdy czujesz się dobrze",
+     "chips": [
+      "🌦️ Sygnały ostrzegawcze",
+      "🤝 Do kogo zadzwonić",
+      "🩺 Specjaliści",
+      "💛 Powody, by iść dalej"
+     ],
+     "hot": 1,
+     "foot": "Zapisany w telefonie, dostępny też offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Dziel się myślami,\nnie tożsamością",
+     "cap": "Ludzie, którzy naprawdę rozumieją",
+     "chips": [
+      "🙈 Bez prawdziwego imienia",
+      "💬 Temat dnia",
+      "💛 Życzliwe odpowiedzi"
+     ],
+     "hot": 0,
+     "foot": "Anonimowe, moderowane forum"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Pełna prywatność.",
+     "cap": "Szyfrowane na\ntwoim telefonie",
+     "foot": "Prywatny dziennik: tylko ty go przeczytasz"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Zapisz każdy nastrój\nw kilka sekund",
+     "cap": "Od depresji do manii, w kilka dotknięć",
+     "chips": [
+      "🐻 Nastrój",
+      "😴 Sen",
+      "⚡ Energia",
+      "💊 Leki"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Odkryj swoje wzorce",
+     "cap": "Analizy zostają prywatne, liczone na twoim tablecie",
+     "chips": [
+      "🍺 Alkohol",
+      "😴 Sen",
+      "⚡ Energia",
+      "😰 Lęk"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Zbuduj swój\n*zestaw przetrwania*",
+     "cap": "Jeden zestaw, wszystkie narzędzia",
+     "chips": [
+      "🧠 Strategie",
+      "💊 Leki",
+      "🎯 Cele",
+      "🙏 Wdzięczność",
+      "🆘 Pomoc w kryzysie"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Gotowy na\ntrudne dni",
+     "cap": "Co ci pomaga, nastrój po nastroju",
+     "chips": [
+      "😔 Niski",
+      "😞 Przygnębiony",
+      "🤪 Maniakalny"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "Plan na\n*trudne chwile*",
+     "cap": "Napisz go, gdy czujesz się dobrze",
+     "chips": [
+      "🌦️ Sygnały ostrzegawcze",
+      "🤝 Do kogo zadzwonić",
+      "💛 Powody, by iść dalej"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Dziel się myślami,\nnie tożsamością",
+     "cap": "Ludzie, którzy naprawdę rozumieją",
+     "chips": [
+      "🙈 Bez prawdziwego imienia",
+      "💬 Temat dnia",
+      "💛 Życzliwe odpowiedzi"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "sv": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "Följ ditt humör.\nFörstå ditt sinne."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "Varje topp.\n*Varje dal.*",
+     "foot": "En privat, krypterad humördagbok.\nSe mönstren, bygg ditt överlevnadskit."
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "Fånga\nvarje humör\npå sekunder",
+     "foot": "Från deprimerad till manisk: hur dagen verkligen kändes, med ett par tryck."
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "Hitta dina mönster",
+     "cap": "Kopplar ihop allt du loggar",
+     "chips": [
+      "🍺 Alkohol",
+      "😴 Sömn",
+      "⚡ Energi",
+      "😰 Ångest",
+      "🏃 Träning",
+      "💊 Mediciner"
+     ],
+     "hot": 0,
+     "foot": "Insikterna stannar privata, beräknade i din telefon"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "Sömnen med\nett tryck",
+     "cap": "Eller låt Health Connect fylla i den",
+     "chips": [
+      "😴 Sömn",
+      "👟 Steg",
+      "⚡ Energi",
+      "💊 Mediciner"
+     ],
+     "hot": 0,
+     "foot": "Fungerar med Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "Bygg ditt eget\n*överlevnadskit*",
+     "cap": "Ett kit, alla dina verktyg",
+     "chips": [
+      "🧠 Strategier",
+      "💊 Mediciner",
+      "🎯 Mål",
+      "🙏 Tacksamhet",
+      "📚 Läsning",
+      "📸 Minnen",
+      "🆘 Krishjälp"
+     ],
+     "hot": 6,
+     "foot": "Gör det på ditt sätt"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "En plan för\n*de svåra stunderna*",
+     "cap": "Skriv den när du mår bra",
+     "chips": [
+      "🌦️ Varningstecken",
+      "🤝 Vem jag ringer",
+      "🩺 Vården",
+      "💛 Skäl att fortsätta"
+     ],
+     "hot": 1,
+     "foot": "Sparad i din telefon, även offline"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "Dela dina tankar,\ninte din identitet",
+     "cap": "Människor som verkligen förstår",
+     "chips": [
+      "🙈 Inget riktigt namn",
+      "💬 Dagens ämne",
+      "💛 Vänliga svar"
+     ],
+     "hot": 0,
+     "foot": "Ett anonymt, modererat forum"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "Full integritet.",
+     "cap": "Krypterad i\ndin telefon",
+     "foot": "Privat dagbok: bara du kan läsa den"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "Fånga varje humör\npå sekunder",
+     "cap": "Från deprimerad till manisk, med ett par tryck",
+     "chips": [
+      "🐻 Humör",
+      "😴 Sömn",
+      "⚡ Energi",
+      "💊 Mediciner"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "Hitta dina mönster",
+     "cap": "Insikterna stannar privata, beräknade i din surfplatta",
+     "chips": [
+      "🍺 Alkohol",
+      "😴 Sömn",
+      "⚡ Energi",
+      "😰 Ångest"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "Bygg ditt eget\n*överlevnadskit*",
+     "cap": "Ett kit, alla dina verktyg",
+     "chips": [
+      "🧠 Strategier",
+      "💊 Mediciner",
+      "🎯 Mål",
+      "🙏 Tacksamhet",
+      "🆘 Krishjälp"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "Redo för\nde tunga dagarna",
+     "cap": "Det som hjälper dig, humör för humör",
+     "chips": [
+      "😔 Låg",
+      "😞 Deprimerad",
+      "🤪 Manisk"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "En plan för\n*de svåra stunderna*",
+     "cap": "Skriv den när du mår bra",
+     "chips": [
+      "🌦️ Varningstecken",
+      "🤝 Vem jag ringer",
+      "💛 Skäl att fortsätta"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "Dela dina tankar,\ninte din identitet",
+     "cap": "Människor som verkligen förstår",
+     "chips": [
+      "🙈 Inget riktigt namn",
+      "💬 Dagens ämne",
+      "💛 Vänliga svar"
+     ],
+     "hot": 0
+    }
+   }
+  },
+  "zh": {
+   "lockup": {
+    "name": "Bipolar Bear"
+   },
+   "fg": {
+    "tag": "记录心情，\n读懂自己。"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "white",
+     "head": "每一次高涨，\n*每一次低落。*",
+     "foot": "私密、加密的心情日记。\n发现规律，打造你的生存工具包。"
+    },
+    "02-hero": {
+     "ground": "orange",
+     "head": "几秒钟\n记录每一种\n心情",
+     "foot": "从抑郁到躁狂：轻点几下，记下这一天真实的感受。"
+    },
+    "03-patterns": {
+     "ground": "orange",
+     "head": "发现你的规律",
+     "cap": "把你记录的一切联系起来",
+     "chips": [
+      "🍺 饮酒",
+      "😴 睡眠",
+      "⚡ 精力",
+      "😰 焦虑",
+      "🏃 运动",
+      "💊 药物"
+     ],
+     "hot": 0,
+     "foot": "分析在你的手机上完成，保持私密"
+    },
+    "04-sleep": {
+     "ground": "orange",
+     "head": "一点即记睡眠",
+     "cap": "也可以让 Health Connect 自动填写",
+     "chips": [
+      "😴 睡眠",
+      "👟 步数",
+      "⚡ 精力",
+      "💊 药物"
+     ],
+     "hot": 0,
+     "foot": "支持 Health Connect"
+    },
+    "05-survivalkit": {
+     "ground": "white",
+     "head": "打造你的\n*生存工具包*",
+     "cap": "一个工具包，所有工具都在",
+     "chips": [
+      "🧠 应对",
+      "💊 药物",
+      "🎯 目标",
+      "🙏 感恩",
+      "📚 阅读",
+      "📸 回忆",
+      "🆘 危机求助"
+     ],
+     "hot": 6,
+     "foot": "按你的方式来"
+    },
+    "06-safetyplan": {
+     "ground": "white",
+     "head": "为*艰难时刻*\n准备一份计划",
+     "cap": "趁你状态好的时候写下",
+     "chips": [
+      "🌦️ 预警信号",
+      "🤝 可以打给谁",
+      "🩺 专业人员",
+      "💛 坚持下去的理由"
+     ],
+     "hot": 1,
+     "foot": "保存在你的手机上，离线也能打开"
+    },
+    "07-anonymous": {
+     "ground": "yellow",
+     "head": "分享想法，\n不暴露身份",
+     "cap": "真正懂你的人",
+     "chips": [
+      "🙈 无需真名",
+      "💬 今日话题",
+      "💛 温暖回复"
+     ],
+     "hot": 0,
+     "foot": "匿名且有人管理的社区"
+    },
+    "08-privacy": {
+     "ground": "dark",
+     "head": "完全私密。",
+     "cap": "在你的手机上\n加密",
+     "foot": "私密日记：只有你能读取"
+    },
+    "t01-journal": {
+     "ground": "orange",
+     "head": "几秒钟记录\n每一种心情",
+     "cap": "从抑郁到躁狂，轻点几下",
+     "chips": [
+      "🐻 心情",
+      "😴 睡眠",
+      "⚡ 精力",
+      "💊 药物"
+     ],
+     "hot": 0
+    },
+    "t02-patterns": {
+     "ground": "orange",
+     "head": "发现你的规律",
+     "cap": "分析在你的平板上完成，保持私密",
+     "chips": [
+      "🍺 饮酒",
+      "😴 睡眠",
+      "⚡ 精力",
+      "😰 焦虑"
+     ],
+     "hot": 0
+    },
+    "t03-survivalkit": {
+     "ground": "white",
+     "head": "打造你的\n*生存工具包*",
+     "cap": "一个工具包，所有工具都在",
+     "chips": [
+      "🧠 应对",
+      "💊 药物",
+      "🎯 目标",
+      "🙏 感恩",
+      "🆘 危机求助"
+     ],
+     "hot": 4
+    },
+    "t04-coping": {
+     "ground": "orange",
+     "head": "为艰难的日子\n做好准备",
+     "cap": "按心情找到对你有用的方法",
+     "chips": [
+      "😔 低落",
+      "😞 抑郁",
+      "🤪 躁狂"
+     ],
+     "hot": 0
+    },
+    "t05-safetyplan": {
+     "ground": "white",
+     "head": "为*艰难时刻*\n准备一份计划",
+     "cap": "趁你状态好的时候写下",
+     "chips": [
+      "🌦️ 预警信号",
+      "🤝 可以打给谁",
+      "💛 坚持下去的理由"
+     ],
+     "hot": 1
+    },
+    "t06-anonymous": {
+     "ground": "yellow",
+     "head": "分享想法，\n不暴露身份",
+     "cap": "真正懂你的人",
+     "chips": [
+      "🙈 无需真名",
+      "💬 今日话题",
+      "💛 温暖回复"
+     ],
+     "hot": 0
+    }
+   }
+  }
+ },
+ "anon": {
+  "en": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "You're not\n*alone.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "You're not\n*alone.*",
+     "foot": "Share your thoughts, not your identity"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "How are\nyou today?",
+     "cap": "Check in, and see how the board is feeling",
+     "foot": "Only the day's totals are kept, never who picked what"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Pick a moniker.\nStay anonymous.",
+     "cap": "No sign-up trail, no real name",
+     "chips": [
+      "🙈 Anonymous name",
+      "🚫 No profile to keep",
+      "📱 Same name on every device"
+     ],
+     "hot": 0,
+     "foot": "Your email is kept only as a hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Ask anything.\n*Get real answers.*",
+     "cap": "Lived experience, not lectures",
+     "chips": [
+      "💬 Honest answers",
+      "💛 No judgement",
+      "🌙 Someone's always around"
+     ],
+     "hot": 0,
+     "foot": "Real people who've been where you are"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Common questions,\n*answered*",
+     "cap": "Plain answers you can trust",
+     "chips": [
+      "💊 Medications",
+      "🧠 Conditions",
+      "🛋️ Therapies",
+      "💼 Workplace",
+      "🤰 Pregnancy"
+     ],
+     "hot": 0,
+     "foot": "With sources and signposts, no jargon"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Report a post.\nHelp arrives fast.",
+     "cap": "A moderated, safer space",
+     "chips": [
+      "🚨 Report in one tap",
+      "🆘 SOS in a crisis",
+      "🛡️ Every report reviewed"
+     ],
+     "hot": 1,
+     "foot": "Help is never far away"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "A new topic\n*every day*",
+     "cap": "Small wins, shared",
+     "chips": [
+      "💬 Reply",
+      "💛 Like",
+      "🙈 Stay anonymous"
+     ],
+     "hot": 0,
+     "foot": "Join in, or just read along"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Light or dark,\n*your choice*",
+     "cap": "Easy on the eyes at night",
+     "chips": [
+      "🌙 Dark",
+      "☀️ Light",
+      "📱 Like your phone"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "You're not\n*alone.*",
+     "cap": "Share your thoughts, not your identity",
+     "chips": [
+      "🙈 No real name",
+      "💬 Today's topic",
+      "💛 Kind replies"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "How are\nyou today?",
+     "cap": "Only the day's totals are kept, never who picked what",
+     "chips": [
+      "🐻 Check in",
+      "📊 See the board's mood"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Ask anything.\n*Get real answers.*",
+     "cap": "Lived experience, not lectures",
+     "chips": [
+      "💬 Honest answers",
+      "💛 No judgement"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Common questions,\n*answered*",
+     "cap": "Plain answers you can trust",
+     "chips": [
+      "💊 Medications",
+      "🧠 Conditions",
+      "🛋️ Therapies"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Pick a moniker.\nStay anonymous.",
+     "cap": "No sign-up trail, no real name",
+     "chips": [
+      "🙈 Anonymous name",
+      "📱 Same name on every device"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Report a post.\nHelp arrives fast.",
+     "cap": "A moderated, safer space",
+     "chips": [
+      "🚨 Report in one tap",
+      "🆘 SOS in a crisis"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "es": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "No estás\n*solo.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "No estás\n*solo.*",
+     "foot": "Comparte lo que piensas, no quién eres"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "¿Cómo estás\nhoy?",
+     "cap": "Haz tu registro y mira cómo está el tablón",
+     "foot": "Solo se guardan los totales del día, nunca quién eligió qué"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Elige un Moniker.\nSigue en el anonimato.",
+     "cap": "Sin rastro de registro, sin nombre real",
+     "chips": [
+      "🙈 Nombre anónimo",
+      "🚫 Sin perfil que mantener",
+      "📱 El mismo nombre en todos tus dispositivos"
+     ],
+     "hot": 0,
+     "foot": "Tu correo solo se guarda como hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Pregunta lo que sea.\n*Recibe respuestas reales.*",
+     "cap": "Experiencia vivida, no sermones",
+     "chips": [
+      "💬 Respuestas sinceras",
+      "💛 Sin juicios",
+      "🌙 Siempre hay alguien"
+     ],
+     "hot": 0,
+     "foot": "Gente real que ha pasado por lo mismo"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Preguntas frecuentes,\n*respondidas*",
+     "cap": "Respuestas claras en las que confiar",
+     "chips": [
+      "💊 Medicación",
+      "🧠 Trastornos",
+      "🛋️ Terapias",
+      "💼 Trabajo",
+      "🤰 Embarazo"
+     ],
+     "hot": 0,
+     "foot": "Con fuentes y orientación, sin tecnicismos"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Denuncia una publicación.\nLa ayuda llega rápido.",
+     "cap": "Un espacio moderado y más seguro",
+     "chips": [
+      "🚨 Denuncia con un toque",
+      "🆘 SOS en una crisis",
+      "🛡️ Revisamos cada denuncia"
+     ],
+     "hot": 1,
+     "foot": "La ayuda nunca está lejos"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Un tema nuevo\n*cada día*",
+     "cap": "Pequeños logros, compartidos",
+     "chips": [
+      "💬 Responde",
+      "💛 Me gusta",
+      "🙈 Sin nombre"
+     ],
+     "hot": 0,
+     "foot": "Participa o simplemente lee"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Claro u oscuro,\n*tú eliges*",
+     "cap": "Descansa la vista por la noche",
+     "chips": [
+      "🌙 Oscuro",
+      "☀️ Claro",
+      "📱 Como tu móvil"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "No estás\n*solo.*",
+     "cap": "Comparte lo que piensas, no quién eres",
+     "chips": [
+      "🙈 Sin nombre real",
+      "💬 Tema de hoy",
+      "💛 Respuestas amables"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "¿Cómo estás\nhoy?",
+     "cap": "Solo se guardan los totales del día, nunca quién eligió qué",
+     "chips": [
+      "🐻 Haz tu registro",
+      "📊 El ánimo del tablón"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Pregunta lo que sea.\n*Recibe respuestas reales.*",
+     "cap": "Experiencia vivida, no sermones",
+     "chips": [
+      "💬 Respuestas sinceras",
+      "💛 Sin juicios"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Preguntas frecuentes,\n*respondidas*",
+     "cap": "Respuestas claras en las que confiar",
+     "chips": [
+      "💊 Medicación",
+      "🧠 Trastornos",
+      "🛋️ Terapias"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Elige un Moniker.\nSigue en el anonimato.",
+     "cap": "Sin rastro de registro, sin nombre real",
+     "chips": [
+      "🙈 Nombre anónimo",
+      "📱 El mismo nombre en todos tus dispositivos"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Denuncia una publicación.\nLa ayuda llega rápido.",
+     "cap": "Un espacio moderado y más seguro",
+     "chips": [
+      "🚨 Denuncia con un toque",
+      "🆘 SOS en una crisis"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "fr": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Tu n'es pas\n*seul.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Tu n'es pas\n*seul.*",
+     "foot": "Partage tes pensées, pas ton identité"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Comment vas‑tu\naujourd’hui ?",
+     "cap": "Dis comment tu vas et vois l’humeur du forum",
+     "foot": "Seuls les totaux du jour sont gardés, jamais qui a choisi quoi"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Choisis un Moniker.\nReste anonyme.",
+     "cap": "Pas de trace d'inscription, pas de vrai nom",
+     "chips": [
+      "🙈 Nom anonyme",
+      "🚫 Aucun profil à gérer",
+      "📱 Le même nom sur tous tes appareils"
+     ],
+     "hot": 0,
+     "foot": "Ton e-mail n'est gardé que sous forme de hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Pose tes questions.\n*Reçois de vraies réponses.*",
+     "cap": "Du vécu, pas des leçons",
+     "chips": [
+      "💬 Réponses sincères",
+      "💛 Sans jugement",
+      "🌙 Toujours quelqu'un"
+     ],
+     "hot": 0,
+     "foot": "De vraies personnes passées par là"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Questions fréquentes,\n*et leurs réponses*",
+     "cap": "Des réponses claires et fiables",
+     "chips": [
+      "💊 Médicaments",
+      "🧠 Conditions",
+      "🛋️ Thérapies",
+      "💼 Lieu de travail",
+      "🤰 Grossesse"
+     ],
+     "hot": 0,
+     "foot": "Avec des sources et des repères, sans jargon"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Signale un post.\nL’aide arrive vite.",
+     "cap": "Un espace modéré et plus sûr",
+     "chips": [
+      "🚨 Signaler en une touche",
+      "🆘 SOS en cas de crise",
+      "🛡️ Chaque signalement vérifié"
+     ],
+     "hot": 1,
+     "foot": "L'aide n'est jamais loin"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Un nouveau sujet\n*chaque jour*",
+     "cap": "Des petites victoires, partagées",
+     "chips": [
+      "💬 Répondre",
+      "💛 J'aime",
+      "🙈 Rester anonyme"
+     ],
+     "hot": 0,
+     "foot": "Participe, ou lis simplement"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Clair ou sombre,\n*à toi de choisir*",
+     "cap": "Doux pour les yeux le soir",
+     "chips": [
+      "🌙 Sombre",
+      "☀️ Clair",
+      "📱 Comme ton téléphone"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Tu n'es pas\n*seul.*",
+     "cap": "Partage tes pensées, pas ton identité",
+     "chips": [
+      "🙈 Pas de vrai nom",
+      "💬 Sujet du jour",
+      "💛 Réponses bienveillantes"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Comment vas‑tu\naujourd’hui ?",
+     "cap": "Seuls les totaux du jour sont gardés, jamais qui a choisi quoi",
+     "chips": [
+      "🐻 Dis comment tu vas",
+      "📊 L'humeur du forum"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Pose tes questions.\n*Reçois de vraies réponses.*",
+     "cap": "Du vécu, pas des leçons",
+     "chips": [
+      "💬 Réponses sincères",
+      "💛 Sans jugement"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Questions fréquentes,\n*et leurs réponses*",
+     "cap": "Des réponses claires et fiables",
+     "chips": [
+      "💊 Médicaments",
+      "🧠 Conditions",
+      "🛋️ Thérapies"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Choisis un Moniker.\nReste anonyme.",
+     "cap": "Pas de trace d'inscription, pas de vrai nom",
+     "chips": [
+      "🙈 Nom anonyme",
+      "📱 Le même nom sur tous tes appareils"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Signale un post.\nL’aide arrive vite.",
+     "cap": "Un espace modéré et plus sûr",
+     "chips": [
+      "🚨 Signaler en une touche",
+      "🆘 SOS en cas de crise"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "de": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Du bist nicht\n*allein.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Du bist nicht\n*allein.*",
+     "foot": "Teile deine Gedanken, nicht deine Identität"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Wie geht es\ndir heute?",
+     "cap": "Sag, wie es dir geht, und sieh die Stimmung im Forum",
+     "foot": "Gespeichert werden nur die Tagessummen, nie wer was gewählt hat"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Wähl einen Moniker.\nBleib anonym.",
+     "cap": "Keine Anmeldespur, kein echter Name",
+     "chips": [
+      "🙈 Anonymer Name",
+      "🚫 Kein Profil zu pflegen",
+      "📱 Derselbe Name auf allen Geräten"
+     ],
+     "hot": 0,
+     "foot": "Deine E-Mail wird nur als Hash gespeichert"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Frag, was du willst.\n*Echte Antworten.*",
+     "cap": "Gelebte Erfahrung statt Belehrungen",
+     "chips": [
+      "💬 Ehrliche Antworten",
+      "💛 Keine Vorurteile",
+      "🌙 Immer ist jemand da"
+     ],
+     "hot": 0,
+     "foot": "Echte Menschen, die genau da waren, wo du bist"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Häufige Fragen,\n*beantwortet*",
+     "cap": "Verständliche Antworten, denen du vertrauen kannst",
+     "chips": [
+      "💊 Medikamente",
+      "🧠 Erkrankungen",
+      "🛋️ Therapien",
+      "💼 Arbeitsplatz",
+      "🤰 Schwangerschaft"
+     ],
+     "hot": 0,
+     "foot": "Mit Quellen und Wegweisern, ohne Fachchinesisch"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Beitrag melden.\nHilfe kommt schnell.",
+     "cap": "Ein moderierter, sicherer Ort",
+     "chips": [
+      "🚨 Mit einem Tipp melden",
+      "🆘 SOS in der Krise",
+      "🛡️ Jede Meldung wird geprüft"
+     ],
+     "hot": 1,
+     "foot": "Hilfe ist nie weit"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Jeden Tag\n*ein neues Thema*",
+     "cap": "Kleine Erfolge, geteilt",
+     "chips": [
+      "💬 Antworten",
+      "💛 Gefällt mir",
+      "🙈 Anonym bleiben"
+     ],
+     "hot": 0,
+     "foot": "Mach mit oder lies einfach mit"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Hell oder dunkel,\n*du entscheidest*",
+     "cap": "Angenehm für die Augen am Abend",
+     "chips": [
+      "🌙 Dunkel",
+      "☀️ Hell",
+      "📱 Wie dein Handy"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Du bist nicht\n*allein.*",
+     "cap": "Teile deine Gedanken, nicht deine Identität",
+     "chips": [
+      "🙈 Kein echter Name",
+      "💬 Thema des Tages",
+      "💛 Freundliche Antworten"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Wie geht es\ndir heute?",
+     "cap": "Gespeichert werden nur die Tagessummen, nie wer was gewählt hat",
+     "chips": [
+      "🐻 Sag, wie es dir geht",
+      "📊 Die Stimmung im Forum"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Frag, was du willst.\n*Echte Antworten.*",
+     "cap": "Gelebte Erfahrung statt Belehrungen",
+     "chips": [
+      "💬 Ehrliche Antworten",
+      "💛 Keine Vorurteile"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Häufige Fragen,\n*beantwortet*",
+     "cap": "Verständliche Antworten, denen du vertrauen kannst",
+     "chips": [
+      "💊 Medikamente",
+      "🧠 Erkrankungen",
+      "🛋️ Therapien"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Wähl einen Moniker.\nBleib anonym.",
+     "cap": "Keine Anmeldespur, kein echter Name",
+     "chips": [
+      "🙈 Anonymer Name",
+      "📱 Derselbe Name auf allen Geräten"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Beitrag melden.\nHilfe kommt schnell.",
+     "cap": "Ein moderierter, sicherer Ort",
+     "chips": [
+      "🚨 Mit einem Tipp melden",
+      "🆘 SOS in der Krise"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "it": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Non sei\n*solo.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Non sei\n*solo.*",
+     "foot": "Condividi i pensieri, non la tua identità"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Come stai\noggi?",
+     "cap": "Di’ come stai e guarda l’umore della bacheca",
+     "foot": "Si conservano solo i totali del giorno, mai chi ha scelto cosa"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Scegli un Moniker.\nResta anonimo.",
+     "cap": "Nessuna traccia di iscrizione, nessun nome vero",
+     "chips": [
+      "🙈 Nome anonimo",
+      "🚫 Nessun profilo da curare",
+      "📱 Lo stesso nome su ogni dispositivo"
+     ],
+     "hot": 0,
+     "foot": "La tua email è conservata solo come hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Chiedi qualsiasi cosa.\n*Ricevi risposte vere.*",
+     "cap": "Esperienza vissuta, non prediche",
+     "chips": [
+      "💬 Risposte sincere",
+      "💛 Nessun giudizio",
+      "🌙 C'è sempre qualcuno"
+     ],
+     "hot": 0,
+     "foot": "Persone vere che ci sono passate"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Domande frequenti,\n*con risposta*",
+     "cap": "Risposte chiare di cui fidarti",
+     "chips": [
+      "💊 Farmaci",
+      "🧠 Condizioni",
+      "🛋️ Terapie",
+      "💼 Lavoro",
+      "🤰 Gravidanza"
+     ],
+     "hot": 0,
+     "foot": "Con fonti e indicazioni, senza gergo"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Segnala un post.\nL’aiuto arriva presto.",
+     "cap": "Uno spazio moderato e più sicuro",
+     "chips": [
+      "🚨 Segnala con un tocco",
+      "🆘 SOS in caso di crisi",
+      "🛡️ Ogni segnalazione verificata"
+     ],
+     "hot": 1,
+     "foot": "L'aiuto non è mai lontano"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Un nuovo argomento\n*ogni giorno*",
+     "cap": "Piccole vittorie, condivise",
+     "chips": [
+      "💬 Rispondi",
+      "💛 Mi piace",
+      "🙈 Resta anonimo"
+     ],
+     "hot": 0,
+     "foot": "Partecipa, o leggi soltanto"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Chiaro o scuro,\n*scegli tu*",
+     "cap": "Riposante per gli occhi di sera",
+     "chips": [
+      "🌙 Scuro",
+      "☀️ Chiaro",
+      "📱 Come il tuo telefono"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Non sei\n*solo.*",
+     "cap": "Condividi i pensieri, non la tua identità",
+     "chips": [
+      "🙈 Nessun nome vero",
+      "💬 Argomento di oggi",
+      "💛 Risposte gentili"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Come stai\noggi?",
+     "cap": "Si conservano solo i totali del giorno, mai chi ha scelto cosa",
+     "chips": [
+      "🐻 Di’ come stai",
+      "📊 L'umore della bacheca"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Chiedi qualsiasi cosa.\n*Ricevi risposte vere.*",
+     "cap": "Esperienza vissuta, non prediche",
+     "chips": [
+      "💬 Risposte sincere",
+      "💛 Nessun giudizio"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Domande frequenti,\n*con risposta*",
+     "cap": "Risposte chiare di cui fidarti",
+     "chips": [
+      "💊 Farmaci",
+      "🧠 Condizioni",
+      "🛋️ Terapie"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Scegli un Moniker.\nResta anonimo.",
+     "cap": "Nessuna traccia di iscrizione, nessun nome vero",
+     "chips": [
+      "🙈 Nome anonimo",
+      "📱 Lo stesso nome su ogni dispositivo"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Segnala un post.\nL’aiuto arriva presto.",
+     "cap": "Uno spazio moderato e più sicuro",
+     "chips": [
+      "🚨 Segnala con un tocco",
+      "🆘 SOS in caso di crisi"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "pt": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Não estás\n*sozinho.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Não estás\n*sozinho.*",
+     "foot": "Partilha o que pensas, não quem és"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Como estás\nhoje?",
+     "cap": "Diz como estás e vê o humor do fórum",
+     "foot": "Só se guardam os totais do dia, nunca quem escolheu o quê"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Escolhe um Moniker.\nMantém o anonimato.",
+     "cap": "Sem rasto de registo, sem nome real",
+     "chips": [
+      "🙈 Nome anónimo",
+      "🚫 Sem perfil para manter",
+      "📱 O mesmo nome em todos os dispositivos"
+     ],
+     "hot": 0,
+     "foot": "O teu e-mail só é guardado como hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Pergunta tudo.\n*Recebe respostas reais.*",
+     "cap": "Experiência vivida, não sermões",
+     "chips": [
+      "💬 Respostas sinceras",
+      "💛 Sem julgamentos",
+      "🌙 Há sempre alguém"
+     ],
+     "hot": 0,
+     "foot": "Pessoas reais que já passaram pelo mesmo"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Perguntas frequentes,\n*respondidas*",
+     "cap": "Respostas claras em que podes confiar",
+     "chips": [
+      "💊 Medicação",
+      "🧠 Condições",
+      "🛋️ Terapias",
+      "💼 Trabalho",
+      "🤰 Gravidez"
+     ],
+     "hot": 0,
+     "foot": "Com fontes e orientação, sem jargão"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Denuncia um post.\nA ajuda chega depressa.",
+     "cap": "Um espaço moderado e mais seguro",
+     "chips": [
+      "🚨 Denuncia num toque",
+      "🆘 SOS numa crise",
+      "🛡️ Cada denúncia é revista"
+     ],
+     "hot": 1,
+     "foot": "A ajuda nunca está longe"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Um tema novo\n*todos os dias*",
+     "cap": "Pequenas vitórias, partilhadas",
+     "chips": [
+      "💬 Responder",
+      "💛 Gosto",
+      "🙈 Anónimo"
+     ],
+     "hot": 0,
+     "foot": "Participa ou limita-te a ler"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Claro ou escuro,\n*tu escolhes*",
+     "cap": "Descansa os olhos à noite",
+     "chips": [
+      "🌙 Escuro",
+      "☀️ Claro",
+      "📱 Como o teu telemóvel"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Não estás\n*sozinho.*",
+     "cap": "Partilha o que pensas, não quem és",
+     "chips": [
+      "🙈 Sem nome real",
+      "💬 Tema de hoje",
+      "💛 Respostas simpáticas"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Como estás\nhoje?",
+     "cap": "Só se guardam os totais do dia, nunca quem escolheu o quê",
+     "chips": [
+      "🐻 Diz como estás",
+      "📊 O humor do fórum"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Pergunta tudo.\n*Recebe respostas reais.*",
+     "cap": "Experiência vivida, não sermões",
+     "chips": [
+      "💬 Respostas sinceras",
+      "💛 Sem julgamentos"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Perguntas frequentes,\n*respondidas*",
+     "cap": "Respostas claras em que podes confiar",
+     "chips": [
+      "💊 Medicação",
+      "🧠 Condições",
+      "🛋️ Terapias"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Escolhe um Moniker.\nMantém o anonimato.",
+     "cap": "Sem rasto de registo, sem nome real",
+     "chips": [
+      "🙈 Nome anónimo",
+      "📱 O mesmo nome em todos os dispositivos"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Denuncia um post.\nA ajuda chega depressa.",
+     "cap": "Um espaço moderado e mais seguro",
+     "chips": [
+      "🚨 Denuncia num toque",
+      "🆘 SOS numa crise"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "pt-BR": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Você não está\n*sozinho.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Você não está\n*sozinho.*",
+     "foot": "Compartilhe o que pensa, não quem você é"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Como você\nestá hoje?",
+     "cap": "Diga como está e veja o humor do fórum",
+     "foot": "Só os totais do dia são guardados, nunca quem escolheu o quê"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Escolha um Moniker.\nFique anônimo.",
+     "cap": "Sem rastro de cadastro, sem nome real",
+     "chips": [
+      "🙈 Nome anônimo",
+      "🚫 Nenhum perfil para manter",
+      "📱 O mesmo nome em todos os aparelhos"
+     ],
+     "hot": 0,
+     "foot": "Seu e-mail só é guardado como hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Pergunte tudo.\n*Receba respostas reais.*",
+     "cap": "Experiência vivida, não sermões",
+     "chips": [
+      "💬 Respostas sinceras",
+      "💛 Sem julgamentos",
+      "🌙 Sempre tem alguém"
+     ],
+     "hot": 0,
+     "foot": "Pessoas reais que já passaram por isso"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Perguntas frequentes,\n*respondidas*",
+     "cap": "Respostas claras e confiáveis",
+     "chips": [
+      "💊 Medicação",
+      "🧠 Condições",
+      "🛋️ Terapias",
+      "💼 Trabalho",
+      "🤰 Gravidez"
+     ],
+     "hot": 0,
+     "foot": "Com fontes e orientação, sem jargão"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Denuncie um post.\nA ajuda chega rápido.",
+     "cap": "Um espaço moderado e mais seguro",
+     "chips": [
+      "🚨 Denuncie com um toque",
+      "🆘 SOS na crise",
+      "🛡️ Cada denúncia é revisada"
+     ],
+     "hot": 1,
+     "foot": "A ajuda nunca está longe"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Um tema novo\n*todo dia*",
+     "cap": "Pequenas vitórias, compartilhadas",
+     "chips": [
+      "💬 Responder",
+      "💛 Curtir",
+      "🙈 Anônimo"
+     ],
+     "hot": 0,
+     "foot": "Participe ou só leia"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Claro ou escuro,\n*você escolhe*",
+     "cap": "Descanso para os olhos à noite",
+     "chips": [
+      "🌙 Escuro",
+      "☀️ Claro",
+      "📱 Como seu celular"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Você não está\n*sozinho.*",
+     "cap": "Compartilhe o que pensa, não quem você é",
+     "chips": [
+      "🙈 Sem nome real",
+      "💬 Tema de hoje",
+      "💛 Respostas gentis"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Como você\nestá hoje?",
+     "cap": "Só os totais do dia são guardados, nunca quem escolheu o quê",
+     "chips": [
+      "🐻 Diga como está",
+      "📊 O humor do fórum"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Pergunte tudo.\n*Receba respostas reais.*",
+     "cap": "Experiência vivida, não sermões",
+     "chips": [
+      "💬 Respostas sinceras",
+      "💛 Sem julgamentos"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Perguntas frequentes,\n*respondidas*",
+     "cap": "Respostas claras e confiáveis",
+     "chips": [
+      "💊 Medicação",
+      "🧠 Condições",
+      "🛋️ Terapias"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Escolha um Moniker.\nFique anônimo.",
+     "cap": "Sem rastro de cadastro, sem nome real",
+     "chips": [
+      "🙈 Nome anônimo",
+      "📱 O mesmo nome em todos os aparelhos"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Denuncie um post.\nA ajuda chega rápido.",
+     "cap": "Um espaço moderado e mais seguro",
+     "chips": [
+      "🚨 Denuncie com um toque",
+      "🆘 SOS na crise"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "nl": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Je staat er\nniet *alleen* voor."
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Je staat er\nniet *alleen* voor.",
+     "foot": "Deel je gedachten, niet je identiteit"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Hoe gaat het\nvandaag?",
+     "cap": "Zeg hoe het gaat en zie de stemming op het forum",
+     "foot": "Alleen de totalen van de dag worden bewaard, nooit wie wat koos"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Kies een Moniker.\nBlijf anoniem.",
+     "cap": "Geen aanmeldspoor, geen echte naam",
+     "chips": [
+      "🙈 Anonieme naam",
+      "🚫 Geen profiel bij te houden",
+      "📱 Dezelfde naam op elk apparaat"
+     ],
+     "hot": 0,
+     "foot": "Je e-mail wordt alleen als hash bewaard"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Vraag wat je wilt.\n*Krijg echte antwoorden.*",
+     "cap": "Ervaring, geen preken",
+     "chips": [
+      "💬 Eerlijke antwoorden",
+      "💛 Geen oordeel",
+      "🌙 Er is altijd iemand"
+     ],
+     "hot": 0,
+     "foot": "Echte mensen die er ook zijn geweest"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Veelgestelde vragen,\n*beantwoord*",
+     "cap": "Heldere antwoorden waar je op kunt vertrouwen",
+     "chips": [
+      "💊 Medicatie",
+      "🧠 Aandoeningen",
+      "🛋️ Therapieën",
+      "💼 Werk",
+      "🤰 Zwangerschap"
+     ],
+     "hot": 0,
+     "foot": "Met bronnen en wegwijzers, zonder jargon"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Meld een bericht.\nHulp is snel daar.",
+     "cap": "Een gemodereerde, veiligere plek",
+     "chips": [
+      "🚨 Melden met één tik",
+      "🆘 SOS in een crisis",
+      "🛡️ Elke melding bekeken"
+     ],
+     "hot": 1,
+     "foot": "Hulp is nooit ver weg"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Elke dag\n*een nieuw onderwerp*",
+     "cap": "Kleine overwinningen, gedeeld",
+     "chips": [
+      "💬 Reageren",
+      "💛 Vind ik leuk",
+      "🙈 Anoniem blijven"
+     ],
+     "hot": 0,
+     "foot": "Doe mee, of lees gewoon mee"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Licht of donker,\n*jij kiest*",
+     "cap": "Rustig voor je ogen in de avond",
+     "chips": [
+      "🌙 Donker",
+      "☀️ Licht",
+      "📱 Zoals je telefoon"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Je staat er\nniet *alleen* voor.",
+     "cap": "Deel je gedachten, niet je identiteit",
+     "chips": [
+      "🙈 Geen echte naam",
+      "💬 Onderwerp van vandaag",
+      "💛 Vriendelijke reacties"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Hoe gaat het\nvandaag?",
+     "cap": "Alleen de totalen van de dag worden bewaard, nooit wie wat koos",
+     "chips": [
+      "🐻 Zeg hoe het gaat",
+      "📊 De stemming op het forum"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Vraag wat je wilt.\n*Krijg echte antwoorden.*",
+     "cap": "Ervaring, geen preken",
+     "chips": [
+      "💬 Eerlijke antwoorden",
+      "💛 Geen oordeel"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Veelgestelde vragen,\n*beantwoord*",
+     "cap": "Heldere antwoorden waar je op kunt vertrouwen",
+     "chips": [
+      "💊 Medicatie",
+      "🧠 Aandoeningen",
+      "🛋️ Therapieën"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Kies een Moniker.\nBlijf anoniem.",
+     "cap": "Geen aanmeldspoor, geen echte naam",
+     "chips": [
+      "🙈 Anonieme naam",
+      "📱 Dezelfde naam op elk apparaat"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Meld een bericht.\nHulp is snel daar.",
+     "cap": "Een gemodereerde, veiligere plek",
+     "chips": [
+      "🚨 Melden met één tik",
+      "🆘 SOS in een crisis"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "pl": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Nie jesteś\n*sam.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Nie jesteś\n*sam.*",
+     "foot": "Dziel się myślami, nie tożsamością"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Jak się dziś\nczujesz?",
+     "cap": "Zaznacz swój nastrój i zobacz, jak czuje się forum",
+     "foot": "Zapisujemy tylko sumy z dnia, nigdy kto co wybrał"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Wybierz Moniker.\nPozostań anonimowy.",
+     "cap": "Bez śladu rejestracji, bez prawdziwego imienia",
+     "chips": [
+      "🙈 Anonimowe imię",
+      "🚫 Żadnego profilu do prowadzenia",
+      "📱 To samo imię na każdym urządzeniu"
+     ],
+     "hot": 0,
+     "foot": "Twój e-mail zapisujemy tylko jako hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Pytaj o wszystko.\n*Dostań prawdziwe odpowiedzi.*",
+     "cap": "Doświadczenie, nie pouczanie",
+     "chips": [
+      "💬 Szczere odpowiedzi",
+      "💛 Bez oceniania",
+      "🌙 Zawsze ktoś jest"
+     ],
+     "hot": 0,
+     "foot": "Prawdziwi ludzie, którzy przez to przeszli"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Częste pytania,\n*z odpowiedziami*",
+     "cap": "Jasne odpowiedzi, którym możesz ufać",
+     "chips": [
+      "💊 Leki",
+      "🧠 Zaburzenia",
+      "🛋️ Terapie",
+      "💼 Praca",
+      "🤰 Ciąża"
+     ],
+     "hot": 0,
+     "foot": "Ze źródłami i wskazówkami, bez żargonu"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Zgłoś wpis.\nPomoc przychodzi szybko.",
+     "cap": "Moderowane, bezpieczniejsze miejsce",
+     "chips": [
+      "🚨 Zgłoś jednym dotknięciem",
+      "🆘 SOS w kryzysie",
+      "🛡️ Każde zgłoszenie sprawdzane"
+     ],
+     "hot": 1,
+     "foot": "Pomoc nigdy nie jest daleko"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Nowy temat\n*każdego dnia*",
+     "cap": "Małe sukcesy, wspólnie",
+     "chips": [
+      "💬 Odpowiedz",
+      "💛 Polub",
+      "🙈 Zostań anonimowy"
+     ],
+     "hot": 0,
+     "foot": "Dołącz albo po prostu czytaj"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Jasny czy ciemny,\n*ty wybierasz*",
+     "cap": "Łagodny dla oczu wieczorem",
+     "chips": [
+      "🌙 Ciemny",
+      "☀️ Jasny",
+      "📱 Jak w telefonie"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Nie jesteś\n*sam.*",
+     "cap": "Dziel się myślami, nie tożsamością",
+     "chips": [
+      "🙈 Bez prawdziwego imienia",
+      "💬 Temat dnia",
+      "💛 Życzliwe odpowiedzi"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Jak się dziś\nczujesz?",
+     "cap": "Zapisujemy tylko sumy z dnia, nigdy kto co wybrał",
+     "chips": [
+      "🐻 Zaznacz nastrój",
+      "📊 Nastrój forum"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Pytaj o wszystko.\n*Dostań prawdziwe odpowiedzi.*",
+     "cap": "Doświadczenie, nie pouczanie",
+     "chips": [
+      "💬 Szczere odpowiedzi",
+      "💛 Bez oceniania"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Częste pytania,\n*z odpowiedziami*",
+     "cap": "Jasne odpowiedzi, którym możesz ufać",
+     "chips": [
+      "💊 Leki",
+      "🧠 Zaburzenia",
+      "🛋️ Terapie"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Wybierz Moniker.\nPozostań anonimowy.",
+     "cap": "Bez śladu rejestracji, bez prawdziwego imienia",
+     "chips": [
+      "🙈 Anonimowe imię",
+      "📱 To samo imię na każdym urządzeniu"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Zgłoś wpis.\nPomoc przychodzi szybko.",
+     "cap": "Moderowane, bezpieczniejsze miejsce",
+     "chips": [
+      "🚨 Zgłoś jednym dotknięciem",
+      "🆘 SOS w kryzysie"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "sv": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "Du är inte\n*ensam.*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "Du är inte\n*ensam.*",
+     "foot": "Dela dina tankar, inte din identitet"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "Hur mår du\ni dag?",
+     "cap": "Säg hur du mår och se hur forumet mår",
+     "foot": "Bara dagens summor sparas, aldrig vem som valde vad"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "Välj en Moniker.\nFörbli anonym.",
+     "cap": "Inga registreringsspår, inget riktigt namn",
+     "chips": [
+      "🙈 Anonymt namn",
+      "🚫 Ingen profil att sköta",
+      "📱 Samma namn på alla enheter"
+     ],
+     "hot": 0,
+     "foot": "Din e-post sparas bara som en hash"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "Fråga vad som helst.\n*Få riktiga svar.*",
+     "cap": "Levd erfarenhet, inte föreläsningar",
+     "chips": [
+      "💬 Ärliga svar",
+      "💛 Inga fördomar",
+      "🌙 Någon finns alltid där"
+     ],
+     "hot": 0,
+     "foot": "Riktiga människor som varit där du är"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "Vanliga frågor,\n*besvarade*",
+     "cap": "Tydliga svar du kan lita på",
+     "chips": [
+      "💊 Läkemedel",
+      "🧠 Tillstånd",
+      "🛋️ Terapier",
+      "💼 Arbetsplats",
+      "🤰 Graviditet"
+     ],
+     "hot": 0,
+     "foot": "Med källor och vägvisare, utan facktermer"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "Rapportera ett inlägg.\nHjälpen kommer snabbt.",
+     "cap": "En modererad, tryggare plats",
+     "chips": [
+      "🚨 Rapportera med ett tryck",
+      "🆘 SOS i en kris",
+      "🛡️ Varje rapport granskas"
+     ],
+     "hot": 1,
+     "foot": "Hjälpen är aldrig långt borta"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "Ett nytt ämne\n*varje dag*",
+     "cap": "Små segrar, delade",
+     "chips": [
+      "💬 Svara",
+      "💛 Gilla",
+      "🙈 Förbli anonym"
+     ],
+     "hot": 0,
+     "foot": "Var med, eller läs bara"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "Ljust eller mörkt,\n*du väljer*",
+     "cap": "Skonsamt för ögonen på kvällen",
+     "chips": [
+      "🌙 Mörkt",
+      "☀️ Ljust",
+      "📱 Som din telefon"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "Du är inte\n*ensam.*",
+     "cap": "Dela dina tankar, inte din identitet",
+     "chips": [
+      "🙈 Inget riktigt namn",
+      "💬 Dagens ämne",
+      "💛 Vänliga svar"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "Hur mår du\ni dag?",
+     "cap": "Bara dagens summor sparas, aldrig vem som valde vad",
+     "chips": [
+      "🐻 Säg hur du mår",
+      "📊 Forumets humör"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "Fråga vad som helst.\n*Få riktiga svar.*",
+     "cap": "Levd erfarenhet, inte föreläsningar",
+     "chips": [
+      "💬 Ärliga svar",
+      "💛 Inga fördomar"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "Vanliga frågor,\n*besvarade*",
+     "cap": "Tydliga svar du kan lita på",
+     "chips": [
+      "💊 Läkemedel",
+      "🧠 Tillstånd",
+      "🛋️ Terapier"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "Välj en Moniker.\nFörbli anonym.",
+     "cap": "Inga registreringsspår, inget riktigt namn",
+     "chips": [
+      "🙈 Anonymt namn",
+      "📱 Samma namn på alla enheter"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "Rapportera ett inlägg.\nHjälpen kommer snabbt.",
+     "cap": "En modererad, tryggare plats",
+     "chips": [
+      "🚨 Rapportera med ett tryck",
+      "🆘 SOS i en kris"
+     ],
+     "hot": 1
+    }
+   }
+  },
+  "zh": {
+   "lockup": {
+    "name": "Bipolar Anonymous"
+   },
+   "fg": {
+    "head": "你并不\n*孤单。*"
+   },
+   "shots": {
+    "01-hero": {
+     "ground": "cream",
+     "head": "你并不\n*孤单。*",
+     "foot": "分享想法，不暴露身份"
+    },
+    "02-hero": {
+     "ground": "yellow",
+     "head": "你今天\n感觉怎么样？",
+     "cap": "说说你今天的状态，看看大家感觉如何",
+     "foot": "只保存当天的总数，绝不记录谁选了什么"
+    },
+    "03-moniker": {
+     "ground": "yellow",
+     "head": "选一个 Moniker。\n保持匿名。",
+     "cap": "没有注册痕迹，不用真名",
+     "chips": [
+      "🙈 匿名名字",
+      "🚫 无需维护个人资料",
+      "📱 所有设备同一个名字"
+     ],
+     "hot": 0,
+     "foot": "你的邮箱只以哈希形式保存"
+    },
+    "04-ask": {
+     "ground": "dark",
+     "head": "有问题尽管问。\n*收获真诚回答。*",
+     "cap": "亲身经历，而非说教",
+     "chips": [
+      "💬 真诚回答",
+      "💛 没有评判",
+      "🌙 总有人在"
+     ],
+     "hot": 0,
+     "foot": "真正经历过的人"
+    },
+    "05-wiki": {
+     "ground": "cream",
+     "head": "常见问题，\n*一一解答*",
+     "cap": "值得信赖的清晰解答",
+     "chips": [
+      "💊 药物",
+      "🧠 病症",
+      "🛋️ 疗法",
+      "💼 职场",
+      "🤰 妊娠"
+     ],
+     "hot": 0,
+     "foot": "附有来源和指引，没有术语"
+    },
+    "06-report": {
+     "ground": "yellow",
+     "head": "举报帖子。\n帮助迅速到达。",
+     "cap": "有人管理、更安全的空间",
+     "chips": [
+      "🚨 一键举报",
+      "🆘 危机时发送 SOS",
+      "🛡️ 每条举报都会审核"
+     ],
+     "hot": 1,
+     "foot": "帮助从不遥远"
+    },
+    "07-topic": {
+     "ground": "cream",
+     "head": "每天\n*一个新话题*",
+     "cap": "分享小小的进步",
+     "chips": [
+      "💬 回复",
+      "💛 点赞",
+      "🙈 保持匿名"
+     ],
+     "hot": 0,
+     "foot": "参与讨论，或只是看看"
+    },
+    "08-dark": {
+     "ground": "dark",
+     "head": "浅色或深色，\n*由你决定*",
+     "cap": "夜晚看着更舒服",
+     "chips": [
+      "🌙 深色",
+      "☀️ 浅色",
+      "📱 跟随手机"
+     ],
+     "hot": 0
+    },
+    "t01-board": {
+     "ground": "yellow",
+     "head": "你并不\n*孤单。*",
+     "cap": "分享想法，不暴露身份",
+     "chips": [
+      "🙈 无需真名",
+      "💬 今日话题",
+      "💛 温暖回复"
+     ],
+     "hot": 0
+    },
+    "t02-checkin": {
+     "ground": "cream",
+     "head": "你今天\n感觉怎么样？",
+     "cap": "只保存当天的总数，绝不记录谁选了什么",
+     "chips": [
+      "🐻 说说你的状态",
+      "📊 社区心情"
+     ],
+     "hot": 0
+    },
+    "t03-ask": {
+     "ground": "dark",
+     "head": "有问题尽管问。\n*收获真诚回答。*",
+     "cap": "亲身经历，而非说教",
+     "chips": [
+      "💬 真诚回答",
+      "💛 没有评判"
+     ],
+     "hot": 0
+    },
+    "t04-wiki": {
+     "ground": "cream",
+     "head": "常见问题，\n*一一解答*",
+     "cap": "值得信赖的清晰解答",
+     "chips": [
+      "💊 药物",
+      "🧠 病症",
+      "🛋️ 疗法"
+     ],
+     "hot": 0
+    },
+    "t05-moniker": {
+     "ground": "yellow",
+     "head": "选一个 Moniker。\n保持匿名。",
+     "cap": "没有注册痕迹，不用真名",
+     "chips": [
+      "🙈 匿名名字",
+      "📱 所有设备同一个名字"
+     ],
+     "hot": 0
+    },
+    "t06-report": {
+     "ground": "yellow",
+     "head": "举报帖子。\n帮助迅速到达。",
+     "cap": "有人管理、更安全的空间",
+     "chips": [
+      "🚨 一键举报",
+      "🆘 危机时发送 SOS"
+     ],
+     "hot": 1
+    }
+   }
+  }
+ }
+}

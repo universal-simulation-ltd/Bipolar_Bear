@@ -1,0 +1,104 @@
+{
+  "_comment": "Invented content typed into the app for the Google Play captures (play/capture.mjs), beside screens-i18n/ipad_seed.json's survival kit and notes: the safety plan, in each store language. No real person, number or place. Only en-GB shows phone numbers, from Ofcom's ranges kept for drama (07700 900xxx, 01632 960xxx); the other languages show names only.",
+  "plan": {
+    "en": {
+      "warningSigns": ["Sleeping less than 5 hours", "Spending without thinking"],
+      "coping": ["A hot shower and my calm playlist", "A walk round the block"],
+      "distraction": ["The café on the corner", "Gaming with my brother"],
+      "helpPeople": [{ "name": "Sam (my sister)", "phone": "07700 900123" }],
+      "professionals": [{ "name": "My care coordinator", "phone": "01632 960456" }],
+      "safeEnv": ["Ask Sam to keep my spare bank cards"],
+      "reasons": ["My niece", "Summers by the sea"]
+    },
+    "es": {
+      "warningSigns": ["Dormir menos de 5 horas", "Gastar sin pensar"],
+      "coping": ["Una ducha caliente y mi lista de música tranquila", "Dar una vuelta a la manzana"],
+      "distraction": ["La cafetería de la esquina", "Jugar a videojuegos con mi hermano"],
+      "helpPeople": [{ "name": "Sara (mi hermana)" }],
+      "professionals": [{ "name": "Mi psicóloga del centro de salud mental" }],
+      "safeEnv": ["Pedir a Sara que guarde mis tarjetas de repuesto"],
+      "reasons": ["Mi sobrina", "Los veranos junto al mar"]
+    },
+    "fr": {
+      "warningSigns": ["Dormir moins de 5 heures", "Dépenser sans réfléchir"],
+      "coping": ["Une douche chaude et ma playlist calme", "Faire le tour du pâté de maisons"],
+      "distraction": ["Le café du coin", "Jouer aux jeux vidéo avec mon frère"],
+      "helpPeople": [{ "name": "Sophie (ma sœur)" }],
+      "professionals": [{ "name": "Mon infirmière référente" }],
+      "safeEnv": ["Demander à Sophie de garder mes cartes bancaires"],
+      "reasons": ["Ma nièce", "Les étés au bord de la mer"]
+    },
+    "de": {
+      "warningSigns": ["Weniger als 5 Stunden Schlaf", "Geld ausgeben, ohne nachzudenken"],
+      "coping": ["Eine heiße Dusche und meine ruhige Playlist", "Einmal um den Block gehen"],
+      "distraction": ["Das Café an der Ecke", "Mit meinem Bruder zocken"],
+      "helpPeople": [{ "name": "Lena (meine Schwester)" }],
+      "professionals": [{ "name": "Meine Bezugstherapeutin" }],
+      "safeEnv": ["Lena bitten, meine Ersatzkarten aufzubewahren"],
+      "reasons": ["Meine Nichte", "Sommer am Meer"]
+    },
+    "it": {
+      "warningSigns": ["Dormire meno di 5 ore", "Spendere senza pensarci"],
+      "coping": ["Una doccia calda e la mia playlist rilassante", "Fare il giro dell'isolato"],
+      "distraction": ["Il bar all'angolo", "Giocare ai videogiochi con mio fratello"],
+      "helpPeople": [{ "name": "Giulia (mia sorella)" }],
+      "professionals": [{ "name": "La mia psicologa del centro di salute mentale" }],
+      "safeEnv": ["Chiedere a Giulia di tenere le mie carte di riserva"],
+      "reasons": ["Mia nipote", "Le estati al mare"]
+    },
+    "pt": {
+      "warningSigns": ["Dormir menos de 5 horas", "Gastar sem pensar"],
+      "coping": ["Um duche quente e a minha playlist calma", "Dar uma volta ao quarteirão"],
+      "distraction": ["O café da esquina", "Jogar videojogos com o meu irmão"],
+      "helpPeople": [{ "name": "Rita (a minha irmã)" }],
+      "professionals": [{ "name": "A minha enfermeira de referência" }],
+      "safeEnv": ["Pedir à Rita que guarde os meus cartões"],
+      "reasons": ["A minha sobrinha", "Os verões junto ao mar"]
+    },
+    "pt-BR": {
+      "warningSigns": ["Dormir menos de 5 horas", "Gastar sem pensar"],
+      "coping": ["Um banho quente e minha playlist tranquila", "Dar uma volta no quarteirão"],
+      "distraction": ["A cafeteria da esquina", "Jogar videogame com meu irmão"],
+      "helpPeople": [{ "name": "Ana (minha irmã)" }],
+      "professionals": [{ "name": "Minha psicóloga do CAPS" }],
+      "safeEnv": ["Pedir para a Ana guardar meus cartões"],
+      "reasons": ["Minha sobrinha", "Os verões na praia"]
+    },
+    "nl": {
+      "warningSigns": ["Minder dan 5 uur slapen", "Geld uitgeven zonder na te denken"],
+      "coping": ["Een warme douche en mijn rustige playlist", "Een rondje om het blok"],
+      "distraction": ["Het café op de hoek", "Gamen met mijn broer"],
+      "helpPeople": [{ "name": "Sanne (mijn zus)" }],
+      "professionals": [{ "name": "Mijn behandelaar bij de ggz" }],
+      "safeEnv": ["Sanne vragen mijn extra pasjes te bewaren"],
+      "reasons": ["Mijn nichtje", "Zomers aan zee"]
+    },
+    "pl": {
+      "warningSigns": ["Sen krótszy niż 5 godzin", "Wydawanie pieniędzy bez zastanowienia"],
+      "coping": ["Gorący prysznic i moja spokojna playlista", "Spacer dookoła bloku"],
+      "distraction": ["Kawiarnia na rogu", "Granie z bratem"],
+      "helpPeople": [{ "name": "Ola (moja siostra)" }],
+      "professionals": [{ "name": "Moja psychiatra" }],
+      "safeEnv": ["Poprosić Olę, żeby przechowała moje zapasowe karty"],
+      "reasons": ["Moja siostrzenica", "Lato nad morzem"]
+    },
+    "sv": {
+      "warningSigns": ["Sover mindre än 5 timmar", "Handlar utan att tänka"],
+      "coping": ["En varm dusch och min lugna spellista", "En promenad runt kvarteret"],
+      "distraction": ["Kaféet på hörnet", "Spela tv-spel med min bror"],
+      "helpPeople": [{ "name": "Elin (min syster)" }],
+      "professionals": [{ "name": "Min kontaktperson på psykiatrin" }],
+      "safeEnv": ["Be Elin ta hand om mina extra bankkort"],
+      "reasons": ["Min systerdotter", "Somrar vid havet"]
+    },
+    "zh": {
+      "warningSigns": ["睡眠少于 5 小时", "不假思索地花钱"],
+      "coping": ["洗个热水澡，听我的舒缓歌单", "绕着街区走一圈"],
+      "distraction": ["街角的咖啡馆", "和哥哥一起打游戏"],
+      "helpPeople": [{ "name": "小雨（我姐姐）" }],
+      "professionals": [{ "name": "我的心理医生" }],
+      "safeEnv": ["请小雨帮我保管备用银行卡"],
+      "reasons": ["我的外甥女", "海边的夏天"]
+    }
+  }
+}
