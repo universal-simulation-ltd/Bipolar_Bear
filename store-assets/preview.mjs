@@ -4,16 +4,29 @@
 // would, recorded by the UNI·SIM store kit (Docs_UNI_SIM/store-kit/preview.mjs:
 // status bar, touch dots, encoding, Apple's checks).
 //
-//   node store-assets/preview.mjs bear        → out/preview/bipolarbear/en/iphone-01.mp4
-//   node store-assets/preview.mjs anonymous   → out/preview/anonymous/en/iphone-01.mp4
+//   node store-assets/preview.mjs bear [de-DE fr-FR …]  → out/preview/bipolarbear/<locale>/iphone-01.mp4
+//   node store-assets/preview.mjs anonymous [all]       → out/preview/anonymous/<locale>/iphone-01.mp4
+//   … no locale = en-GB; `all` = every App Store locale in LOCALES below
 //   … --stills                                and PNG stills beside it, to look at
 //   … --worktree                              serve the working tree instead of HEAD
+//
+// Beside each mp4 (2026-10-17): contact.png (one frame a second, to check
+// before uploading), texts.txt (every piece of text on screen at each step)
+// and, for a translated locale, english.txt (those texts that are word for
+// word the English run's: untranslated UI shows up there), and meta.json
+// with the length and the poster frame for asc-preview.mjs --poster.
+// CHROMIUM=<path> launches that Chromium (Playwright's own otherwise).
+//
+// Uploading one (App Store Connect, the 6.9" slot; dry run without --apply):
+//   node Docs_UNI_SIM/store-kit/asc-preview.mjs --bundle com.app.bipolarbear --version 1.43 \
+//     --locale de-DE --poster <meta.json's poster> --apply out/preview/bipolarbear/de-DE/iphone-01.mp4
+// (Bipolar Anonymous: --bundle com.bipolaranonymous.app, out/preview/anonymous/…).
 //
 // What it serves: a copy of the committed app (git archive HEAD, so a neighbour
 // session's uncommitted work never ends up in a store video), and for
 // anonymous the Bipolar Anonymous bundle scripts/build-anonymous.js makes from
 // it (anonymous.html as index.html, BB_BRAND.bundle = 'anonymous'), both in a
-// temp folder: nothing in the repo is written but the mp4.
+// temp folder: nothing in the repo is written but out/preview/.
 //
 // What it shows: invented data only, as the screenshot captures
 // (_ipadseed.html) do. Bipolar Bear runs as a guest, its five weeks of entries
@@ -22,9 +35,9 @@
 // (fakeFirebase below), so no request reaches Firestore, Auth or Functions,
 // and the Bipolar Anonymous board, its daily topic and its replies are
 // invented docs in that stand-in. Every other off-site request is refused.
-import { readFile, mkdtemp, rm } from 'node:fs/promises'
-import { realpathSync } from 'node:fs'
-import { execSync } from 'node:child_process'
+import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises'
+import { realpathSync, readFileSync, existsSync } from 'node:fs'
+import { execSync, execFileSync } from 'node:child_process'
 import { pbkdf2Sync, randomBytes } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -33,9 +46,13 @@ import { fileURLToPath } from 'node:url'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const repo = path.resolve(here, '..')
 const kit = await import('file:///Users/jamesmarkey/Github/UNISIM/Docs_UNI_SIM/store-kit/preview.mjs')
-const { IPHONE, playwright, prepare, record, stills, tap, type, scroll, hold } = kit
+const { IPHONE, playwright, prepare, record, stills, tap, type, scroll, hold, W, H, FPS, MIN_S, MAX_S } = kit
 
-const ORIGIN = 'http://localhost:8765'
+const isMain = !!process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])
+// Nothing listens on this port: every request is answered by the page's own
+// routing (serve below). The recordings use 8811; capture-ipad-localized.mjs,
+// which imports open(), navigates to 8765 itself.
+const ORIGIN = `http://localhost:${isMain ? 8811 : 8765}`
 const TYPES = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif',
@@ -431,8 +448,18 @@ async function serve(ctx, root, seed) {
   })
 }
 
-function morning() {
-  const d = new Date(); d.setHours(9, 41, 0, 0); return d
+// 9:41 in the morning where the page is (its time zone), so the greeting is
+// "Good morning" in Shanghai and São Paulo too. The day is this machine's
+// today, the one bearEntries() counts back from, so "yesterday" in the page
+// is always the day the seed leaves unlogged.
+function morning(timeZone = 'Europe/London') {
+  const now = new Date()
+  const part = (d) => Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    .formatToParts(d).map((x) => [x.type, +x.value]))
+  const p = part(now)
+  const offset = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second) - Math.floor(now.getTime() / 1000) * 1000
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 9, 41) - offset)
 }
 
 /**
@@ -444,9 +471,9 @@ function morning() {
  * anonymous the board's `docs` in place of boardDocs() and `translations`
  * (English → the reader's language) for the board's auto-translation.
  */
-export async function open(app, { browser, device = IPHONE, lang = 'en', locale = 'en-GB', timezoneId = 'Europe/London', storage: extra = {}, docs, translations } = {}) {
+export async function open(app, { browser, device = IPHONE, lang = 'en', locale = 'en-GB', timezoneId = 'Europe/London', storage: extra = {}, docs, translations, localMorning = false } = {}) {
   const { chromium } = await playwright()
-  browser ??= await chromium.launch()
+  browser ??= await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
   const { tmp, root } = await snapshot(app)
   const ctx = await browser.newContext({ ...device, locale, timezoneId, serviceWorkers: 'block' })
   const callables = translations ? { ...BOARD_CALLABLES, translateAnonTexts: { translate: translations } } : BOARD_CALLABLES
@@ -463,7 +490,9 @@ export async function open(app, { browser, device = IPHONE, lang = 'en', locale 
       Plugins: {}, convertFileSrc: (s) => s, platform: 'ios' }
   })
   // A morning, so the app greets the day the way most people log it.
-  await ctx.clock.install({ time: morning() })
+  // localMorning: 9:41 in the page's own time zone (the previews); otherwise
+  // 9:41 London time, as the iPad stills were taken.
+  await ctx.clock.install({ time: morning(localMorning ? timezoneId : undefined) })
   const page = await ctx.newPage()
   page.on('pageerror', (e) => console.warn('[page error]', e.message))
   await prepare(page)
@@ -477,8 +506,106 @@ export async function open(app, { browser, device = IPHONE, lang = 'en', locale 
   return { browser, ctx, page, cleanup: () => rm(tmp, { recursive: true, force: true }) }
 }
 
+
+// ── The App Store locales ──────────────────────────────────────────────────
+// App Store locale → the app's language, the browser's locale, the time zone
+// (it picks the crisis lines and the greeting), and the key in
+// screens-i18n/ipad_seed.json / ipad_anon_board.json for what the "user" and
+// the board's members wrote. pt-BR is the app's Portuguese with Brazilian
+// notes and Brazil's crisis lines, as on the iPad set.
+export const LOCALES = {
+  'en-GB': ['en', 'en-GB', 'Europe/London', 'en'],
+  'de-DE': ['de', 'de-DE', 'Europe/Berlin', 'de'],
+  'es-ES': ['es', 'es-ES', 'Europe/Madrid', 'es'],
+  'fr-FR': ['fr', 'fr-FR', 'Europe/Paris', 'fr'],
+  it: ['it', 'it-IT', 'Europe/Rome', 'it'],
+  'nl-NL': ['nl', 'nl-NL', 'Europe/Amsterdam', 'nl'],
+  pl: ['pl', 'pl-PL', 'Europe/Warsaw', 'pl'],
+  'pt-BR': ['pt', 'pt-BR', 'America/Sao_Paulo', 'pt-BR'],
+  'pt-PT': ['pt', 'pt-PT', 'Europe/Lisbon', 'pt'],
+  sv: ['sv', 'sv-SE', 'Europe/Stockholm', 'sv'],
+  'zh-Hans': ['zh', 'zh-CN', 'Asia/Shanghai', 'zh'],
+}
+const i18n = (f) => JSON.parse(readFileSync(path.join(here, 'screens-i18n', f), 'utf8'))
+
+// Bipolar Bear's seed for a locale: the survival kit, meds and day notes in
+// that language (capture-ipad-localized.mjs's), and the state of someone a few
+// weeks in: the dock unlocked (its white bar and the default 🆘 · + · 🕹️ · 📣,
+// not a first run's lone centre button), the kit's "filled in!" confetti
+// already played, and home's quick check-in card with its Last 7 days row
+// (a new user's default since v313).
+function bearStorage(key, tz) {
+  const s = key === 'en' ? null : i18n('ipad_seed.json')[key]
+  const extra = { bbFabsUnlocked: '1', bbWaFabHidden: '0', bbSurvivalCelebDone: '1', bbHomeDefaults20261012: '1' }
+  const entries = bearEntries(s ? s.notes : undefined)
+  for (const e of Object.values(entries)) e.recordedTz = tz
+  Object.assign(extra, entries)
+  if (s) Object.assign(extra, {
+    copingStrategies: { low: s.low, depressed: s.depressed, manic: s.manic },
+    dailyGoals: s.goals, survivalGratitude: s.gratitude, rememberThis: s.remember,
+    moodDefinitions: { low: s.lowDef }, currentMedList: s.meds.map(([name, dosage]) => ({ name, dosage })),
+  })
+  return extra
+}
+
+// The board in a locale: preview.mjs's members, each post and reply in that
+// language (ipad_anon_board.json). Today's topic stays as the app posts it
+// (English) and the board's auto-translation shows it in the reader's
+// language, as it does for every member.
+function anonBoard(key) {
+  const P = 'bbAnonPosts/', tr = i18n('ipad_anon_board.json')[key], all = boardDocs(), docs = {}
+  for (const [k, v] of Object.entries(all)) docs[k] = { ...v }
+  const topic = Object.keys(all).find((k) => k.startsWith(P + 'topic-') && !k.includes('/comments/'))
+  for (const [k, text] of Object.entries(tr || {})) {
+    if (k === 'topic' || !docs[k.startsWith('topic/') ? topic + k.slice(5) : P + k]) continue
+    docs[k.startsWith('topic/') ? topic + k.slice(5) : P + k].text = text
+  }
+  const translations = key === 'en' ? null : { [all[topic].text]: tr.topic }
+  return { docs, translations, topic: topic.slice(P.length) }
+}
+
 // ── The stories ────────────────────────────────────────────────────────────
 const shown = (page, sel, opts) => page.locator(sel, opts).locator('visible=true')
+
+// Every piece of text on screen, as capture-ipad-localized.mjs collects it.
+function onScreenText() {
+  const out = [], w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+  for (let n; (n = w.nextNode());) {
+    const t = n.textContent.replace(/\s+/g, ' ').trim()
+    const el = n.parentElement
+    if (!t || !el || ['SCRIPT', 'STYLE', 'NOSCRIPT'].includes(el.tagName)) continue
+    // Where it is first (cheap), its style only if on screen: a board or wiki
+    // has thousands of hidden nodes, and the recording waits while this runs.
+    const r = document.createRange(); r.selectNodeContents(n)
+    const b = r.getBoundingClientRect()
+    if (!b.width || !b.height || b.bottom <= 0 || b.top >= innerHeight || b.right <= 0 || b.left >= innerWidth) continue
+    const cs = getComputedStyle(el)
+    if (cs.visibility === 'hidden' || Number(cs.opacity) === 0) continue
+    out.push(t)
+  }
+  for (const el of document.querySelectorAll('input[placeholder], textarea[placeholder]')) {
+    const b = el.getBoundingClientRect()
+    if (b.width && b.height && b.bottom > 0 && b.top < innerHeight && !el.value) out.push('[placeholder] ' + el.placeholder)
+  }
+  return out
+}
+
+/**
+ * What a story notes as it runs, in real time: `at(name)` marks a moment,
+ * `cut(from, to)` drops the stretch between two marks from the video (a page
+ * loading), the mark `poster` is the poster frame, and `text(step)` keeps
+ * the text on screen for the English check. Turned into video seconds once
+ * the recording is done: the kit lays frames out by their real times, with
+ * `lead` ms of the opening screen before the story starts.
+ */
+function notebook(page) {
+  const nb = { t0: 0, marks: {}, cuts: [], log: [] }
+  nb.start = () => { nb.t0 = Date.now() }
+  nb.at = (name) => { nb.marks[name] = Date.now() }
+  nb.cut = (a, b) => nb.cuts.push([a, b])
+  nb.text = async (step) => { nb.log.push([step, await page.evaluate(onScreenText)]) }
+  return nb
+}
 
 /**
  * Swipe focus mode's wheel until the pill with data-val `val` sits under the
@@ -518,106 +645,260 @@ async function swipeWheel(page, val, { ms = 650, after = 600 } = {}) {
   await page.waitForTimeout(after)
 }
 
-// Bipolar Bear: yesterday logged on focus mode's wheel, a new user's default
-// since v313 (swipe the mood to Low and back, tap Stable; tap through sleep,
-// energy and meds) → five weeks at a glance → the survival kit's coping
-// strategies → back to the journal, held on the life chart.
-async function bear(page, out) {
-  await page.goto(`${ORIGIN}/journal.html`)
-  await shown(page, '#fmWheel .fm-wheel-btn.center').first().waitFor()
-  await hold(page, 900)
-  await record(page, async () => {
-    // Log yesterday: mood, sleep, energy, meds, additional tracking, save.
-    await hold(page, 500)
-    await swipeWheel(page, 'low', { after: 700 })
-    await swipeWheel(page, 'stable', { after: 400 })
-    const centre = () => shown(page, '#fmWheel .fm-wheel-btn.center').first()
-    await tap(page, centre(), { after: 1100 })
-    await tap(page, centre(), { after: 900 })
-    await tap(page, centre(), { after: 900 })
-    await tap(page, centre(), { after: 1000 })
-    // One question on the step, so answering it moves straight on to Save.
-    await tap(page, shown(page, 'button', { hasText: 'On track' }).first(), { after: 1300 })
-    await tap(page, shown(page, '.fm-done-save').first(), { after: 1000 })
-    // Five weeks at a glance.
-    await tap(page, page.locator('#journalToggleBtn'), { after: 1500 })
-    // The survival kit: what helps when things get low.
-    await scroll(page, -3000, { ms: 600, after: 200 })
-    await tap(page, page.locator('#survivalNavBtn'), { after: 1400 })
-    await tap(page, shown(page, 'a.sk-tab', { hasText: 'Coping' }).first(), { after: 450 })
-    await tap(page, shown(page, '#coping-strategies .mood-icon-btn.low').first(), { after: 1800 })
-    // Back to the journal, and the life chart.
-    await scroll(page, -3000, { ms: 600, after: 200 })
-    await tap(page, page.locator('#skJournalNavBtn'), { after: 1300 })
-    await tap(page, page.locator('#journalToggleBtn'), { after: 1000 })
-    await tap(page, shown(page, 'button', { hasText: 'Life chart' }).first(), { after: 700 })
-    // Settle with the Calendar | Life chart switch just under the status bar,
-    // so the bar sits on the card's plain ground rather than its numbers.
-    const top = await shown(page, 'button', { hasText: 'Life chart' }).first().evaluate((b) => b.getBoundingClientRect().top)
-    await scroll(page, top - 10, { ms: 900, after: 0 })
-    // The status bar's ground is row 4 of the app, not the kit's 16: the survival
-    // kit's sticky tab strip has its icons on row 16, which would streak the bar.
-  }, { out, tail: 2000, edge: { top: 4 } })
+// Where to scroll the journal: `topOf` puts that element `gap` px below the
+// top; `show` keeps those elements whole above the dock's white bar and
+// `hide` keeps those below it (the "Log in to back up" row), and among the
+// places that do both it takes the one nearest the dock (`prefer: 'bottom'`)
+// where no button or stat tile is cut by the dock's edge or the top edge, and
+// the app's top rows, which the status bar's ground is drawn from, fall on
+// plain ground between cards rather than across one (a muddy band). Long
+// translations make the tiles taller, so this is worked out on the page.
+async function scrollTarget(page, { topOf, show = [], hide = [], gap = 4 }) {
+  return page.evaluate(({ topOf, show, hide, gap }) => {
+    const dock = document.querySelector('.fab-footer')
+    const dockTop = dock && dock.offsetHeight ? dock.getBoundingClientRect().top : innerHeight
+    const rect = (el) => { const r = el.getBoundingClientRect(); return { top: r.top + scrollY, bottom: r.bottom + scrollY } }
+    const one = (sel) => { const el = document.querySelector(sel); if (!el) throw new Error(`scrollTarget: no ${sel}`); return rect(el) }
+    if (topOf) return one(topOf).top - gap - scrollY
+    const S = show.map(one), Hd = hide.map(one)
+    const lo = Math.ceil(Math.max(...S.map((r) => r.bottom - dockTop + gap)))
+    const hi = Math.floor(Math.min(...S.map((r) => r.top - 2), ...Hd.map((r) => r.top - dockTop - 1)))
+    const whole = [...document.querySelectorAll('#stats > *, #journalCard button, #calViewSwitch, #lifeChart, #monthCalendar, .entries-reveal-list > *')]
+      .filter((e) => e.offsetHeight).map(rect)
+    // The bar's rounded top edge hides a button's last few px anyway; a long
+    // translation that leaves no other way tucks a little more under it.
+    const cut = (y, tuck) => whole.some((r) => (r.top < y && r.bottom > y + 1) || (r.top < y + dockTop - 1 && r.bottom > y + dockTop + tuck))
+    const was = scrollY
+    const plain = (y) => {
+      scrollTo(0, y)
+      if (Math.abs(scrollY - y) > 0.5) return false
+      for (const x of [innerWidth * 0.2, innerWidth * 0.5, innerWidth * 0.8]) {
+        const e = document.elementFromPoint(x, 2)
+        if (e && e.closest('#stats > *, button, #calViewSwitch, #lifeChart, #monthCalendar, .cal-cell, svg')) return false
+      }
+      return true
+    }
+    let got = null
+    // Failing that (German's tall tiles), the dock still covers nothing and
+    // the top edge goes just inside a stat tile's top: a card scrolled a few
+    // px under the status bar, not a button half under the dock.
+    const tileTop = (y) => Math.min(...whole.filter((r) => r.top < y && r.bottom > y + 1).map((r) => y - r.top), Infinity)
+    for (let y = lo; y <= hi && got == null; y++) if (!cut(y, 4) && plain(y)) got = y
+    if (got == null) {
+      const free = []
+      for (let y = lo; y <= hi; y++) {
+        const dockCut = whole.some((r) => r.top < y + dockTop - 1 && r.bottom > y + dockTop + 4)
+        if (!dockCut) free.push([tileTop(y), y])
+      }
+      free.sort((a, b) => a[0] - b[0])
+      if (free.length) { got = free[0][1]; console.warn(`scrollTarget: top edge ${free[0][0]} px into a tile at ${got}`) }
+    }
+    scrollTo(0, was)
+    if (got == null) { console.warn(`scrollTarget: nothing clean in ${lo}–${hi} (dock ${dockTop}; ${whole.map((r) => `${Math.round(r.top)}-${Math.round(r.bottom)}`).join(' ')})`); got = lo }
+    return got - was
+  }, { topOf, show, hide, gap })
 }
 
-// Bipolar Anonymous: the board on a calm morning, checking in as Stable → the
-// daily topic's thread, answered under a moniker → the built-in wiki → back
-// to the board, held.
-async function anonymous(page, out) {
+// Bipolar Bear (James, 2026-10-17): home and its quick check-in card → the
+// mood journal on focus mode's wheel: yesterday logged (the mood swiped to
+// Low and back to Stable, then sleep, energy, meds and the budget), saved →
+// the journal's stats and calendar → the life chart, ending on yesterday's
+// day picked out on it. Framed so the dock's bar never sits across a card,
+// and the "Log in to back up" row stays below it.
+const SIGN_IN = '#journalCard button[onclick*="showAuthModal"]'
+async function bear(page, out, nb) {
+  const yest = new Date(await page.evaluate(() => Date.now()) - 86400000)
+  const yKey = await page.evaluate((t) => { const d = new Date(t); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }, yest.getTime())
+  await page.goto(`${ORIGIN}/index.html`)
+  await shown(page, '#qcOpen').first().waitFor()
+  await hold(page, 2200)
+  await record(page, async () => {
+    nb.start()
+    await nb.text('home')
+    await hold(page, 1300)
+    // Into the journal from the card's header. The journal's own loading
+    // spinner, while the page opens, is cut from the video.
+    nb.at('tapJournal')
+    await tap(page, page.locator('#qcOpen'), { after: 0 })
+    await page.waitForTimeout(140)
+    nb.at('leaveHome')
+    const centre = () => shown(page, '#fmWheel .fm-wheel-btn.center').first()
+    await centre().waitFor()
+    await page.waitForFunction(() => { const p = document.getElementById('entryLoadingPlaceholder'); const o = document.getElementById('fmWheel'); return o && o.getBoundingClientRect().height > 0 })
+    await page.waitForTimeout(120)
+    nb.at('wheelIn')
+    nb.cut('leaveHome', 'wheelIn')
+    await hold(page, 700)
+    nb.at('poster')
+    await nb.text('mood')
+    await hold(page, 600)
+    await swipeWheel(page, 'low', { after: 650 })
+    await swipeWheel(page, 'stable', { after: 350 })
+    await tap(page, centre(), { after: 1050 })
+    await nb.text('sleep')
+    await tap(page, centre(), { after: 900 })
+    await tap(page, centre(), { after: 900 })
+    await nb.text('meds')
+    await tap(page, centre(), { after: 1000 })
+    await nb.text('additional')
+    // The budget question's ✅: one question on the step, so it moves on.
+    await tap(page, shown(page, 'button').filter({ hasText: /✅/ }).last(), { after: 1200 })
+    await nb.text('review')
+    await tap(page, shown(page, '.fm-done-save').first(), { after: 1300 })
+    await nb.text('saved')
+    // Your Journey: the stats, then the month's calendar.
+    await tap(page, page.locator('#journalToggleBtn'), { after: 500 })
+    await page.locator('#stats').waitFor()
+    await scroll(page, await scrollTarget(page, { topOf: '#journalCard', gap: 12 }), { ms: 900, after: 1500 })
+    await nb.text('stats')
+    await scroll(page, await scrollTarget(page, { show: ['#monthCalendar'], hide: [SIGN_IN] }), { ms: 800, after: 1300 })
+    await nb.text('calendar')
+    // The life chart: five weeks at a glance, and yesterday, just logged, on it.
+    await tap(page, page.locator('#calViewSwitch .cv-opt').nth(1), { after: 600 })
+    await scroll(page, await scrollTarget(page, { show: ['#lifeChart'], hide: [SIGN_IN] }), { ms: 800, after: 500 })
+    const bar = await page.evaluate(() => {
+      const svg = document.querySelector('#lifeChart svg')
+      const moods = ['#51cf66', '#d2be00', '#ff6b6b', '#845ef7', '#5c7cfa']
+      const last = [...svg.querySelectorAll('rect')].filter((r) => r.id !== 'lcHl' && r.getAttribute('fill') && r.getAttribute('fill') !== '#6495ed')
+        .sort((a, b) => +b.getAttribute('x') - +a.getAttribute('x'))[0]
+      const r = last.getBoundingClientRect(), s = svg.getBoundingClientRect()
+      return { x: r.left + r.width / 2, y: s.top + s.height * 0.4 }
+    })
+    await tap(page, bar, { after: 300 })
+    await nb.text('lifechart')
+  }, { out, lead: 700, tail: 2600, edge: { top: 4 } })
+}
+
+// Bipolar Anonymous (James, 2026-10-17): the board as it opens (How are you
+// today?, today's topic, Help, the dock) → today's topic's thread, its
+// replies read → a heart for a member's post → the wiki, an article open →
+// back on the board, checking in as Stable: "You're not alone in it", held to
+// the end. The feed stays at its top: the board's floating dock always sits
+// over a post (its cards' gaps are narrower than the dock), and any scroll
+// that clears it slices the greeting card's text or the post under it.
+// Nothing leaves the page: the stand-in Firestore keeps it all.
+async function anonymous(page, out, nb, { topic }) {
   await page.goto(`${ORIGIN}/index.html`)
   await page.locator('#post-list .mood-btn[data-mood=stable]:not([disabled])').waitFor()
   await page.locator('#post-list .topic-card').waitFor()
-  await hold(page, 900)
+  await hold(page, 1500)
   await record(page, async () => {
-    await hold(page, 300)
-    // How are you today? Stable, and the board says you're not alone.
-    await tap(page, page.locator('#post-list .mood-btn[data-mood=stable]'), { after: 2300 })
-    // Today's topic, its replies, and one more.
-    await tap(page, page.locator('#post-list .topic-card'), { after: 1300 })
-    await type(page, page.locator('#thread-ta'), 'A short walk before breakfast. Felt good.', { delay: 38, after: 300 })
-    await tap(page, page.locator('#thread-send'), { after: 1700 })
-    await tap(page, page.locator('#thread-close'), { after: 600 })
-    // The wiki: plain-English notes on treatments, conditions and more.
-    await tap(page, shown(page, '.board-tab', { hasText: 'Wiki' }).first(), { after: 900 })
-    await tap(page, shown(page, '.wiki-pill', { hasText: 'Therapies' }).first(), { after: 800 })
-    await tap(page, shown(page, '.wiki-card summary').first(), { after: 2600 })
-    // Back to the board, down past the topic to the members' posts.
-    await tap(page, shown(page, '.board-tab', { hasText: 'General' }).first(), { after: 900 })
-    const feed = await page.evaluate(() => {
-      for (const el of [document.querySelector('#post-list'), ...document.querySelectorAll('#post-list *')]) {
-        let e = el
-        while (e && e !== document.body) { const o = getComputedStyle(e).overflowY; if ((o === 'auto' || o === 'scroll') && e.scrollHeight > e.clientHeight) return e.id ? '#' + e.id : null; e = e.parentElement }
-      }
-      return null
-    })
-    // Today's topic near the top, and the feed's last visible card ending just
-    // above the bottom edge, so the home indicator's ground (the app's bottom
-    // rows, stretched) is the feed's plain background rather than a line of text.
-    const dy = await page.evaluate(() => {
-      const H = innerHeight, want = H - 8
-      let dy = document.querySelector('#post-list .topic-card').getBoundingClientRect().top - 110
-      const ends = [...document.querySelectorAll('#post-list > *')].map((c) => c.getBoundingClientRect().bottom - dy)
-      const best = ends.reduce((a, b) => (Math.abs(b - want) < Math.abs(a - want) ? b : a), Infinity)
-      if (Math.abs(best - want) < 120) dy += best - want
-      return dy
-    })
-    await scroll(page, dy, { ms: 1100, selector: feed, after: 0 })
-  }, { out, tail: 2600 })
+    nb.start()
+    await nb.text('board')
+    // The poster: the board as it opens, its five bears asking how you are.
+    await hold(page, 500)
+    nb.at('poster')
+    await hold(page, 1300)
+    // Today's topic: what members wrote.
+    await tap(page, page.locator(`#post-list [data-comment="${topic}"]`).first(), { after: 1400 })
+    await nb.text('thread')
+    await hold(page, 1800)
+    await tap(page, page.locator('#thread-close'), { after: 700 })
+    // A heart for SoftHarbour's two months stable.
+    await tap(page, page.locator('#post-list .like-btn[data-id="p1"]'), { after: 1400 })
+    await nb.text('heart')
+    // The wiki: plain-language notes on treatments, conditions and more.
+    await tap(page, page.locator('.board-tab[data-tab="wiki"]'), { after: 900 })
+    await tap(page, shown(page, '.wiki-pill[data-wiki="therapies"]').first(), { after: 800 })
+    await tap(page, shown(page, '.wiki-card summary').first(), { after: 2400 })
+    await nb.text('wiki')
+    // Back on the board: How are you today? Stable, and the day's totals.
+    await tap(page, page.locator('.board-tab[data-tab="general"]'), { after: 900 })
+    await tap(page, page.locator('#post-list .mood-btn[data-mood=stable]'), { after: 1800 })
+    await hold(page, 600)
+    await nb.text('checkin')
+  }, { out, lead: 700, tail: 2400 })
 }
 
-const OUT = {
-  bear: path.join(here, 'out/preview/bipolarbear/en/iphone-01.mp4'),
-  anonymous: path.join(here, 'out/preview/anonymous/en/iphone-01.mp4'),
+// ── After the recording ────────────────────────────────────────────────────
+const run = (cmd, args) => execFileSync(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] }).toString()
+const probe = (f) => JSON.parse(run('ffprobe', ['-v', 'error', '-show_entries', 'format=duration:stream=codec_name,width,height,r_frame_rate', '-of', 'json', f]))
+
+// Drop each [from, to] (video seconds) from `src` into `out`, at the kit's
+// encoding (H.264 high, 30 fps, a silent stereo AAC track).
+function cutVideo(src, out, cuts) {
+  const keep = cuts.map(([a, b]) => `between(t,${a.toFixed(3)},${b.toFixed(3)})`).join('+')
+  run('ffmpeg', ['-y', '-loglevel', 'error', '-i', src, '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+    '-filter_complex', `[0:v]select='not(${keep})',setpts=N/${FPS}/TB,fps=${FPS},setsar=1,format=yuv420p[v]`,
+    '-map', '[v]', '-map', '1:a', '-shortest',
+    '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.0', '-crf', '16', '-maxrate', '10M', '-bufsize', '20M',
+    '-r', String(FPS), '-c:a', 'aac', '-b:a', '256k', '-ar', '44100', '-ac', '2', '-movflags', '+faststart', out])
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
-  const app = process.argv[2]
-  if (!OUT[app]) { console.error('usage: node store-assets/preview.mjs bear|anonymous [--stills] [--worktree]'); process.exit(1) }
-  const { browser, page, cleanup } = await open(app)
+function contactSheet(file, out) {
+  run('ffmpeg', ['-y', '-loglevel', 'error', '-i', file, '-vf', `fps=1,scale=221:480:flags=area,tile=10x3:padding=4:color=white`, '-frames:v', '1', out])
+}
+
+async function finish(app, locale, rawOut, out, nb, lead) {
+  const vt = (w) => (w - nb.t0) / 1000 + lead / 1000
+  const cuts = nb.cuts.map(([a, b]) => [vt(nb.marks[a]), vt(nb.marks[b])])
+  if (cuts.length) cutVideo(rawOut, out, cuts)
+  else execSync(`mv "${rawOut}" "${out}"`)
+  if (existsSync(rawOut)) await rm(rawOut)
+  // A time after the cuts, in the finished video.
+  const after = (t) => t - cuts.filter(([a, b]) => b <= t).reduce((s, [a, b]) => s + (b - a), 0)
+  const poster = Math.round(after(vt(nb.marks.poster)) * FPS) / FPS
+  const p = probe(out), v = p.streams.find((s) => s.width), a = p.streams.find((s) => !s.width)
+  const secs = +p.format.duration
+  const ok = v.width === W && v.height === H && v.r_frame_rate === `${FPS}/1` && a && secs >= MIN_S && secs <= MAX_S
+  const dir = path.dirname(out)
+  contactSheet(out, path.join(dir, 'contact.png'))
+  run('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(poster), '-i', out, '-frames:v', '1', path.join(dir, 'poster.png')])
+  await writeFile(path.join(dir, 'texts.txt'), nb.log.map(([step, t]) => `## ${step}\n${t.join('\n')}`).join('\n\n') + '\n')
+  // Word-for-word the English run's text: untranslated UI, or a name / number.
+  const enTexts = path.join(path.dirname(dir), 'en-GB', 'texts.txt')
+  let english = []
+  if (locale !== 'en-GB' && existsSync(enTexts)) {
+    const en = new Set(readFileSync(enTexts, 'utf8').split('\n').filter((l) => l && !l.startsWith('## ')))
+    const lettered = (l) => /\p{L}{3,}/u.test(l.replace(/\[[^\]]*\]/g, ''))
+    english = [...new Set(nb.log.flatMap(([, t]) => t))].filter((l) => en.has(l) && lettered(l))
+    await writeFile(path.join(dir, 'english.txt'), english.join('\n') + (english.length ? '\n' : ''))
+  }
+  const meta = { app, locale, secs: +secs.toFixed(2), poster, cuts: cuts.map(([x, y]) => [+x.toFixed(3), +y.toFixed(3)]), ok, width: v.width, height: v.height, fps: v.r_frame_rate, audio: a && a.codec_name }
+  await writeFile(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 1) + '\n')
+  console.log(`${ok ? 'OK ' : 'BAD'} ${app} ${locale}: ${secs.toFixed(2)} s, poster ${poster.toFixed(2)} s, cut ${cuts.map(([x, y]) => `${x.toFixed(2)}–${y.toFixed(2)}`).join(', ') || 'none'}${english.length ? `, ${english.length} English line(s): ${english.slice(0, 6).join(' | ')}` : ''}`)
+  if (!ok) throw new Error(`${out} is not a valid preview`)
+  return meta
+}
+
+const DIR = { bear: 'bipolarbear', anonymous: 'anonymous' }
+
+export async function recordLocale(app, locale, { browser } = {}) {
+  const [lang, bLocale, tz, key] = LOCALES[locale]
+  const dir = path.join(here, 'out/preview', DIR[app], locale)
+  const out = path.join(dir, 'iphone-01.mp4'), rawOut = path.join(dir, 'raw.mp4')
+  const board = app === 'anonymous' ? anonBoard(key) : null
+  const opts = app === 'anonymous'
+    ? { docs: board.docs, translations: board.translations }
+    : { storage: bearStorage(key, tz) }
+  const { browser: b, ctx, page, cleanup } = await open(app, { browser, lang, locale: bLocale, timezoneId: tz, localMorning: true, ...opts })
+  const nb = notebook(page)
+  page.on('console', (m) => { if (m.text().startsWith('scrollTarget')) console.warn(`  ⚠ ${locale}: ${m.text()}`) })
   try {
-    await (app === 'bear' ? bear : anonymous)(page, OUT[app])
-    if (process.argv.includes('--stills')) console.log((await stills(OUT[app], [1, 3, 6, 9, 12, 15, 18, 21])).join('\n'))
+    if (app === 'bear') await bear(page, rawOut, nb)
+    else await anonymous(page, rawOut, nb, board)
+    const meta = await finish(app, locale, rawOut, out, nb, 700)
+    if (process.argv.includes('--stills')) console.log((await stills(out, [1, 3, 6, 9, 12, 15, 18, 21])).join('\n'))
+    return meta
   } finally {
-    await browser.close(); await cleanup()
+    await ctx.close(); await cleanup()
+    if (!browser) await b.close()
+  }
+}
+
+if (isMain) {
+  const app = process.argv[2]
+  if (!DIR[app]) { console.error('usage: node store-assets/preview.mjs bear|anonymous [all | <locale> …] [--stills] [--worktree]'); process.exit(1) }
+  const asked = process.argv.slice(3).filter((a) => !a.startsWith('--'))
+  const locales = asked.includes('all') ? Object.keys(LOCALES) : asked.length ? asked : ['en-GB']
+  for (const l of locales) if (!LOCALES[l]) throw new Error(`unknown locale ${l} (${Object.keys(LOCALES).join(' ')})`)
+  // English first: the other locales' English check reads its texts.txt.
+  locales.sort((a, b) => (b === 'en-GB') - (a === 'en-GB'))
+  const { chromium } = await playwright()
+  const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {})
+  try {
+    for (const l of locales) await recordLocale(app, l, { browser })
+  } finally {
+    await browser.close()
   }
 }

@@ -56,3 +56,8 @@ store-assets/out/localized-ipad-anon-raw/
 # App Store iPhone sets, both apps (captures, composed screens, frames): rebuilt by
 # store-assets/capture-appstore-iphone.mjs + build-appstore-iphone.mjs
 store-assets/out/appstore/
+
+# App Store previews (videos), every locale, both apps, with their contact sheets,
+# posters and text checks: rebuilt by store-assets/preview.mjs (the two older
+# en/iphone-01.mp4 files stay tracked as they were)
+store-assets/out/preview/
