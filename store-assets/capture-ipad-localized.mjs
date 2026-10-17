@@ -77,7 +77,10 @@ const BOARD = JSON.parse(readFileSync(path.join(here, 'screens-i18n/ipad_anon_bo
 // The survival kit and journal notes in that language (English: preview.mjs's own).
 function storage(lang, tz) {
   const s = SEED[lang]
-  const extra = { bbSurvivalCelebDone: '1' }
+  // A new user's home (2026-10-12/13): the quick check-in card with its stats,
+  // and the 🆘 crisis button in the dock.
+  const extra = { bbSurvivalCelebDone: '1', bbHomeDefaults20261012: '1', bbDefaults20261013: '1', bbWaFabHidden: '0',
+    bbCurrentStreak: '34', bbStableStreak: '5' }
   const entries = bearEntries(s ? s.notes : undefined)
   for (const e of Object.values(entries)) e.recordedTz = tz
   Object.assign(extra, entries)
@@ -96,7 +99,7 @@ function storage(lang, tz) {
 async function tidy(page) {
   await page.evaluate(() => {
     ;['pwa-install-banner', 'bbWelcomeModal', 'skWelcomeModal', 'journalTutorialProgress', 'journalStartHint',
-      'survivalKitHint', 'signinHint', 'logoHint', 'bbHintOverlay'].forEach((id) => document.getElementById(id)?.remove())
+      'survivalKitHint', 'signinHint', 'logoHint', 'bbHintOverlay', 'bbHomeVersion'].forEach((id) => document.getElementById(id)?.remove())
     document.querySelectorAll('body > div, body > canvas').forEach((el) => {
       const cs = getComputedStyle(el)
       if (cs.position === 'fixed' && Number(cs.zIndex) >= 9990 && !el.querySelector('button')) el.remove()
@@ -128,11 +131,25 @@ function onScreenText() {
   return out
 }
 
+// 9:41 in the morning where the capture is set, as the status bar says.
+// (preview.mjs sets 9:41 on this machine's clock, which is the afternoon in
+// Shanghai and before dawn in São Paulo.)
+function nineFortyOne(tz) {
+  const now = new Date()
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(now).map((p) => [p.type, p.value]))
+  const local = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute)
+  const offset = local - Math.floor(now.getTime() / 60000) * 60000
+  // On this machine's date, which the invented entries count back from.
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 9, 41) - offset)
+}
+
 async function capture(browser, lang) {
   const [appLang, locale, tz] = LANGS[lang]
   const out = path.join(here, 'out/localized-ipad-raw', lang)
   mkdirSync(out, { recursive: true })
   const { ctx, page, cleanup } = await open('bear', { browser, device: IPAD, lang: appLang, locale, timezoneId: tz, storage: storage(lang, tz) })
+  await ctx.clock.setSystemTime(nineFortyOne(tz))
   const shot = async (name) => {
     await tidy(page)
     await page.screenshot({ path: path.join(out, `${name}.png`) })
@@ -202,6 +219,7 @@ async function captureAnon(browser, lang) {
   mkdirSync(out, { recursive: true })
   const { docs, translations, topic } = anonDocs(lang)
   const { ctx, page, cleanup } = await open('anonymous', { browser, device: IPAD, lang: appLang, locale, timezoneId: tz, docs, translations })
+  await ctx.clock.setSystemTime(nineFortyOne(tz))
   const shot = async (name) => {
     await page.waitForTimeout(300)
     await page.screenshot({ path: path.join(out, `${name}.png`) })
@@ -231,7 +249,21 @@ async function captureAnon(browser, lang) {
     await board()
     // The wiki, an article open.
     await page.locator('.board-tab').nth(2).click(); await page.waitForTimeout(1200)
-    await page.locator('.wiki-card summary').locator('visible=true').first().click(); await page.waitForTimeout(1200)
+    // Loved ones → "What to say (and what not to say)", sourced from Mind
+    // rather than the NHS, so it reads true in every country's store.
+    await page.evaluate(() => document.querySelector('.wiki-pill[data-wiki="lovedOnes"]').click()); await page.waitForTimeout(800)
+    await page.locator('.wiki-card summary').locator('visible=true').nth(1).click(); await page.waitForTimeout(1200)
+    // The articles just under the tabs: above them sits the wiki's "based on
+    // UK-issued guidance (NHS, …)" note, which would put the NHS in every store.
+    await page.evaluate(() => {
+      const card = [...document.querySelectorAll('.wiki-card')].filter((c) => c.offsetParent)[0]
+      let el = card.parentElement
+      while (el && !(el.scrollHeight > el.clientHeight && /auto|scroll/.test(getComputedStyle(el).overflowY))) el = el.parentElement
+      el = el || document.scrollingElement
+      const tabs = Math.max(...[...document.querySelectorAll('.board-tab')].map((t) => t.getBoundingClientRect().bottom))
+      el.scrollTop += card.getBoundingClientRect().top - tabs - 14
+    })
+    await page.waitForTimeout(900)
     await shot('wiki')
     // Choosing a moniker, as after the email code.
     await page.evaluate(() => { showScreen('monika'); setupMonika() }); await page.waitForTimeout(600)

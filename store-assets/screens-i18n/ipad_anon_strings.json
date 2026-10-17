@@ -2,8 +2,8 @@
   "_comment": "Captions for the localised Bipolar Anonymous iPad set (build-ipad-localized.mjs): [headline, line below]. <br> breaks a headline; <span class=\"hl\"> is its highlighted line. The words are the iPhone set's (anon_<lang>.json), except the moniker headline, which follows the app (\"Moniker\" in every language, as js/shared/i18n.js has it).",
   "en": {
     "02-monika": [
-      "Pick a moniker.<br>Stay anonymous.",
-      "No sign-up trail, no real name"
+      "Pick a Moniker.<br>Stay anonymous.",
+      "A name you make up, never your real one"
     ],
     "03-ask": [
       "Ask anything.<br><span class=\"hl\">Get real answers.</span>",
@@ -20,8 +20,8 @@
   },
   "es": {
     "02-monika": [
-      "Elige un moniker.<br>Sigue en el anonimato.",
-      "Sin rastro de registro ni nombre real"
+      "Elige un Moniker.<br>Sigue en el anonimato.",
+      "Un nombre inventado, nunca el real"
     ],
     "03-ask": [
       "Pregunta lo que sea.<br><span class=\"hl\">Recibe respuestas reales.</span>",
@@ -39,7 +39,7 @@
   "fr": {
     "02-monika": [
       "Choisis un Moniker.<br>Reste anonyme.",
-      "Pas de trace d'inscription, pas de vrai nom"
+      "Un nom que tu inventes, jamais le vrai"
     ],
     "03-ask": [
       "Pose tes questions.<br><span class=\"hl\">Reçois de vraies réponses.</span>",
@@ -57,7 +57,7 @@
   "de": {
     "02-monika": [
       "Wähl einen Moniker.<br>Bleib anonym.",
-      "Keine Anmeldespur, kein echter Name"
+      "Ein ausgedachter Name, nie dein echter"
     ],
     "03-ask": [
       "Frag, was du willst.<br><span class=\"hl\">Echte Antworten.</span>",
@@ -74,8 +74,8 @@
   },
   "it": {
     "02-monika": [
-      "Scegli un moniker.<br>Resta anonimo.",
-      "Nessuna traccia di iscrizione, nessun nome reale"
+      "Scegli un Moniker.<br>Resta anonimo.",
+      "Un nome inventato, mai quello vero"
     ],
     "03-ask": [
       "Chiedi qualsiasi cosa.<br><span class=\"hl\">Ricevi risposte vere.</span>",
@@ -92,8 +92,8 @@
   },
   "pt": {
     "02-monika": [
-      "Escolhe um moniker.<br>Mantém o anonimato.",
-      "Sem rasto de registo, sem nome real"
+      "Escolhe um Moniker.<br>Mantém o anonimato.",
+      "Um nome inventado, nunca o verdadeiro"
     ],
     "03-ask": [
       "Pergunta tudo.<br><span class=\"hl\">Recebe respostas reais.</span>",
@@ -110,8 +110,8 @@
   },
   "pt-BR": {
     "02-monika": [
-      "Escolha um moniker.<br>Fique anônimo.",
-      "Cadastro sem rastro, sem nome real"
+      "Escolha um Moniker.<br>Fique anônimo.",
+      "Um nome inventado, nunca o verdadeiro"
     ],
     "03-ask": [
       "Pergunte tudo.<br><span class=\"hl\">Receba respostas reais.</span>",
@@ -128,8 +128,8 @@
   },
   "nl": {
     "02-monika": [
-      "Kies een moniker.<br>Blijf anoniem.",
-      "Geen aanmeldspoor, geen echte naam"
+      "Kies een Moniker.<br>Blijf anoniem.",
+      "Een verzonnen naam, nooit je echte"
     ],
     "03-ask": [
       "Vraag wat je wilt.<br><span class=\"hl\">Krijg echte antwoorden.</span>",
@@ -147,7 +147,7 @@
   "pl": {
     "02-monika": [
       "Wybierz Moniker.<br>Pozostań anonimowy.",
-      "Bez śladu rejestracji, bez prawdziwego imienia"
+      "Wymyślony pseudonim, nigdy prawdziwe imię"
     ],
     "03-ask": [
       "Pytaj o wszystko.<br><span class=\"hl\">Dostań prawdziwe odpowiedzi.</span>",
@@ -164,8 +164,8 @@
   },
   "sv": {
     "02-monika": [
-      "Välj en moniker.<br>Förbli anonym.",
-      "Inga registreringsspår, inget riktigt namn"
+      "Välj en Moniker.<br>Förbli anonym.",
+      "Ett påhittat namn, aldrig ditt riktiga"
     ],
     "03-ask": [
       "Fråga vad som helst.<br><span class=\"hl\">Få riktiga svar.</span>",
@@ -183,7 +183,7 @@
   "zh": {
     "02-monika": [
       "选一个 Moniker。<br>保持匿名。",
-      "不留注册痕迹，无需真实姓名"
+      "自己起的名字，绝不是真名"
     ],
     "03-ask": [
       "有问题尽管问。<br><span class=\"hl\">收获真诚回答。</span>",

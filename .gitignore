@@ -52,3 +52,7 @@ store-assets/out/localized-ipad/
 store-assets/out/localized-ipad-anon/
 store-assets/out/localized-ipad-raw/
 store-assets/out/localized-ipad-anon-raw/
+
+# App Store iPhone sets, both apps (captures, composed screens, frames): rebuilt by
+# store-assets/capture-appstore-iphone.mjs + build-appstore-iphone.mjs
+store-assets/out/appstore/

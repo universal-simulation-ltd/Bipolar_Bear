@@ -16,14 +16,14 @@
   },
   "fr": {
     "02-journal": ["Note chaque\nhumeur", "Capture ce que la journée a vraiment été — de la dépression à la manie — en quelques secondes."],
-    "03-survivalkit": ["Ta trousse\nde secours", "Stratégies, traitements, objectifs et gratitude — rien que pour toi."],
+    "03-survivalkit": ["Ton kit\nde survie", "Stratégies, traitements, objectifs et gratitude — rien que pour toi."],
     "04-tools": ["Prêt pour\nles jours difficiles", "Les outils qui t'aident à tenir, réunis dans un espace apaisant."],
     "05-pin": ["Confidentialité\ntotale.", "Chiffré sur ton appareil. Journal privé : toi seul peux le lire."],
     "06-details": ["Pensé pour\nton médecin", "Transforme des mois de suivi en un PDF clair à partager avec ton soignant."]
   },
   "de": {
     "02-journal": ["Jede Stimmung\nerfassen", "Halt fest, wie der Tag wirklich war — von depressiv bis manisch — in Sekunden."],
-    "03-survivalkit": ["Dein Notfallset", "Bewältigungsstrategien, Medikamente, Ziele und Dankbarkeit — ganz auf dich zugeschnitten."],
+    "03-survivalkit": ["Dein Survival-Kit", "Bewältigungsstrategien, Medikamente, Ziele und Dankbarkeit — ganz auf dich zugeschnitten."],
     "04-tools": ["Bereit für\ndie schweren Tage", "Die Werkzeuge, die dir helfen, an einem ruhigen Ort."],
     "05-pin": ["Volle Privatsphäre.", "Verschlüsselt auf deinem Gerät. Privates Tagebuch: nur du kannst es lesen."],
     "06-details": ["Gemacht für\ndeinen Arzt", "Mach aus Monaten voller Einträge ein übersichtliches PDF für dein Behandlungsteam."]
@@ -58,7 +58,7 @@
   },
   "pl": {
     "02-journal": ["Zapisuj każdy\nnastrój", "Uchwyć, jaki naprawdę był dzień — od depresji do manii — w kilka sekund."],
-    "03-survivalkit": ["Twój zestaw\nratunkowy", "Strategie radzenia sobie, leki, cele i wdzięczność — dopasowane do Ciebie."],
+    "03-survivalkit": ["Twój zestaw\nprzetrwania", "Strategie radzenia sobie, leki, cele i wdzięczność — dopasowane do Ciebie."],
     "04-tools": ["Gotowy na\ntrudne dni", "Narzędzia, które pomagają przetrwać, w jednym spokojnym miejscu."],
     "05-pin": ["Pełna prywatność.", "Szyfrowany na Twoim urządzeniu. Prywatny dziennik: tylko Ty go przeczytasz."],
     "06-details": ["Stworzony\ndla lekarza", "Zamień miesiące zapisów w przejrzysty PDF dla osoby, która Cię leczy."]
@@ -72,7 +72,7 @@
   },
   "zh": {
     "02-journal": ["记录每一种心情", "从抑郁到躁狂——几秒钟就能记下这一天真实的感受。"],
-    "03-survivalkit": ["你的自救工具箱", "应对策略、用药、目标和感恩——为你量身定制。"],
+    "03-survivalkit": ["你的生存工具包", "应对策略、用药、目标和感恩——为你量身定制。"],
     "04-tools": ["为艰难的日子\n做好准备", "帮助你渡过难关的工具，都在一个平静的地方。"],
     "05-pin": ["完全私密。", "在你的设备上加密。私密日记：只有你能读取。"],
     "06-details": ["为你的医生\n而设计", "把几个月的记录变成一份清晰的 PDF，与你的医生分享。"]

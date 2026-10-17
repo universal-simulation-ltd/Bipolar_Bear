@@ -24,10 +24,11 @@
 //   node ../../Docs_UNI_SIM/store-kit/asc-creative.mjs creative/bipolarbear --bundle com.app.bipolarbear --version <x.y>
 //   node ../../Docs_UNI_SIM/store-kit/asc-creative.mjs creative/anonymous --bundle com.bipolaranonymous.app --version <x.y>
 //
-// Phones show the localised captures: Bear's from out/localized/<lang>/
-// (capture-localized.mjs; pt-BR reuses pt), Anonymous's board screens are the
-// screens/_board-*.html mockups run through screens-i18n/anon_<lang>.json, as
-// build-anon-localized.mjs does. Headlines are the heroes' own (head1).
+// Phones show real captures of today's app in that language, as the iPhone
+// screenshots do: the whole iPhone screens (status bar drawn) that
+// build-appstore-iphone.mjs composes from capture-appstore-iphone.mjs, in
+// out/appstore/screen/<app>/<lang>/: Bear's home and the mood wheel,
+// Anonymous's board and today's topic. Headlines are the heroes' own (head1).
 //
 //   cd store-assets && node build-creative.mjs [bipolarbear|anonymous] [lang …]
 //
@@ -121,8 +122,16 @@ const SHELL = (W, H, css, inner, lang = 'en') => `<!doctype html><html lang="${l
   ${css}
 </style></head><body><div class="canvas">${inner}</div>${FIT}</body></html>`;
 
+// The Dynamic Island sits in the screen's own status bar (the store kit's
+// 2.5% down, 28.64% × 8.41% of the screen's width).
 const phone = (img, w, style) => `<div class="phone" style="--s:${w / 1290};width:${w}px;${style}">
-  <div class="scr"><img src="${img}" alt=""></div><div class="isl"></div></div>`;
+  <div class="scr" style="container-type:inline-size"><img src="${img}" alt="">
+  <div style="position:absolute;left:50%;transform:translateX(-50%);top:2.5cqw;width:28.64cqw;height:8.41cqw;border-radius:999px;background:#08080a"></div></div></div>`;
+const screen = (app, lang, name) => {
+  const f = `out/appstore/screen/${app}/${lang}/${name}.png`;
+  if (!existsSync(f)) throw new Error(`no ${f}: run capture-appstore-iphone.mjs + build-appstore-iphone.mjs ${app} ${lang}`);
+  return file(f);
+};
 const av = (t, grad, d, x, y, rot = 0, extra = '') => `<div class="av" style="left:${x - d / 2}px;top:${y - d / 2}px;width:${d}px;height:${d}px;
   background:${grad};font-size:${Math.round(d * 0.4)}px;border:${Math.round(d * 0.04)}px solid rgba(255,255,255,.92);transform:rotate(${rot}deg);${extra}">${t}</div>`;
 
@@ -162,7 +171,6 @@ const BEAR_HEAD_EN = 'Every high.<br>Every low.';
 /** The headline on white; the mood picker and home screen on the orange. */
 function bearSearch(lang) {
   const W = 3840, H = 2560, split = 1720;
-  const caps = `out/localized/${lang === 'pt-BR' ? 'pt' : lang}`;
   const head = BEAR_HEAD[lang]?.head1 ?? BEAR_HEAD_EN;
   const faces = [['manic.png', 3600, 420, 280, -8], ['elevated.png', 3660, 860, 230, 6],
     ['low.png', 3640, 1800, 220, 5], ['depressed.png', 3560, 2220, 240, -7]];
@@ -172,8 +180,8 @@ function bearSearch(lang) {
       background:radial-gradient(closest-side,#fff0db,rgba(255,240,219,0) 72%)"></div>
     <div class="head" data-fit="900" style="left:170px;top:820px;width:1240px;font-size:250px">${head}</div>
     ${faces.map(([img, x, yy, d, r]) => `<div class="abs face" style="left:${x - d / 2}px;top:${yy - d / 2}px;width:${d}px;transform:rotate(${r}deg)"><img src="${face(img)}" alt=""></div>`).join('')}
-    ${phone(file(`${caps}/01-home.png`), 860, `left:${split - 210}px;top:520px;transform:rotate(-7deg);z-index:1`)}
-    ${phone(file(`${caps}/02-journal.png`), 960, `left:${split + 600}px;top:260px;transform:rotate(6deg);z-index:2`)}`, lang);
+    ${phone(screen('bear', lang, 'home'), 860, `left:${split - 210}px;top:520px;transform:rotate(-7deg);z-index:1`)}
+    ${phone(screen('bear', lang, 'mood'), 960, `left:${split + 600}px;top:260px;transform:rotate(6deg);z-index:2`)}`, lang);
 }
 
 // ── Bipolar Anonymous ───────────────────────────────────────────────────────
@@ -212,18 +220,6 @@ function anonHeader() {
 }
 
 const ANON_HEAD = JSON.parse(readFileSync('screens-i18n/anon_hero_strings.json', 'utf8'));
-const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-// Whole-node substitution, as build-anon-localized.mjs: > <ws> token <ws> <
-function substitute(html, map) {
-  for (const en of Object.keys(map).sort((a, b) => b.length - a.length)) {
-    const tr = map[en];
-    if (tr == null || tr === en) continue;
-    const body = esc(en).replace(/\\ /g, ' ').replace(/ /g, '\\s+');
-    html = html.replace(new RegExp('>(\\s*)' + body + '(\\s*)<', 'g'), (_, a, b) => '>' + a + tr + b + '<');
-  }
-  return html;
-}
-
 /** The headline on white; the board and a reply thread on the yellow. */
 function anonSearch(lang, shot) {
   const W = 3840, H = 2560, split = 1720;
@@ -251,20 +247,7 @@ for (const app of APPS) {
     if (app === 'bipolarbear') {
       await shoot(bearSearch(lang), `${root}/out/${loc}/search/search.png`, 3840, 2560);
     } else {
-      const map = existsSync(`screens-i18n/anon_${lang}.json`) ? JSON.parse(readFileSync(`screens-i18n/anon_${lang}.json`, 'utf8')) : {};
-      const src = `${root}/_src`;
-      for (const name of ['feed', 'thread']) {
-        const html = substitute(readFileSync(`screens/_board-${name}.html`, 'utf8'), map);
-        writeFileSync(`screens/_creative_board.html`, html);
-        await page.setViewportSize({ width: 1290, height: 2796 });
-        await page.goto(file('screens/_creative_board.html'));
-        await page.evaluate(() => document.fonts.ready);
-        mkdirSync(src, { recursive: true });
-        await page.screenshot({ path: `${src}/${name}.png` });
-        rmSync('screens/_creative_board.html');
-      }
-      await shoot(anonSearch(lang, n => file(`${src}/${n}.png`)), `${root}/out/${loc}/search/search.png`, 3840, 2560);
-      rmSync(src, { recursive: true, force: true });
+      await shoot(anonSearch(lang, n => screen('anon', lang, n)), `${root}/out/${loc}/search/search.png`, 3840, 2560);
     }
   }
   rmSync(headerOnce);

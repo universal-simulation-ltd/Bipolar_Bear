@@ -1,0 +1,102 @@
+{
+  "_comment": "Invented safety plans for the App Store iPhone captures (capture-appstore-iphone.mjs), one per store language: what the 'user' wrote in My safety plan. Phone numbers only in English, from Ofcom's drama ranges (07700 900xxx, 020 7946 0xxx), which never ring anyone; the other languages name the people without a number.",
+  "en": {
+    "warningSigns": ["Sleeping less than 5 hours", "Spending without thinking", "Pulling away from friends"],
+    "coping": ["A long walk with my headphones", "A hot shower, then tea", "Writing it down in my journal"],
+    "distraction": ["The café on the corner", "My sister's kitchen"],
+    "helpPeople": [{ "name": "Sam (sister)", "phone": "07700 900123" }],
+    "professionals": [{ "name": "Dr Patel (GP)", "phone": "020 7946 0018" }],
+    "safeEnv": ["Give my bank card to Sam for a few days"],
+    "reasons": ["My nephew Leo", "Finishing my course"]
+  },
+  "es": {
+    "warningSigns": ["Dormir menos de 5 horas", "Gastar sin pensar", "Alejarme de mis amigos"],
+    "coping": ["Un paseo largo con mis auriculares", "Una ducha caliente y luego un té", "Escribirlo en mi diario"],
+    "distraction": ["La cafetería de la esquina", "La cocina de mi hermana"],
+    "helpPeople": [{ "name": "Lucía (hermana)" }],
+    "professionals": [{ "name": "Dra. Martín (médica de cabecera)" }],
+    "safeEnv": ["Dejarle mi tarjeta a Lucía unos días"],
+    "reasons": ["Mi sobrino Hugo", "Terminar mis estudios"]
+  },
+  "fr": {
+    "warningSigns": ["Dormir moins de 5 heures", "Dépenser sans réfléchir", "M'éloigner de mes amis"],
+    "coping": ["Une longue marche avec mes écouteurs", "Une douche chaude, puis un thé", "L'écrire dans mon journal"],
+    "distraction": ["Le café du coin", "La cuisine de ma sœur"],
+    "helpPeople": [{ "name": "Camille (ma sœur)" }],
+    "professionals": [{ "name": "Dr Martin (médecin traitant)" }],
+    "safeEnv": ["Confier ma carte bancaire à Camille quelques jours"],
+    "reasons": ["Mon neveu Léo", "Finir ma formation"]
+  },
+  "de": {
+    "warningSigns": ["Weniger als 5 Stunden Schlaf", "Geld ausgeben, ohne nachzudenken", "Mich von Freunden zurückziehen"],
+    "coping": ["Ein langer Spaziergang mit Kopfhörern", "Eine heiße Dusche, dann Tee", "Es in mein Tagebuch schreiben"],
+    "distraction": ["Das Café an der Ecke", "Die Küche meiner Schwester"],
+    "helpPeople": [{ "name": "Lena (Schwester)" }],
+    "professionals": [{ "name": "Dr. Weber (Hausärztin)" }],
+    "safeEnv": ["Meine Bankkarte für ein paar Tage Lena geben"],
+    "reasons": ["Mein Neffe Paul", "Meine Ausbildung abschließen"]
+  },
+  "it": {
+    "warningSigns": ["Dormire meno di 5 ore", "Spendere senza pensarci", "Allontanarmi dagli amici"],
+    "coping": ["Una lunga passeggiata con le cuffie", "Una doccia calda, poi un tè", "Scriverlo nel mio diario"],
+    "distraction": ["Il bar all'angolo", "La cucina di mia sorella"],
+    "helpPeople": [{ "name": "Giulia (sorella)" }],
+    "professionals": [{ "name": "Dott.ssa Rossi (medico di base)" }],
+    "safeEnv": ["Lasciare la mia carta a Giulia per qualche giorno"],
+    "reasons": ["Mio nipote Luca", "Finire il mio corso"]
+  },
+  "pt": {
+    "warningSigns": ["Dormir menos de 5 horas", "Gastar sem pensar", "Afastar-me dos amigos"],
+    "coping": ["Uma caminhada longa com os meus auscultadores", "Um duche quente e depois um chá", "Escrever no meu diário"],
+    "distraction": ["O café da esquina", "A cozinha da minha irmã"],
+    "helpPeople": [{ "name": "Inês (irmã)" }],
+    "professionals": [{ "name": "Dra. Costa (médica de família)" }],
+    "safeEnv": ["Dar o meu cartão à Inês durante uns dias"],
+    "reasons": ["O meu sobrinho Tomás", "Acabar o meu curso"]
+  },
+  "pt-BR": {
+    "warningSigns": ["Dormir menos de 5 horas", "Gastar sem pensar", "Me afastar dos amigos"],
+    "coping": ["Uma caminhada longa com meus fones", "Um banho quente e depois um chá", "Escrever no meu diário"],
+    "distraction": ["A padaria da esquina", "A cozinha da minha irmã"],
+    "helpPeople": [{ "name": "Juliana (irmã)" }],
+    "professionals": [{ "name": "Dr. Souza (psiquiatra)" }],
+    "safeEnv": ["Deixar meu cartão com a Juliana por uns dias"],
+    "reasons": ["Meu sobrinho Davi", "Terminar a faculdade"]
+  },
+  "nl": {
+    "warningSigns": ["Minder dan 5 uur slapen", "Geld uitgeven zonder na te denken", "Me terugtrekken van vrienden"],
+    "coping": ["Een lange wandeling met mijn koptelefoon", "Een warme douche, dan thee", "Het opschrijven in mijn dagboek"],
+    "distraction": ["Het café op de hoek", "De keuken van mijn zus"],
+    "helpPeople": [{ "name": "Sanne (zus)" }],
+    "professionals": [{ "name": "Dr. de Vries (huisarts)" }],
+    "safeEnv": ["Mijn bankpas een paar dagen aan Sanne geven"],
+    "reasons": ["Mijn neefje Daan", "Mijn opleiding afmaken"]
+  },
+  "pl": {
+    "warningSigns": ["Sen krótszy niż 5 godzin", "Wydawanie pieniędzy bez zastanowienia", "Odsuwanie się od przyjaciół"],
+    "coping": ["Długi spacer ze słuchawkami", "Gorący prysznic, potem herbata", "Zapisanie tego w dzienniku"],
+    "distraction": ["Kawiarnia na rogu", "Kuchnia mojej siostry"],
+    "helpPeople": [{ "name": "Kasia (siostra)" }],
+    "professionals": [{ "name": "Dr Nowak (lekarz rodzinny)" }],
+    "safeEnv": ["Oddać Kasi kartę płatniczą na kilka dni"],
+    "reasons": ["Mój siostrzeniec Kuba", "Skończenie studiów"]
+  },
+  "sv": {
+    "warningSigns": ["Sover mindre än 5 timmar", "Handlar utan att tänka efter", "Drar mig undan från vänner"],
+    "coping": ["En lång promenad med hörlurar", "En varm dusch, sedan te", "Skriva ner det i min dagbok"],
+    "distraction": ["Kaféet på hörnet", "Min systers kök"],
+    "helpPeople": [{ "name": "Elin (syster)" }],
+    "professionals": [{ "name": "Dr Lind (husläkare)" }],
+    "safeEnv": ["Lämna mitt bankkort till Elin några dagar"],
+    "reasons": ["Min systerson Leo", "Att gå klart min utbildning"]
+  },
+  "zh": {
+    "warningSigns": ["睡眠少于 5 小时", "不假思索地花钱", "开始疏远朋友"],
+    "coping": ["戴上耳机走很长一段路", "洗个热水澡，再喝杯茶", "把它写进我的日记"],
+    "distraction": ["街角的咖啡馆", "姐姐家的厨房"],
+    "helpPeople": [{ "name": "小雨（姐姐）" }],
+    "professionals": [{ "name": "王医生（精神科）" }],
+    "safeEnv": ["把银行卡交给小雨保管几天"],
+    "reasons": ["我的外甥乐乐", "完成我的学业"]
+  }
+}

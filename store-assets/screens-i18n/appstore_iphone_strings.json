@@ -1,0 +1,2823 @@
+{
+ "_comment": "Captions for the App Store iPhone sets (build-appstore-iphone.mjs): per app, language and screen, the headline (<br> breaks it, <span class=\"hl\"> is its highlighted line), the line under the phone, its chips ([emoji, words]) and the footnote. The heroes (01, 02) take hero_strings.json and anon_hero_strings.json. Every chip names something the app really does; the survival kit and Moniker are the app's own words in each language.",
+ "bear": {
+  "en": {
+   "03-patterns": {
+    "head": "Spot your patterns",
+    "label": "Correlates everything you track",
+    "chips": [
+     [
+      "😴",
+      "Sleep"
+     ],
+     [
+      "⚡",
+      "Energy"
+     ],
+     [
+      "😰",
+      "Anxiety"
+     ],
+     [
+      "🍷",
+      "Alcohol"
+     ],
+     [
+      "💊",
+      "Meds"
+     ],
+     [
+      "👣",
+      "Steps"
+     ]
+    ],
+    "foot": "Insights stay private — computed on your device"
+   },
+   "04-health": {
+    "head": "Sleep and steps,<br>from Apple Health",
+    "label": "Filled in for you — just confirm",
+    "chips": [
+     [
+      "😴",
+      "Hours asleep"
+     ],
+     [
+      "👣",
+      "Daily steps"
+     ],
+     [
+      "🔒",
+      "Kept in your journal"
+     ]
+    ],
+    "foot": "Works with Apple Health"
+   },
+   "05-survivalkit": {
+    "head": "Build your own<br>survival kit",
+    "label": "One kit — all your tools",
+    "chips": [
+     [
+      "🧠",
+      "Strategies"
+     ],
+     [
+      "💊",
+      "Meds"
+     ],
+     [
+      "🎯",
+      "Goals"
+     ],
+     [
+      "🙏",
+      "Gratitude"
+     ],
+     [
+      "📚",
+      "Reading"
+     ],
+     [
+      "📸",
+      "Memories"
+     ],
+     [
+      "🆘",
+      "Crisis help"
+     ]
+    ],
+    "foot": "Build it your way — 100% customisable"
+   },
+   "06-safetyplan": {
+    "head": "Your safety plan,<br>ready for hard days",
+    "label": "Written while you're well, there when you're not",
+    "chips": [
+     [
+      "🌦️",
+      "Warning signs"
+     ],
+     [
+      "🤝",
+      "People to call"
+     ],
+     [
+      "💊",
+      "Your medications"
+     ],
+     [
+      "📱",
+      "On your lock screen"
+     ]
+    ],
+    "foot": "Stays on your phone · encrypted if you sign in"
+   },
+   "07-pin": {
+    "head": "Full privacy.",
+    "label": "Encrypted on your device",
+    "chips": [
+     [
+      "🔐",
+      "PIN lock"
+     ],
+     [
+      "👤",
+      "No account needed"
+     ],
+     [
+      "🛟",
+      "Safety plan on the PIN screen"
+     ]
+    ],
+    "foot": "Private journal: only you can read it"
+   },
+   "08-anonymous": {
+    "head": "Share your thoughts,<br>not your identity",
+    "label": "People who actually get it",
+    "you": "+ You",
+    "foot": "Anonymous · no real name required"
+   }
+  },
+  "es": {
+   "03-patterns": {
+    "head": "Descubre tus patrones",
+    "label": "Relaciona todo lo que registras",
+    "chips": [
+     [
+      "😴",
+      "Sueño"
+     ],
+     [
+      "⚡",
+      "Energía"
+     ],
+     [
+      "😰",
+      "Ansiedad"
+     ],
+     [
+      "🍷",
+      "Alcohol"
+     ],
+     [
+      "💊",
+      "Medicación"
+     ],
+     [
+      "👣",
+      "Pasos"
+     ]
+    ],
+    "foot": "Tus datos siguen siendo privados: se analizan en tu dispositivo"
+   },
+   "04-health": {
+    "head": "Sueño y pasos,<br>desde Apple Salud",
+    "label": "Se rellena por ti: solo confírmalo",
+    "chips": [
+     [
+      "😴",
+      "Horas de sueño"
+     ],
+     [
+      "👣",
+      "Pasos diarios"
+     ],
+     [
+      "🔒",
+      "Se guardan en tu diario"
+     ]
+    ],
+    "foot": "Compatible con Apple Salud"
+   },
+   "05-survivalkit": {
+    "head": "Crea tu propio<br>kit de supervivencia",
+    "label": "Un kit, todas tus herramientas",
+    "chips": [
+     [
+      "🧠",
+      "Estrategias"
+     ],
+     [
+      "💊",
+      "Medicación"
+     ],
+     [
+      "🎯",
+      "Objetivos"
+     ],
+     [
+      "🙏",
+      "Gratitud"
+     ],
+     [
+      "📚",
+      "Lectura"
+     ],
+     [
+      "📸",
+      "Recuerdos"
+     ],
+     [
+      "🆘",
+      "Ayuda en crisis"
+     ]
+    ],
+    "foot": "A tu manera: 100 % personalizable"
+   },
+   "06-safetyplan": {
+    "head": "Tu plan de seguridad,<br>listo para los días difíciles",
+    "label": "Lo escribes cuando estás bien, te acompaña cuando no",
+    "chips": [
+     [
+      "🌦️",
+      "Señales de alerta"
+     ],
+     [
+      "🤝",
+      "Personas a las que llamar"
+     ],
+     [
+      "💊",
+      "Tu medicación"
+     ],
+     [
+      "📱",
+      "En la pantalla de bloqueo"
+     ]
+    ],
+    "foot": "Se queda en tu teléfono · cifrado si inicias sesión"
+   },
+   "07-pin": {
+    "head": "Privacidad total.",
+    "label": "Cifrado en tu dispositivo",
+    "chips": [
+     [
+      "🔐",
+      "Bloqueo con PIN"
+     ],
+     [
+      "👤",
+      "Sin cuenta"
+     ],
+     [
+      "🛟",
+      "Plan de seguridad en la pantalla del PIN"
+     ]
+    ],
+    "foot": "Diario privado: solo tú puedes leerlo"
+   },
+   "08-anonymous": {
+    "head": "Comparte lo que piensas,<br>no quién eres",
+    "label": "Gente que de verdad lo entiende",
+    "you": "+ Tú",
+    "foot": "Anónimo · sin nombre real"
+   }
+  },
+  "fr": {
+   "03-patterns": {
+    "head": "Repère tes tendances",
+    "label": "Croise tout ce que tu suis",
+    "chips": [
+     [
+      "😴",
+      "Sommeil"
+     ],
+     [
+      "⚡",
+      "Énergie"
+     ],
+     [
+      "😰",
+      "Anxiété"
+     ],
+     [
+      "🍷",
+      "Alcool"
+     ],
+     [
+      "💊",
+      "Médicaments"
+     ],
+     [
+      "👣",
+      "Pas"
+     ]
+    ],
+    "foot": "Analyses privées : calculées sur ton appareil"
+   },
+   "04-health": {
+    "head": "Sommeil et pas,<br>depuis Apple Santé",
+    "label": "Rempli pour toi — il suffit de confirmer",
+    "chips": [
+     [
+      "😴",
+      "Heures de sommeil"
+     ],
+     [
+      "👣",
+      "Pas du jour"
+     ],
+     [
+      "🔒",
+      "Gardé dans ton journal"
+     ]
+    ],
+    "foot": "Compatible avec Apple Santé"
+   },
+   "05-survivalkit": {
+    "head": "Crée ton propre<br>kit de survie",
+    "label": "Un kit, tous tes outils",
+    "chips": [
+     [
+      "🧠",
+      "Stratégies"
+     ],
+     [
+      "💊",
+      "Médicaments"
+     ],
+     [
+      "🎯",
+      "Objectifs"
+     ],
+     [
+      "🙏",
+      "Gratitude"
+     ],
+     [
+      "📚",
+      "Lecture"
+     ],
+     [
+      "📸",
+      "Souvenirs"
+     ],
+     [
+      "🆘",
+      "Aide d'urgence"
+     ]
+    ],
+    "foot": "À ta façon : 100 % personnalisable"
+   },
+   "06-safetyplan": {
+    "head": "Ton plan de sécurité,<br>prêt pour les jours durs",
+    "label": "Écrit quand tu vas bien, là quand ça va mal",
+    "chips": [
+     [
+      "🌦️",
+      "Signes d'alerte"
+     ],
+     [
+      "🤝",
+      "Personnes à appeler"
+     ],
+     [
+      "💊",
+      "Tes médicaments"
+     ],
+     [
+      "📱",
+      "Sur ton écran verrouillé"
+     ]
+    ],
+    "foot": "Reste sur ton téléphone · chiffré si tu te connectes"
+   },
+   "07-pin": {
+    "head": "Confidentialité totale.",
+    "label": "Chiffré sur ton appareil",
+    "chips": [
+     [
+      "🔐",
+      "Verrouillage par PIN"
+     ],
+     [
+      "👤",
+      "Sans compte"
+     ],
+     [
+      "🛟",
+      "Plan de sécurité sur l’écran du PIN"
+     ]
+    ],
+    "foot": "Journal privé : toi seul peux le lire"
+   },
+   "08-anonymous": {
+    "head": "Partage tes pensées,<br>pas ton identité",
+    "label": "Des gens qui comprennent vraiment",
+    "you": "+ Toi",
+    "foot": "Anonyme · sans vrai nom"
+   }
+  },
+  "de": {
+   "03-patterns": {
+    "head": "Erkenne deine Muster",
+    "label": "Verknüpft alles, was du trackst",
+    "chips": [
+     [
+      "😴",
+      "Schlaf"
+     ],
+     [
+      "⚡",
+      "Energie"
+     ],
+     [
+      "😰",
+      "Angst"
+     ],
+     [
+      "🍷",
+      "Alkohol"
+     ],
+     [
+      "💊",
+      "Medikamente"
+     ],
+     [
+      "👣",
+      "Schritte"
+     ]
+    ],
+    "foot": "Analysen bleiben privat – auf deinem Gerät berechnet"
+   },
+   "04-health": {
+    "head": "Schlaf und Schritte<br>aus Apple Health",
+    "label": "Für dich ausgefüllt – nur noch bestätigen",
+    "chips": [
+     [
+      "😴",
+      "Schlafdauer"
+     ],
+     [
+      "👣",
+      "Tägliche Schritte"
+     ],
+     [
+      "🔒",
+      "Bleibt in deinem Tagebuch"
+     ]
+    ],
+    "foot": "Kompatibel mit Apple Health"
+   },
+   "05-survivalkit": {
+    "head": "Bau dir dein<br>eigenes Survival-Kit",
+    "label": "Ein Kit – all deine Werkzeuge",
+    "chips": [
+     [
+      "🧠",
+      "Strategien"
+     ],
+     [
+      "💊",
+      "Medikamente"
+     ],
+     [
+      "🎯",
+      "Ziele"
+     ],
+     [
+      "🙏",
+      "Dankbarkeit"
+     ],
+     [
+      "📚",
+      "Lesen"
+     ],
+     [
+      "📸",
+      "Erinnerungen"
+     ],
+     [
+      "🆘",
+      "Krisenhilfe"
+     ]
+    ],
+    "foot": "Ganz nach deiner Art – 100 % anpassbar"
+   },
+   "06-safetyplan": {
+    "head": "Dein Sicherheitsplan,<br>bereit für schwere Tage",
+    "label": "Geschrieben, wenn es dir gut geht – da, wenn nicht",
+    "chips": [
+     [
+      "🌦️",
+      "Warnzeichen"
+     ],
+     [
+      "🤝",
+      "Menschen zum Anrufen"
+     ],
+     [
+      "💊",
+      "Deine Medikamente"
+     ],
+     [
+      "📱",
+      "Auf dem Sperrbildschirm"
+     ]
+    ],
+    "foot": "Bleibt auf deinem Handy · verschlüsselt, wenn du dich anmeldest"
+   },
+   "07-pin": {
+    "head": "Volle Privatsphäre.",
+    "label": "Verschlüsselt auf deinem Gerät",
+    "chips": [
+     [
+      "🔐",
+      "PIN-Sperre"
+     ],
+     [
+      "👤",
+      "Kein Konto nötig"
+     ],
+     [
+      "🛟",
+      "Sicherheitsplan auf dem PIN-Bildschirm"
+     ]
+    ],
+    "foot": "Privates Tagebuch: nur du kannst es lesen"
+   },
+   "08-anonymous": {
+    "head": "Teile deine Gedanken,<br>nicht deine Identität",
+    "label": "Menschen, die dich wirklich verstehen",
+    "you": "+ Du",
+    "foot": "Anonym · kein echter Name nötig"
+   }
+  },
+  "it": {
+   "03-patterns": {
+    "head": "Scopri i tuoi schemi",
+    "label": "Collega tutto ciò che registri",
+    "chips": [
+     [
+      "😴",
+      "Sonno"
+     ],
+     [
+      "⚡",
+      "Energia"
+     ],
+     [
+      "😰",
+      "Ansia"
+     ],
+     [
+      "🍷",
+      "Alcol"
+     ],
+     [
+      "💊",
+      "Farmaci"
+     ],
+     [
+      "👣",
+      "Passi"
+     ]
+    ],
+    "foot": "Analisi private: calcolate sul tuo dispositivo"
+   },
+   "04-health": {
+    "head": "Sonno e passi,<br>da Apple Salute",
+    "label": "Compilato per te: basta confermare",
+    "chips": [
+     [
+      "😴",
+      "Ore di sonno"
+     ],
+     [
+      "👣",
+      "Passi giornalieri"
+     ],
+     [
+      "🔒",
+      "Resta nel tuo diario"
+     ]
+    ],
+    "foot": "Compatibile con Apple Salute"
+   },
+   "05-survivalkit": {
+    "head": "Crea il tuo<br>kit di sopravvivenza",
+    "label": "Un kit, tutti i tuoi strumenti",
+    "chips": [
+     [
+      "🧠",
+      "Strategie"
+     ],
+     [
+      "💊",
+      "Farmaci"
+     ],
+     [
+      "🎯",
+      "Obiettivi"
+     ],
+     [
+      "🙏",
+      "Gratitudine"
+     ],
+     [
+      "📚",
+      "Letture"
+     ],
+     [
+      "📸",
+      "Ricordi"
+     ],
+     [
+      "🆘",
+      "Aiuto in crisi"
+     ]
+    ],
+    "foot": "A modo tuo: personalizzabile al 100 %"
+   },
+   "06-safetyplan": {
+    "head": "Il tuo piano di sicurezza,<br>pronto per i giorni difficili",
+    "label": "Lo scrivi quando stai bene, c’è quando non stai bene",
+    "chips": [
+     [
+      "🌦️",
+      "Segnali di allarme"
+     ],
+     [
+      "🤝",
+      "Persone da chiamare"
+     ],
+     [
+      "💊",
+      "I tuoi farmaci"
+     ],
+     [
+      "📱",
+      "Sulla schermata di blocco"
+     ]
+    ],
+    "foot": "Resta sul tuo telefono · cifrato se accedi"
+   },
+   "07-pin": {
+    "head": "Privacy totale.",
+    "label": "Cifrato sul tuo dispositivo",
+    "chips": [
+     [
+      "🔐",
+      "Blocco con PIN"
+     ],
+     [
+      "👤",
+      "Nessun account richiesto"
+     ],
+     [
+      "🛟",
+      "Piano di sicurezza sulla schermata del PIN"
+     ]
+    ],
+    "foot": "Diario privato: solo tu puoi leggerlo"
+   },
+   "08-anonymous": {
+    "head": "Condividi i pensieri,<br>non la tua identità",
+    "label": "Persone che capiscono davvero",
+    "you": "+ Tu",
+    "foot": "Anonimo · nessun nome reale"
+   }
+  },
+  "pt": {
+   "03-patterns": {
+    "head": "Descobre os teus padrões",
+    "label": "Relaciona tudo o que registas",
+    "chips": [
+     [
+      "😴",
+      "Sono"
+     ],
+     [
+      "⚡",
+      "Energia"
+     ],
+     [
+      "😰",
+      "Ansiedade"
+     ],
+     [
+      "🍷",
+      "Álcool"
+     ],
+     [
+      "💊",
+      "Medicação"
+     ],
+     [
+      "👣",
+      "Passos"
+     ]
+    ],
+    "foot": "As análises ficam privadas — calculadas no teu dispositivo"
+   },
+   "04-health": {
+    "head": "Sono e passos,<br>da app Saúde",
+    "label": "Preenchido por ti — só tens de confirmar",
+    "chips": [
+     [
+      "😴",
+      "Horas de sono"
+     ],
+     [
+      "👣",
+      "Passos diários"
+     ],
+     [
+      "🔒",
+      "Fica no teu diário"
+     ]
+    ],
+    "foot": "Funciona com a app Saúde"
+   },
+   "05-survivalkit": {
+    "head": "Cria o teu<br>kit de sobrevivência",
+    "label": "Um kit, todas as tuas ferramentas",
+    "chips": [
+     [
+      "🧠",
+      "Estratégias"
+     ],
+     [
+      "💊",
+      "Medicação"
+     ],
+     [
+      "🎯",
+      "Objetivos"
+     ],
+     [
+      "🙏",
+      "Gratidão"
+     ],
+     [
+      "📚",
+      "Leitura"
+     ],
+     [
+      "📸",
+      "Memórias"
+     ],
+     [
+      "🆘",
+      "Ajuda em crise"
+     ]
+    ],
+    "foot": "À tua maneira — 100% personalizável"
+   },
+   "06-safetyplan": {
+    "head": "O teu plano de segurança,<br>pronto para os dias difíceis",
+    "label": "Escrito quando estás bem, presente quando não estás",
+    "chips": [
+     [
+      "🌦️",
+      "Sinais de alerta"
+     ],
+     [
+      "🤝",
+      "Pessoas a quem ligar"
+     ],
+     [
+      "💊",
+      "A tua medicação"
+     ],
+     [
+      "📱",
+      "No ecrã de bloqueio"
+     ]
+    ],
+    "foot": "Fica no teu telemóvel · encriptado se iniciares sessão"
+   },
+   "07-pin": {
+    "head": "Privacidade total.",
+    "label": "Encriptado no teu dispositivo",
+    "chips": [
+     [
+      "🔐",
+      "Bloqueio com PIN"
+     ],
+     [
+      "👤",
+      "Sem conta"
+     ],
+     [
+      "🛟",
+      "Plano de segurança no ecrã do PIN"
+     ]
+    ],
+    "foot": "Diário privado: só tu o podes ler"
+   },
+   "08-anonymous": {
+    "head": "Partilha o que pensas,<br>não quem és",
+    "label": "Pessoas que percebem mesmo",
+    "you": "+ Tu",
+    "foot": "Anónimo · sem nome real"
+   }
+  },
+  "pt-BR": {
+   "03-patterns": {
+    "head": "Descubra seus padrões",
+    "label": "Relaciona tudo o que você registra",
+    "chips": [
+     [
+      "😴",
+      "Sono"
+     ],
+     [
+      "⚡",
+      "Energia"
+     ],
+     [
+      "😰",
+      "Ansiedade"
+     ],
+     [
+      "🍷",
+      "Álcool"
+     ],
+     [
+      "💊",
+      "Medicação"
+     ],
+     [
+      "👣",
+      "Passos"
+     ]
+    ],
+    "foot": "As análises ficam privadas — calculadas no seu aparelho"
+   },
+   "04-health": {
+    "head": "Sono e passos,<br>do app Saúde",
+    "label": "Preenchido para você — é só confirmar",
+    "chips": [
+     [
+      "😴",
+      "Horas de sono"
+     ],
+     [
+      "👣",
+      "Passos do dia"
+     ],
+     [
+      "🔒",
+      "Fica no seu diário"
+     ]
+    ],
+    "foot": "Funciona com o app Saúde"
+   },
+   "05-survivalkit": {
+    "head": "Monte seu<br>kit de sobrevivência",
+    "label": "Um kit, todas as suas ferramentas",
+    "chips": [
+     [
+      "🧠",
+      "Estratégias"
+     ],
+     [
+      "💊",
+      "Medicação"
+     ],
+     [
+      "🎯",
+      "Metas"
+     ],
+     [
+      "🙏",
+      "Gratidão"
+     ],
+     [
+      "📚",
+      "Leitura"
+     ],
+     [
+      "📸",
+      "Lembranças"
+     ],
+     [
+      "🆘",
+      "Ajuda na crise"
+     ]
+    ],
+    "foot": "Do seu jeito — 100% personalizável"
+   },
+   "06-safetyplan": {
+    "head": "Seu plano de segurança,<br>pronto para os dias difíceis",
+    "label": "Escrito quando você está bem, presente quando não está",
+    "chips": [
+     [
+      "🌦️",
+      "Sinais de alerta"
+     ],
+     [
+      "🤝",
+      "Pessoas para ligar"
+     ],
+     [
+      "💊",
+      "Seus medicamentos"
+     ],
+     [
+      "📱",
+      "Na tela de bloqueio"
+     ]
+    ],
+    "foot": "Fica no seu celular · criptografado se você entrar"
+   },
+   "07-pin": {
+    "head": "Privacidade total.",
+    "label": "Criptografado no seu aparelho",
+    "chips": [
+     [
+      "🔐",
+      "Bloqueio com PIN"
+     ],
+     [
+      "👤",
+      "Sem precisar de conta"
+     ],
+     [
+      "🛟",
+      "Plano de segurança na tela do PIN"
+     ]
+    ],
+    "foot": "Diário privado: só você pode ler"
+   },
+   "08-anonymous": {
+    "head": "Compartilhe o que pensa,<br>não quem você é",
+    "label": "Pessoas que realmente entendem",
+    "you": "+ Você",
+    "foot": "Anônimo · sem nome real"
+   }
+  },
+  "nl": {
+   "03-patterns": {
+    "head": "Ontdek je patronen",
+    "label": "Verbindt alles wat je bijhoudt",
+    "chips": [
+     [
+      "😴",
+      "Slaap"
+     ],
+     [
+      "⚡",
+      "Energie"
+     ],
+     [
+      "😰",
+      "Angst"
+     ],
+     [
+      "🍷",
+      "Alcohol"
+     ],
+     [
+      "💊",
+      "Medicatie"
+     ],
+     [
+      "👣",
+      "Stappen"
+     ]
+    ],
+    "foot": "Inzichten blijven privé — berekend op je apparaat"
+   },
+   "04-health": {
+    "head": "Slaap en stappen<br>uit Apple Gezondheid",
+    "label": "Voor je ingevuld — even bevestigen",
+    "chips": [
+     [
+      "😴",
+      "Uren slaap"
+     ],
+     [
+      "👣",
+      "Dagelijkse stappen"
+     ],
+     [
+      "🔒",
+      "Blijft in je dagboek"
+     ]
+    ],
+    "foot": "Werkt met Apple Gezondheid"
+   },
+   "05-survivalkit": {
+    "head": "Bouw je eigen<br>overlevingskit",
+    "label": "Eén kit — al je hulpmiddelen",
+    "chips": [
+     [
+      "🧠",
+      "Strategieën"
+     ],
+     [
+      "💊",
+      "Medicatie"
+     ],
+     [
+      "🎯",
+      "Doelen"
+     ],
+     [
+      "🙏",
+      "Dankbaarheid"
+     ],
+     [
+      "📚",
+      "Lezen"
+     ],
+     [
+      "📸",
+      "Herinneringen"
+     ],
+     [
+      "🆘",
+      "Crisishulp"
+     ]
+    ],
+    "foot": "Op jouw manier — 100% aan te passen"
+   },
+   "06-safetyplan": {
+    "head": "Je veiligheidsplan,<br>klaar voor zware dagen",
+    "label": "Geschreven als het goed gaat, er als het slecht gaat",
+    "chips": [
+     [
+      "🌦️",
+      "Waarschuwingssignalen"
+     ],
+     [
+      "🤝",
+      "Mensen om te bellen"
+     ],
+     [
+      "💊",
+      "Je medicatie"
+     ],
+     [
+      "📱",
+      "Op je vergrendelscherm"
+     ]
+    ],
+    "foot": "Blijft op je telefoon · versleuteld als je inlogt"
+   },
+   "07-pin": {
+    "head": "Volledige privacy.",
+    "label": "Versleuteld op je apparaat",
+    "chips": [
+     [
+      "🔐",
+      "Pincodeslot"
+     ],
+     [
+      "👤",
+      "Geen account nodig"
+     ],
+     [
+      "🛟",
+      "Veiligheidsplan op het pincodescherm"
+     ]
+    ],
+    "foot": "Privédagboek: alleen jij kunt het lezen"
+   },
+   "08-anonymous": {
+    "head": "Deel je gedachten,<br>niet wie je bent",
+    "label": "Mensen die het echt snappen",
+    "you": "+ Jij",
+    "foot": "Anoniem · geen echte naam nodig"
+   }
+  },
+  "pl": {
+   "03-patterns": {
+    "head": "Odkryj swoje wzorce",
+    "label": "Łączy wszystko, co śledzisz",
+    "chips": [
+     [
+      "😴",
+      "Sen"
+     ],
+     [
+      "⚡",
+      "Energia"
+     ],
+     [
+      "😰",
+      "Lęk"
+     ],
+     [
+      "🍷",
+      "Alkohol"
+     ],
+     [
+      "💊",
+      "Leki"
+     ],
+     [
+      "👣",
+      "Kroki"
+     ]
+    ],
+    "foot": "Wnioski pozostają prywatne — liczone na Twoim urządzeniu"
+   },
+   "04-health": {
+    "head": "Sen i kroki<br>z aplikacji Zdrowie",
+    "label": "Uzupełnione za Ciebie — wystarczy potwierdzić",
+    "chips": [
+     [
+      "😴",
+      "Godziny snu"
+     ],
+     [
+      "👣",
+      "Dzienne kroki"
+     ],
+     [
+      "🔒",
+      "Zostaje w Twoim dzienniku"
+     ]
+    ],
+    "foot": "Działa z aplikacją Zdrowie"
+   },
+   "05-survivalkit": {
+    "head": "Stwórz własny<br>zestaw przetrwania",
+    "label": "Jeden zestaw — wszystkie narzędzia",
+    "chips": [
+     [
+      "🧠",
+      "Strategie"
+     ],
+     [
+      "💊",
+      "Leki"
+     ],
+     [
+      "🎯",
+      "Cele"
+     ],
+     [
+      "🙏",
+      "Wdzięczność"
+     ],
+     [
+      "📚",
+      "Czytanie"
+     ],
+     [
+      "📸",
+      "Wspomnienia"
+     ],
+     [
+      "🆘",
+      "Pomoc w kryzysie"
+     ]
+    ],
+    "foot": "Po swojemu — w 100% do dopasowania"
+   },
+   "06-safetyplan": {
+    "head": "Twój plan bezpieczeństwa<br>na trudne dni",
+    "label": "Piszesz go, gdy czujesz się dobrze — jest, gdy jest źle",
+    "chips": [
+     [
+      "🌦️",
+      "Sygnały ostrzegawcze"
+     ],
+     [
+      "🤝",
+      "Osoby, do których zadzwonisz"
+     ],
+     [
+      "💊",
+      "Twoje leki"
+     ],
+     [
+      "📱",
+      "Na ekranie blokady"
+     ]
+    ],
+    "foot": "Zostaje w telefonie · zaszyfrowany po zalogowaniu"
+   },
+   "07-pin": {
+    "head": "Pełna prywatność.",
+    "label": "Szyfrowany na Twoim urządzeniu",
+    "chips": [
+     [
+      "🔐",
+      "Blokada PIN"
+     ],
+     [
+      "👤",
+      "Bez zakładania konta"
+     ],
+     [
+      "🛟",
+      "Plan bezpieczeństwa na ekranie PIN"
+     ]
+    ],
+    "foot": "Prywatny dziennik: tylko Ty go przeczytasz"
+   },
+   "08-anonymous": {
+    "head": "Dziel się myślami,<br>nie tożsamością",
+    "label": "Ludzie, którzy naprawdę rozumieją",
+    "you": "+ Ty",
+    "foot": "Anonimowo · bez prawdziwego imienia"
+   }
+  },
+  "sv": {
+   "03-patterns": {
+    "head": "Se dina mönster",
+    "label": "Kopplar samman allt du spårar",
+    "chips": [
+     [
+      "😴",
+      "Sömn"
+     ],
+     [
+      "⚡",
+      "Energi"
+     ],
+     [
+      "😰",
+      "Ångest"
+     ],
+     [
+      "🍷",
+      "Alkohol"
+     ],
+     [
+      "💊",
+      "Mediciner"
+     ],
+     [
+      "👣",
+      "Steg"
+     ]
+    ],
+    "foot": "Insikter förblir privata — beräknas på din enhet"
+   },
+   "04-health": {
+    "head": "Sömn och steg<br>från Apple Hälsa",
+    "label": "Ifyllt åt dig — bekräfta bara",
+    "chips": [
+     [
+      "😴",
+      "Timmar sömn"
+     ],
+     [
+      "👣",
+      "Dagliga steg"
+     ],
+     [
+      "🔒",
+      "Stannar i din dagbok"
+     ]
+    ],
+    "foot": "Fungerar med Apple Hälsa"
+   },
+   "05-survivalkit": {
+    "head": "Bygg ditt eget<br>överlevnadskit",
+    "label": "Ett kit — alla dina verktyg",
+    "chips": [
+     [
+      "🧠",
+      "Strategier"
+     ],
+     [
+      "💊",
+      "Mediciner"
+     ],
+     [
+      "🎯",
+      "Mål"
+     ],
+     [
+      "🙏",
+      "Tacksamhet"
+     ],
+     [
+      "📚",
+      "Läsning"
+     ],
+     [
+      "📸",
+      "Minnen"
+     ],
+     [
+      "🆘",
+      "Krishjälp"
+     ]
+    ],
+    "foot": "Bygg det som du vill — 100 % anpassningsbart"
+   },
+   "06-safetyplan": {
+    "head": "Din säkerhetsplan,<br>redo för tunga dagar",
+    "label": "Skriven när du mår bra, där när du inte gör det",
+    "chips": [
+     [
+      "🌦️",
+      "Varningstecken"
+     ],
+     [
+      "🤝",
+      "Personer att ringa"
+     ],
+     [
+      "💊",
+      "Dina läkemedel"
+     ],
+     [
+      "📱",
+      "På låsskärmen"
+     ]
+    ],
+    "foot": "Stannar i mobilen · krypterad om du loggar in"
+   },
+   "07-pin": {
+    "head": "Full integritet.",
+    "label": "Krypterad på din enhet",
+    "chips": [
+     [
+      "🔐",
+      "PIN-lås"
+     ],
+     [
+      "👤",
+      "Inget konto behövs"
+     ],
+     [
+      "🛟",
+      "Säkerhetsplan på PIN-skärmen"
+     ]
+    ],
+    "foot": "Privat dagbok: bara du kan läsa den"
+   },
+   "08-anonymous": {
+    "head": "Dela dina tankar,<br>inte vem du är",
+    "label": "Människor som verkligen förstår",
+    "you": "+ Du",
+    "foot": "Anonymt · inget riktigt namn krävs"
+   }
+  },
+  "zh": {
+   "03-patterns": {
+    "head": "发现你的规律",
+    "label": "关联你记录的一切",
+    "chips": [
+     [
+      "😴",
+      "睡眠"
+     ],
+     [
+      "⚡",
+      "能量"
+     ],
+     [
+      "😰",
+      "焦虑"
+     ],
+     [
+      "🍷",
+      "酒精"
+     ],
+     [
+      "💊",
+      "药物"
+     ],
+     [
+      "👣",
+      "步数"
+     ]
+    ],
+    "foot": "分析始终私密——在你的设备上完成"
+   },
+   "04-health": {
+    "head": "睡眠和步数，<br>来自 Apple 健康",
+    "label": "自动为你填好——确认即可",
+    "chips": [
+     [
+      "😴",
+      "睡眠时长"
+     ],
+     [
+      "👣",
+      "每日步数"
+     ],
+     [
+      "🔒",
+      "只保存在你的日记里"
+     ]
+    ],
+    "foot": "支持 Apple 健康"
+   },
+   "05-survivalkit": {
+    "head": "打造你自己的<br>生存工具包",
+    "label": "一个工具包，所有工具",
+    "chips": [
+     [
+      "🧠",
+      "应对策略"
+     ],
+     [
+      "💊",
+      "药物"
+     ],
+     [
+      "🎯",
+      "目标"
+     ],
+     [
+      "🙏",
+      "感恩"
+     ],
+     [
+      "📚",
+      "阅读"
+     ],
+     [
+      "📸",
+      "回忆"
+     ],
+     [
+      "🆘",
+      "危机求助"
+     ]
+    ],
+    "foot": "随你打造——100% 可定制"
+   },
+   "06-safetyplan": {
+    "head": "你的安全计划，<br>为艰难的日子准备",
+    "label": "状态好时写下，难熬时就在身边",
+    "chips": [
+     [
+      "🌦️",
+      "预警信号"
+     ],
+     [
+      "🤝",
+      "可以联系的人"
+     ],
+     [
+      "💊",
+      "你的药物"
+     ],
+     [
+      "📱",
+      "显示在锁定屏幕上"
+     ]
+    ],
+    "foot": "保存在你的手机上 · 登录后加密同步"
+   },
+   "07-pin": {
+    "head": "完全私密。",
+    "label": "在你的设备上加密",
+    "chips": [
+     [
+      "🔐",
+      "PIN 锁"
+     ],
+     [
+      "👤",
+      "无需账户"
+     ],
+     [
+      "🛟",
+      "PIN 界面上的安全计划"
+     ]
+    ],
+    "foot": "私密日记：只有你能读取"
+   },
+   "08-anonymous": {
+    "head": "分享你的想法，<br>而非你的身份",
+    "label": "真正懂你的人",
+    "you": "+ 你",
+    "foot": "匿名 · 无需真实姓名"
+   }
+  }
+ },
+ "anon": {
+  "en": {
+   "03-moniker": {
+    "head": "Pick a Moniker.<br>Stay anonymous.",
+    "label": "A name you make up, never your real one",
+    "chips": [
+     [
+      "🎭",
+      "Anonymous handle"
+     ],
+     [
+      "🚫",
+      "No profile to maintain"
+     ],
+     [
+      "📱",
+      "Recognised across devices"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Ask anything.<br><span class=\"hl\">Get real answers.</span>",
+    "label": "Lived experience, not lectures",
+    "chips": [
+     [
+      "💬",
+      "Honest replies"
+     ],
+     [
+      "💛",
+      "Zero judgement"
+     ],
+     [
+      "🌙",
+      "Someone's always around"
+     ]
+    ],
+    "foot": "Real people who've been exactly where you are"
+   },
+   "05-wiki": {
+    "head": "Common questions,<br><span class=\"hl\">answered</span>",
+    "label": "Plain-English answers you can trust",
+    "chips": [
+     [
+      "💊",
+      "Medications"
+     ],
+     [
+      "🏥",
+      "Conditions"
+     ],
+     [
+      "🧘",
+      "Therapies"
+     ],
+     [
+      "⚠️",
+      "Warning signs"
+     ],
+     [
+      "💛",
+      "Loved ones"
+     ]
+    ],
+    "foot": "Sourced, signposted and jargon-free"
+   },
+   "06-report": {
+    "head": "Report a post.<br>Help arrives fast.",
+    "label": "A moderated, safer space",
+    "chips": [
+     [
+      "🚩",
+      "Report in one tap"
+     ],
+     [
+      "🆘",
+      "SOS flag for crises"
+     ],
+     [
+      "🛡️",
+      "Mods review everything"
+     ]
+    ],
+    "foot": "Every report is reviewed — help is never far away"
+   },
+   "07-checkin": {
+    "head": "Check in.<br><span class=\"hl\">You're not alone.</span>",
+    "label": "See how the board is feeling today",
+    "chips": [
+     [
+      "🐻",
+      "One tap"
+     ],
+     [
+      "📊",
+      "Today's totals"
+     ],
+     [
+      "🙈",
+      "Never who picked what"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Help, the moment<br>you need it",
+    "label": "Crisis lines for where you live",
+    "chips": [
+     [
+      "📞",
+      "Call in one tap"
+     ],
+     [
+      "🌍",
+      "Your country's lines"
+     ],
+     [
+      "🛟",
+      "Always in the top bar"
+     ]
+    ]
+   }
+  },
+  "es": {
+   "03-moniker": {
+    "head": "Elige un Moniker.<br>Sigue en el anonimato.",
+    "label": "Un nombre inventado, nunca el real",
+    "chips": [
+     [
+      "🎭",
+      "Alias anónimo"
+     ],
+     [
+      "🚫",
+      "Sin perfil que mantener"
+     ],
+     [
+      "📱",
+      "Reconocido en todos tus dispositivos"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Pregunta lo que sea.<br><span class=\"hl\">Recibe respuestas reales.</span>",
+    "label": "Experiencia vivida, no sermones",
+    "chips": [
+     [
+      "💬",
+      "Respuestas sinceras"
+     ],
+     [
+      "💛",
+      "Cero juicios"
+     ],
+     [
+      "🌙",
+      "Siempre hay alguien"
+     ]
+    ],
+    "foot": "Gente real que ha estado justo donde tú estás"
+   },
+   "05-wiki": {
+    "head": "Preguntas frecuentes,<br><span class=\"hl\">respondidas</span>",
+    "label": "Respuestas claras en las que confiar",
+    "chips": [
+     [
+      "💊",
+      "Medicación"
+     ],
+     [
+      "🏥",
+      "Trastornos"
+     ],
+     [
+      "🧘",
+      "Terapias"
+     ],
+     [
+      "⚠️",
+      "Señales de alerta"
+     ],
+     [
+      "💛",
+      "Seres queridos"
+     ]
+    ],
+    "foot": "Con fuentes, orientación y sin jerga"
+   },
+   "06-report": {
+    "head": "Denuncia una publicación.<br>La ayuda llega rápido.",
+    "label": "Un espacio moderado y más seguro",
+    "chips": [
+     [
+      "🚩",
+      "Denuncia con un toque"
+     ],
+     [
+      "🆘",
+      "Aviso SOS para crisis"
+     ],
+     [
+      "🛡️",
+      "Los moderadores lo revisan todo"
+     ]
+    ],
+    "foot": "Cada denuncia se revisa: la ayuda nunca está lejos"
+   },
+   "07-checkin": {
+    "head": "Cuéntanos cómo estás.<br><span class=\"hl\">No estás solo.</span>",
+    "label": "Mira cómo se siente hoy la comunidad",
+    "chips": [
+     [
+      "🐻",
+      "Un toque"
+     ],
+     [
+      "📊",
+      "Los totales de hoy"
+     ],
+     [
+      "🙈",
+      "Nunca quién eligió qué"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Ayuda en cuanto<br>la necesites",
+    "label": "Líneas de crisis de donde vives",
+    "chips": [
+     [
+      "📞",
+      "Llama con un toque"
+     ],
+     [
+      "🌍",
+      "Las líneas de tu país"
+     ],
+     [
+      "🛟",
+      "Siempre en la barra superior"
+     ]
+    ]
+   }
+  },
+  "fr": {
+   "03-moniker": {
+    "head": "Choisis un Moniker.<br>Reste anonyme.",
+    "label": "Un nom que tu inventes, jamais le vrai",
+    "chips": [
+     [
+      "🎭",
+      "Pseudo anonyme"
+     ],
+     [
+      "🚫",
+      "Aucun profil à gérer"
+     ],
+     [
+      "📱",
+      "Reconnu sur tous tes appareils"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Pose tes questions.<br><span class=\"hl\">Reçois de vraies réponses.</span>",
+    "label": "Du vécu, pas des leçons",
+    "chips": [
+     [
+      "💬",
+      "Des réponses sincères"
+     ],
+     [
+      "💛",
+      "Zéro jugement"
+     ],
+     [
+      "🌙",
+      "Toujours quelqu'un pour répondre"
+     ]
+    ],
+    "foot": "De vraies personnes passées exactement par là"
+   },
+   "05-wiki": {
+    "head": "Questions fréquentes,<br><span class=\"hl\">et leurs réponses</span>",
+    "label": "Des réponses claires et fiables",
+    "chips": [
+     [
+      "💊",
+      "Médicaments"
+     ],
+     [
+      "🏥",
+      "Troubles"
+     ],
+     [
+      "🧘",
+      "Thérapies"
+     ],
+     [
+      "⚠️",
+      "Signes d'alerte"
+     ],
+     [
+      "💛",
+      "Proches"
+     ]
+    ],
+    "foot": "Sourcé, orienté et sans jargon"
+   },
+   "06-report": {
+    "head": "Signale un post.<br>L'aide arrive vite.",
+    "label": "Un espace modéré et plus sûr",
+    "chips": [
+     [
+      "🚩",
+      "Signalement en un geste"
+     ],
+     [
+      "🆘",
+      "Signal SOS en cas de crise"
+     ],
+     [
+      "🛡️",
+      "Les modos examinent tout"
+     ]
+    ],
+    "foot": "Chaque signalement est examiné — l'aide n'est jamais loin"
+   },
+   "07-checkin": {
+    "head": "Dis comment tu vas.<br><span class=\"hl\">Tu n'es pas seul.</span>",
+    "label": "Vois comment va la communauté aujourd’hui",
+    "chips": [
+     [
+      "🐻",
+      "Un seul geste"
+     ],
+     [
+      "📊",
+      "Les chiffres du jour"
+     ],
+     [
+      "🙈",
+      "Jamais qui a choisi quoi"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "De l'aide dès que<br>tu en as besoin",
+    "label": "Les lignes d’écoute de ton pays",
+    "chips": [
+     [
+      "📞",
+      "Appelle en un geste"
+     ],
+     [
+      "🌍",
+      "Les numéros de ton pays"
+     ],
+     [
+      "🛟",
+      "Toujours dans la barre du haut"
+     ]
+    ]
+   }
+  },
+  "de": {
+   "03-moniker": {
+    "head": "Wähl einen Moniker.<br>Bleib anonym.",
+    "label": "Ein ausgedachter Name, nie dein echter",
+    "chips": [
+     [
+      "🎭",
+      "Anonymer Name"
+     ],
+     [
+      "🚫",
+      "Kein Profil zu pflegen"
+     ],
+     [
+      "📱",
+      "Auf allen Geräten erkannt"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Frag, was du willst.<br><span class=\"hl\">Echte Antworten.</span>",
+    "label": "Gelebte Erfahrung statt Belehrungen",
+    "chips": [
+     [
+      "💬",
+      "Ehrliche Antworten"
+     ],
+     [
+      "💛",
+      "Keine Vorurteile"
+     ],
+     [
+      "🌙",
+      "Immer ist jemand da"
+     ]
+    ],
+    "foot": "Echte Menschen, die genau da waren, wo du bist"
+   },
+   "05-wiki": {
+    "head": "Häufige Fragen,<br><span class=\"hl\">beantwortet</span>",
+    "label": "Verständliche Antworten, denen du vertrauen kannst",
+    "chips": [
+     [
+      "💊",
+      "Medikamente"
+     ],
+     [
+      "🏥",
+      "Erkrankungen"
+     ],
+     [
+      "🧘",
+      "Therapien"
+     ],
+     [
+      "⚠️",
+      "Warnzeichen"
+     ],
+     [
+      "💛",
+      "Angehörige"
+     ]
+    ],
+    "foot": "Mit Quellen, Wegweisern und ohne Fachchinesisch"
+   },
+   "06-report": {
+    "head": "Beitrag melden.<br>Hilfe kommt schnell.",
+    "label": "Ein moderierter, sicherer Ort",
+    "chips": [
+     [
+      "🚩",
+      "Mit einem Tipp melden"
+     ],
+     [
+      "🆘",
+      "SOS-Meldung in Krisen"
+     ],
+     [
+      "🛡️",
+      "Mods prüfen alles"
+     ]
+    ],
+    "foot": "Jede Meldung wird geprüft – Hilfe ist nie weit"
+   },
+   "07-checkin": {
+    "head": "Sag, wie es dir geht.<br><span class=\"hl\">Du bist nicht allein.</span>",
+    "label": "Sieh, wie es der Community heute geht",
+    "chips": [
+     [
+      "🐻",
+      "Ein Tipp"
+     ],
+     [
+      "📊",
+      "Die Zahlen von heute"
+     ],
+     [
+      "🙈",
+      "Nie, wer was gewählt hat"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Hilfe, sobald du<br>sie brauchst",
+    "label": "Krisentelefone für dein Land",
+    "chips": [
+     [
+      "📞",
+      "Mit einem Tipp anrufen"
+     ],
+     [
+      "🌍",
+      "Die Nummern deines Landes"
+     ],
+     [
+      "🛟",
+      "Immer oben in der Leiste"
+     ]
+    ]
+   }
+  },
+  "it": {
+   "03-moniker": {
+    "head": "Scegli un Moniker.<br>Resta anonimo.",
+    "label": "Un nome inventato, mai quello vero",
+    "chips": [
+     [
+      "🎭",
+      "Nome anonimo"
+     ],
+     [
+      "🚫",
+      "Nessun profilo da gestire"
+     ],
+     [
+      "📱",
+      "Riconosciuto su tutti i dispositivi"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Chiedi qualsiasi cosa.<br><span class=\"hl\">Ricevi risposte vere.</span>",
+    "label": "Esperienza vissuta, non prediche",
+    "chips": [
+     [
+      "💬",
+      "Risposte sincere"
+     ],
+     [
+      "💛",
+      "Zero giudizi"
+     ],
+     [
+      "🌙",
+      "C'è sempre qualcuno"
+     ]
+    ],
+    "foot": "Persone vere che sono state esattamente dove sei tu"
+   },
+   "05-wiki": {
+    "head": "Domande frequenti,<br><span class=\"hl\">con risposta</span>",
+    "label": "Risposte chiare di cui fidarti",
+    "chips": [
+     [
+      "💊",
+      "Farmaci"
+     ],
+     [
+      "🏥",
+      "Disturbi"
+     ],
+     [
+      "🧘",
+      "Terapie"
+     ],
+     [
+      "⚠️",
+      "Segnali di allarme"
+     ],
+     [
+      "💛",
+      "Persone care"
+     ]
+    ],
+    "foot": "Con fonti, indicazioni e senza gergo"
+   },
+   "06-report": {
+    "head": "Segnala un post.<br>L'aiuto arriva presto.",
+    "label": "Uno spazio moderato e più sicuro",
+    "chips": [
+     [
+      "🚩",
+      "Segnala con un tocco"
+     ],
+     [
+      "🆘",
+      "Segnale SOS per le crisi"
+     ],
+     [
+      "🛡️",
+      "I moderatori controllano tutto"
+     ]
+    ],
+    "foot": "Ogni segnalazione viene esaminata: l'aiuto non è mai lontano"
+   },
+   "07-checkin": {
+    "head": "Di’ come stai.<br><span class=\"hl\">Non sei solo.</span>",
+    "label": "Guarda come sta oggi la community",
+    "chips": [
+     [
+      "🐻",
+      "Un tocco"
+     ],
+     [
+      "📊",
+      "I totali di oggi"
+     ],
+     [
+      "🙈",
+      "Mai chi ha scelto cosa"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Aiuto, appena<br>ne hai bisogno",
+    "label": "Linee di crisi del tuo Paese",
+    "chips": [
+     [
+      "📞",
+      "Chiama con un tocco"
+     ],
+     [
+      "🌍",
+      "I numeri del tuo Paese"
+     ],
+     [
+      "🛟",
+      "Sempre nella barra in alto"
+     ]
+    ]
+   }
+  },
+  "pt": {
+   "03-moniker": {
+    "head": "Escolhe um Moniker.<br>Mantém o anonimato.",
+    "label": "Um nome inventado, nunca o verdadeiro",
+    "chips": [
+     [
+      "🎭",
+      "Nome anónimo"
+     ],
+     [
+      "🚫",
+      "Nenhum perfil para manter"
+     ],
+     [
+      "📱",
+      "Reconhecido em todos os dispositivos"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Pergunta tudo.<br><span class=\"hl\">Recebe respostas reais.</span>",
+    "label": "Experiência vivida, não sermões",
+    "chips": [
+     [
+      "💬",
+      "Respostas sinceras"
+     ],
+     [
+      "💛",
+      "Zero julgamentos"
+     ],
+     [
+      "🌙",
+      "Há sempre alguém por perto"
+     ]
+    ],
+    "foot": "Pessoas reais que já estiveram onde tu estás"
+   },
+   "05-wiki": {
+    "head": "Perguntas frequentes,<br><span class=\"hl\">respondidas</span>",
+    "label": "Respostas claras em que podes confiar",
+    "chips": [
+     [
+      "💊",
+      "Medicação"
+     ],
+     [
+      "🏥",
+      "Condições"
+     ],
+     [
+      "🧘",
+      "Terapias"
+     ],
+     [
+      "⚠️",
+      "Sinais de alerta"
+     ],
+     [
+      "💛",
+      "Entes queridos"
+     ]
+    ],
+    "foot": "Com fontes, orientação e sem jargão"
+   },
+   "06-report": {
+    "head": "Denuncia um post.<br>Ajuda rápida.",
+    "label": "Um espaço moderado e mais seguro",
+    "chips": [
+     [
+      "🚩",
+      "Denuncia com um toque"
+     ],
+     [
+      "🆘",
+      "Alerta SOS para crises"
+     ],
+     [
+      "🛡️",
+      "Os moderadores reveem tudo"
+     ]
+    ],
+    "foot": "Cada denúncia é analisada — a ajuda nunca está longe"
+   },
+   "07-checkin": {
+    "head": "Diz como estás.<br><span class=\"hl\">Não estás sozinho.</span>",
+    "label": "Vê como está hoje a comunidade",
+    "chips": [
+     [
+      "🐻",
+      "Um toque"
+     ],
+     [
+      "📊",
+      "Os totais de hoje"
+     ],
+     [
+      "🙈",
+      "Nunca quem escolheu o quê"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Ajuda assim que<br>precisares",
+    "label": "Linhas de crise do sítio onde vives",
+    "chips": [
+     [
+      "📞",
+      "Liga com um toque"
+     ],
+     [
+      "🌍",
+      "As linhas do teu país"
+     ],
+     [
+      "🛟",
+      "Sempre na barra de cima"
+     ]
+    ]
+   }
+  },
+  "pt-BR": {
+   "03-moniker": {
+    "head": "Escolha um Moniker.<br>Fique anônimo.",
+    "label": "Um nome inventado, nunca o verdadeiro",
+    "chips": [
+     [
+      "🎭",
+      "Nome anônimo"
+     ],
+     [
+      "🚫",
+      "Nenhum perfil para manter"
+     ],
+     [
+      "📱",
+      "Reconhecido em todos os dispositivos"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Pergunte tudo.<br><span class=\"hl\">Receba respostas reais.</span>",
+    "label": "Experiência vivida, não sermões",
+    "chips": [
+     [
+      "💬",
+      "Respostas sinceras"
+     ],
+     [
+      "💛",
+      "Zero julgamentos"
+     ],
+     [
+      "🌙",
+      "Sempre há alguém por perto"
+     ]
+    ],
+    "foot": "Gente real que já esteve onde você está"
+   },
+   "05-wiki": {
+    "head": "Perguntas frequentes,<br><span class=\"hl\">respondidas</span>",
+    "label": "Respostas claras e confiáveis",
+    "chips": [
+     [
+      "💊",
+      "Medicação"
+     ],
+     [
+      "🏥",
+      "Condições"
+     ],
+     [
+      "🧘",
+      "Terapias"
+     ],
+     [
+      "⚠️",
+      "Sinais de alerta"
+     ],
+     [
+      "💛",
+      "Entes queridos"
+     ]
+    ],
+    "foot": "Com fontes, orientação e sem jargão"
+   },
+   "06-report": {
+    "head": "Denuncie um post.<br>Ajuda rápida.",
+    "label": "Um espaço moderado e mais seguro",
+    "chips": [
+     [
+      "🚩",
+      "Denuncie com um toque"
+     ],
+     [
+      "🆘",
+      "Alerta SOS para crises"
+     ],
+     [
+      "🛡️",
+      "Moderadores revisam tudo"
+     ]
+    ],
+    "foot": "Cada denúncia é analisada — a ajuda nunca está longe"
+   },
+   "07-checkin": {
+    "head": "Conte como você está.<br><span class=\"hl\">Você não está sozinho.</span>",
+    "label": "Veja como a comunidade está hoje",
+    "chips": [
+     [
+      "🐻",
+      "Um toque"
+     ],
+     [
+      "📊",
+      "Os totais de hoje"
+     ],
+     [
+      "🙈",
+      "Nunca quem escolheu o quê"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Ajuda na hora<br>em que você precisar",
+    "label": "Linhas de apoio de onde você mora",
+    "chips": [
+     [
+      "📞",
+      "Ligue com um toque"
+     ],
+     [
+      "🌍",
+      "As linhas do seu país"
+     ],
+     [
+      "🛟",
+      "Sempre na barra de cima"
+     ]
+    ]
+   }
+  },
+  "nl": {
+   "03-moniker": {
+    "head": "Kies een Moniker.<br>Blijf anoniem.",
+    "label": "Een verzonnen naam, nooit je echte",
+    "chips": [
+     [
+      "🎭",
+      "Anonieme naam"
+     ],
+     [
+      "🚫",
+      "Geen profiel om bij te houden"
+     ],
+     [
+      "📱",
+      "Herkend op al je apparaten"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Vraag wat je wilt.<br><span class=\"hl\">Krijg echte antwoorden.</span>",
+    "label": "Ervaring, geen preken",
+    "chips": [
+     [
+      "💬",
+      "Eerlijke antwoorden"
+     ],
+     [
+      "💛",
+      "Nul oordeel"
+     ],
+     [
+      "🌙",
+      "Er is altijd wel iemand"
+     ]
+    ],
+    "foot": "Echte mensen die precies waren waar jij nu bent"
+   },
+   "05-wiki": {
+    "head": "Veelgestelde vragen,<br><span class=\"hl\">beantwoord</span>",
+    "label": "Heldere antwoorden waar je op kunt vertrouwen",
+    "chips": [
+     [
+      "💊",
+      "Medicatie"
+     ],
+     [
+      "🏥",
+      "Aandoeningen"
+     ],
+     [
+      "🧘",
+      "Therapieën"
+     ],
+     [
+      "⚠️",
+      "Waarschuwingssignalen"
+     ],
+     [
+      "💛",
+      "Naasten"
+     ]
+    ],
+    "foot": "Met bronnen, verwijzingen en zonder jargon"
+   },
+   "06-report": {
+    "head": "Meld een bericht.<br>Hulp is snel daar.",
+    "label": "Een gemodereerde, veiligere plek",
+    "chips": [
+     [
+      "🚩",
+      "Melden met één tik"
+     ],
+     [
+      "🆘",
+      "SOS-melding bij crisis"
+     ],
+     [
+      "🛡️",
+      "Mods bekijken alles"
+     ]
+    ],
+    "foot": "Elke melding wordt bekeken — hulp is nooit ver weg"
+   },
+   "07-checkin": {
+    "head": "Laat weten hoe het gaat.<br><span class=\"hl\">Je bent niet alleen.</span>",
+    "label": "Zie hoe het vandaag met de community gaat",
+    "chips": [
+     [
+      "🐻",
+      "Eén tik"
+     ],
+     [
+      "📊",
+      "De totalen van vandaag"
+     ],
+     [
+      "🙈",
+      "Nooit wie wat koos"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Hulp zodra<br>je die nodig hebt",
+    "label": "Crisislijnen voor waar je woont",
+    "chips": [
+     [
+      "📞",
+      "Bel met één tik"
+     ],
+     [
+      "🌍",
+      "De lijnen van jouw land"
+     ],
+     [
+      "🛟",
+      "Altijd in de bovenbalk"
+     ]
+    ]
+   }
+  },
+  "pl": {
+   "03-moniker": {
+    "head": "Wybierz Moniker.<br>Pozostań anonimowy.",
+    "label": "Wymyślony pseudonim, nigdy prawdziwe imię",
+    "chips": [
+     [
+      "🎭",
+      "Anonimowy pseudonim"
+     ],
+     [
+      "🚫",
+      "Brak profilu do prowadzenia"
+     ],
+     [
+      "📱",
+      "Rozpoznawany na wszystkich urządzeniach"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Pytaj o wszystko.<br><span class=\"hl\">Dostań prawdziwe odpowiedzi.</span>",
+    "label": "Doświadczenie, nie pouczanie",
+    "chips": [
+     [
+      "💬",
+      "Szczere odpowiedzi"
+     ],
+     [
+      "💛",
+      "Zero oceniania"
+     ],
+     [
+      "🌙",
+      "Zawsze ktoś jest obok"
+     ]
+    ],
+    "foot": "Prawdziwi ludzie, którzy byli dokładnie tam, gdzie ty"
+   },
+   "05-wiki": {
+    "head": "Częste pytania,<br><span class=\"hl\">z odpowiedziami</span>",
+    "label": "Jasne odpowiedzi, którym możesz ufać",
+    "chips": [
+     [
+      "💊",
+      "Leki"
+     ],
+     [
+      "🏥",
+      "Zaburzenia"
+     ],
+     [
+      "🧘",
+      "Terapie"
+     ],
+     [
+      "⚠️",
+      "Objawy ostrzegawcze"
+     ],
+     [
+      "💛",
+      "Bliscy"
+     ]
+    ],
+    "foot": "Ze źródłami, wskazówkami i bez żargonu"
+   },
+   "06-report": {
+    "head": "Zgłoś wpis.<br>Pomoc przychodzi szybko.",
+    "label": "Moderowane, bezpieczniejsze miejsce",
+    "chips": [
+     [
+      "🚩",
+      "Zgłoszenie jednym dotknięciem"
+     ],
+     [
+      "🆘",
+      "Sygnał SOS w kryzysie"
+     ],
+     [
+      "🛡️",
+      "Moderatorzy sprawdzają wszystko"
+     ]
+    ],
+    "foot": "Każde zgłoszenie jest sprawdzane — pomoc jest blisko"
+   },
+   "07-checkin": {
+    "head": "Daj znać, jak się czujesz.<br><span class=\"hl\">Nie jesteś sam.</span>",
+    "label": "Zobacz, jak dziś czuje się społeczność",
+    "chips": [
+     [
+      "🐻",
+      "Jedno dotknięcie"
+     ],
+     [
+      "📊",
+      "Dzisiejsze podsumowanie"
+     ],
+     [
+      "🙈",
+      "Nigdy, kto co wybrał"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Pomoc, gdy tylko<br>jej potrzebujesz",
+    "label": "Telefony zaufania tam, gdzie mieszkasz",
+    "chips": [
+     [
+      "📞",
+      "Zadzwoń jednym dotknięciem"
+     ],
+     [
+      "🌍",
+      "Numery Twojego kraju"
+     ],
+     [
+      "🛟",
+      "Zawsze na górnym pasku"
+     ]
+    ]
+   }
+  },
+  "sv": {
+   "03-moniker": {
+    "head": "Välj en Moniker.<br>Förbli anonym.",
+    "label": "Ett påhittat namn, aldrig ditt riktiga",
+    "chips": [
+     [
+      "🎭",
+      "Anonymt alias"
+     ],
+     [
+      "🚫",
+      "Ingen profil att underhålla"
+     ],
+     [
+      "📱",
+      "Känns igen på alla enheter"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "Fråga vad som helst.<br><span class=\"hl\">Få riktiga svar.</span>",
+    "label": "Levd erfarenhet, inte föreläsningar",
+    "chips": [
+     [
+      "💬",
+      "Ärliga svar"
+     ],
+     [
+      "💛",
+      "Noll dömande"
+     ],
+     [
+      "🌙",
+      "Någon finns alltid där"
+     ]
+    ],
+    "foot": "Riktiga människor som varit precis där du är"
+   },
+   "05-wiki": {
+    "head": "Vanliga frågor,<br><span class=\"hl\">besvarade</span>",
+    "label": "Tydliga svar du kan lita på",
+    "chips": [
+     [
+      "💊",
+      "Läkemedel"
+     ],
+     [
+      "🏥",
+      "Diagnoser"
+     ],
+     [
+      "🧘",
+      "Terapier"
+     ],
+     [
+      "⚠️",
+      "Varningstecken"
+     ],
+     [
+      "💛",
+      "Anhöriga"
+     ]
+    ],
+    "foot": "Med källor, vägledning och utan jargong"
+   },
+   "06-report": {
+    "head": "Rapportera ett inlägg.<br>Hjälpen kommer snabbt.",
+    "label": "En modererad, tryggare plats",
+    "chips": [
+     [
+      "🚩",
+      "Rapportera med ett tryck"
+     ],
+     [
+      "🆘",
+      "SOS-flagga vid kris"
+     ],
+     [
+      "🛡️",
+      "Moderatorer granskar allt"
+     ]
+    ],
+    "foot": "Varje rapport granskas — hjälpen är aldrig långt borta"
+   },
+   "07-checkin": {
+    "head": "Säg hur du mår.<br><span class=\"hl\">Du är inte ensam.</span>",
+    "label": "Se hur gemenskapen mår i dag",
+    "chips": [
+     [
+      "🐻",
+      "Ett tryck"
+     ],
+     [
+      "📊",
+      "Dagens siffror"
+     ],
+     [
+      "🙈",
+      "Aldrig vem som valde vad"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "Hjälp så fort<br>du behöver den",
+    "label": "Krislinjer där du bor",
+    "chips": [
+     [
+      "📞",
+      "Ring med ett tryck"
+     ],
+     [
+      "🌍",
+      "Ditt lands linjer"
+     ],
+     [
+      "🛟",
+      "Alltid i översta fältet"
+     ]
+    ]
+   }
+  },
+  "zh": {
+   "03-moniker": {
+    "head": "选一个 Moniker。<br>保持匿名。",
+    "label": "自己起的名字，绝不是真名",
+    "chips": [
+     [
+      "🎭",
+      "匿名昵称"
+     ],
+     [
+      "🚫",
+      "无需维护个人资料"
+     ],
+     [
+      "📱",
+      "跨设备自动识别"
+     ]
+    ]
+   },
+   "04-ask": {
+    "head": "有问题尽管问。<br><span class=\"hl\">收获真诚回答。</span>",
+    "label": "亲身经历，而非说教",
+    "chips": [
+     [
+      "💬",
+      "真诚回复"
+     ],
+     [
+      "💛",
+      "零评判"
+     ],
+     [
+      "🌙",
+      "总有人在"
+     ]
+    ],
+    "foot": "真正走过你这段路的人"
+   },
+   "05-wiki": {
+    "head": "常见问题，<br><span class=\"hl\">一一解答</span>",
+    "label": "值得信赖的清晰解答",
+    "chips": [
+     [
+      "💊",
+      "药物"
+     ],
+     [
+      "🏥",
+      "病症"
+     ],
+     [
+      "🧘",
+      "疗法"
+     ],
+     [
+      "⚠️",
+      "预警信号"
+     ],
+     [
+      "💛",
+      "亲友"
+     ]
+    ],
+    "foot": "有来源、有指引、无术语"
+   },
+   "06-report": {
+    "head": "举报帖子。<br>帮助迅速到达。",
+    "label": "有人管理、更安全的空间",
+    "chips": [
+     [
+      "🚩",
+      "一键举报"
+     ],
+     [
+      "🆘",
+      "危机时发送 SOS"
+     ],
+     [
+      "🛡️",
+      "版主审核一切"
+     ]
+    ],
+    "foot": "每条举报都会被审核——帮助从不遥远"
+   },
+   "07-checkin": {
+    "head": "说说你今天怎么样。<br><span class=\"hl\">你并不孤单。</span>",
+    "label": "看看大家今天的状态",
+    "chips": [
+     [
+      "🐻",
+      "轻点一下"
+     ],
+     [
+      "📊",
+      "今日统计"
+     ],
+     [
+      "🙈",
+      "绝不显示谁选了什么"
+     ]
+    ]
+   },
+   "08-help": {
+    "head": "需要时，<br>帮助就在这里",
+    "label": "你所在地区的危机热线",
+    "chips": [
+     [
+      "📞",
+      "一键拨打"
+     ],
+     [
+      "🌍",
+      "你所在国家的热线"
+     ],
+     [
+      "🛟",
+      "始终在顶部栏"
+     ]
+    ]
+   }
+  }
+ }
+}
