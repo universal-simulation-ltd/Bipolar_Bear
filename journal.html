@@ -768,9 +768,26 @@
         <button type="button" id="pdfChartBudget" data-on="1" aria-pressed="true" onclick="_togglePdfChart('Budget')" style="display:none;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;border:1.5px solid var(--brand-primary);background:rgba(255,149,0,0.1);color:var(--brand-ink);cursor:pointer;font-size:0.78em;font-weight:600;min-width:56px;-webkit-tap-highlight-color:transparent;"><span style="font-size:1.3em;">💰</span><span data-i18n="journal.label.budget">Budget</span></button>
       </div>
       </div><!-- /pdfChartSection -->
+      <!-- Leave out of the report (v339). Opt-outs, so every tick box starts
+           unticked and the default report is unchanged. Filled by
+           _pdfFillLeaveOut() in js/journal.js; remembered on this device. -->
+      <div id="pdfLeaveOutSection" class="pdf-leaveout">
+        <hr id="pdfLeaveOutRule" style="border:none;border-top:1px solid #e9ecef;margin:0 0 14px;">
+        <div class="pdf-leaveout-title" data-i18n="pdf143.leaveOutTitle">Leave out of the report</div>
+        <label class="pdf-opt"><input type="checkbox" id="pdfOmitCalendar" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitCalendar">Leave out the mood calendar</span></label>
+        <label class="pdf-opt"><input type="checkbox" id="pdfOmitLifeChart" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitLifeChart">Leave out the life chart</span></label>
+        <label class="pdf-opt" id="pdfOmitInsightsRow"><input type="checkbox" id="pdfOmitInsights" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitInsights">Leave out personalised insights</span></label>
+        <div id="pdfOmitAdditionalWrap">
+          <label class="pdf-opt"><input type="checkbox" id="pdfOmitAdditional" aria-controls="pdfOmitTrackersDetails" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitAdditional">Leave out additional data</span></label>
+          <details id="pdfOmitTrackersDetails" class="pdf-omit-trackers">
+            <summary data-i18n="pdf143.chooseTrackers">Leave out single trackers</summary>
+            <div id="pdfOmitTrackerList"></div>
+          </details>
+        </div>
+      </div>
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" data-i18n="common.cancel" onclick="document.getElementById('pdfExportModal').classList.remove('active')">Cancel</button>
-        <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-btn);border-color:transparent;color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value)" data-i18n="t143.pdfx.generate">Generate PDF</button>
+        <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-btn);border-color:transparent;color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value,_pdfLeaveOutFromSheet())" data-i18n="t143.pdfx.generate">Generate PDF</button>
       </div>
     </div>
   </div>

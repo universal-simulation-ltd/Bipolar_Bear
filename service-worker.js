@@ -1618,7 +1618,19 @@
 //   privacy.html, fab.js, js/*.js, js/shared/{a11y,i18n,...}.js,
 //   scripts/build-anonymous.js.
 // v338: the iPad layout + accessibility pass above, merged as one cache version.
-const CACHE_NAME = 'bipolarbear-v338';
+// v339: PDF export sheet gains "Leave out of the report" (mood calendar,
+//   life chart, personalised insights, all additional data, or single
+//   trackers by the user's names; unticked by default, remembered on the
+//   device: bbPdfOmitCalendar / bbPdfOmitLifeChart / bbPdfOmitInsights /
+//   bbPdfOmitAdditional / bbPdfOmitTrackers). The PDF gains the dotted mood
+//   calendar (vector dots, a year per row, paged by row) and draws the life
+//   chart without needing a 12-month chart on; the diagnosis moves beside the
+//   medication list and the medication text grows to 8.5pt when there's room
+//   (two columns for long lists). The journal shows the newest entry with
+//   "See more entries", and Backup / Import are always visible. pdf143.* in
+//   10 languages. Touches journal.html, css/journal.css, js/journal.js,
+//   js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v339';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

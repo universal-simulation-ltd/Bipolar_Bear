@@ -2764,12 +2764,43 @@ html.theme-dark .pf-link { color: #ffb347; }
   html.is-native #iphone-frame { max-width: 1100px !important; }
   html.is-native .container { max-width: 1060px; }
 
-  /* Entries: two columns of cards; the pager and Backup / Import row span
-     both. Inline display:none (list hidden) still wins over this. */
-  html.is-native #entriesReveal {
+  /* Entries: two columns of cards once unfolded; folded, the one newest
+     card spans the width (v339: cards sit in .entries-reveal-list). */
+  html.is-native #entriesReveal .entries-reveal-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 10px;
   }
-  html.is-native #entriesReveal > :not(.entry) { grid-column: 1 / -1; }
+  html.is-native #entriesReveal .entries-reveal-list > :not(.entry),
+  html.is-native #entriesReveal.is-folded .entries-reveal-list > .entry { grid-column: 1 / -1; }
 }
+
+/* ── PDF export sheet: "Leave out of the report" (v339). Opt-out tick boxes,
+   unticked by default; the per-tracker list folds away in a <details> and
+   is hidden while "Leave out additional data" is ticked. ── */
+.pdf-leaveout { text-align: left; margin-bottom: 16px; }
+.pdf-leaveout-title { font-size: 0.8em; font-weight: 600; color: #495057; margin-bottom: 8px; }
+.pdf-opt {
+  display: flex; align-items: flex-start; gap: 10px; padding: 7px 0;
+  font-size: 0.86em; color: #495057; line-height: 1.35; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.pdf-opt input[type="checkbox"] {
+  width: 18px; height: 18px; margin: 0; flex-shrink: 0;
+  accent-color: var(--brand-primary); cursor: pointer;
+}
+.pdf-opt span { min-width: 0; overflow-wrap: anywhere; }
+.pdf-omit-trackers { margin: 2px 0 0 28px; }
+.pdf-omit-trackers summary {
+  font-size: 0.82em; font-weight: 600; color: var(--brand-ink); cursor: pointer;
+  padding: 6px 0; list-style-position: inside;
+  -webkit-tap-highlight-color: transparent;
+}
+.pdf-omit-trackers .pdf-opt { font-size: 0.84em; padding: 5px 0; }
+html.theme-dark .pdf-leaveout-title, html.theme-dark .pdf-opt { color: var(--dk-text); }
+html.theme-dark #pdfLeaveOutRule { border-top-color: var(--dk-line) !important; }
+
+/* ── Journal entries (v339): folded, only the newest entry card shows (always
+   page 1); "See more entries" unfolds the rest and the page buttons. ── */
+.entries-reveal.is-folded .entries-reveal-list > .entry:not(:first-child),
+.entries-reveal.is-folded .entries-reveal-pages { display: none; }

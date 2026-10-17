@@ -3089,26 +3089,30 @@ function _tt(k, vars, fallback) {
         const _pageButtons = _pageNums.map(p =>
           `<button class="pagination-btn${p === currentPage ? ' on' : ''}" onclick="goToPage(${p})"${p === currentPage ? ' aria-current="page"' : ''}>${p}</button>`
         ).join('');
-        // The entry-by-entry log (entries, pages, Backup / Import) sits behind
-        // "See individual entries" under the Personalised Feedback bear; Export
-        // PDF and the account row stay visible (James, 2026-09-30).
+        // The newest entry always shows; "See more entries" opens the rest (and
+        // the pages), "See fewer entries" folds them back. Backup, Import and
+        // Export PDF are always visible underneath (James, 2026-10-17; before
+        // that the whole log and Backup / Import sat behind "See individual
+        // entries", 2026-09-30). Folded, it is always page 1, so the one card
+        // showing is the newest (toggleEntriesList returns to page 1).
+        const _foldedList = !_entriesListOpen;
         const entriesListHtml = `
-          <div id="entriesReveal" style="${_entriesListOpen ? '' : 'display:none;'}">
-            ${html}
-            <div class="pagination" style="justify-content: center; margin: 15px 0 10px; flex-wrap:wrap; gap:4px;">
+          <div id="entriesReveal" class="entries-reveal${_foldedList ? ' is-folded' : ''}">
+            <div class="entries-reveal-list">${html}</div>
+            <div class="pagination entries-reveal-pages" style="justify-content: center; margin: 15px 0 10px; flex-wrap:wrap; gap:4px;">
               <button class="pagination-btn" onclick="goToPage(1)" ${currentPage === 1 ? 'disabled' : ''} title="${BB.t('journal.ui.firstPage')}">«</button>
               ${_pageButtons}
               <button class="pagination-btn" onclick="goToPage(${totalPages})" ${currentPage === totalPages ? 'disabled' : ''} title="${BB.t('journal.ui.lastPage')}">»</button>
-            </div>
-            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
-              <button onclick="document.getElementById('exportModal').classList.add('active')" class="journal-btn btn-export-backup">${BB.t('journal.ui.backupData')}</button>
-              <button onclick="showImportModal()" class="journal-btn btn-export-import">${BB.t('journal.ui.importBtn')}</button>
             </div>
           </div>
         `;
         const paginationHtml = `
           <div style="margin-top: 15px;">
             <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+              <button onclick="document.getElementById('exportModal').classList.add('active')" class="journal-btn btn-export-backup">${BB.t('journal.ui.backupData')}</button>
+              <button onclick="showImportModal()" class="journal-btn btn-export-import">${BB.t('journal.ui.importBtn')}</button>
+            </div>
+            <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
               <button onclick="exportPDF()" class="journal-btn btn-export-pdf">${BB.t('journal.ui.exportPdf')}</button>
             </div>
             <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;gap:12px;">
@@ -3130,11 +3134,12 @@ function _tt(k, vars, fallback) {
           </div>
         `;
 
-        const entriesToggleHtml = `
-          <div style="text-align:center;margin:4px 0 10px;">
-            <button id="entriesRevealBtn" class="entries-reveal-btn" onclick="toggleEntriesList()" aria-expanded="${_entriesListOpen}" aria-controls="entriesReveal">${BB.t(_entriesListOpen ? 'journal.ui.hideEntries' : 'journal.ui.seeEntries')}</button>
-          </div>`;
-        document.getElementById('entries').innerHTML = entriesToggleHtml + entriesListHtml + paginationHtml;
+        // Only worth a button when there is more than the one entry showing.
+        const entriesToggleHtml = entries.length > 1 ? `
+          <div style="text-align:center;margin:10px 0 4px;">
+            <button id="entriesRevealBtn" class="entries-reveal-btn" onclick="toggleEntriesList()" aria-expanded="${_entriesListOpen}" aria-controls="entriesReveal">${BB.t(_entriesListOpen ? 'pdf143.seeFewer' : 'pdf143.seeMore')}</button>
+          </div>` : '';
+        document.getElementById('entries').innerHTML = entriesListHtml + entriesToggleHtml + paginationHtml;
         
 
         // Attach event listeners after HTML is rendered
@@ -8364,8 +8369,12 @@ function _tt(k, vars, fallback) {
         '#667eea': [102, 126, 234],
         '#764ba2': [118, 75, 162]
       };
+      // Insights about an additional tracker carry its key, so the PDF can
+      // drop them when that tracker is left out of the report.
+      const _insTracker = { '🏋️': 'exercise', '🍺': 'alcohol', '🚬': 'smoking', '🌤️': 'outside' };
       const ins = (icon, title, text, accent, detail = '') => ({
-        icon, title, text, detail, accent, accentRgb: accentMap[accent] || [173, 181, 189]
+        icon, title, text, detail, accent, accentRgb: accentMap[accent] || [173, 181, 189],
+        tracker: _insTracker[icon] || null
       });
 
       const dateMap = {};
@@ -10492,10 +10501,129 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       if (_chartSection) _chartSection.style.display = _visibleCount === 0 ? 'none' : '';
       if (_noDataMsg) _noDataMsg.style.display = _visibleCount === 0 ? '' : 'none';
       if (_chartBtns) _chartBtns.style.display = _visibleCount === 0 ? 'none' : 'flex';
+      // The hr above "Leave out of the report" only when the charts are there
+      // (otherwise the one under "Show recent entries" already separates it).
+      const _loRule = document.getElementById('pdfLeaveOutRule');
+      if (_loRule) _loRule.style.display = _visibleCount === 0 ? 'none' : '';
+      _pdfFillLeaveOut();
 
       document.getElementById('pdfExportModal').classList.add('active');
     }
     window.exportPDF = exportPDF;
+
+    // ── PDF: "Leave out of the report" (James, 2026-10-17) ──
+    // Opt-outs (tick boxes start unticked, so the report is unchanged by
+    // default): personalised insights, all additional data, or single
+    // additional trackers — built-in ones and the user's own fields, by the
+    // names the user sees. Remembered on this device only.
+    const _PDF_MIN_DAYS = 3; // a tracker needs 3+ answered days to make the report
+    const _PDF_BUILTIN_TRACKERS = [
+      { key: 'alcohol',  pref: 'trackAlcohol',  labelKey: 'journal.label.alcohol'   },
+      { key: 'smoking',  pref: 'trackSmoking',  labelKey: 'journal.label.smoking'   },
+      { key: 'drugs',    pref: 'trackDrugs',    labelKey: 'journal.label.drugs'     },
+      { key: 'exercise', pref: 'trackExercise', labelKey: 'journal.label.exercise'  },
+      { key: 'outside',  pref: 'trackOutside',  labelKey: 'journal.pdf.wentOutside' },
+    ];
+    // A renamed built-in field is stored as "<emoji> <name>" (or just the
+    // name); the PDF prints the name.
+    function _pdfStripEmoji(label) {
+      return String(label || '').replace(/^[^\p{L}\p{N}]+\s+/u, '').trim();
+    }
+    function _pdfBuiltinLabel(t) {
+      const ov = localStorage.getItem('_labelOverride_' + t.pref);
+      return (ov && _pdfStripEmoji(ov)) || BB.t(t.labelKey);
+    }
+    function _pdfCustomLabel(f) { return _pdfStripEmoji(f.label) || f.label || ''; }
+    /** The additional trackers that can appear in this user's report. */
+    function _pdfTrackerList(entries) {
+      const list = [];
+      _PDF_BUILTIN_TRACKERS.forEach(t => {
+        if (entries.filter(e => e[t.key]).length >= _PDF_MIN_DAYS) list.push({ id: t.key, label: _pdfBuiltinLabel(t) });
+      });
+      getCustomFields().forEach(f => {
+        if (entries.filter(e => e.customFields && e.customFields[f.id]).length >= _PDF_MIN_DAYS) list.push({ id: 'custom:' + f.id, label: _pdfCustomLabel(f) });
+      });
+      return list;
+    }
+    function _pdfLoadLeaveOut() {
+      const o = { insights: false, additional: false, calendar: false, lifeChart: false, trackers: [] };
+      try {
+        o.insights = localStorage.getItem('bbPdfOmitInsights') === '1';
+        o.calendar = localStorage.getItem('bbPdfOmitCalendar') === '1';
+        o.lifeChart = localStorage.getItem('bbPdfOmitLifeChart') === '1';
+        o.additional = localStorage.getItem('bbPdfOmitAdditional') === '1';
+        const t = JSON.parse(localStorage.getItem('bbPdfOmitTrackers') || '[]');
+        if (Array.isArray(t)) o.trackers = t.filter(x => typeof x === 'string');
+      } catch (_) {}
+      return o;
+    }
+    function _pdfFillLeaveOut() {
+      const saved = _pdfLoadLeaveOut();
+      const ins = document.getElementById('pdfOmitInsights');
+      if (ins) ins.checked = saved.insights;
+      const cal = document.getElementById('pdfOmitCalendar');
+      if (cal) cal.checked = saved.calendar;
+      const lc = document.getElementById('pdfOmitLifeChart');
+      if (lc) lc.checked = saved.lifeChart;
+      const wrap = document.getElementById('pdfOmitAdditionalWrap');
+      const listEl = document.getElementById('pdfOmitTrackerList');
+      const all = document.getElementById('pdfOmitAdditional');
+      const trackers = _pdfTrackerList(_allEntries || []);
+      if (wrap) wrap.style.display = trackers.length ? '' : 'none';
+      if (all) all.checked = saved.additional;
+      if (listEl) {
+        listEl.innerHTML = trackers.map((t, i) => `<label class="pdf-opt"><input type="checkbox" id="pdfOmitTracker${i}" data-tracker="${_esc(t.id)}"${saved.trackers.includes(t.id) ? ' checked' : ''} onchange="_pdfSaveLeaveOut()"><span>${_esc(BB.t('pdf143.omitTracker', { name: t.label }))}</span></label>`).join('');
+      }
+      const det = document.getElementById('pdfOmitTrackersDetails');
+      if (det) {
+        // Open when some are already left out, so the choice is visible.
+        det.open = !saved.additional && trackers.some(t => saved.trackers.includes(t.id));
+        if (!det._bbReveal) {
+          det._bbReveal = true;
+          det.addEventListener('toggle', () => {
+            if (det.open) { try { det.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {} }
+          });
+        }
+      }
+      _pdfSyncLeaveOut();
+    }
+    // A single tracker can't be chosen while all additional data is left out.
+    function _pdfSyncLeaveOut() {
+      const all = document.getElementById('pdfOmitAdditional');
+      const det = document.getElementById('pdfOmitTrackersDetails');
+      if (det) det.style.display = all && all.checked ? 'none' : '';
+    }
+    function _pdfSaveLeaveOut() {
+      _pdfSyncLeaveOut();
+      const o = _pdfLeaveOutFromSheet();
+      try {
+        localStorage.setItem('bbPdfOmitInsights', o.insights ? '1' : '0');
+        localStorage.setItem('bbPdfOmitAdditional', o.additional ? '1' : '0');
+        localStorage.setItem('bbPdfOmitCalendar', o.calendar ? '1' : '0');
+        localStorage.setItem('bbPdfOmitLifeChart', o.lifeChart ? '1' : '0');
+        // Keep choices for trackers not listed right now (e.g. too few days).
+        const listed = Array.from(document.querySelectorAll('#pdfOmitTrackerList input[data-tracker]')).map(i => i.dataset.tracker);
+        const kept = _pdfLoadLeaveOut().trackers.filter(id => !listed.includes(id));
+        localStorage.setItem('bbPdfOmitTrackers', JSON.stringify(kept.concat(o.trackers)));
+      } catch (_) {}
+    }
+    function _pdfLeaveOutFromSheet() {
+      const ins = document.getElementById('pdfOmitInsights');
+      const all = document.getElementById('pdfOmitAdditional');
+      const cal = document.getElementById('pdfOmitCalendar');
+      const lc = document.getElementById('pdfOmitLifeChart');
+      return {
+        insights: !!(ins && ins.checked),
+        calendar: !!(cal && cal.checked),
+        lifeChart: !!(lc && lc.checked),
+        // Only when the row is offered (the sheet has closed by the time the
+        // report is made, so this can't go by what's on screen).
+        additional: !!(all && all.checked && document.getElementById('pdfOmitAdditionalWrap')?.style.display !== 'none'),
+        trackers: Array.from(document.querySelectorAll('#pdfOmitTrackerList input[data-tracker]')).filter(i => i.checked).map(i => i.dataset.tracker),
+      };
+    }
+    window._pdfSaveLeaveOut = _pdfSaveLeaveOut;
+    window._pdfLeaveOutFromSheet = _pdfLeaveOutFromSheet;
 
     function _togglePdfChart(key) {
       const btn = document.getElementById('pdfChart' + key);
@@ -10527,9 +10655,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
     window._togglePdfChart = _togglePdfChart;
 
-    async function _doExportPDF(leftPeriod, rightPeriod, charts, recentEntriesPeriod) {
+    async function _doExportPDF(leftPeriod, rightPeriod, charts, recentEntriesPeriod, leaveOut) {
       if (!charts) charts = { mood: true, sleep: true, energy: true };
       if (!recentEntriesPeriod) recentEntriesPeriod = '30d';
+      // "Leave out of the report" choices (exportPDF sheet); nothing left out by default.
+      leaveOut = leaveOut || {};
+      const _omitTrackers = new Set(leaveOut.trackers || []);
+      const _trackerShown = id => !leaveOut.additional && !_omitTrackers.has(id);
       try {
         if (typeof window.jspdf === 'undefined') {
           try { await BB.loadJsPdf(); }
@@ -10753,13 +10885,78 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
         {
           const lineHeight = 4.5;
-          const notesLineCount = personalNotes ? doc.splitTextToSize(personalNotes, (pageW - margin*2) / 2 - 20).length : 0;
-          const leftCount = [personalName, personalDOB, personalMedicalNum, personalDiagnosis,
-                             personalDiagnosisDate, personalAddress, personalMobile, personalEmail,
-                             personalEmergencyContact].filter(Boolean).length + notesLineCount;
-          const rightCount = pdfMedications.length;
-          const maxRows = Math.max(hasPersonalDetails ? leftCount : 2, rightCount, 1);
-          const detailsHeight = maxRows * lineHeight + 16;
+          doc.setFontSize(7); doc.setFont(undefined, 'normal');
+          // Values start after the longest label shown ("Imię i nazwisko",
+          // "Kontakt alarm." ran into them at a fixed 22mm).
+          const _lblW = [[personalName, 'labelName'], [personalDOB, 'labelDOB'], [personalMedicalNum, 'labelMedicalNum'],
+            [personalAddress, 'labelAddress'], [personalMobile, 'labelMobile'], [personalEmail, 'labelEmail'],
+            [personalEmergencyContact, 'labelEmergency'], [personalNotes, 'labelNotes']]
+            .filter(([v]) => v).map(([, k]) => doc.getTextWidth(BB.t('journal.pdf.' + k)));
+          const lValOff = Math.min(Math.max(18, ...(_lblW.length ? _lblW : [0])) + 2.5, 34);
+          const lValW = (col2 - 3 - 3) - (margin + 4 + lValOff);
+          // Diagnosis sits with the medication list (James, 2026-10-17), so the
+          // left column keeps the contact details.
+          const addrLines  = personalAddress ? doc.splitTextToSize(personalAddress, lValW) : [];
+          const notesLines = personalNotes ? doc.splitTextToSize(personalNotes, lValW) : [];
+          const leftCount = [personalName, personalDOB, personalMedicalNum, personalMobile, personalEmail,
+                             personalEmergencyContact].filter(Boolean).length + addrLines.length + notesLines.length;
+          const leftH = (hasPersonalDetails ? Math.max(leftCount, 1) : 2) * lineHeight;
+
+          // Right column: diagnosis (when given) then the medications. The text
+          // is set as large as the box allows: up to 8.5pt while it fits the
+          // height the details (or a 7pt list) need anyway, plus up to 10mm
+          // more while the box stays short (≤ 45mm); a long list goes into two
+          // columns before it shrinks back to 7pt.
+          const rx = col2 + 2;
+          const rW = pageW - margin - 3 - rx;
+          const ptMm = 0.3528 * 1.18; // line pitch per pt
+          const medLayout = (size, cols) => {
+            const colGap = 4;
+            const w = (rW - colGap * (cols - 1)) / cols;
+            let top = 0; const diag = [];
+            if (personalDiagnosis || personalDiagnosisDate) {
+              doc.setFontSize(size);
+              const lbl = d => d ? BB.t('journal.pdf.labelDiagnosis') : BB.t('journal.pdf.labelDiagnosed');
+              [[true, personalDiagnosis], [false, personalDiagnosisDate]].forEach(([isDiag, val]) => {
+                if (!val) return;
+                doc.setFont(undefined, 'normal');
+                const lw = doc.getTextWidth(lbl(isDiag) + ' ');
+                doc.setFont(undefined, 'bold');
+                const lines = doc.splitTextToSize(String(val), Math.max(rW - lw, 20));
+                diag.push({ label: lbl(isDiag), lw, lines, y: top });
+                top += lines.length * size * ptMm;
+              });
+              top += 1.6;
+            }
+            const blocks = pdfMedications.map(med => {
+              doc.setFontSize(size); doc.setFont(undefined, 'bold');
+              const nameLines = doc.splitTextToSize(String(med.name || ''), w);
+              doc.setFontSize(size - 0.5); doc.setFont(undefined, 'normal');
+              const doseLines = med.dosage ? doc.splitTextToSize(String(med.dosage), w) : [];
+              return { nameLines, doseLines, h: nameLines.length * size * ptMm + doseLines.length * (size - 0.5) * ptMm + 1.3 };
+            });
+            const per = Math.ceil(blocks.length / cols) || 1;
+            const colsH = [];
+            for (let c = 0; c < cols; c++) colsH.push(blocks.slice(c * per, (c + 1) * per).reduce((t, b) => t + b.h, 0));
+            const h = top + Math.max(...colsH, pdfMedications.length ? 0 : lineHeight);
+            return { size, cols, w, colGap, diag, top, blocks, per, h };
+          };
+          const SIZES = [8.5, 8, 7.5, 7];
+          const base1 = medLayout(7, 1);
+          let lay = null;
+          // One column if a 7pt list is no taller than the details or 60mm.
+          if (base1.h <= Math.max(leftH, 60) || pdfMedications.length < 6) {
+            const cap = Math.max(leftH, base1.h, Math.min(base1.h + 10, 45));
+            for (const sz of SIZES) { const l = medLayout(sz, 1); if (l.h <= cap + 0.01) { lay = l; break; } }
+          }
+          if (!lay) {
+            const base2 = medLayout(7, 2);
+            const cap = Math.max(leftH, base2.h, Math.min(base2.h + 10, 45));
+            for (const sz of SIZES) { const l = medLayout(sz, 2); if (l.h <= cap + 0.01) { lay = l; break; } }
+            if (!lay) lay = base2;
+          }
+          const rightH = lay.h;
+          const detailsHeight = Math.max(leftH, rightH) + 12;
 
           setDraw([220,220,220]); setFill([250,250,250]);
           doc.roundedRect(margin, y, pageW - margin*2, detailsHeight, 2, 2, 'FD');
@@ -10779,15 +10976,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           // Left column
           if (hasPersonalDetails) {
             let ldy = contentY;
-            const lx = margin + 4; const lv = margin + 22;
+            const lx = margin + 4; const lv = lx + lValOff;
             if (personalName) { setColor(grey); doc.text(BB.t('journal.pdf.labelName'), lx, ldy); setColor(dark); doc.text(personalName, lv, ldy); ldy += lineHeight; }
             if (personalDOB) { setColor(grey); doc.text(BB.t('journal.pdf.labelDOB'), lx, ldy); setColor(dark); doc.text(personalDOB, lv, ldy); ldy += lineHeight; }
             if (personalMedicalNum) { setColor(grey); doc.text(BB.t('journal.pdf.labelMedicalNum'), lx, ldy); setColor(dark); doc.text(personalMedicalNum, lv, ldy); ldy += lineHeight; }
-            if (personalDiagnosis) { setColor(grey); doc.text(BB.t('journal.pdf.labelDiagnosis'), lx, ldy); setColor(dark); doc.text(personalDiagnosis, lv, ldy); ldy += lineHeight; }
-            if (personalDiagnosisDate) { setColor(grey); doc.text(BB.t('journal.pdf.labelDiagnosed'), lx, ldy); setColor(dark); doc.text(personalDiagnosisDate, lv, ldy); ldy += lineHeight; }
             if (personalAddress) {
               setColor(grey); doc.text(BB.t('journal.pdf.labelAddress'), lx, ldy); setColor(dark);
-              const addrLines = doc.splitTextToSize(personalAddress, colW - 20);
               doc.text(addrLines, lv, ldy); ldy += lineHeight * addrLines.length;
             }
             if (personalMobile) { setColor(grey); doc.text(BB.t('journal.pdf.labelMobile'), lx, ldy); setColor(dark); doc.text(personalMobile, lv, ldy); ldy += lineHeight; }
@@ -10795,7 +10989,6 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             if (personalEmergencyContact) { setColor(grey); doc.text(BB.t('journal.pdf.labelEmergency'), lx, ldy); setColor(dark); doc.text(personalEmergencyContact, lv, ldy); ldy += lineHeight; }
             if (personalNotes) {
               setColor(grey); doc.text(BB.t('journal.pdf.labelNotes'), lx, ldy); setColor(dark);
-              const notesLines = doc.splitTextToSize(personalNotes, colW - 20);
               doc.text(notesLines, lv, ldy);
             }
           } else {
@@ -10804,20 +10997,34 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             doc.text(BB.t('fix143.pdfAddDetails2'), margin + 4, contentY + lineHeight);
           }
 
-          // Right column: medications
-          let rdy = contentY;
+          // Right column: diagnosis, then medications
+          const sz = lay.size;
+          lay.diag.forEach(d => {
+            doc.setFontSize(sz); doc.setFont(undefined, 'normal'); setColor(grey);
+            doc.text(d.label, rx, contentY + d.y);
+            doc.setFont(undefined, 'bold'); setColor(dark);
+            doc.text(d.lines, rx + d.lw, contentY + d.y, { lineHeightFactor: 1.18 });
+          });
           if (pdfMedications.length > 0) {
-            pdfMedications.forEach(med => {
-              setColor(dark); doc.setFont(undefined, 'bold');
-              doc.text(med.name, col2 + 2, rdy);
-              doc.setFont(undefined, 'normal'); setColor(grey);
-              doc.text(med.dosage || '', col2 + 2, rdy + 3);
-              rdy += lineHeight + 2;
+            let rdyCol = contentY + lay.top;
+            lay.blocks.forEach((b, i) => {
+              const c = Math.floor(i / lay.per);
+              if (i % lay.per === 0) rdyCol = contentY + lay.top;
+              const x = rx + c * (lay.w + lay.colGap);
+              doc.setFontSize(sz); doc.setFont(undefined, 'bold'); setColor(dark);
+              doc.text(b.nameLines, x, rdyCol, { lineHeightFactor: 1.18 });
+              let yy = rdyCol + b.nameLines.length * sz * ptMm;
+              if (b.doseLines.length) {
+                doc.setFontSize(sz - 0.5); doc.setFont(undefined, 'normal'); setColor(grey);
+                doc.text(b.doseLines, x, yy - 0.4, { lineHeightFactor: 1.18 });
+              }
+              rdyCol += b.h;
             });
           } else {
-            doc.setFont(undefined, 'italic'); setColor(grey);
-            doc.text(BB.t('journal.pdf.noMedications'), col2 + 2, contentY);
+            doc.setFontSize(7); doc.setFont(undefined, 'italic'); setColor(grey);
+            doc.text(BB.t('journal.pdf.noMedications'), rx, contentY + lay.top);
           }
+          doc.setFontSize(7); doc.setFont(undefined, 'normal');
 
           y += detailsHeight + 4;
         }
@@ -10971,18 +11178,18 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
         // ── ADDITIONAL DATA — all-time + 30d columns ──
         {
-          const adFields = [
-            { key: 'alcohol',  label: BB.t('journal.label.alcohol'),   yesLabel: 'drank'      },
-            { key: 'smoking',  label: BB.t('journal.label.smoking'),   yesLabel: 'smoked'     },
-            { key: 'drugs',    label: BB.t('journal.label.drugs'),     yesLabel: 'used'       },
-            { key: 'exercise', label: BB.t('journal.label.exercise'),  yesLabel: 'exercised'  },
-            { key: 'outside',  label: BB.t('journal.pdf.wentOutside'), yesLabel: 'went out'   },
-          ];
-          const MIN_DAYS = 3;
+          // Built-in trackers by the user's names (renamed ones too), minus the
+          // ones left out in the export sheet.
+          const adFields = _PDF_BUILTIN_TRACKERS
+            .filter(t => _trackerShown(t.key))
+            .map(t => ({ key: t.key, label: _pdfBuiltinLabel(t) }));
+          const MIN_DAYS = _PDF_MIN_DAYS;
           const MAX_CUSTOM = 4;
           const allTracked    = adFields.filter(f => allEntries.filter(e => e[f.key]).length >= MIN_DAYS);
           const recentTracked = adFields.filter(f => recent.filter(e => e[f.key]).length >= MIN_DAYS);
-          const pdfCustomFields    = getCustomFields();
+          const pdfCustomFields    = getCustomFields()
+            .filter(f => _trackerShown('custom:' + f.id))
+            .map(f => ({ ...f, label: _pdfCustomLabel(f) }));
           // Custom fields: only currently-active, sorted by count desc, capped at MAX_CUSTOM
           const allCustomTracked = pdfCustomFields
             .map(f => ({ f, cnt: allEntries.filter(e => e.customFields?.[f.id]).length }))
@@ -10999,6 +11206,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           if (allTracked.length > 0 || recentTracked.length > 0 || allCustomTracked.length > 0 || recentCustomTracked.length > 0) {
             const adRows = Math.max(allTracked.length + allCustomTracked.length, recentTracked.length + recentCustomTracked.length, 1);
             const adBoxH = adRows * 5 + 14;
+            // A long medication list can push this past the footer: next page.
+            if (y + adBoxH > pageH - 16) { doc.addPage(); y = margin; }
             // Left: all-time
             setDraw([220,220,220]); setFill([255,255,255]);
             doc.roundedRect(margin, y, colW, adBoxH, 2, 2, 'FD');
@@ -11272,18 +11481,142 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           }
         }
 
-        // ── LIFE CHART (last 90 days, js/journal-insights.js) — with the other charts ──
-        if (_anyChartOn && window.BBInsights && window.BBInsights.drawLifeChartPdf) {
+        // ── LIFE CHART (last 90 days, js/journal-insights.js) ──
+        // Its own tick in "Leave out of the report" (James, 2026-10-17); it
+        // used to come only with the 12-month charts.
+        if (!leaveOut.lifeChart && window.BBInsights && window.BBInsights.drawLifeChartPdf) {
           y = window.BBInsights.drawLifeChartPdf(doc, entries, { margin, pageW, pageH, y });
+        }
+
+        // ── MOOD CALENDAR: the journal's dotted "All" calendar ──
+        // One dot per day in weekly columns (Sunday first, like the app), the
+        // past year or from the stats start date / first entry when that is
+        // longer; a year (53 weeks) per row, a row moves to the next page
+        // rather than splitting. Entries hidden from the PDF are no-entry dots.
+        if (!leaveOut.calendar) {
+          try {
+            const _dk = d => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+            const byDay = {};
+            entries.forEach(e => {
+              if (e.pdfHidden || e.mood == null || e.mood === '') return;
+              byDay[_dk(new Date(e.date))] = _moodCat(e.mood);
+            });
+            if (Object.keys(byDay).length >= 2) {
+              const today = new Date(); today.setHours(0, 0, 0, 0);
+              let start = statsStartDate ? new Date(statsStartDate + 'T00:00:00') : new Date(entries[0].date);
+              start.setHours(0, 0, 0, 0);
+              const yearAgo = new Date(today); yearAgo.setDate(yearAgo.getDate() - 364);
+              if (!(start < yearAgo)) start = yearAgo;
+              const gridStart = new Date(start); gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+              const totalWeeks = Math.floor((today - gridStart) / (7 * 86400000)) + 1;
+              const WEEKS = 53;
+              const rows = [];
+              for (let end = totalWeeks; end > 0; end -= WEEKS) rows.unshift([Math.max(0, end - WEEKS), end]);
+
+              const labW = 9;
+              const gx = margin + 4 + labW;
+              const pitch = (pageW - margin * 2 - 8 - labW) / WEEKS;
+              const r = pitch * 0.38;
+              const counts = {};
+              for (let d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+                const c = byDay[_dk(d)]; if (c) counts[c] = (counts[c] || 0) + 1;
+              }
+              const weekdayLabel = i => _bbDate(new Date(2024, 0, 7 + i), { weekday: 'short' });
+              const monthLabel = (d, withYear) => _bbDate(d, withYear ? { month: 'short', year: 'numeric' } : { month: 'short' });
+              const fmtRange = `${_bbDate(start, { day: 'numeric', month: 'short', year: 'numeric' })} – ${_bbDate(today, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+              rows.forEach(([w0, w1], ri) => {
+                const first = ri === 0, last = ri === rows.length - 1;
+                const headH = first ? 16 : 3;
+                doc.setFontSize(5.5);
+                const noteLines = last ? doc.splitTextToSize(BB.t('pdf143.calNote'), pageW - margin * 2 - 8) : [];
+                const boxH = headH + 5 + 7 * pitch + 3 + (last ? noteLines.length * 2.4 + 2 : 0);
+                if (y + boxH > pageH - 16) { doc.addPage(); y = margin; }
+                setDraw([220,220,220]); setFill([255,255,255]);
+                doc.roundedRect(margin, y, pageW - margin * 2, boxH, 2, 2, 'FD');
+                let ty = y + 6;
+                if (first) {
+                  doc.setFontSize(8); doc.setFont(undefined, 'bold'); setColor([60,60,60]);
+                  doc.text(BB.t('pdf143.calTitle').toUpperCase(), margin + 4, ty);
+                  doc.setFont(undefined, 'normal'); setColor(grey); doc.setFontSize(7);
+                  doc.text(fmtRange, pageW - margin - 4, ty, { align: 'right' });
+                  setDraw(orange); doc.setLineWidth(0.4);
+                  doc.line(margin + 4, ty + 1, pageW - margin - 4, ty + 1);
+                  // Key: every mood with its name (not colour alone) and day count.
+                  const items = ['manic', 'elevated', 'stable', 'low', 'depressed']
+                    .filter(m => counts[m])
+                    .map(m => ({ rgb: moodColor(m), text: `${_moodCatLabel(m)} (${_bbNum(counts[m])})` }))
+                    .concat([{ rgb: [222, 226, 230], text: BB.t('pdf143.calNoEntry') }]);
+                  doc.setFontSize(6.5);
+                  const widths = items.map(it => 3.4 + doc.getTextWidth(it.text) + 4);
+                  let kx = (pageW - widths.reduce((a, b) => a + b, 0)) / 2;
+                  const ky = ty + 6.5;
+                  items.forEach((it, i) => {
+                    setFill(it.rgb); doc.circle(kx + 1.2, ky - 0.9, 1.2, 'F');
+                    setColor(grey); doc.text(it.text, kx + 3.4, ky);
+                    kx += widths[i];
+                  });
+                  ty = y + headH;
+                } else {
+                  ty = y + headH;
+                }
+                // Month names over the week a month starts in (with the year
+                // in January and at the start of each row).
+                const monthY = ty + 2.5;
+                const gridTop = monthY + 2.5;
+                doc.setFontSize(5.5); doc.setFont(undefined, 'normal'); setColor(grey);
+                let labelEnd = -99, yearShown = false;
+                const monthStartIn = w => {
+                  const wd = new Date(gridStart); wd.setDate(wd.getDate() + w * 7);
+                  for (let k = 0; k < 7; k++) { const d = new Date(wd); d.setDate(d.getDate() + k); if (d.getDate() === 1) return d; }
+                  return null;
+                };
+                for (let w = w0; w < w1; w++) {
+                  const wd = new Date(gridStart); wd.setDate(wd.getDate() + w * 7);
+                  const x = gx + (w - w0) * pitch;
+                  const monthStart = monthStartIn(w);
+                  let label = null;
+                  if (monthStart) label = monthLabel(monthStart, !yearShown || monthStart.getMonth() === 0);
+                  else if (w === w0) {
+                    // A part month at the start of the row gets a name only
+                    // when there's room before the next month's.
+                    let gap = 1; while (w + gap < w1 && !monthStartIn(w + gap)) gap++;
+                    if (gap >= 4) label = monthLabel(wd < start ? start : wd, true);
+                  }
+                  if (label && x >= labelEnd + 1) {
+                    doc.text(label, x, monthY); labelEnd = x + doc.getTextWidth(label);
+                    yearShown = true;
+                  }
+                  for (let k = 0; k < 7; k++) {
+                    const d = new Date(wd); d.setDate(d.getDate() + k);
+                    if (d < start || d > today) continue;
+                    const c = byDay[_dk(d)];
+                    setFill(c ? moodColor(c) : [233, 236, 239]);
+                    doc.circle(x + pitch / 2, gridTop + k * pitch + pitch / 2, c ? r : r * 0.8, 'F');
+                  }
+                }
+                // Weekday names on Mon / Wed / Fri, as calendars usually do.
+                doc.setFontSize(5); setColor(grey);
+                [1, 3, 5].forEach(k => doc.text(weekdayLabel(k), gx - 1.5, gridTop + k * pitch + pitch / 2 + 0.8, { align: 'right' }));
+                if (last) {
+                  doc.setFontSize(5.5); setColor([120,120,120]);
+                  doc.text(noteLines, margin + 4, gridTop + 7 * pitch + 3.5);
+                }
+                y += boxH + 4;
+              });
+            }
+          } catch (e) { console.warn('PDF mood calendar skipped', e); }
         }
 
         // ── PERSONALISED INSIGHTS ──
         {
           const pdfSorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
-          const pdfInsights = pdfSorted.length >= 7 ? computeInsights(pdfSorted) : [];
+          // Left out in the sheet: none at all, or the ones about a left-out tracker.
+          const pdfInsights = (!leaveOut.insights && pdfSorted.length >= 7 ? computeInsights(pdfSorted) : [])
+            .filter(ins => !ins.tracker || _trackerShown(ins.tracker));
 
           if (pdfInsights.length > 0) {
-            if (!_anyChartOn || y > pageH - 50) { doc.addPage(); y = margin; } else { y += 4; }
+            if (doc.internal.getNumberOfPages() === 1 || y > pageH - 50) { doc.addPage(); y = margin; } else { y += 4; }
 
             // Section header
             doc.setFontSize(9); doc.setFont(undefined, 'bold'); setColor(dark);
@@ -11376,20 +11709,23 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           // Flag estimated days explicitly — a clinician reading this must not
           // mistake an auto-filled guess for something the user reported.
           const autoStr     = entry.autoFilled ? `  ·  ${BB.t('journal.autofill.pdfNote')}` : '';
-          const alcoholStr      = entry.alcohol     ? _kv('journal.label.alcohol', entry.alcohol === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
-          const smokingStr      = entry.smoking     ? _kv('journal.label.smoked', entry.smoking === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
-          const drugsStr        = entry.drugs       ? _kv('journal.label.drugs', entry.drugs === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
-          const exerciseStr     = entry.exercise    ? _kv('journal.label.exercise', entry.exercise === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
+          // Additional trackers: only the ones not left out in the export sheet.
+          const _yn = v => v === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no');
+          const _alcOv = _pdfStripEmoji(localStorage.getItem('_labelOverride_trackAlcohol') || '');
+          const alcoholStr      = entry.alcohol  && _trackerShown('alcohol')  ? (_alcOv ? `  ·  ${BB.t('t143.j.labelColon', { label: _alcOv })} ${_yn(entry.alcohol)}` : _kv('journal.label.alcohol', _yn(entry.alcohol))) : '';
+          const smokingStr      = entry.smoking  && _trackerShown('smoking')  ? _kv('journal.label.smoked', _yn(entry.smoking)) : '';
+          const drugsStr        = entry.drugs    && _trackerShown('drugs')    ? _kv('journal.label.drugs', _yn(entry.drugs)) : '';
+          const exerciseStr     = entry.exercise && _trackerShown('exercise') ? _kv('journal.label.exercise', _yn(entry.exercise)) : '';
           const _relLabel = v => v === 'high' ? BB.t('journal.value.moreThanUsual') : v === 'medium' ? BB.t('journal.value.normal') : BB.t('journal.value.lessThanUsual');
           const anxietyStr      = entry.anxiety     ? _kv('journal.label.anxiety', _relLabel(entry.anxiety)) : '';
           const irritabilityStr = entry.irritability ? _kv('journal.label.irritability', entry.irritability === 'yes' ? BB.t('journal.value.moreThanUsual') : entry.irritability === 'medium' ? BB.t('journal.value.normal') : BB.t('journal.value.lessThanUsual')) : '';
           const stressStr2      = entry.stress      ? _kv('journal.label.stress', _relLabel(entry.stress)) : '';
-          const outsideStr      = entry.outside     ? _kv('journal.label.outside', entry.outside === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')) : '';
+          const outsideStr      = entry.outside && _trackerShown('outside') ? _kv('journal.label.outside', _yn(entry.outside)) : '';
           const sleepQualityStr = entry.sleepQuality ? _kv('journal.label.sleepQuality', entry.sleepQuality === 'good' ? BB.t('journal.value.good') : entry.sleepQuality === 'bad' ? BB.t('journal.value.bad') : BB.t('journal.value.ok')) : '';
           const customStr = Object.entries(entry.customFields || {})
             .map(([id, val]) => {
-              const cf = getCustomFields().find(f => f.id === id);
-              return cf ? `  ·  ${cf.label}: ${val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
+              const cf = _trackerShown('custom:' + id) ? getCustomFields().find(f => f.id === id) : null;
+              return cf ? `  ·  ${_pdfCustomLabel(cf)}: ${val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
             }).filter(Boolean).join('');
           const _moodLabel = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
           const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${entry.energy}/10  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken'))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
@@ -12515,11 +12851,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     var _entriesListOpen = false; // var: loadEntries (earlier in the file) may render first
     function toggleEntriesList() {
       _entriesListOpen = !_entriesListOpen;
+      // Folded shows the newest entry, so folding from a later page goes back to page 1.
+      if (!_entriesListOpen && currentPage !== 1) { currentPage = 1; loadEntries(); return; }
       const list = document.getElementById('entriesReveal');
       const btn = document.getElementById('entriesRevealBtn');
-      if (list) list.style.display = _entriesListOpen ? '' : 'none';
+      if (list) list.classList.toggle('is-folded', !_entriesListOpen);
       if (btn) {
-        btn.textContent = BB.t(_entriesListOpen ? 'journal.ui.hideEntries' : 'journal.ui.seeEntries');
+        btn.textContent = BB.t(_entriesListOpen ? 'pdf143.seeFewer' : 'pdf143.seeMore');
         btn.setAttribute('aria-expanded', String(_entriesListOpen));
       }
     }
