@@ -534,6 +534,8 @@ bbWebUnlocked           "true"        — beta gate bypass (web preview)
 statsStartDate          string        — custom stats window start date
 bbLogoEasterEggFound    "1"           — logo easter egg discovered
 bbLastSeenVersion       string        — last app version shown in "What's New" popup
+deletedCustomTrackers   JSON array    — custom tracker ids deleted with their data (§2.22); synced as
+                                        userSettings.deletedTrackers so other devices can't bring them back
 bbPrivacyNoteDismissed  "1"           — privacy note on home screen dismissed
 ```
 
@@ -1775,6 +1777,58 @@ Home End move, Enter picks. Calendar days say "date: mood" and are buttons.
 node (scrolling every scroller) and composites the colour down the real paint
 stack; with the accessibility snapshot it counts unnamed controls. Re-run it
 for any colour change.
+
+### 2.22 Stopping or deleting a tracker (2026-10-17, v340)
+
+James: "On the individual trackers, there needs to be a way to delete them and
+the data … give a prompt to say that the data will be lost", then "if they keep
+the data at that point how can they choose to delete it at a later point?".
+Code: the `_trk*` block in `js/journal.js` (after `closeDeleteCustomFieldModal`),
+`#trkDeleteModal` in `journal.html`, `.trk-*` in `css/journal.css`, strings
+`trk143.*`.
+
+- **Delete…** sits in every Track Data row's ✏️ edit row (Goals, Budget and
+  Emotions get a ✏️ whose row holds only Delete…). The sheet offers **Stop
+  tracking (keep past data)** (the switch goes off; the safe default, focused
+  first) or **Delete tracker and all its data** (red), then a second confirm
+  with the count from the loaded entries.
+- **What a tracker is**: `_TRK_BUILTINS` (goals, budget, emotions =
+  anxiety + stress + irritability, alcohol, and the switchless old exercise /
+  outside / smoking / drugs) keyed by entry field; Added Sugar and the user's
+  own fields by `entry.customFields[id]`; plus "orphans", ids found in
+  entries whose definition an older build removed (its Remove modal never
+  touched the entries).
+- **Removing the data** (`_trkPurgeFirestore` / `_trkPurgeGuest`): signed in,
+  read every entry from the server, decrypt (account key, then set-aside
+  keys), drop the key, re-encrypt under the account key, `batch.set` in
+  batches of ≤400 with progress. Entries nothing opens are skipped and
+  counted. Never without the key (`_requireUserKey` first). Guests: every
+  `entry:*` rewritten, encrypted under the PIN key when there is one. A
+  failure throws with `done/total`; the sheet says how far it got and **Try
+  again** reruns it — done entries no longer match, so it only finishes the
+  rest. Only after the data: `_trkForget` drops the definition, its switch,
+  its `_labelOverride_*` and its PDF leave-out tick; the draft, the form's
+  answers and `_allEntries` lose it; then `loadEntries()`.
+- **Stopped trackers** (bottom of Track Data, hidden when empty, not while
+  editing an entry): every tracker that is off (or has no switch) and still
+  has an answer in `_allEntries` — counted from the decrypted entries already
+  loaded, no reads. Track again (trackers with a switch) or Delete data.
+  Those rows are not repeated as switches above.
+- **Sync**: a deleted custom tracker's id goes in `deletedCustomTrackers`
+  (localStorage) and `userSettings/{uid}.deletedTrackers` (arrayUnion), and
+  `trackingFields.trackCustom_<id>` / `labelOverrides.trackCustom_<id>` are
+  deleted. `getCustomFields()` and the sign-in settings read skip those ids,
+  so another device's stale `customTrackingFields` can't bring one back.
+  Built-ins are just switched off.
+- **Test**: `node scripts/test-tracker-delete.mjs` (real functions, mocked
+  Firestore, real WebCrypto: 950 entries in three batches, partial failure +
+  retry, idempotence, unopenable entries, no key, settings sync).
+
+**Home quick check-in labels (v340)**: the bears' names use `trk143.qc.*`
+(the mood names with soft hyphens). `fitLabels()` in `js/index.js` leaves
+names that fit alone; otherwise all five go to 0.62 → 0.58em together, and
+if one still doesn't fit they take two lines (`.qc-two`), breaking only at
+the soft hyphens. The bears' accessible names stay `mood.*`.
 
 ## 3. Algorithm Flowcharts
 

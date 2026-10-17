@@ -1973,7 +1973,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
-          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
+          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
@@ -2033,7 +2033,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false, earlyWarnEnabled: false,
               moodSpectrumEnabled: false, wheelModeEnabled: true,
-              customTrackingFields: [], trackingFields: {}, labelOverrides: {},
+              customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
               safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,
               personalHintDone: false,
@@ -2424,7 +2424,35 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           b.tabIndex = done ? -1 : 0;
         });
         renderWeek();
+        fitLabels();
       }
+
+      // Long mood names ("Przygnębiony", "Deprimerad") used to be cut to
+      // "Przygnęb…" on a phone (v340). Where a name doesn't fit, every label
+      // goes a little smaller together; if that isn't enough, they may take
+      // two lines, breaking only at the soft hyphens in trk143.qc.* (so a
+      // word splits where the language allows, with a hyphen). Names that fit
+      // — English on an iPhone — are left exactly as they were.
+      function fitLabels() {
+        requestAnimationFrame(function () {
+          const labels = Array.prototype.slice.call(card.querySelectorAll('.qc-label'));
+          if (!labels.length || card.getAttribute('data-done') === 'true' || !card.offsetParent) return;
+          card.classList.remove('qc-two');
+          labels.forEach(l => { l.style.fontSize = ''; });
+          const over = () => labels.some(l => l.scrollWidth > l.clientWidth + 0.5);
+          if (!over()) return;
+          const steps = ['0.62em', '0.6em', '0.58em'];
+          for (let i = 0; i < steps.length; i++) {
+            labels.forEach(l => { l.style.fontSize = steps[i]; });
+            if (!over()) return;
+          }
+          labels.forEach(l => { l.style.fontSize = '0.6em'; });
+          card.classList.add('qc-two');
+        });
+      }
+      let fitTimer = null;
+      window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitLabels, 120); });
+      try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitLabels); } catch (_) {}
 
       // Visibility follows onboarding: hidden during the first-run steps 0–3
       // (the journal's own first-entry tutorial runs from the Mood Journal

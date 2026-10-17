@@ -383,6 +383,12 @@ const bear = {
           currentMedList: FV.delete(), moodDefinitions: FV.delete(), copingStrategies: FV.delete(),
         }, { merge: true });
       });
+      // journal.js _trkSyncForget(): a custom tracker deleted with its data (v340).
+      const us = db.collection('userSettings').doc(uid);
+      await us.set({ trackingFields: { trackCustom_c1: true }, labelOverrides: { trackCustom_c1: 'Run' } }, { merge: true });
+      const FP = require('firebase/compat/app').default.firestore.FieldPath;
+      await us.update(new FP('trackingFields', 'trackCustom_c1'), FV.delete(),
+        new FP('labelOverrides', 'trackCustom_c1'), FV.delete(), 'deletedTrackers', FV.arrayUnion('c1'));
     } else {
       // survival-kit.js saveMedList() and friends, before 2026-10-12
       await db.collection('userSettings').doc(uid).set({ currentMedList: [{ name: 'Lithium' }] }, { merge: true });
@@ -408,6 +414,10 @@ const bear = {
     await db.collection('entries').where('userId', '==', uid).get();
     await db.collection('entries').doc(ref.id).set({ userId: uid, timestamp: Date.now(), enc: 'blob2' });
     await db.collection('entries').doc(ref.id).update({ intention: 'rest' });
+    // journal.js _trkPurgeFirestore(): re-encrypted entries written back in a batch (v340).
+    const b = db.batch();
+    b.set(db.collection('entries').doc(ref.id), { userId: uid, timestamp: Date.now(), _enc: 'blob3', _iv: 'aXY=' });
+    await b.commit();
     await db.collection('entries').doc(ref.id).delete();
   },
   feedback: (db, uid) => db.collection('feedback').add({

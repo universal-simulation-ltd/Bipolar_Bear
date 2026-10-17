@@ -408,6 +408,21 @@
       text-overflow: ellipsis;
       padding: 0 2px;
     }
+    /* A name that still doesn't fit at a smaller size (fitLabels() in
+       js/index.js, v340) may take two lines, breaking only at the soft
+       hyphens in trk143.qc.* — never mid-syllable, never "…". */
+    .quick-checkin.qc-two .qc-label {
+      white-space: normal;
+      text-overflow: clip;
+      overflow-wrap: normal;
+      word-break: normal;
+      hyphens: manual;
+      -webkit-hyphens: manual;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
     .qc-bear:active { transform: scale(0.9); background: #ffe8cc; }
     .qc-bear:focus-visible { outline: 3px solid #a8430a; outline-offset: 1px; }
     @media (hover: hover) and (pointer: fine) {

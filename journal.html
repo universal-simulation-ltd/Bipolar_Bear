@@ -1913,6 +1913,15 @@
     </div>
   </div>
 
+  <!-- Stop or delete a tracker (v340): Stop tracking (keep past data) / Delete
+       tracker and all its data, a counted second confirm, progress, retry.
+       Filled by _trkRenderSheet() in js/journal.js. -->
+  <div class="confirm-modal" id="trkDeleteModal" style="z-index:1200;" role="dialog" aria-modal="true" aria-labelledby="trkDeleteTitle" onclick="if(event.target===this)_trkCloseSheet()">
+    <div class="confirm-content trk-sheet" style="max-width:360px;">
+      <div id="trkDeleteBody"></div>
+    </div>
+  </div>
+
   </div> <!-- Close app-content -->
 
   

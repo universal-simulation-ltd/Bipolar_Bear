@@ -1630,7 +1630,21 @@
 //   "See more entries", and Backup / Import are always visible. pdf143.* in
 //   10 languages. Touches journal.html, css/journal.css, js/journal.js,
 //   js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v339';
+// v340: Track Data — every tracker's ✏️ row has Delete…: Stop tracking (keep
+//   past data) or Delete tracker and all its data (red, a counted second
+//   confirm, then the answers are removed from every entry: signed in,
+//   decrypted / re-encrypted in Firestore batches of ≤400 with progress;
+//   guest, entry:* rewritten under the PIN key; a failure part-way says how
+//   far it got and Try again finishes it). "Stopped trackers" lists trackers
+//   that are off but still have answers (also old built-ins and fields
+//   removed by older builds) with Track again / Delete data. Deleted custom
+//   trackers are remembered (deletedCustomTrackers, userSettings.deletedTrackers)
+//   so settings sync can't bring them back. The home quick check-in's mood
+//   names fit (smaller together, then two lines at soft hyphens) instead of
+//   "Przygnęb…". trk143.* in 10 languages. Touches journal.html, index.html,
+//   css/journal.css, css/index.css, js/journal.js, js/index.js,
+//   js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v340';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

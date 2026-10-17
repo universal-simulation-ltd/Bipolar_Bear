@@ -596,8 +596,17 @@ function _tt(k, vars, fallback) {
                 localStorage.setItem('currentMedList', JSON.stringify(d.currentMedList));
                 if (typeof loadMedicationList === 'function') loadMedicationList();
               }
+              // Custom trackers deleted with their data on any device (v340).
+              if (Array.isArray(d.deletedTrackers)) {
+                const _dead = _trkTombstones();
+                d.deletedTrackers.forEach(id => { if (typeof id === 'string' && !_dead.includes(id)) _dead.push(id); });
+                localStorage.setItem('deletedCustomTrackers', JSON.stringify(_dead));
+                _dead.forEach(id => { localStorage.removeItem('trackCustom_' + id); localStorage.removeItem('_labelOverride_trackCustom_' + id); });
+              }
               if (d.trackingFields !== undefined) {
+                const _deadT = _trkTombstones();
                 Object.entries(d.trackingFields).forEach(([key, val]) => {
+                  if (key.startsWith('trackCustom_') && _deadT.includes(key.slice('trackCustom_'.length))) return;
                   localStorage.setItem(key, val);
                 });
                 applyTrackingPrefs();
@@ -1087,7 +1096,7 @@ function _tt(k, vars, fallback) {
       [
         'trackGoals', 'trackBudget', 'trackExercise', 'trackOutside',
         'trackAnxiety', 'trackAlcohol', 'trackEmotions',
-        'customTrackingFields', 'currentMedList', 'dailyGoals', 'dailyBudget',
+        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'dailyGoals', 'dailyBudget',
         'statsStartDate', 'unlockedAchievements',
         'bbOnboardingStep',
         'bbFavAnniShown',
@@ -12452,7 +12461,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         'showMoodSuggestion', 'moreDataOpenByDefault',
         'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
         'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
-        'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
+        'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
         'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
       ];
       _keys.forEach(k => localStorage.removeItem(k));
@@ -12483,7 +12492,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
           intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
           achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
-          customTrackingFields: [], trackingFields: {}, labelOverrides: {},
+          customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
           earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
         }, { merge: true }).catch(() => {});
       }
@@ -12666,7 +12675,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
-          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields',
+          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
@@ -12761,7 +12770,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
-              customTrackingFields: [], trackingFields: {}, labelOverrides: {},
+              customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
               earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
               safetyPlanEnc: null,
               onboardingStep: 0,
@@ -15037,7 +15046,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
     function getCustomFields() {
       const deleted = JSON.parse(localStorage.getItem('deletedDefaultCustomFields') || '[]');
-      const user = JSON.parse(localStorage.getItem('customTrackingFields') || '[]');
+      let user = JSON.parse(localStorage.getItem('customTrackingFields') || '[]');
+      // Deleted with their data (v340): a stale copy synced from another device can't bring one back.
+      const _dead = _trkTombstones();
+      if (_dead.length && Array.isArray(user)) user = user.filter(u => !(u && _dead.includes(u.id)));
       const defaults = DEFAULT_CUSTOM_FIELDS.filter(d => !deleted.includes(d.id) && !user.some(u => u.id === d.id) && !user.some(u => u.label && u.label.toLowerCase() === d.label.toLowerCase())).map(d => {
         const override = localStorage.getItem('_labelOverride_trackCustom_' + d.id);
         return override ? { ...d, label: override.replace(/^\S+\s*/, ''), emoji: override.split(' ')[0] || d.emoji } : d;
@@ -15077,8 +15089,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         : (f.sublabel || '');
       const _renameLbl = BB.t('journal.ui.renameField');
 
+      // Off but still holding answers: listed under "Stopped trackers" below
+      // instead of as a switch here (v340).
+      const _stopped = _trkStopped();
+      const _stoppedIds = new Set(_stopped.map(t => t.tid));
+      const _delLink = tid => `<button type="button" onclick="_trkOpenSheet('${tid}')" class="trk-del-link">🗑️ ${_esc(BB.t('trk143.deleteBtn'))}</button>`;
       const _deletedBuiltin = JSON.parse(localStorage.getItem('deletedBuiltinFields') || '[]');
-      const builtIn = FIELD_PICKER_FIELDS.filter(f => !f.deletable || !_deletedBuiltin.includes(f.key)).map(f => {
+      const builtIn = FIELD_PICKER_FIELDS.filter(f => (!f.deletable || !_deletedBuiltin.includes(f.key)) && !_stoppedIds.has(_trkTidForPref(f.key))).map(f => {
         const active = _editFieldOverrides !== null
           ? !!_editFieldOverrides[f.key]
           : (localStorage.getItem(f.key) !== null
@@ -15100,11 +15117,22 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               <button onclick="cancelBuiltinFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:120px;overflow-y:auto;">${_bEmojiGrid}</div>
+            ${_delLink(_trkTidForPref(f.key))}
+          </div>`;
+        }
+        if (!f.renameable && _editingBuiltinKey === f.key) {
+          // Goals, Budget, Emotions: nothing to rename, so the edit row is just Delete….
+          return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="flex:1;min-width:0;font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${_displayLabel}</div>
+              <button onclick="cancelBuiltinFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
+            </div>
+            ${_delLink(_trkTidForPref(f.key))}
           </div>`;
         }
         const lead = f.renameable ? _iconBtn(`startEditBuiltinField('${f.key}')`, '✏', _renameLbl)
           : f.deletable ? _iconBtn(`deleteBuiltinField('${f.key}')`, '×', BB.t('journal.ui.deleteField'), '1.2em')
-          : '';
+          : _iconBtn(`startEditBuiltinField('${f.key}')`, '✏', _esc(BB.t('trk143.editOrDelete')));
         return _row(f.key, active, lead, _displayLabel, _subFor(f));
       }).join('');
 
@@ -15112,7 +15140,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         `<button onclick="selectEditPickerEmoji('${e}')" style="font-size:1.25em;background:none;border:none;padding:4px 3px;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1;">${e}</button>`
       ).join('');
 
-      const custom = getCustomFields().filter(f => !f.builtin).map(f => {
+      const custom = getCustomFields().filter(f => !f.builtin && !_stoppedIds.has('c:' + f.id)).map(f => {
         const active = _editFieldOverrides !== null
           ? !!_editFieldOverrides[`trackCustom_${f.id}`]
           : localStorage.getItem(`trackCustom_${f.id}`) === 'true';
@@ -15131,7 +15159,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f0f0f0;border-radius:8px;">
               ${editEmojiGrid}
             </div>
-            <button onclick="deleteCustomField('${f.id}')" style="background:none;border:none;color:#c92a2a;font-size:0.82em;font-weight:600;padding:6px 2px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;">🗑️ ${BB.t('journal.ui.deleteField')}</button>
+            ${_delLink('c:' + f.id)}
           </div>`;
         }
 
@@ -15155,7 +15183,19 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         </div>
       </div>`;
 
-      list.innerHTML = builtIn + custom;
+      // Stopped trackers: off the form, answers kept — Track again or Delete data.
+      const stoppedHtml = _stopped.length ? `<div class="trk-stopped" id="trkStoppedSection">
+          <div class="trk-stopped-head">⏸️ ${_esc(BB.t('trk143.stoppedTitle'))}</div>
+          <div class="trk-stopped-desc">${_esc(BB.t('trk143.stoppedDesc'))}</div>
+          ${_stopped.map(t => `<div class="trk-stopped-row" data-tid="${_esc(t.tid)}">
+            <div class="trk-stopped-name">${_esc(t.label)}<span class="trk-stopped-count">${_esc(BB.t('trk143.entries', { count: t.count }))}</span></div>
+            <div class="trk-stopped-btns">
+              ${t.picker ? `<button type="button" class="trk-again-btn" onclick="_trkTrackAgain('${_esc(t.tid)}')">${_esc(BB.t('trk143.trackAgain'))}</button>` : ''}
+              <button type="button" class="trk-deldata-btn" onclick="_trkOpenSheet('${_esc(t.tid)}','confirm')">${_esc(BB.t('trk143.deleteData'))}</button>
+            </div>
+          </div>`).join('')}
+        </div>` : '';
+      list.innerHTML = builtIn + custom + stoppedHtml;
       const addRow = document.getElementById('fieldPickerAddRow');
       if (addRow) addRow.innerHTML = addForm;
     }
@@ -15336,6 +15376,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
 
     function deleteCustomField(id) {
+      // Since v340 this is the Stop / Delete-with-data sheet (the old modal
+      // removed the field but left its answers on every entry).
+      if (typeof _trkOpenSheet === 'function') { _trkOpenSheet('c:' + id); return; }
       const field = getCustomFields().find(f => f.id === id);
       if (!field) return;
       _pendingDeleteFieldId = id;
@@ -15368,6 +15411,364 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       document.getElementById('deleteCustomFieldModal').classList.remove('active');
       _pendingDeleteFieldId = null;
     }
+
+    // ── Stop or delete a tracker, with its data (James, 2026-10-17) ──
+    // "You did a tracker 3 months ago, no longer use it and don't want to keep
+    // the data." Every additional tracker's ✏️ row has Delete…, which offers:
+    //   • Stop tracking (keep past data): off the form, answers stay.
+    //   • Delete tracker and all its data: a counted, red second confirm, then
+    //     the answers are removed from EVERY entry (signed in: decrypt, delete
+    //     the key, re-encrypt, Firestore batches of ≤400; guest: rewrite
+    //     entry:* under the PIN key), then the definition, its switch and its
+    //     renamed label go. A failure part-way says how far it got; running it
+    //     again finishes the rest (entries already done no longer match).
+    // "If they keep the data, how can they delete it later?" — trackers that
+    // are off but still have answers in an entry (found by scanning the loaded
+    // entries, so trackers switched off before this, the old built-ins and
+    // fields removed by older builds show too) are listed under "Stopped
+    // trackers" with Track again / Delete data. A deleted custom tracker is
+    // remembered in deletedCustomTrackers (userSettings.deletedTrackers), so
+    // another device's stale settings can't bring it back.
+    const _TRK_BUILTINS = [
+      { id: 'goals',    pref: 'trackGoals',    keys: ['goals'],   picker: true },
+      { id: 'budget',   pref: 'trackBudget',   keys: ['budget'],  picker: true },
+      { id: 'emotions', pref: 'trackAnxiety',  keys: ['anxiety', 'stress', 'irritability'], legacy: 'trackEmotions', picker: true },
+      { id: 'alcohol',  pref: 'trackAlcohol',  keys: ['alcohol'], picker: true },
+      // On entries from earlier builds; there is no switch for these any more.
+      { id: 'exercise', pref: 'trackExercise', keys: ['exercise'], emoji: '🏋️', labelKey: 'journal.label.exercise' },
+      { id: 'outside',  pref: 'trackOutside',  keys: ['outside'],  emoji: '🌤️', labelKey: 'journal.label.goneOutside' },
+      { id: 'smoking',  pref: 'trackSmoking',  keys: ['smoking'],  emoji: '🚬', labelKey: 'journal.label.smoking' },
+      { id: 'drugs',    pref: 'trackDrugs',    keys: ['drugs'],    emoji: '💊', labelKey: 'journal.label.drugs' },
+    ];
+    function _trkVal(v) { return v != null && v !== '' && v !== false; }
+    /** Whether entry e holds an answer for tracker t. */
+    function _trkEntryHas(e, t) {
+      if (!e) return false;
+      if (t.cid) return !!(e.customFields && _trkVal(e.customFields[t.cid]));
+      return t.keys.some(k => _trkVal(e[k]));
+    }
+    /** Remove tracker t's answers from entry e, in place. True when it held one. */
+    function _trkStripEntry(e, t) {
+      if (!e) return false;
+      const had = _trkEntryHas(e, t);
+      if (t.cid) { if (e.customFields && typeof e.customFields === 'object') delete e.customFields[t.cid]; }
+      else t.keys.forEach(k => { delete e[k]; });
+      return had;
+    }
+    /** Custom tracker ids deleted with their data (synced as userSettings.deletedTrackers). */
+    function _trkTombstones() {
+      try { const a = JSON.parse(localStorage.getItem('deletedCustomTrackers') || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch (_) { return []; }
+    }
+    function _trkBuiltinLabel(b) {
+      const ov = localStorage.getItem('_labelOverride_' + b.pref);
+      if (ov) return ov;
+      const fp = FIELD_PICKER_FIELDS.find(f => f.key === b.pref);
+      if (fp) return fp.label;
+      return b.emoji + ' ' + _tt(b.labelKey);
+    }
+    /** Every tracker this user has or had: built-ins, Added Sugar, own fields, and nameless ones still on entries. */
+    function _trkAll() {
+      const list = _TRK_BUILTINS.map(b => Object.assign({}, b, { tid: 'b:' + b.id, kind: 'builtin', label: _trkBuiltinLabel(b) }));
+      list.push({ tid: 'c:addedSugar', id: 'addedSugar', cid: 'addedSugar', pref: 'trackCustom_addedSugar', kind: 'sugar', picker: true,
+        label: localStorage.getItem('_labelOverride_trackCustom_addedSugar') || ('🍫 ' + _tt('t143.j.addedSugar', null, 'Added Sugar')) });
+      const seen = new Set(['addedSugar']);
+      getCustomFields().filter(f => !f.builtin).forEach(f => {
+        seen.add(f.id);
+        list.push({ tid: 'c:' + f.id, id: f.id, cid: f.id, pref: 'trackCustom_' + f.id, kind: 'custom', picker: true, label: (f.emoji ? f.emoji + ' ' : '') + f.label });
+      });
+      (_allEntries || []).forEach(e => Object.keys((e && e.customFields) || {}).forEach(id => {
+        if (seen.has(id) || !_trkVal(e.customFields[id])) return;
+        seen.add(id);
+        list.push({ tid: 'c:' + id, id, cid: id, pref: 'trackCustom_' + id, kind: 'orphan', picker: false, label: '🏷️ ' + _tt('trk143.unnamed') });
+      }));
+      return list;
+    }
+    function _trkDescribe(tid) { return _trkAll().find(t => t.tid === tid) || null; }
+    function _trkTidForPref(key) {
+      if (key.startsWith('trackCustom_')) return 'c:' + key.slice('trackCustom_'.length);
+      const b = _TRK_BUILTINS.find(x => x.pref === key);
+      return b ? 'b:' + b.id : null;
+    }
+    /** On the form (the switch in Track Data, read the way renderFieldPickerList reads it). */
+    function _trkIsOn(t) {
+      if (!t.picker) return false;
+      const v = localStorage.getItem(t.pref);
+      if (v !== null) return v === 'true';
+      if (t.legacy) return localStorage.getItem(t.legacy) === 'true';
+      return t.pref === 'trackBudget';
+    }
+    function _trkCount(t) { return (_allEntries || []).filter(e => _trkEntryHas(e, t)).length; }
+    /** Trackers that are off (or have no switch) but still have answers. Counted from the loaded entries; no reads. */
+    function _trkStopped() {
+      if (_editFieldOverrides !== null) return []; // editing one entry: the list is that entry's
+      return _trkAll().filter(t => !_trkIsOn(t)).map(t => Object.assign(t, { count: _trkCount(t) })).filter(t => t.count > 0);
+    }
+
+    /** Signed in: remove t's answers from every entry on the account. Resolves { changed, skipped }. */
+    async function _trkPurgeFirestore(uid, t, onProgress) {
+      const _limit = (p, ms, tag) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(tag)), ms))]);
+      const snap = await _limit(db.collection('entries').where('userId', '==', uid).get({ source: 'server' }), 20000, 'trk-fetch');
+      const todo = [];
+      let skipped = 0;
+      for (const doc of snap.docs) {
+        const data = doc.data();
+        let plain = null;
+        if (data._enc) {
+          for (const k of [_userCryptoKey].concat(_staleUserKeys || [])) {
+            if (!k) continue;
+            try { plain = await _userDecrypt(k, data); break; } catch (_) { /* not this key */ }
+          }
+          if (!plain) { skipped++; continue; }
+        } else {
+          plain = JSON.parse(JSON.stringify(data)); // a copy: the snapshot stays as read
+        }
+        if (!_trkStripEntry(plain, t)) continue;
+        todo.push({ doc, plain, ts: data.timestamp, owner: data.userId || uid });
+      }
+      const total = todo.length;
+      let done = 0;
+      if (onProgress) onProgress(0, total);
+      for (let i = 0; i < total; i += 400) {
+        const slice = todo.slice(i, i + 400);
+        try {
+          const batch = db.batch();
+          for (const it of slice) {
+            if (!_userCryptoKey) throw new Error('journal key missing');
+            const enc = await _userEncrypt(_userCryptoKey, it.plain);
+            batch.set(it.doc.ref, { userId: it.owner, timestamp: it.ts, ...enc });
+          }
+          await _limit(batch.commit(), 30000, 'trk-commit');
+        } catch (e) {
+          const err = e instanceof Error ? e : new Error(String(e));
+          err.done = done; err.total = total;
+          throw err;
+        }
+        done += slice.length;
+        if (onProgress) onProgress(done, total);
+      }
+      return { changed: total, skipped };
+    }
+
+    /** Guest: remove t's answers from every entry:* on this device, encrypted again under the PIN key. */
+    async function _trkPurgeGuest(t, onProgress) {
+      if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('entry:')) keys.push(k); }
+      const todo = [];
+      let skipped = 0;
+      for (const k of keys) {
+        let parsed = null;
+        try { parsed = JSON.parse(localStorage.getItem(k) || 'null'); } catch (_) { continue; }
+        if (!parsed || typeof parsed !== 'object') continue;
+        let plain = parsed;
+        if (parsed._enc) {
+          if (!_guestCryptoKey) { skipped++; continue; }
+          try { plain = await _guestDecrypt(_guestCryptoKey, parsed); } catch (_) { skipped++; continue; }
+        }
+        if (!_trkStripEntry(plain, t)) continue;
+        todo.push({ k, plain });
+      }
+      const total = todo.length;
+      let done = 0;
+      if (onProgress) onProgress(0, total);
+      for (const it of todo) {
+        try {
+          const v = _guestCryptoKey ? await _guestEncrypt(_guestCryptoKey, it.plain) : it.plain;
+          localStorage.setItem(it.k, JSON.stringify(v));
+        } catch (e) {
+          const err = e instanceof Error ? e : new Error(String(e));
+          err.done = done; err.total = total;
+          throw err;
+        }
+        done++;
+        if (onProgress && (done % 25 === 0 || done === total)) onProgress(done, total);
+      }
+      return { changed: total, skipped };
+    }
+
+    /** After the data: the definition, its switch, its renamed label and its PDF "leave out" tick. */
+    function _trkForget(t) {
+      if (t.kind === 'custom' || t.kind === 'orphan') {
+        let fields = [];
+        try { fields = JSON.parse(localStorage.getItem('customTrackingFields') || '[]'); } catch (_) {}
+        localStorage.setItem('customTrackingFields', JSON.stringify((Array.isArray(fields) ? fields : []).filter(f => f && f.id !== t.cid)));
+        localStorage.removeItem('trackCustom_' + t.cid);
+        localStorage.removeItem('_labelOverride_trackCustom_' + t.cid);
+        const dead = _trkTombstones();
+        if (!dead.includes(t.cid)) { dead.push(t.cid); localStorage.setItem('deletedCustomTrackers', JSON.stringify(dead)); }
+        if (_editFieldOverrides !== null) delete _editFieldOverrides['trackCustom_' + t.cid];
+      } else {
+        localStorage.setItem(t.pref, 'false');
+        if (t.legacy) localStorage.removeItem(t.legacy);
+        localStorage.removeItem('_labelOverride_' + t.pref);
+        if (_editFieldOverrides !== null) _editFieldOverrides[t.pref] = false;
+      }
+      try {
+        const pid = t.cid ? 'custom:' + t.cid : t.id;
+        const o = JSON.parse(localStorage.getItem('bbPdfOmitTrackers') || '[]');
+        if (Array.isArray(o) && o.includes(pid)) localStorage.setItem('bbPdfOmitTrackers', JSON.stringify(o.filter(x => x !== pid)));
+      } catch (_) {}
+    }
+
+    /** Settings sync: the account forgets it too, and remembers it was deleted. */
+    function _trkSyncForget(t) {
+      syncTrackingPrefsToFirestore();
+      if (!currentUser || !db || !t.cid || t.kind === 'sugar') return Promise.resolve();
+      try {
+        const FV = firebase.firestore.FieldValue, FP = firebase.firestore.FieldPath;
+        return db.collection('userSettings').doc(currentUser.uid).update(
+          new FP('trackingFields', 'trackCustom_' + t.cid), FV.delete(),
+          new FP('labelOverrides', 'trackCustom_' + t.cid), FV.delete(),
+          'deletedTrackers', FV.arrayUnion(t.cid)
+        ).catch(() => {});
+      } catch (_) { return Promise.resolve(); }
+    }
+
+    /** The form's in-memory answers and the draft lose it too, so it isn't saved back. */
+    function _trkClearSelection(t) {
+      if (t.cid) {
+        if (selectedCustom) delete selectedCustom[t.cid];
+      } else {
+        t.keys.forEach(k => {
+          if (k === 'goals') selectedGoals = null;
+          else if (k === 'budget') selectedBudget = null;
+          else if (k === 'anxiety') selectedAnxiety = null;
+          else if (k === 'stress') selectedStress = null;
+          else if (k === 'irritability') selectedIrritability = null;
+          else if (k === 'alcohol') selectedAlcohol = null;
+          else if (k === 'exercise') selectedExercise = null;
+          else if (k === 'outside') selectedOutside = null;
+          else if (k === 'smoking') selectedSmoking = null;
+          else if (k === 'drugs') selectedDrugs = null;
+          document.querySelectorAll('[data-' + k + ']').forEach(b => b.classList.remove('selected'));
+        });
+      }
+      try {
+        const d = JSON.parse(BB.storage.get('_draft') || 'null');
+        if (d && _trkStripEntry(d, t)) BB.storage.set('_draft', JSON.stringify(d));
+      } catch (_) {}
+      if (editingEntry) _trkStripEntry(editingEntry, t);
+    }
+
+    function _trkSetOn(t, on) {
+      localStorage.setItem(t.pref, on ? 'true' : 'false');
+      if (t.legacy) localStorage.removeItem(t.legacy);
+      if (_editFieldOverrides !== null) _editFieldOverrides[t.pref] = on;
+      _editingBuiltinKey = null;
+      _editingFieldId = null;
+      applyTrackingPrefs();
+      renderFieldPickerList();
+      syncTrackingPrefsToFirestore();
+    }
+
+    // ── The sheet ──
+    let _trkSheet = null; // { tid, label, state: choose|confirm|working|done|failed, ... }
+    function _trkOpenSheet(tid, state) {
+      const t = _trkDescribe(tid);
+      if (!t) return;
+      _trkSheet = { tid, label: t.label, count: _trkCount(t), state: state || 'choose' };
+      _trkRenderSheet();
+      document.getElementById('trkDeleteModal').classList.add('active');
+      requestAnimationFrame(() => { const b = document.querySelector('#trkDeleteBody [data-trk-first]'); if (b) b.focus(); });
+    }
+    function _trkCloseSheet() {
+      if (_trkSheet && _trkSheet.state === 'working') return; // finish (or fail) first
+      document.getElementById('trkDeleteModal').classList.remove('active');
+      _trkSheet = null;
+    }
+    function _trkRenderSheet() {
+      const el = document.getElementById('trkDeleteBody');
+      if (!el || !_trkSheet) return;
+      const s = _trkSheet;
+      const name = _esc(s.label);
+      const cancel = `<button type="button" class="confirm-btn confirm-btn-no" onclick="_trkCloseSheet()">${_esc(BB.t('common.cancel'))}</button>`;
+      let html = '';
+      if (s.state === 'choose') {
+        html = `<h3 id="trkDeleteTitle">${name}</h3>
+          <p class="trk-lead">${_esc(BB.t('trk143.chooseBody'))}</p>
+          <button type="button" class="trk-opt trk-opt-safe" data-trk-first onclick="_trkStop()"><span class="trk-opt-title">⏸️ ${_esc(BB.t('trk143.stopTitle'))}</span><span class="trk-opt-desc">${_esc(BB.t('trk143.stopDesc'))}</span></button>
+          <button type="button" class="trk-opt trk-opt-danger" onclick="_trkAskConfirm()"><span class="trk-opt-title">🗑️ ${_esc(BB.t('trk143.deleteTitle'))}</span><span class="trk-opt-desc">${_esc(BB.t('trk143.deleteDesc'))}</span></button>
+          <div class="confirm-buttons" style="margin-top:14px;">${cancel}</div>`;
+      } else if (s.state === 'confirm') {
+        const body = s.count > 0 ? BB.t('trk143.confirmBody', { name: s.label, count: s.count }) : BB.t('trk143.confirmNone', { name: s.label });
+        html = `<h3 id="trkDeleteTitle">${_esc(BB.t('trk143.confirmTitle'))}</h3>
+          <p class="trk-warn">${_esc(body)}</p>
+          <div class="confirm-buttons">${cancel.replace('<button ', '<button data-trk-first ')}<button type="button" class="confirm-btn confirm-btn-yes trk-danger-btn" onclick="_trkConfirmDelete()">${_esc(BB.t('trk143.confirmBtn'))}</button></div>`;
+      } else if (s.state === 'working') {
+        const pct = s.total ? Math.round(100 * (s.done || 0) / s.total) : 0;
+        html = `<h3 id="trkDeleteTitle">${_esc(BB.t('trk143.working'))}</h3>
+          <div class="trk-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${s.total || 0}" aria-valuenow="${s.done || 0}"><div style="width:${pct}%"></div></div>
+          <p class="trk-lead" aria-live="polite">${s.total ? _esc(BB.t('trk143.progress', { done: s.done || 0, total: s.total })) : ''}</p>`;
+      } else if (s.state === 'done') {
+        const body = s.changed > 0 ? BB.t('trk143.doneBody', { name: s.label, count: s.changed }) : BB.t('trk143.doneNone', { name: s.label });
+        html = `<h3 id="trkDeleteTitle">✅ ${_esc(BB.t('trk143.doneTitle'))}</h3>
+          <p class="trk-lead" role="status">${_esc(body)}</p>
+          ${s.skipped ? `<p class="trk-note">${_esc(BB.t('trk143.skipped', { count: s.skipped }))}</p>` : ''}
+          <div class="confirm-buttons"><button type="button" class="confirm-btn confirm-btn-no" data-trk-first onclick="_trkCloseSheet()">${_esc(BB.t('journal.mods.done'))}</button></div>`;
+      } else if (s.state === 'failed') {
+        const body = s.total ? BB.t('trk143.failPartial', { done: s.done || 0, total: s.total }) : BB.t('trk143.failNone');
+        html = `<h3 id="trkDeleteTitle">${_esc(BB.t('trk143.failTitle'))}</h3>
+          <p class="trk-warn" role="alert">${_esc(body)}</p>
+          <div class="confirm-buttons">${cancel}<button type="button" class="confirm-btn confirm-btn-yes trk-danger-btn" data-trk-first onclick="_trkConfirmDelete()">${_esc(BB.t('trk143.retry'))}</button></div>`;
+      }
+      el.innerHTML = html;
+    }
+    function _trkStop() {
+      const t = _trkSheet && _trkDescribe(_trkSheet.tid);
+      _trkCloseSheet();
+      if (t) _trkSetOn(t, false);
+    }
+    function _trkTrackAgain(tid) {
+      const t = _trkDescribe(tid);
+      if (t && t.picker) _trkSetOn(t, true);
+    }
+    function _trkAskConfirm() {
+      if (!_trkSheet) return;
+      _trkSheet.state = 'confirm';
+      _trkRenderSheet();
+      requestAnimationFrame(() => { const b = document.querySelector('#trkDeleteBody [data-trk-first]'); if (b) b.focus(); });
+    }
+    async function _trkConfirmDelete() {
+      if (!_trkSheet || _trkSheet.state === 'working') return;
+      const t = _trkDescribe(_trkSheet.tid);
+      if (!t) { _trkCloseSheet(); return; }
+      // Signed in without the journal key: get it first (never write unencrypted).
+      if (currentUser && !(await _requireUserKey())) {
+        _trkSheet.state = 'failed'; _trkSheet.done = 0; _trkSheet.total = 0;
+        _trkRenderSheet();
+        return;
+      }
+      Object.assign(_trkSheet, { state: 'working', done: 0, total: 0 });
+      _trkRenderSheet();
+      const progress = (done, total) => { if (_trkSheet) { _trkSheet.done = done; _trkSheet.total = total; _trkRenderSheet(); } };
+      let res;
+      try {
+        res = currentUser ? await _trkPurgeFirestore(currentUser.uid, t, progress) : await _trkPurgeGuest(t, progress);
+      } catch (e) {
+        console.warn('Tracker delete stopped part-way', e);
+        Object.assign(_trkSheet, { state: 'failed', done: e && e.done || 0, total: e && e.total || 0 });
+        _trkRenderSheet();
+        return;
+      }
+      (_allEntries || []).forEach(e => _trkStripEntry(e, t));
+      _trkClearSelection(t);
+      _trkForget(t);
+      _trkSyncForget(t);
+      _editingBuiltinKey = null;
+      _editingFieldId = null;
+      Object.assign(_trkSheet, { state: 'done', changed: res.changed, skipped: res.skipped });
+      _trkRenderSheet();
+      applyTrackingPrefs();
+      renderFieldPickerList();
+      try { await loadEntries(); } catch (_) {}
+      renderFieldPickerList();
+    }
+    window._trkOpenSheet = _trkOpenSheet;
+    window._trkCloseSheet = _trkCloseSheet;
+    window._trkStop = _trkStop;
+    window._trkTrackAgain = _trkTrackAgain;
+    window._trkAskConfirm = _trkAskConfirm;
+    window._trkConfirmDelete = _trkConfirmDelete;
 
     function selectCustomField(id, val) {
       if (selectedCustom[id] === val) {
