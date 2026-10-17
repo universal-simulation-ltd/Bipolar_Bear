@@ -875,10 +875,13 @@ function _tt(k, vars, fallback) {
               }).catch(() => {});
               BB.secure.personal(user.uid).catch(() => {});
             }
+            // Tracker clean-up (§2.22): only on a settings read that came from the server.
+            _trkNoteSettingsRead(user.uid, doc);
             // Migrate guest entries (decrypt with guest key, re-encrypt with user key), then load
             await migrateGuestEntriesIfNeeded(user);
             loadEntries();
           }).catch(() => {
+            _trkNoteSettingsRead(user.uid, null); // failed or timed out: no tracker clean-up this session
             _markAuthReady(); loadEntries();
             // The settings read timed out before the journal key was resolved:
             // still ask (or open a Standard journal) once the account answers,
@@ -896,6 +899,7 @@ function _tt(k, vars, fallback) {
           document.getElementById('userInfo').style.display = 'none';
           _updateJournalAuthFab(false);
           _markAuthReady();
+          _trkGuestReady = true; // auth answered: a guest (the tracker clean-up may run)
           // Defer past script initialization — onAuthStateChanged can fire synchronously
           // for a cached guest state, before all `let` declarations further down the script
           // have been initialized. Calling loadEntries() directly from here causes a TDZ
@@ -2985,6 +2989,7 @@ function _tt(k, vars, fallback) {
         if (loader) loader.style.display = 'none';
         entries.sort((a, b) => b.timestamp - a.timestamp);
         _allEntries = entries;
+        setTimeout(() => { try { _trkMaybeAutoClean(); } catch (_) {} }, 0);
         _writeRecentMoods(entries);
         _updateMedBtn();
         _syncStableStreak(entries);
@@ -15469,6 +15474,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     /** Whether entry e holds an answer for tracker t. */
     function _trkEntryHas(e, t) {
       if (!e) return false;
+      if (t.cids) return !!(e.customFields && t.cids.some(id => _trkVal(e.customFields[id])));
       if (t.cid) return !!(e.customFields && _trkVal(e.customFields[t.cid]));
       return t.keys.some(k => _trkVal(e[k]));
     }
@@ -15476,7 +15482,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     function _trkStripEntry(e, t) {
       if (!e) return false;
       const had = _trkEntryHas(e, t);
-      if (t.cid) { if (e.customFields && typeof e.customFields === 'object') delete e.customFields[t.cid]; }
+      if (t.cids || t.cid) { if (e.customFields && typeof e.customFields === 'object') (t.cids || [t.cid]).forEach(id => { delete e.customFields[id]; }); }
       else t.keys.forEach(k => { delete e[k]; });
       return had;
     }
@@ -15491,7 +15497,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       if (fp) return fp.label;
       return b.emoji + ' ' + _tt(b.labelKey);
     }
-    /** Every tracker this user has or had: built-ins, Added Sugar, own fields, and nameless ones still on entries. */
+    /** Every tracker this user has or had: built-ins, Added Sugar, own fields, and named ones still on entries with no definition. */
     function _trkAll() {
       const list = _TRK_BUILTINS.map(b => Object.assign({}, b, { tid: 'b:' + b.id, kind: 'builtin', label: _trkBuiltinLabel(b) }));
       list.push({ tid: 'c:addedSugar', id: 'addedSugar', cid: 'addedSugar', pref: 'trackCustom_addedSugar', kind: 'sugar', picker: true,
@@ -15501,10 +15507,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         seen.add(f.id);
         list.push({ tid: 'c:' + f.id, id: f.id, cid: f.id, pref: 'trackCustom_' + f.id, kind: 'custom', picker: true, label: (f.emoji ? f.emoji + ' ' : '') + f.label });
       });
+      // Answers whose definition an older build removed: listed only when a
+      // name survives (_labelOverride_). Nameless ones are never shown; the
+      // clean-up below (_trkAutoClean) removes them from the entries.
       (_allEntries || []).forEach(e => Object.keys((e && e.customFields) || {}).forEach(id => {
         if (seen.has(id) || !_trkVal(e.customFields[id])) return;
         seen.add(id);
-        list.push({ tid: 'c:' + id, id, cid: id, pref: 'trackCustom_' + id, kind: 'orphan', picker: false, label: localStorage.getItem('_labelOverride_trackCustom_' + id) || ('🏷️ ' + _tt('trk143.unnamed')) });
+        const name = localStorage.getItem('_labelOverride_trackCustom_' + id);
+        if (name) list.push({ tid: 'c:' + id, id, cid: id, pref: 'trackCustom_' + id, kind: 'orphan', picker: false, label: name });
       }));
       return list;
     }
@@ -15529,11 +15539,11 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       return _trkAll().filter(t => !_trkIsOn(t)).map(t => Object.assign(t, { count: _trkCount(t) })).filter(t => t.count > 0);
     }
 
-    /** Signed in: remove t's answers from every entry on the account. Resolves { changed, skipped }. */
-    async function _trkPurgeFirestore(uid, t, onProgress) {
-      const _limit = (p, ms, tag) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(tag)), ms))]);
-      const snap = await _limit(db.collection('entries').where('userId', '==', uid).get({ source: 'server' }), 20000, 'trk-fetch');
-      const todo = [];
+    function _trkLimit(p, ms, tag) { return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error(tag)), ms))]); }
+    /** Signed in: every entry on the account, read from the server and opened. Resolves { items: [{ doc, plain, ts, owner }], skipped }. */
+    async function _trkReadFirestore(uid) {
+      const snap = await _trkLimit(db.collection('entries').where('userId', '==', uid).get({ source: 'server' }), 20000, 'trk-fetch');
+      const items = [];
       let skipped = 0;
       for (const doc of snap.docs) {
         const data = doc.data();
@@ -15547,9 +15557,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         } else {
           plain = JSON.parse(JSON.stringify(data)); // a copy: the snapshot stays as read
         }
-        if (!_trkStripEntry(plain, t)) continue;
-        todo.push({ doc, plain, ts: data.timestamp, owner: data.userId || uid });
+        items.push({ doc, plain, ts: data.timestamp, owner: data.userId || uid });
       }
+      return { items, skipped };
+    }
+    /** Signed in: write the changed entries back, encrypted under the account key, in batches of ≤400. Throws with done/total. */
+    async function _trkWriteFirestore(todo, onProgress) {
       const total = todo.length;
       let done = 0;
       if (onProgress) onProgress(0, total);
@@ -15562,7 +15575,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             const enc = await _userEncrypt(_userCryptoKey, it.plain);
             batch.set(it.doc.ref, { userId: it.owner, timestamp: it.ts, ...enc });
           }
-          await _limit(batch.commit(), 30000, 'trk-commit');
+          await _trkLimit(batch.commit(), 30000, 'trk-commit');
         } catch (e) {
           const err = e instanceof Error ? e : new Error(String(e));
           err.done = done; err.total = total;
@@ -15571,15 +15584,21 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         done += slice.length;
         if (onProgress) onProgress(done, total);
       }
-      return { changed: total, skipped };
+      return total;
+    }
+    /** Signed in: remove t's answers from every entry on the account. Resolves { changed, skipped }. */
+    async function _trkPurgeFirestore(uid, t, onProgress) {
+      const { items, skipped } = await _trkReadFirestore(uid);
+      const todo = items.filter(it => _trkStripEntry(it.plain, t));
+      return { changed: await _trkWriteFirestore(todo, onProgress), skipped };
     }
 
-    /** Guest: remove t's answers from every entry:* on this device, encrypted again under the PIN key. */
-    async function _trkPurgeGuest(t, onProgress) {
+    /** Guest: every entry:* on this device, opened (PIN key when encrypted). Resolves { items: [{ k, plain }], skipped }. */
+    async function _trkReadGuest() {
       if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
       const keys = [];
       for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith('entry:')) keys.push(k); }
-      const todo = [];
+      const items = [];
       let skipped = 0;
       for (const k of keys) {
         let parsed = null;
@@ -15590,9 +15609,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           if (!_guestCryptoKey) { skipped++; continue; }
           try { plain = await _guestDecrypt(_guestCryptoKey, parsed); } catch (_) { skipped++; continue; }
         }
-        if (!_trkStripEntry(plain, t)) continue;
-        todo.push({ k, plain });
+        items.push({ k, plain });
       }
+      return { items, skipped };
+    }
+    /** Guest: write the changed entries back, encrypted again under the PIN key when there is one. Throws with done/total. */
+    async function _trkWriteGuest(todo, onProgress) {
       const total = todo.length;
       let done = 0;
       if (onProgress) onProgress(0, total);
@@ -15608,7 +15630,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         done++;
         if (onProgress && (done % 25 === 0 || done === total)) onProgress(done, total);
       }
-      return { changed: total, skipped };
+      return total;
+    }
+    /** Guest: remove t's answers from every entry:* on this device, encrypted again under the PIN key. */
+    async function _trkPurgeGuest(t, onProgress) {
+      const { items, skipped } = await _trkReadGuest();
+      const todo = items.filter(it => _trkStripEntry(it.plain, t));
+      return { changed: await _trkWriteGuest(todo, onProgress), skipped };
     }
 
     /** After the data: the definition, its switch, its renamed label and its PDF "leave out" tick. */
@@ -15651,8 +15679,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
     /** The form's in-memory answers and the draft lose it too, so it isn't saved back. */
     function _trkClearSelection(t) {
-      if (t.cid) {
-        if (selectedCustom) delete selectedCustom[t.cid];
+      if (t.cids || t.cid) {
+        if (selectedCustom) (t.cids || [t.cid]).forEach(id => { delete selectedCustom[id]; });
       } else {
         t.keys.forEach(k => {
           if (k === 'goals') selectedGoals = null;
@@ -15684,6 +15712,196 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       applyTrackingPrefs();
       renderFieldPickerList();
       syncTrackingPrefsToFirestore();
+    }
+
+
+    // ── Clean-up of nameless leftovers (v344, James 2026-10-17: "Surely these
+    // should just be deleted?" then "Or we track the name from before?") ──
+    // Before v340 a tracker's Remove deleted its definition and name but left
+    // its answers in every entry, so Old trackers listed rows called "A
+    // tracker you removed earlier". Once per session, in the background, with
+    // no prompt: for every custom id still answered in an entry,
+    //   • a definition anywhere (this device's customTrackingFields, Added
+    //     Sugar, or the account's customTrackingFields read from the server
+    //     THIS session) → a tracker, left alone;
+    //   • else a name anywhere (labelOverrides.trackCustom_<id> on the account
+    //     or on this device, or an Elaborate Responses note line in an entry
+    //     that answered only that tracker) → its definition is restored,
+    //     switched off, so it is listed under Old trackers by that name with
+    //     Edit / Track again / Delete data;
+    //   • else answered in the last 14 days → left for now (another device may
+    //     still have it), not listed;
+    //   • else → removed from every entry: the v340 rewrite (decrypt, drop,
+    //     re-encrypt; batches of ≤400; guests keep the PIN key).
+    // Ids deleted with their data (deletedCustomTrackers) have no definition
+    // by design and are removed too. Signed in, it runs only once the
+    // account's settings came from the server (not cache, no failure or
+    // timeout) and the journal key is in hand; guests once auth says there is
+    // no account. Idempotent: a second run finds nothing.
+    var _TRK_RECENT_MS = 14 * 864e5;
+    var _trkAcctRead = null;     // { uid, data }: userSettings read from the server this session; null otherwise
+    var _trkGuestReady = false;  // auth answered: no account on this device
+    var _trkCleanRun = null;     // the running clean-up (a delete waits for it)
+    var _trkCleanDone = false;
+    /** The sign-in settings read: kept for the clean-up only when it came from the server. */
+    function _trkNoteSettingsRead(uid, doc) {
+      _trkAcctRead = (!doc || !uid || (doc.metadata && doc.metadata.fromCache)) ? null : { uid, data: (doc.exists ? doc.data() : null) || {} };
+    }
+    /** The custom ids with a definition: Added Sugar, this device's list, and (signed in) the account's. id → shown name. */
+    function _trkDefinedIds(acct) {
+      const out = new Map();
+      DEFAULT_CUSTOM_FIELDS.forEach(d => out.set(d.id, ''));
+      const add = list => (Array.isArray(list) ? list : []).forEach(f => {
+        if (f && typeof f.id === 'string') out.set(f.id, ((f.emoji ? f.emoji + ' ' : '') + (f.label || '')).trim());
+      });
+      try { add(JSON.parse(localStorage.getItem('customTrackingFields') || '[]')); } catch (_) {}
+      if (acct) add(acct.customTrackingFields);
+      _trkTombstones().forEach(id => out.delete(id)); // deleted with its data: not a definition
+      return out;
+    }
+    /** A name kept for a custom id without a definition: the account's or this device's label override. */
+    function _trkKeptName(id, acct) {
+      const lo = acct && acct.labelOverrides && typeof acct.labelOverrides === 'object' ? acct.labelOverrides['trackCustom_' + id] : null;
+      if (typeof lo === 'string' && lo.trim()) return lo.trim();
+      const l = localStorage.getItem('_labelOverride_trackCustom_' + id);
+      return l && l.trim() ? l.trim() : '';
+    }
+    /** The "<label>: <note>" lines Elaborate Responses put under ___ in an entry's intention. */
+    function _trkNoteLabels(e) {
+      const lines = (e && typeof e.intention === 'string' ? e.intention : '').split('\n');
+      let at = -1;
+      lines.forEach((l, i) => { if (/^_{3,}\s*$/.test(l)) at = i; });
+      if (at < 0) return [];
+      return lines.slice(at + 1).map(l => /^([^:\n]{1,60}):\s*\S/.exec(l)).filter(Boolean).map(m => m[1].trim());
+    }
+    /** Labels that aren't a custom tracker's: every step's, in every language. */
+    function _trkStepLabels() {
+      const out = new Set(['mood', 'energy', 'notes', 'more_data', 'done', 'intention']);
+      const all = k => (window.BB && BB.i18n && BB.i18n.tAll) ? BB.i18n.tAll(k) : [];
+      Object.keys(_STEP_NOTE_LABELS).forEach(k => {
+        out.add(k);
+        try { const v = _STEP_NOTE_LABELS[k]; if (v) out.add(String(v).trim()); } catch (_) {}
+        all('journal.label.' + k).forEach(v => out.add(String(v).trim()));
+      });
+      ['goneOutside', 'smoking', 'drugs', 'mood', 'emotions'].forEach(k => all('journal.label.' + k).forEach(v => out.add(String(v).trim())));
+      all('t143.j.addedSugar').forEach(v => { out.add(String(v).trim()); out.add('🍫 ' + String(v).trim()); });
+      return out;
+    }
+    /** Sort the custom ids answered in entries that have no definition: { purge: [id], named: [{ id, name, source }], wait: [id] }. */
+    function _trkSortLeftovers(entries, acct, now) {
+      const defined = _trkDefinedIds(acct), dead = _trkTombstones();
+      const last = new Map(); // leftover id → newest entry time
+      (entries || []).forEach(e => {
+        const cf = e && e.customFields;
+        if (!cf || typeof cf !== 'object') return;
+        Object.keys(cf).forEach(id => {
+          if (defined.has(id) || !_trkVal(cf[id])) return;
+          const t = Math.max(Number(e.timestamp) || 0, Date.parse(e.recordedAt || '') || 0);
+          last.set(id, Math.max(last.get(id) || 0, t));
+        });
+      });
+      // Names from Elaborate Responses notes: an entry that answered only this
+      // tracker, whose note lines hold exactly one label nothing else uses.
+      // Every such entry has to agree on the name.
+      const votes = new Map();
+      if (last.size) {
+        const known = _trkStepLabels();
+        defined.forEach(n => { if (n) known.add(n); });
+        (entries || []).forEach(e => {
+          const cf = e && e.customFields;
+          if (!cf || typeof cf !== 'object') return;
+          const answered = Object.keys(cf).filter(id => _trkVal(cf[id]));
+          if (answered.length !== 1 || !last.has(answered[0]) || dead.includes(answered[0])) return;
+          const cands = _trkNoteLabels(e).filter(l => !known.has(l) && !last.has(l) && !defined.has(l) && !/^custom_\d+$/.test(l));
+          if (cands.length !== 1) return;
+          if (!votes.has(answered[0])) votes.set(answered[0], new Set());
+          votes.get(answered[0]).add(cands[0]);
+        });
+      }
+      const out = { purge: [], named: [], wait: [] };
+      last.forEach((t, id) => {
+        if (dead.includes(id)) { out.purge.push(id); return; }
+        const kept = _trkKeptName(id, acct);
+        const v = votes.get(id);
+        const fromNotes = v && v.size === 1 ? [...v][0] : '';
+        if (kept) out.named.push({ id, name: kept, source: 'labelOverride' });
+        else if (fromNotes) out.named.push({ id, name: fromNotes, source: 'notes' });
+        else if (now - t < _TRK_RECENT_MS) out.wait.push(id);
+        else out.purge.push(id);
+      });
+      return out;
+    }
+    /** A recovered name becomes a definition again, switched off: listed under Old trackers, and Track again works. */
+    function _trkRestoreNamed(named) {
+      if (!named || !named.length) return 0;
+      let fields = [];
+      try { fields = JSON.parse(localStorage.getItem('customTrackingFields') || '[]'); } catch (_) {}
+      if (!Array.isArray(fields)) fields = [];
+      let n = 0;
+      named.forEach(({ id, name }) => {
+        if (fields.some(f => f && f.id === id)) return;
+        const m = /^(\S+)\s+(.+)$/.exec(name);
+        const emoji = m && !/[\p{L}\p{N}]/u.test(m[1]) ? m[1] : '';
+        fields.push({ id, label: emoji ? m[2] : name, emoji });
+        localStorage.setItem('trackCustom_' + id, 'false');
+        n++;
+      });
+      if (n) {
+        localStorage.setItem('customTrackingFields', JSON.stringify(fields));
+        syncTrackingPrefsToFirestore();
+      }
+      return n;
+    }
+    /** Start the clean-up once its conditions hold (called after every entry load). */
+    function _trkMaybeAutoClean() {
+      if (_trkCleanDone || _trkCleanRun) return;
+      let acct = null, who = 'guest';
+      if (currentUser) {
+        if (!_trkAcctRead || _trkAcctRead.uid !== currentUser.uid) return; // settings not read fresh: not this session
+        if (!_userCryptoKey) return; // never prompts; runs on a later load once the key is in hand
+        acct = _trkAcctRead.data || {};
+        who = currentUser.uid;
+      } else if (!_trkGuestReady) return;
+      try { if (sessionStorage.getItem('bbTrkCleaned') === who) { _trkCleanDone = true; return; } } catch (_) {}
+      _trkCleanRun = _trkAutoClean(acct).catch(e => {
+        BB.log('tracker clean-up stopped', e && e.message, (e && e.done) || 0, '/', (e && e.total) || 0);
+      }).finally(() => {
+        _trkCleanRun = null;
+        _trkCleanDone = true; // at most once per session, even after a failure (it finishes next time)
+        try { sessionStorage.setItem('bbTrkCleaned', who); } catch (_) {}
+      });
+    }
+    async function _trkAutoClean(acct) {
+      const read = currentUser ? await _trkReadFirestore(currentUser.uid) : await _trkReadGuest();
+      const sort = _trkSortLeftovers(read.items.map(i => i.plain), acct, Date.now());
+      const restored = _trkRestoreNamed(sort.named);
+      let changed = 0;
+      if (sort.purge.length) {
+        const t = { cids: sort.purge };
+        const todo = read.items.filter(it => _trkStripEntry(it.plain, t));
+        changed = currentUser ? await _trkWriteFirestore(todo) : await _trkWriteGuest(todo);
+        (_allEntries || []).forEach(e => _trkStripEntry(e, t));
+        _trkClearSelection(t);
+        sort.purge.forEach(id => { localStorage.removeItem('trackCustom_' + id); localStorage.removeItem('_labelOverride_trackCustom_' + id); });
+        // The account's leftover switch for each (set-merge never removed it).
+        if (currentUser && db) {
+          try {
+            const FV = firebase.firestore.FieldValue, FP = firebase.firestore.FieldPath;
+            const args = [];
+            sort.purge.forEach(id => args.push(new FP('trackingFields', 'trackCustom_' + id), FV.delete()));
+            await db.collection('userSettings').doc(currentUser.uid).update(...args).catch(() => {});
+          } catch (_) {}
+        }
+      }
+      BB.log('tracker clean-up:', changed, 'entries cleaned of', sort.purge.length, 'nameless trackers;', restored, 'restored by name',
+        sort.named.map(n => n.source).join(',') || '-', ';', sort.wait.length, 'answered lately, left;', read.skipped, 'entries unopened');
+      if (restored || changed) {
+        applyTrackingPrefs();
+        if (typeof renderCustomTrackingRows === 'function') renderCustomTrackingRows();
+        const m = document.getElementById('fieldPickerModal');
+        if (m && m.classList.contains('active')) renderFieldPickerList();
+      }
+      return { changed, purged: sort.purge, named: sort.named, wait: sort.wait, skipped: read.skipped };
     }
 
     // ── The sheet ──
@@ -15760,7 +15978,6 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const f = getCustomFields().find(x => x.id === t.cid);
         return { emoji: (f && f.emoji) || '', name: f ? f.label : '' };
       }
-      if (t.kind === 'orphan' && !localStorage.getItem('_labelOverride_trackCustom_' + t.cid)) return { emoji: '🏷️', name: '', placeholder: _tt('trk143.unnamed') };
       const lbl = String(t.label || '');
       const m = lbl.match(/^(\S+)\s+(.*)$/);
       if (m && !/[\p{L}\p{N}]/u.test(m[1])) return { emoji: m[1], name: m[2] };
@@ -15777,7 +15994,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           let ren = '';
           if (_trkOldCanRename(t)) {
             const n = _trkOldName(t);
-            ren = `<div class="trk-old-line">${n.emoji ? `<span class="trk-old-emoji" aria-hidden="true">${_esc(n.emoji)}</span>` : ''}<input id="trkOldNameInput" class="trk-old-input" type="text" value="${_esc(n.name)}" placeholder="${_esc(n.placeholder || '')}" maxlength="${t.kind === 'custom' ? 15 : 20}" aria-label="${_esc(BB.t('trk143.old.name'))}"><button type="button" class="trk-old-save" data-trk-act="save">${_esc(BB.t('common.save'))}</button></div>`;
+            ren = `<div class="trk-old-line">${n.emoji ? `<span class="trk-old-emoji" aria-hidden="true">${_esc(n.emoji)}</span>` : ''}<input id="trkOldNameInput" class="trk-old-input" type="text" value="${_esc(n.name)}" maxlength="${t.kind === 'custom' ? 15 : 20}" aria-label="${_esc(BB.t('trk143.old.name'))}"><button type="button" class="trk-old-save" data-trk-act="save">${_esc(BB.t('common.save'))}</button></div>`;
           }
           panel = `<div class="trk-old-panel" id="trkOldPanel">${sw}${ren}</div>`;
         }
@@ -15897,6 +16114,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
     async function _trkConfirmDelete() {
       if (!_trkSheet || _trkSheet.state === 'working') return;
+      if (_trkCleanRun) { try { await _trkCleanRun; } catch (_) {} } // both rewrite entries: one at a time
       const t = _trkDescribe(_trkSheet.tid);
       if (!t) { _trkCloseSheet(); return; }
       // Signed in without the journal key: get it first (never write unencrypted).

@@ -546,6 +546,7 @@ bbPrivacyNoteDismissed  "1"           — privacy note on home screen dismissed
 ```
 bbPinUnlocked           "1"    — PIN verified for this session; cleared on pagehide
 bbReload                "1"    — set before forced reload after Firestore failure
+bbTrkCleaned            uid|"guest" — the tracker clean-up (§2.22) has run this session for that journal
 ```
 
 ### 2.4 Navigation Model
@@ -1830,7 +1831,8 @@ Code: the `_trk*` block in `js/journal.js` (after `closeDeleteCustomFieldModal`)
   outside / smoking / drugs) keyed by entry field; Added Sugar and the user's
   own fields by `entry.customFields[id]`; plus "orphans", ids found in
   entries whose definition an older build removed (its Remove modal never
-  touched the entries).
+  touched the entries). Since v344 an orphan is listed only when it has a
+  name; nameless ones are removed by the clean-up below.
 - **Removing the data** (`_trkPurgeFirestore` / `_trkPurgeGuest`): signed in,
   read every entry from the server, decrypt (account key, then set-aside
   keys), drop the key, re-encrypt under the account key, `batch.set` in
@@ -1854,8 +1856,9 @@ Code: the `_trk*` block in `js/journal.js` (after `closeDeleteCustomFieldModal`)
   tracker that is off or has no switch and still has an answer in
   `_allEntries` (counted from the decrypted entries already loaded, no
   reads) — the switchless old Exercise / Gone outside / Smoking / Drugs,
-  "A tracker you removed earlier" ids, and switched-off trackers with data
-  (also listed above). Each row: the count (plus "switched off"), **Edit**
+  named trackers with no definition (v344), and switched-off trackers with
+  data (also listed above). Nothing nameless is listed any more (the v342
+  "A tracker you removed earlier" rows and `trk143.unnamed` are gone). Each row: the count (plus "switched off"), **Edit**
   (an inline panel: Track again switch for a switchable one; the name for
   custom / Alcohol / Added Sugar / switchless / nameless ones — Goals, Budget
   and Emotions have no name to change) and **Delete data** (the same counted
@@ -1871,9 +1874,57 @@ Code: the `_trk*` block in `js/journal.js` (after `closeDeleteCustomFieldModal`)
   deleted. `getCustomFields()` and the sign-in settings read skip those ids,
   so another device's stale `customTrackingFields` can't bring one back.
   Built-ins are just switched off.
+- **Clean-up of nameless leftovers (v344, James 2026-10-17: "Surely these
+  should just be deleted?", then "Or we track the name from before?").**
+  `_trkMaybeAutoClean()` runs after an entry load, in the background, with no
+  UI or prompt (`BB.log` only), at most once per session
+  (`sessionStorage.bbTrkCleaned`, also after a failure: the next session
+  finishes it). Signed in it needs the sign-in `userSettings` read to have
+  come from the server this session (`_trkNoteSettingsRead`: a failure, the
+  5 s timeout or `metadata.fromCache` means no run) and the journal key in
+  memory (never prompts); guests need `onAuthStateChanged` to have answered
+  "no user" (not the 4 s / 20 s fallback). `_trkSortLeftovers` takes every
+  custom id answered in an entry (read from the server / every `entry:*`,
+  not the cache) and:
+  1. **a definition** anywhere: Added Sugar, this device's
+     `customTrackingFields`, or the account's `customTrackingFields` from that
+     fresh read (so a tracker the device hasn't loaded yet is safe) → left alone;
+  2. **a name** anywhere: `labelOverrides.trackCustom_<id>` on the account or
+     `_labelOverride_trackCustom_<id>` on the device, or an Elaborate
+     Responses note line (`<emoji> <label>: <note>` after `___` in the
+     intention) in an entry that answered only that tracker, where exactly one
+     label isn't a step's (every language, `BB.i18n.tAll`) or a defined
+     tracker's, and every such entry agrees → the definition is restored
+     (`{id, label, emoji}`, switch `'false'`, synced): it shows under Old
+     trackers by that name, with Edit / Delete data, and its top-list switch
+     brings it back;
+  3. no definition or name but **answered in the last 14 days** → left in the
+     entries, not listed (another device may still hold its definition, e.g.
+     after two devices' settings overwrote each other's `customTrackingFields`);
+  4. otherwise → **removed from every entry** with the v340 rewrite
+     (`_trkReadFirestore` / `_trkWriteFirestore`, `_trkReadGuest` /
+     `_trkWriteGuest`: decrypt, drop, re-encrypt under the account key, batches
+     of ≤400; guests under the PIN key; entries nothing opens are skipped),
+     plus its leftover `trackCustom_<id>` switch here and in the account's
+     `trackingFields`.
+  Ids in `deletedCustomTrackers` are deleted-with-data by the user, so they
+  never count as a definition or name and any answers an old build wrote back
+  are removed. `trackingFields.trackCustom_<id>` alone is NOT a definition:
+  set-merge never removes those keys, so every field ever made on an account
+  has one, with no name. Idempotent (a second run finds nothing). A manual
+  Delete data waits for a running clean-up. Where names really survive: a
+  custom field's name only ever lived in `customTrackingFields` (replaced
+  whole on every sync) until v342 let Old trackers name a leftover, so a
+  field removed by an older build usually has no name left anywhere the app
+  can read; a journal backup file the user kept still holds the old list,
+  and importing it restores the definitions.
 - **Test**: `node scripts/test-tracker-delete.mjs` (real functions, mocked
   Firestore, real WebCrypto: 950 entries in three batches, partial failure +
-  retry, idempotence, unopenable entries, no key, settings sync).
+  retry, idempotence, unopenable entries, no key, settings sync; v344: the
+  clean-up removes orphans from every entry, keeps an account-only
+  definition, an account name and a note name, waits on a recent one, does
+  nothing on a failed / cached settings read or without the key, runs once,
+  is idempotent, and guests stay PIN-encrypted).
 
 **Home quick check-in labels (v340)**: the bears' names use `trk143.qc.*`
 (the mood names with soft hyphens). `fitLabels()` in `js/index.js` leaves

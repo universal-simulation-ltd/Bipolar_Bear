@@ -1664,7 +1664,15 @@
 //   userSettings.secureEnc only, merged across devices by union, in the
 //   backup, cleared with currentMedList. Touches js/shared/secure-store.js,
 //   js/survival-kit.js, js/journal.js, js/anonymous.js, js/index.js.
-const CACHE_NAME = 'bipolarbear-v343';
+// v344: tracker clean-up (James, 2026-10-17). Once per session, in the
+//   background: answers of custom trackers with no definition anywhere (this
+//   device, or the account's settings read fresh from the server) are
+//   removed from every entry (the v340 encrypted rewrite); ones whose name
+//   survives (labelOverrides, or an Elaborate Responses note) are restored
+//   as switched-off trackers instead; nameless ones answered in the last 14
+//   days wait. Old trackers lists named trackers only; trk143.unnamed gone.
+//   BB.i18n.tAll(key). Touches js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v344';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
