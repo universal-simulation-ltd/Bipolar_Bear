@@ -13552,11 +13552,22 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         outside: document.getElementById('editEntryOutside').value || null,
       };
       try {
+        // Encrypted or not at all, as saveEntry does (this dialog has no
+        // caller today; it must never be the one path that writes plaintext).
         if (currentUser && db) {
-          await db.collection('entries').doc(editingEntry.id).set(updated);
+          if (!(await _requireUserKey())) {
+            if (!_journalKeyDeclined) alert(BB.t('journalKey.offline'));
+            return;
+          }
+          const { id: _docId, ...plain } = updated;
+          const enc = await _userEncrypt(_userCryptoKey, { ...plain, userId: currentUser.uid });
+          await db.collection('entries').doc(editingEntry.id).set({ userId: currentUser.uid, timestamp: plain.timestamp, ...enc });
         } else {
           const key = editingEntry.id || `entry:${editingEntry.timestamp}`;
-          localStorage.setItem(key, JSON.stringify(updated));
+          if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
+          const { id: _lsId, ...plain } = updated;
+          if (BB.storage.get('PinEnabled') === '1' && !_guestCryptoKey) return; // PIN set but locked: never write plaintext
+          localStorage.setItem(key, JSON.stringify(_guestCryptoKey ? await _guestEncrypt(_guestCryptoKey, plain) : plain));
         }
         closeEditModal();
         loadEntries();

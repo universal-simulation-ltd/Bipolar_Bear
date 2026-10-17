@@ -1644,7 +1644,10 @@
 //   "Przygnęb…". trk143.* in 10 languages. Touches journal.html, index.html,
 //   css/journal.css, css/index.css, js/journal.js, js/index.js,
 //   js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v340';
+// v341: saveEditedEntry (the edit dialog; no caller today) encrypts like
+//   saveEntry: account key for signed-in entries, the PIN key for guests,
+//   and never a plaintext write. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v341';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
