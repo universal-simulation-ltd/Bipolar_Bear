@@ -15086,7 +15086,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       // names and switches line up down the list (James, 2026-10-13).
       const _sw = (key, active, name) => `<label class="bb-switch" style="flex-shrink:0;" onclick="event.stopPropagation()"><input type="checkbox"${active ? ' checked' : ''} onchange="toggleField('${key}')" aria-label="${String(name).replace(/"/g, '&quot;')}"><span class="bb-slider"></span></label>`;
       const _iconBtn = (onclick, glyph, label, size) => `<button onclick="event.stopPropagation();${onclick}" aria-label="${label}" title="${label}" style="background:none;border:none;color:var(--text-muted-ink);font-size:${size || '1em'};cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;">${glyph}</button>`;
-      const _row = (key, active, leadHtml, name, sub) => `<div style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
+      const _row = (key, active, leadHtml, name, sub) => `<div data-trk-tid="${_trkTidForPref(key) || ''}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
           <div style="width:36px;flex-shrink:0;display:flex;justify-content:center;">${leadHtml || ''}</div>
           <div onclick="toggleField('${key}')" style="flex:1;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;">
             <div style="font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${name}</div>
@@ -15100,13 +15100,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         : (f.sublabel || '');
       const _renameLbl = BB.t('journal.ui.renameField');
 
-      // Off but still holding answers: listed under "Stopped trackers" below
-      // instead of as a switch here (v340).
-      const _stopped = _trkStopped();
-      const _stoppedIds = new Set(_stopped.map(t => t.tid));
+      // Every tracker with a switch stays in this list, on or off; switching
+      // one on again is how it comes back, history intact. Off trackers that
+      // still hold answers are ALSO listed under "Old trackers" at the bottom
+      // (v342, James 2026-10-17).
+      const _old = _trkStopped();
       const _delLink = tid => `<button type="button" onclick="_trkOpenSheet('${tid}')" class="trk-del-link">🗑️ ${_esc(BB.t('trk143.deleteBtn'))}</button>`;
       const _deletedBuiltin = JSON.parse(localStorage.getItem('deletedBuiltinFields') || '[]');
-      const builtIn = FIELD_PICKER_FIELDS.filter(f => (!f.deletable || !_deletedBuiltin.includes(f.key)) && !_stoppedIds.has(_trkTidForPref(f.key))).map(f => {
+      const builtIn = FIELD_PICKER_FIELDS.filter(f => !f.deletable || !_deletedBuiltin.includes(f.key)).map(f => {
         const active = _editFieldOverrides !== null
           ? !!_editFieldOverrides[f.key]
           : (localStorage.getItem(f.key) !== null
@@ -15151,7 +15152,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         `<button onclick="selectEditPickerEmoji('${e}')" style="font-size:1.25em;background:none;border:none;padding:4px 3px;cursor:pointer;-webkit-tap-highlight-color:transparent;line-height:1;">${e}</button>`
       ).join('');
 
-      const custom = getCustomFields().filter(f => !f.builtin && !_stoppedIds.has('c:' + f.id)).map(f => {
+      const custom = getCustomFields().filter(f => !f.builtin).map(f => {
         const active = _editFieldOverrides !== null
           ? !!_editFieldOverrides[`trackCustom_${f.id}`]
           : localStorage.getItem(`trackCustom_${f.id}`) === 'true';
@@ -15194,19 +15195,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         </div>
       </div>`;
 
-      // Stopped trackers: off the form, answers kept — Track again or Delete data.
-      const stoppedHtml = _stopped.length ? `<div class="trk-stopped" id="trkStoppedSection">
-          <div class="trk-stopped-head">⏸️ ${_esc(BB.t('trk143.stoppedTitle'))}</div>
-          <div class="trk-stopped-desc">${_esc(BB.t('trk143.stoppedDesc'))}</div>
-          ${_stopped.map(t => `<div class="trk-stopped-row" data-tid="${_esc(t.tid)}">
-            <div class="trk-stopped-name">${_esc(t.label)}<span class="trk-stopped-count">${_esc(BB.t('trk143.entries', { count: t.count }))}</span></div>
-            <div class="trk-stopped-btns">
-              ${t.picker ? `<button type="button" class="trk-again-btn" onclick="_trkTrackAgain('${_esc(t.tid)}')">${_esc(BB.t('trk143.trackAgain'))}</button>` : ''}
-              <button type="button" class="trk-deldata-btn" onclick="_trkOpenSheet('${_esc(t.tid)}','confirm')">${_esc(BB.t('trk143.deleteData'))}</button>
-            </div>
-          </div>`).join('')}
-        </div>` : '';
-      list.innerHTML = builtIn + custom + stoppedHtml;
+      list.innerHTML = builtIn + custom + _trkOldHtml(_old);
+      _trkWireOld();
       const addRow = document.getElementById('fieldPickerAddRow');
       if (addRow) addRow.innerHTML = addForm;
     }
@@ -15218,6 +15208,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const _hint = document.getElementById('fmCustomFieldHint');
         if (_hint) _hint.style.display = 'none';
       }
+      _trkOldOpen = false; _trkOldEditTid = null; // Old trackers starts closed each time
       renderFieldPickerList();
       document.getElementById('fieldPickerModal').classList.add('active');
       // Set up fade indicator — hide when scrolled to bottom
@@ -15490,7 +15481,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       (_allEntries || []).forEach(e => Object.keys((e && e.customFields) || {}).forEach(id => {
         if (seen.has(id) || !_trkVal(e.customFields[id])) return;
         seen.add(id);
-        list.push({ tid: 'c:' + id, id, cid: id, pref: 'trackCustom_' + id, kind: 'orphan', picker: false, label: '🏷️ ' + _tt('trk143.unnamed') });
+        list.push({ tid: 'c:' + id, id, cid: id, pref: 'trackCustom_' + id, kind: 'orphan', picker: false, label: localStorage.getItem('_labelOverride_trackCustom_' + id) || ('🏷️ ' + _tt('trk143.unnamed')) });
       }));
       return list;
     }
@@ -15729,9 +15720,151 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       _trkCloseSheet();
       if (t) _trkSetOn(t, false);
     }
-    function _trkTrackAgain(tid) {
+
+    // ── Old trackers (v342, James 2026-10-17: "all old ones at bottom in a
+    // collapsed collapsible … a list at top to reactivate … with the switch").
+    // A <details> at the bottom of Track Data, closed each time the sheet
+    // opens: every tracker that is off (or has no switch any more) and still
+    // has answers — the same set _trkStopped() counts. Off trackers that have
+    // a switch are ALSO in the list above, switched off. Each row: Edit (the
+    // switch to track it again, and its name) and Delete data (the counted
+    // confirm). Clicks go through data-trk-act, so ids never sit in onclick.
+    var _trkOldOpen = false;     // the <details> survives re-renders while open
+    var _trkOldEditTid = null;   // the row whose Edit panel is open
+    function _trkOldCanRename(t) { return t.kind !== 'builtin' || !t.picker || t.id === 'alcohol'; }
+    function _trkOldName(t) {
+      if (t.kind === 'custom') {
+        const f = getCustomFields().find(x => x.id === t.cid);
+        return { emoji: (f && f.emoji) || '', name: f ? f.label : '' };
+      }
+      if (t.kind === 'orphan' && !localStorage.getItem('_labelOverride_trackCustom_' + t.cid)) return { emoji: '🏷️', name: '', placeholder: _tt('trk143.unnamed') };
+      const lbl = String(t.label || '');
+      const m = lbl.match(/^(\S+)\s+(.*)$/);
+      if (m && !/[\p{L}\p{N}]/u.test(m[1])) return { emoji: m[1], name: m[2] };
+      return { emoji: '', name: lbl };
+    }
+    function _trkOldHtml(old) {
+      if (!old.length) return '';
+      const rows = old.map(t => {
+        const open = _trkOldEditTid === t.tid;
+        const meta = BB.t('trk143.entries', { count: t.count }) + (t.picker ? ' · ' + BB.t('trk143.old.off') : '');
+        let panel = '';
+        if (open) {
+          const sw = t.picker ? `<div class="trk-old-line"><span class="trk-old-lbl">${_esc(BB.t('trk143.trackAgain'))}</span><label class="bb-switch" style="flex-shrink:0;"><input type="checkbox" data-trk-act="on" aria-label="${_esc(BB.t('trk143.trackAgain') + ': ' + t.label)}"><span class="bb-slider"></span></label></div>` : '';
+          let ren = '';
+          if (_trkOldCanRename(t)) {
+            const n = _trkOldName(t);
+            ren = `<div class="trk-old-line">${n.emoji ? `<span class="trk-old-emoji" aria-hidden="true">${_esc(n.emoji)}</span>` : ''}<input id="trkOldNameInput" class="trk-old-input" type="text" value="${_esc(n.name)}" placeholder="${_esc(n.placeholder || '')}" maxlength="${t.kind === 'custom' ? 15 : 20}" aria-label="${_esc(BB.t('trk143.old.name'))}"><button type="button" class="trk-old-save" data-trk-act="save">${_esc(BB.t('common.save'))}</button></div>`;
+          }
+          panel = `<div class="trk-old-panel" id="trkOldPanel">${sw}${ren}</div>`;
+        }
+        return `<div class="trk-old-row${open ? ' is-editing' : ''}" data-tid="${_esc(t.tid)}">
+          <div class="trk-old-main">
+            <div class="trk-old-name">${_esc(t.label)}<span class="trk-old-count">${_esc(meta)}</span></div>
+            <div class="trk-old-btns">
+              <button type="button" class="trk-old-edit-btn" data-trk-act="edit" aria-expanded="${open}"${open ? ' aria-controls="trkOldPanel"' : ''}>${_esc(BB.t('trk143.old.edit'))}</button>
+              <button type="button" class="trk-deldata-btn" data-trk-act="del">${_esc(BB.t('trk143.deleteData'))}</button>
+            </div>
+          </div>${panel}
+        </div>`;
+      }).join('');
+      return `<details class="trk-old" id="trkOldSection"${_trkOldOpen ? ' open' : ''}>
+          <summary class="trk-old-sum"><span class="bb-note-chev trk-old-chev" aria-hidden="true">›</span><span>${_esc(BB.t('trk143.old.title'))} (${old.length})</span></summary>
+          <div class="trk-old-desc">${_esc(BB.t('trk143.old.desc'))}</div>
+          ${rows}
+        </details>`;
+    }
+    /** Scroll so the opened section (or as much of it as fits, from its top) is on screen. */
+    function _trkRevealIn(el) {
+      requestAnimationFrame(() => {
+        const box = document.getElementById('fieldPickerList');
+        if (!box || !el) return;
+        const smooth = !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+        const b = box.getBoundingClientRect(), r = el.getBoundingClientRect();
+        let d = 0;
+        if (r.height > b.height || r.top < b.top) d = r.top - b.top;
+        else if (r.bottom > b.bottom) d = r.bottom - b.bottom;
+        if (d) box.scrollBy({ top: d, behavior: smooth ? 'smooth' : 'auto' });
+      });
+    }
+    function _trkWireOld() {
+      const list = document.getElementById('fieldPickerList');
+      const det = document.getElementById('trkOldSection');
+      if (det) det.addEventListener('toggle', () => {
+        const was = _trkOldOpen;
+        _trkOldOpen = det.open;
+        if (!det.open) _trkOldEditTid = null;
+        if (det.open && !was) _trkRevealIn(det);
+      });
+      if (!list || list._trkOldWired) return;
+      list._trkOldWired = true;
+      const tidOf = el => { const row = el.closest('.trk-old-row'); return row ? row.dataset.tid : null; };
+      list.addEventListener('click', ev => {
+        const b = ev.target.closest('[data-trk-act]');
+        if (!b || !list.contains(b) || b.tagName === 'INPUT') return;
+        const tid = tidOf(b);
+        if (!tid) return;
+        if (b.dataset.trkAct === 'edit') _trkOldEdit(tid);
+        else if (b.dataset.trkAct === 'del') _trkOpenSheet(tid, 'confirm');
+        else if (b.dataset.trkAct === 'save') _trkOldSave(tid);
+      });
+      list.addEventListener('change', ev => {
+        const i = ev.target.closest && ev.target.closest('input[data-trk-act="on"]');
+        if (i && i.checked) { const tid = tidOf(i); if (tid) _trkOldSwitchOn(tid); }
+      });
+      list.addEventListener('keydown', ev => {
+        if (ev.key === 'Enter' && ev.target.id === 'trkOldNameInput') { const tid = tidOf(ev.target); if (tid) _trkOldSave(tid); }
+      });
+    }
+    function _trkOldEdit(tid) {
+      _trkOldEditTid = _trkOldEditTid === tid ? null : tid;
+      _editingBuiltinKey = null; _editingFieldId = null;
+      renderFieldPickerList();
+      const row = document.querySelector('#trkOldSection .trk-old-row.is-editing');
+      if (row) {
+        _trkRevealIn(row);
+        const f = row.querySelector('#trkOldNameInput') || row.querySelector('input[data-trk-act="on"]');
+        if (f) try { f.focus({ preventScroll: true }); } catch (_) {}
+      } else {
+        const btn = [...document.querySelectorAll('#trkOldSection .trk-old-row')].find(r => r.dataset.tid === tid);
+        const e = btn && btn.querySelector('[data-trk-act="edit"]');
+        if (e) try { e.focus({ preventScroll: true }); } catch (_) {}
+      }
+    }
+    /** Rename from the Old trackers row: a custom tracker's label, or the name override of a built-in / nameless one. */
+    function _trkOldSave(tid) {
       const t = _trkDescribe(tid);
-      if (t && t.picker) _trkSetOn(t, true);
+      const input = document.getElementById('trkOldNameInput');
+      if (!t || !input || !_trkOldCanRename(t)) return;
+      const name = input.value.trim();
+      if (t.kind === 'custom') {
+        if (!name) return;
+        let fields = [];
+        try { fields = JSON.parse(localStorage.getItem('customTrackingFields') || '[]'); } catch (_) {}
+        localStorage.setItem('customTrackingFields', JSON.stringify((Array.isArray(fields) ? fields : []).map(f => (f && f.id === t.cid) ? { ...f, label: name } : f)));
+      } else {
+        const em = _trkOldName(t).emoji;
+        if (name) localStorage.setItem('_labelOverride_' + t.pref, (em ? em + ' ' : '') + name);
+        else localStorage.removeItem('_labelOverride_' + t.pref);
+      }
+      _trkOldEditTid = null;
+      applyTrackingPrefs();
+      if (typeof renderCustomTrackingRows === 'function') renderCustomTrackingRows();
+      renderFieldPickerList();
+      syncTrackingPrefsToFirestore();
+    }
+    /** The Old trackers switch: back on the form, history intact; its row above lights up. */
+    function _trkOldSwitchOn(tid) {
+      const t = _trkDescribe(tid);
+      if (!t || !t.picker) return;
+      _trkOldEditTid = null;
+      _trkSetOn(t, true);
+      const row = [...document.querySelectorAll('#fieldPickerList [data-trk-tid]')].find(r => r.dataset.trkTid === tid);
+      if (row) {
+        row.classList.add('trk-flash');
+        _trkRevealIn(row);
+        setTimeout(() => row.classList.remove('trk-flash'), 1800);
+      }
     }
     function _trkAskConfirm() {
       if (!_trkSheet) return;
@@ -15777,7 +15910,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     window._trkOpenSheet = _trkOpenSheet;
     window._trkCloseSheet = _trkCloseSheet;
     window._trkStop = _trkStop;
-    window._trkTrackAgain = _trkTrackAgain;
+    window._trkOldEdit = _trkOldEdit;
+    window._trkOldSave = _trkOldSave;
+    window._trkOldSwitchOn = _trkOldSwitchOn;
     window._trkAskConfirm = _trkAskConfirm;
     window._trkConfirmDelete = _trkConfirmDelete;
 
@@ -15841,6 +15976,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const v = localStorage.getItem('_labelOverride_' + f.key);
         if (v) labelOverrides[f.key] = v; else labelOverrides[f.key] = null;
       });
+      // Names given under Old trackers (v342): the switchless built-ins, and
+      // nameless trackers still on entries.
+      _TRK_BUILTINS.filter(b => !b.picker).forEach(b => { labelOverrides[b.pref] = localStorage.getItem('_labelOverride_' + b.pref) || null; });
+      const _ownIds = new Set(getCustomFields().map(f => f.id));
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('_labelOverride_trackCustom_') && !_ownIds.has(k.slice('_labelOverride_trackCustom_'.length))) labelOverrides[k.slice('_labelOverride_'.length)] = localStorage.getItem(k);
+      }
       db.collection('userSettings').doc(currentUser.uid).set(
         { trackingFields: prefs, customTrackingFields: getCustomFields(), labelOverrides }, { merge: true }
       ).catch(() => {});

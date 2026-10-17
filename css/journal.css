@@ -2807,7 +2807,8 @@ html.theme-dark #pdfLeaveOutRule { border-top-color: var(--dk-line) !important; 
 
 /* ── Track Data: stop or delete a tracker (v340). The sheet offers Stop
    tracking (the safe default) or Delete with its data (red, then a counted
-   confirm); "Stopped trackers" lists off trackers that still have answers. ── */
+   confirm); "Old trackers" (v342, a closed <details> at the bottom) lists
+   off trackers that still have answers, with Edit / Delete data. ── */
 .trk-del-link {
   background: none; border: none; color: #c92a2a; font-size: 0.82em; font-weight: 600;
   padding: 8px 2px 2px; cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -2831,31 +2832,54 @@ html.theme-dark #pdfLeaveOutRule { border-top-color: var(--dk-line) !important; 
 .trk-danger-btn { background: #c92a2a !important; color: #fff !important; border-color: #c92a2a !important; }
 .trk-progress { height: 8px; border-radius: 4px; background: #e9ecef; overflow: hidden; margin: 6px 0 10px; }
 .trk-progress > div { height: 100%; background: #c92a2a; transition: width 0.2s; }
-.trk-stopped { margin-top: 14px; padding-top: 10px; border-top: 2px solid #f0f0f0; }
-.trk-stopped-head { font-size: 0.86em; font-weight: 700; color: #495057; }
-.trk-stopped-desc { font-size: 0.74em; color: var(--text-muted-ink); margin: 2px 0 4px; line-height: 1.3; }
-.trk-stopped-row {
-  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 8px;
-  padding: 8px 0; border-bottom: 1px solid #f0f0f0;
+.trk-old { margin-top: 14px; padding-top: 6px; border-top: 2px solid #f0f0f0; }
+.trk-old-sum {
+  display: flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; list-style: none;
+  font-size: 0.88em; font-weight: 700; color: #495057; -webkit-tap-highlight-color: transparent;
 }
-.trk-stopped-name { flex: 1 1 120px; min-width: 0; font-size: 0.9em; color: #495057; overflow-wrap: anywhere; }
-.trk-stopped-count { display: block; font-size: 0.8em; color: var(--text-muted-ink); margin-top: 1px; }
-.trk-stopped-btns { display: flex; gap: 6px; flex-shrink: 0; }
-.trk-again-btn, .trk-deldata-btn {
+.trk-old-sum::-webkit-details-marker { display: none; }
+.trk-old-chev { display: inline-block; width: 12px; font-size: 1.15em; line-height: 1; color: var(--brand-ink); transition: transform 0.2s; }
+.trk-old-desc { font-size: 0.74em; color: var(--text-muted-ink); margin: 0 0 4px; line-height: 1.3; }
+.trk-old-row { padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+.trk-old-row:last-child { border-bottom: none; }
+.trk-old-main { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 8px; }
+.trk-old-name { flex: 1 1 120px; min-width: 0; font-size: 0.9em; color: #495057; overflow-wrap: anywhere; }
+.trk-old-count { display: block; font-size: 0.8em; color: var(--text-muted-ink); margin-top: 1px; }
+.trk-old-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.trk-old-panel { margin-top: 8px; padding: 8px 10px; border-radius: 10px; background: #fafafa; display: flex; flex-direction: column; gap: 8px; }
+.trk-old-line { display: flex; align-items: center; gap: 8px; }
+.trk-old-lbl { flex: 1; min-width: 0; font-size: 0.86em; color: #495057; overflow-wrap: anywhere; }
+.trk-old-emoji { font-size: 1.15em; flex-shrink: 0; }
+.trk-old-input {
+  flex: 1; min-width: 0; height: 38px; padding: 0 10px; border: 1.5px solid #e9ecef; border-radius: 8px;
+  font: inherit; font-size: 0.9em; box-sizing: border-box; background: #fff; color: inherit;
+}
+.trk-old-save {
+  height: 38px; box-sizing: border-box; background: var(--brand-btn); color: var(--brand-btn-text); box-shadow: var(--brand-btn-ring); border: none; border-radius: 8px;
+  padding: 0 12px; font: inherit; font-size: 0.85em; font-weight: 600; cursor: pointer; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+#fieldPickerList [data-trk-tid].trk-flash { background: #fff4e0; border-radius: 8px; transition: background 0.3s; }
+.trk-old-edit-btn, .trk-deldata-btn {
   min-height: 34px; padding: 0 10px; border-radius: 8px; font: inherit; font-size: 0.78em; font-weight: 600;
   cursor: pointer; background: #fff; -webkit-tap-highlight-color: transparent;
 }
-.trk-again-btn { border: 1.5px solid var(--brand-primary); color: var(--brand-ink); }
+.trk-old-edit-btn { border: 1.5px solid var(--brand-primary); color: var(--brand-ink); }
+.trk-old-edit-btn[aria-expanded="true"] { background: #fff4e0; }
 .trk-deldata-btn { border: 1.5px solid #f1c0c0; color: #c92a2a; }
-@media (prefers-reduced-motion: reduce) { .trk-progress > div { transition: none; } }
-html.theme-dark .trk-sheet .trk-lead, html.theme-dark .trk-stopped-head, html.theme-dark .trk-stopped-name { color: var(--dk-text-2); }
-html.theme-dark .trk-opt, html.theme-dark .trk-again-btn, html.theme-dark .trk-deldata-btn { background: var(--dk-surface-2); }
-html.theme-dark .trk-opt-desc, html.theme-dark .trk-stopped-desc, html.theme-dark .trk-stopped-count { color: var(--dk-muted); }
+@media (prefers-reduced-motion: reduce) { .trk-progress > div, .trk-old-chev, #fieldPickerList [data-trk-tid].trk-flash { transition: none; } }
+html.theme-dark .trk-sheet .trk-lead, html.theme-dark .trk-old-sum, html.theme-dark .trk-old-name, html.theme-dark .trk-old-lbl { color: var(--dk-text-2); }
+html.theme-dark .trk-opt, html.theme-dark .trk-old-edit-btn, html.theme-dark .trk-deldata-btn, html.theme-dark .trk-old-input { background: var(--dk-surface-2); }
+html.theme-dark .trk-old-input { border-color: var(--dk-line); }
+html.theme-dark .trk-old-panel { background: var(--dk-surface-3); }
+html.theme-dark .trk-old-edit-btn[aria-expanded="true"], html.theme-dark #fieldPickerList [data-trk-tid].trk-flash { background: #4a3a26; }
+html.theme-dark .trk-old-chev { color: var(--brand-primary); }
+html.theme-dark .trk-opt-desc, html.theme-dark .trk-old-desc, html.theme-dark .trk-old-count { color: var(--dk-muted); }
 html.theme-dark .trk-del-link, html.theme-dark .trk-opt-danger, html.theme-dark .trk-deldata-btn,
 html.theme-dark .trk-sheet .trk-warn { color: #ff8f8f; }
 html.theme-dark .trk-opt-danger .trk-opt-desc { color: #f2a7a7; }
 html.theme-dark .trk-opt-danger, html.theme-dark .trk-deldata-btn { border-color: #7a3434; }
 html.theme-dark .trk-danger-btn { background: #b02525 !important; border-color: #b02525 !important; }
-html.theme-dark .trk-stopped { border-top-color: var(--dk-line); }
-html.theme-dark .trk-stopped-row { border-bottom-color: var(--dk-line); }
+html.theme-dark .trk-old { border-top-color: var(--dk-line); }
+html.theme-dark .trk-old-row { border-bottom-color: var(--dk-line); }
 html.theme-dark .trk-progress { background: var(--dk-surface-3); }

@@ -1809,11 +1809,29 @@ Code: the `_trk*` block in `js/journal.js` (after `closeDeleteCustomFieldModal`)
   rest. Only after the data: `_trkForget` drops the definition, its switch,
   its `_labelOverride_*` and its PDF leave-out tick; the draft, the form's
   answers and `_allEntries` lose it; then `loadEntries()`.
-- **Stopped trackers** (bottom of Track Data, hidden when empty, not while
-  editing an entry): every tracker that is off (or has no switch) and still
-  has an answer in `_allEntries` — counted from the decrypted entries already
-  loaded, no reads. Track again (trackers with a switch) or Delete data.
-  Those rows are not repeated as switches above.
+- **Layout (v342, James 2026-10-17: "all old ones at bottom in a collapsed
+  collapsible … a list at top to reactivate emotions with the switch").**
+  *Top*: one list of every tracker with a switch (Goals, Budget, Emotions,
+  Alcohol, Added Sugar, the user's own), on or off. A stopped tracker stays
+  there switched off; switching it on is how it comes back, history intact.
+  Rows carry `data-trk-tid`. The ✏️ edit row keeps rename and Delete….
+  *Bottom*: **Old trackers (N)**, a `<details id="trkOldSection">`, closed
+  each time the sheet opens (`_trkOldOpen` keeps it open across re-renders;
+  hidden when N=0 and while editing one entry). N is `_trkStopped()`: every
+  tracker that is off or has no switch and still has an answer in
+  `_allEntries` (counted from the decrypted entries already loaded, no
+  reads) — the switchless old Exercise / Gone outside / Smoking / Drugs,
+  "A tracker you removed earlier" ids, and switched-off trackers with data
+  (also listed above). Each row: the count (plus "switched off"), **Edit**
+  (an inline panel: Track again switch for a switchable one; the name for
+  custom / Alcohol / Added Sugar / switchless / nameless ones — Goals, Budget
+  and Emotions have no name to change) and **Delete data** (the same counted
+  red confirm). Opening the section, or a row's Edit, scrolls it fully into
+  the list's view (`_trkRevealIn`, or its top when taller). Clicks go through
+  `data-trk-act` with one delegated listener, so tracker ids never sit in
+  inline JS. A name given to a switchless built-in or a nameless tracker is
+  a `_labelOverride_<pref>`, synced in `labelOverrides`. Strings
+  `trk143.old.*`.
 - **Sync**: a deleted custom tracker's id goes in `deletedCustomTrackers`
   (localStorage) and `userSettings/{uid}.deletedTrackers` (arrayUnion), and
   `trackingFields.trackCustom_<id>` / `labelOverrides.trackCustom_<id>` are

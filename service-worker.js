@@ -1647,7 +1647,15 @@
 // v341: saveEditedEntry (the edit dialog; no caller today) encrypts like
 //   saveEntry: account key for signed-in entries, the PIN key for guests,
 //   and never a plaintext write. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v341';
+// v342: Track Data layout (James, 2026-10-17). Every tracker with a switch
+//   stays in the one list at the top, on or off (switch one on to bring it
+//   back); the "Stopped trackers" block is gone. A folded "Old trackers (N)"
+//   <details> at the bottom lists trackers that are off or switchless but
+//   still have answers, each with its count, Edit (Track again switch /
+//   name) and Delete data (the v340 counted confirm and purge, unchanged).
+//   trk143.old.* in 10 languages. Touches css/journal.css, js/journal.js,
+//   js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v342';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
