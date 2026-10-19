@@ -94,7 +94,24 @@
     + SHEETS.map(function (s) { return 'html.nf ' + s[0] + '>' + s[1] + '::before'; }).join(',')
     +   '{content:"";display:block;flex:none;width:36px;height:5px;border-radius:3px;'
     +   'background:rgba(128,128,128,.45);margin:-12px auto 14px}'
-    + '@media (prefers-reduced-motion:reduce){html.nf *{animation:none!important}}';
+    + '@media (prefers-reduced-motion:reduce){html.nf *{animation:none!important}}'
+    // Press feedback on a row that opens (set by the touch code below).
+    + 'html.nf .nf-press{filter:brightness(.92)}html.theme-dark.nf .nf-press{filter:brightness(1.25)}'
+    // "← Home" as a plain back control in the top bar, not a filled pill.
+    + 'html.nf .home-link-journal.home-link-journal,html.nf .home-link-btn.home-link-btn,html.nf .board-back-btn.board-back-btn{background:none!important;border:0!important;'
+    +   'box-shadow:none!important;padding:10px 6px!important;min-height:44px;display:inline-flex;align-items:center;'
+    +   'color:var(--brand-ink,#b35c00)!important;font-weight:700;font-size:1.02em}'
+    + 'html.theme-dark.nf .home-link-journal,html.theme-dark.nf .home-link-btn{color:var(--brand-primary,#ff9500)!important}'
+    // Journal settings: each setting a grouped row, like a phone's Settings.
+    + 'html.nf #settingsContent details,html.nf #guestPinRow,html.nf #appLockRow,html.nf #bioUnlockRow,'
+    +   'html.nf #settingsContent div:has(> label.bb-switch),html.nf #settingsContent div:has(> input[type="time"]){background:rgba(127,127,127,.10);border-radius:12px;'
+    +   'padding:12px 14px!important;margin:0 0 8px!important;box-sizing:border-box}'
+    + 'html.nf #settingsContent details > summary{padding:2px 0!important;min-height:40px}'
+    // Small tap targets on the board (Apple's minimum is 44pt).
+    + 'html.nf .thread-close-btn{min-width:44px;min-height:44px}'
+    + 'html.nf .like-btn,html.nf .comment-btn{min-height:40px}'
+    // Sheets measure against the visible viewport, so the keyboard can't hide a Send button.
+    + 'html.nf .sheet{max-height:90dvh}';
   var styleEl = document.createElement('style');
   styleEl.id = 'nf-style';
   styleEl.textContent = css;
@@ -202,7 +219,27 @@
     var m = match(e.target);
     if (!m) return;
     g = { m: m, row: m.row, x0: tt.clientX, y0: tt.clientY, base: m.row === openRow ? -(m.row._nfW || 0) : 0, lock: null, off: 0, armed: false };
+    // Highlight a row that opens once the finger has rested on it a moment
+    // (not straight away, so a scroll doesn't flash every row it passes).
+    if (m.rule.open && m.row !== openRow && !within(e.target, 'button,a,[onclick]')) {
+      var row = m.row;
+      pressX = tt.clientX; pressY = tt.clientY;
+      pressTimer = setTimeout(function () { row.classList.add('nf-press'); pressed = row; }, 90);
+    }
   }, { passive: true, capture: true });
+  var pressTimer = null, pressed = null, pressX = 0, pressY = 0;
+  function unpress() {
+    clearTimeout(pressTimer); pressTimer = null;
+    if (pressed) { var p = pressed; pressed = null; setTimeout(function () { p.classList.remove('nf-press'); }, 120); }
+  }
+  document.addEventListener('touchmove', function (e) {
+    if (!pressTimer && !pressed) return;
+    var tt = e.touches[0];
+    if (Math.abs(tt.clientX - pressX) < 8 && Math.abs(tt.clientY - pressY) < 8) return;
+    if (pressTimer || pressed) { clearTimeout(pressTimer); pressTimer = null; if (pressed) { pressed.classList.remove('nf-press'); pressed = null; } }
+  }, { passive: true, capture: true });
+  document.addEventListener('touchend', unpress, { passive: true, capture: true });
+  document.addEventListener('touchcancel', unpress, { passive: true, capture: true });
 
   document.addEventListener('touchmove', function (e) {
     if (!g) return;
@@ -426,6 +463,8 @@
       if (del) a.push({ label: t('common.delete', 'Delete'), kind: 'del', run: function () { del.click(); } });
       return a;
     } });
+  // 💊 My medicines (js/journal-meds.js): side effects, blood levels, past changes.
+  api.rows({ row: '.meds-row', del: '.meds-del' });
   // My safety plan: no edit, so a swipe is the only way to remove an item.
   api.rows({ row: '.bbsp-list > li', del: '.bbsp-rm' });
 })();
