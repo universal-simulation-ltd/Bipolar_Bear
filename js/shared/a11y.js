@@ -285,16 +285,30 @@
       else if (e.shiftKey && (a === first || a === d)) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
     } else if (e.key === 'Escape' && !d.matches(root.a11y.lockSelector)) {
-      // Close it the way a tap on the backdrop would; failing that, its own
-      // close / cancel button.
-      d.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-      setTimeout(function () {
-        if (!visible(d)) return;
-        var c = d.querySelector('[data-a11y-close], .close-btn, .thread-close-btn, .steps-modal-close, .confirm-btn-no, [aria-label="' + tr('a11y.close', 'Close') + '"]');
-        if (c) c.click();
-      }, 30);
+      closeDialog(d);
     }
   }, true);
+
+  // Close it the way a tap on the backdrop would; failing that, its own
+  // close / cancel button.
+  function closeDialog(d) {
+    d.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    setTimeout(function () {
+      if (!visible(d)) return;
+      var c = d.querySelector('[data-a11y-close], .close-btn, .thread-close-btn, .steps-modal-close, .confirm-btn-no, [aria-label="' + tr('a11y.close', 'Close') + '"]');
+      if (c) c.click();
+    }, 30);
+  }
+  // For Android's back button (js/anonymous.js): close the top dialog as
+  // Escape would. True when a dialog was open, closed or not (a lock screen
+  // or a must-answer prompt stays, and the back press is used up on it).
+  root.a11y.closeTop = function () {
+    scanDialogs();
+    var d = topDialog();
+    if (!d) return false;
+    if (!d.matches(root.a11y.lockSelector)) closeDialog(d);
+    return true;
+  };
 
   function start() {
     scanClickables(document.body);

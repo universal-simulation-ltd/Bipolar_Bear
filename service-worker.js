@@ -1725,7 +1725,17 @@
 //   js/shared/i18n-meds.js (BB.i18n.extend), 10 languages. Touches
 //   journal.html, js/journal.js, js/journal-insights.js, js/index.js,
 //   js/survival-kit.js, js/shared/i18n.js, js/shared/secure-store.js.
-const CACHE_NAME = 'bipolarbear-v352';
+// v353: 1.44 native work. The daily reminder's five mood buttons: a tap is
+//   queued by the app (no opening it) and filed, encrypted, on the next open
+//   (js/shared/mood-queue.js, new; journal.js _fileReminderMoods; index.js
+//   opens the journal when taps are waiting). "Unlock with Face ID / Touch
+//   ID / your fingerprint" in Settings, off by default, PIN as the fallback
+//   (js/shared/bio-unlock.js, new; index.js lock screen). Bipolar Anonymous:
+//   Android back closes a sheet, then goes to the previous tab, then leaves
+//   (js/anonymous.js; BB.a11y.closeTop in js/shared/a11y.js). Strings mq144.*,
+//   bio144.*, 10 languages. Touches index.html, journal.html, js/index.js,
+//   js/journal.js, js/anonymous.js, js/shared/a11y.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v353';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1773,6 +1783,8 @@ const STATIC_ASSETS = [
   './js/shared/meds-reminder.js',
   './js/shared/pin-guard.js',
   './js/shared/pin-reauth.js',
+  './js/shared/mood-queue.js',
+  './js/shared/bio-unlock.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',
 

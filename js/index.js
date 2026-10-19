@@ -2959,7 +2959,12 @@ function _handleIndexJournalNav() {
     function _afterPinUnlock() {
       const mood = _pinPendingMood;
       _pinPendingMood = null;
-      if (!mood) return false;
+      if (!mood) {
+        // Moods tapped on the daily reminder wait for the journal to file
+        // them (js/shared/mood-queue.js). Checked once the overlay is gone.
+        setTimeout(() => { if (window.BB && BB.moodQueue) BB.moodQueue.openJournalIfPending(); }, 0);
+        return false;
+      }
       location.replace('journal.html?mood=' + encodeURIComponent(mood));
       return true;
     }
@@ -3035,6 +3040,18 @@ function _handleIndexJournalNav() {
     } else {
       _initPinLock();
     }
+
+    // Moods tapped on the daily reminder's buttons (1.44): with any waiting,
+    // open the journal, which files them encrypted. Not while the PIN screen
+    // is up (the unlock above checks again). Also when the app comes back to
+    // the front, or the native side reports a tap while it is open.
+    (function () {
+      function _check() { if (window.BB && BB.moodQueue) BB.moodQueue.openJournalIfPending(); }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(_check, 0));
+      else setTimeout(_check, 0);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) _check(); });
+      window.addEventListener('bbmoodqueue', _check);
+    })();
 
     let _idxPinBuf = '';
 
@@ -3123,6 +3140,91 @@ function _handleIndexJournalNav() {
       }
       _idxPinRight();
     }
+
+    // ── Unlock with Face ID / Touch ID / fingerprint (bio144, 1.44) ──
+    // Opt-in in the journal's Settings (BB.bioUnlock, js/shared/bio-unlock.js).
+    // When it is on, the keypad's empty corner holds a Face ID / fingerprint
+    // button, and the scan is offered once each time the lock screen comes
+    // up. The keypad stays: cancelling or failing the scan leaves the PIN.
+    // A guest's PIN is their encryption key, so a scan hands back the key kept
+    // for this PIN (or, if the PIN has changed since, nothing: type it).
+    const _IDX_BIO_GLYPH = {
+      face: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M9 9v1.5M15 9v1.5M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0"/></svg>',
+      finger: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5A8 8 0 0 1 20 12c0 2-.3 3.6-.8 5"/><path d="M4 11a8 8 0 0 1 .9-3.6M4.2 15.5c.5-1.4.8-2.9.8-4.5"/><path d="M8 12a4 4 0 0 1 8 0c0 3-.6 5.6-1.6 8"/><path d="M12 12c0 3.4-.8 6.4-2.3 9M7.8 19.5c.8-1.5 1.2-3.2 1.2-5"/></svg>',
+    };
+    function _idxBioMode() {
+      const _isNat = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+      if (_isNat && BB.storage.get('NativePinEnabled') === '1') return 'native';
+      if (!_hasCachedFbUser() && BB.storage.get('GuestPinSalt')) return 'guest';
+      return null;
+    }
+    function _idxPinScreenUp() {
+      const ov = document.getElementById('guestPinOverlay');
+      return !!(ov && ov.style.display === 'flex');
+    }
+    let _idxBioBusy = false;
+    async function _idxBioSync(offer) {
+      const btn = document.getElementById('idxBioBtn');
+      if (!btn) return;
+      if (!(window.BB && BB.bioUnlock) || !_idxBioMode() || !BB.bioUnlock.isOn() || !_idxPinScreenUp()) { btn.hidden = true; return; }
+      const a = await BB.bioUnlock.available();
+      if (!a.ok || !_idxPinScreenUp()) { btn.hidden = true; return; }
+      btn.innerHTML = _IDX_BIO_GLYPH[a.type === 'face' ? 'face' : 'finger'];
+      btn.setAttribute('aria-label', BB.bioUnlock.label(a.type));
+      btn.title = BB.bioUnlock.label(a.type);
+      btn.hidden = false;
+      if (offer) idxBioUnlock();
+    }
+    async function idxBioUnlock() {
+      if (_idxBioBusy || !(window.BB && BB.bioUnlock)) return;
+      // The app is in the background: offer it when it is back.
+      if (document.hidden) {
+        document.addEventListener('visibilitychange', function _once() {
+          if (document.hidden) return;
+          document.removeEventListener('visibilitychange', _once);
+          if (_idxPinScreenUp()) idxBioUnlock();
+        });
+        return;
+      }
+      _idxBioBusy = true;
+      try {
+        const mode = _idxBioMode();
+        const r = await BB.bioUnlock.unlock(mode);
+        if (!_idxPinScreenUp()) return;
+        if (r.ok) {
+          if (mode === 'guest') sessionStorage.setItem('bb_guest_key', r.guestKey);
+          _idxPinBuf = '';
+          _idxRenderDots(0);
+          document.getElementById('idxPinError').textContent = '';
+          _idxPinRight();
+        } else if (r.reason === 'keyGone' || r.reason === 'off') {
+          const btn = document.getElementById('idxBioBtn');
+          if (btn) btn.hidden = true;
+          if (r.reason === 'keyGone') document.getElementById('idxPinError').textContent = BB.bioUnlock.text('keyGone');
+        }
+      } finally {
+        _idxBioBusy = false;
+      }
+    }
+    window.idxBioUnlock = idxBioUnlock;
+    // Each time the lock screen comes up (load, the 5-minute and background
+    // relocks), offer the scan once.
+    (function () {
+      function _wire() {
+        const ov = document.getElementById('guestPinOverlay');
+        if (!ov) return;
+        let _was = _idxPinScreenUp();
+        new MutationObserver(() => {
+          const up = _idxPinScreenUp();
+          if (up && !_was) _idxBioSync(true);
+          if (!up) { const b = document.getElementById('idxBioBtn'); if (b) b.hidden = true; }
+          _was = up;
+        }).observe(ov, { attributes: true, attributeFilter: ['style'] });
+        if (_was) _idxBioSync(true);
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(_wire, 0));
+      else setTimeout(_wire, 0);
+    })();
 
     function idxPinDel() {
       if (_idxPinBuf.length === 0) return;

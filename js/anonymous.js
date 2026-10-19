@@ -6851,3 +6851,63 @@ if ('serviceWorker' in navigator && !(window.isNative && window.isNative())) {
     navigator.serviceWorker.register('/service-worker.js').catch(() => {});
   });
 }
+
+// ─────────────────────────────────────────────────────────────────
+// Android back button (1.44). Needs @capacitor/app, which Bipolar Bear has
+// and Bipolar Anonymous has from 1.44 (before that, back closed the app).
+// One press does the first of:
+//   1. close the open sheet or dialog, as a tap on its backdrop would
+//      (BB.a11y.closeTop; the PIN check and the language picker stay);
+//   2. close the wiki's search bar;
+//   3. go back to the board tab you were on before;
+//   4. leave: back to Bipolar Bear's home in the Bear app, or close
+//      Bipolar Anonymous.
+// ─────────────────────────────────────────────────────────────────
+(function () {
+  const C = window.Capacitor;
+  const App = C && C.Plugins && C.Plugins.App;
+  if (!App || typeof App.addListener !== 'function') return;
+  if (!(C.getPlatform && C.getPlatform() === 'android')) return;
+
+  const trail = [];   // the tabs before this one, newest last
+  let backing = false;
+  const _setTab = setTab;
+  // A function declaration lives on window, so every caller (the tab
+  // buttons' inline handlers too) gets this one.
+  window.setTab = function (tab) {
+    if (!backing && tab !== currentTab) {
+      trail.push(currentTab);
+      if (trail.length > 30) trail.shift();
+    }
+    return _setTab.apply(this, arguments);
+  };
+
+  function openSheet() {
+    const open = Array.from(document.querySelectorAll('.overlay:not(.hidden)'));
+    return open.length ? open[open.length - 1] : null;
+  }
+
+  App.addListener('backButton', () => {
+    if (window.BB && BB.a11y && typeof BB.a11y.closeTop === 'function' && BB.a11y.closeTop()) return;
+    const ov = openSheet();
+    if (ov) {
+      if (ov.id === 'ov-thread') { closeThread(); return; }
+      const via = _BACKDROP_VIA[ov.id] && document.getElementById(_BACKDROP_VIA[ov.id]);
+      if (via) via.click(); else closeOv(ov.id);
+      return;
+    }
+    const bar = document.getElementById('wiki-search-bar');
+    if (bar && bar.style.display !== 'none' && currentTab === 'wiki') { closeWikiSearch(); return; }
+    const board = document.getElementById('screen-board');
+    if (board && board.classList.contains('active')) {
+      while (trail.length && trail[trail.length - 1] === currentTab) trail.pop();
+      if (trail.length) {
+        backing = true;
+        try { setTab(trail.pop()); } finally { backing = false; }
+        return;
+      }
+    }
+    if (!_isAnonymousApp) { location.replace('index.html'); return; }
+    App.exitApp();
+  });
+})();

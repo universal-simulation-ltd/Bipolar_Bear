@@ -679,6 +679,27 @@ listener resolves.
 - Re-lock: after 5 min idle, and when the page / app comes back after more than a
   minute in the background (`visibilitychange`, Capacitor `pause`/`resume`, and
   `@capacitor/app` `appStateChange` where installed) — `BB.pin.watchBackground`
+- **Unlock with Face ID / Touch ID / fingerprint** (1.44, v353; `js/shared/bio-unlock.js`,
+  `BB.bioUnlock`; strings `bio144.*`). Journal Settings → `#bioUnlockRow`, under 🔒 PIN /
+  🔒 App lock: phone app only, shown while a PIN lock is on and `checkBiometry()` says
+  biometrics are enrolled; **unticked by default** (`localStorage.bbBioUnlock = '1'`,
+  this phone only, never synced). Turning it on runs one scan first. The lock screen
+  (`#guestPinOverlay`) then offers the scan each time it comes up (a MutationObserver
+  on the overlay; deferred while the page is hidden) and shows a Face ID / fingerprint
+  button in the keypad's empty corner (`#idxBioBtn`). Biometrics only
+  (`allowDeviceCredential: false`): the PIN is the fallback, and cancelling or failing
+  leaves the keypad. "Forgot PIN?" still takes the passcode (pin-reauth.js).
+  - The signed-in **app lock** (`bbNativePinEnabled`) only guards the screen, so a good
+    scan is enough (`_idxPinRight()`).
+  - A **guest PIN** is the encryption key. Turning the switch on keeps the session's
+    PIN-derived key (`sessionStorage.bb_guest_key`) in the Keychain / Keystore as
+    `bb_guest_bio_key` = `{salt, key}`, where the account journal's device key
+    (`bb_user_key`) already lives. A scan puts it back in the session. A record for
+    another salt (the PIN changed or was removed) is never used: it is deleted, the
+    switch goes off and the lock screen says to type the PIN (`bio144.keyGone`).
+    With no PIN lock left, `_syncBioRow` turns the switch off (and deletes the key).
+  - iOS: `NSFaceIDUsageDescription` now names unlocking too (11 `InfoPlist.strings`).
+  - Test: `node scripts/test-native-144.mjs` (Playwright, plugins simulated).
 - Session unlock stored in `sessionStorage.bbPinUnlocked`
 - `sessionStorage` is cleared on `pagehide`, so PIN is required every time the page is opened
 - `bbPinLinkedUID` stores the Firebase Auth UID of the account that created the PIN
@@ -919,6 +940,12 @@ User opens anonymous.html
 - Report post (flags for admin review)
 - Admin accounts (`profile.isAdmin`) can soft-delete posts
 - `bbAnonLastVisit` timestamp written to localStorage when the board loads; used by `index.html` to show "X new messages" badge under the Anonymous button
+- **Android back** (1.44, end of `js/anonymous.js`; Bipolar Anonymous got
+  `@capacitor/app` in 1.44): one press closes the top sheet or dialog as a
+  backdrop tap would (`BB.a11y.closeTop()`, so the PIN check and the language
+  picker stay), else the wiki search bar, else goes back to the previous board
+  tab (a trail kept by wrapping `setTab`), else leaves: `index.html` in the
+  Bear app, `App.exitApp()` in Bipolar Anonymous. Test: `scripts/test-native-144.mjs`.
 
 #### Announcements are admin-only; members suggest
 
@@ -2089,6 +2116,73 @@ Cleared on logout and reset with the other medicine keys. The sheet's tabs
 take a double-tap to set the default tab (`bbMedsHubTab`, cleared by Reset).
 The daily medication reminder (`meds-reminder.js`) is still one reminder.
 Test: `node scripts/test-med-tracking.mjs` (9 scenarios).
+
+### 2.24 Mood buttons on the daily reminder (1.44, v353)
+
+James's feature-gap list (2026-10-13): "log from the reminder notification
+without opening the app". The daily reminder (`scheduleReminder`, id 1) has
+the five moods as buttons. A tap does not open the app, so the page and the
+journal key aren't there: the native side only queues it, and the app files it
+on its next open.
+
+```
+reminder button "bg.mood.<mood>" (category / actionTypeId "bb.mood")
+  iOS      MoodReminder.swift: a UNUserNotificationCenter delegate set in
+           AppDelegate.didFinishLaunching, in front of Capacitor's router
+           (BridgeViewController.capacitorDidLoad re-takes the delegate and
+           forwards everything else). Works with the app not running: iOS
+           launches it in the background, no scene, no web view.
+           Buttons need the phone unlocked (authenticationRequired).
+  Android  MoodReminderNotification.java draws the five bears (Android shows
+           at most three plain buttons) through a hook patched into
+           @capacitor/local-notifications (patches/, manifest meta-data
+           capacitor.localnotifications.customizer). A bear is a broadcast to
+           MoodActionReceiver: queue, then a quiet "saved for later" for 4 s.
+     │
+     ▼ queue: {id, mood, at, day}   (day = yesterday, or today with "log
+       today" on: the widget's targetDay rule, from the widget data)
+  iOS      UserDefaults(group.app.bipolarbear)["moodQueue"]
+  Android  SharedPreferences "bipolarbear_widget" → "moodQueue"
+     │      Capacitor.Plugins.BipolarBearMoodQueue: pending() / remove({ids});
+     │      a tap with the app open fires window 'bbmoodqueue'
+     ▼
+index.js   taps waiting, no PIN screen up → journal.html (once per tap per
+           session, so a journal that can't file yet doesn't bounce)
+journal.js _fileReminderMoods() after every loadEntries(), on visibilitychange
+           and on 'bbmoodqueue' → BB.moodQueue.file(_reminderMoodAdapter)
+```
+
+- **The rules** (`BB.moodQueue.plan`, pure): one entry per day, the latest tap
+  for a day wins; **a day that already has an entry is never overwritten**, its
+  taps are dropped (the widget's `?mood=` link does the same when the day is
+  logged, and auto-complete only fills empty days); a bad mood, a bad day or a
+  future day is dropped.
+- **Ready** (`adapter.ready`): signed in with `_userCryptoKey` and no
+  undecryptable entries; or a guest whose storage is ready (a PIN, unlocked, or
+  "Continue without a PIN"). Otherwise nothing happens and the taps wait. A
+  Private journal not unlocked this session waits for the unlock.
+- **Logged days** come from the server for an account
+  (`get({source: 'server'})`, the plaintext timestamps, nothing decrypted), so a
+  cache that misses another device's entry can't let a tap through. Offline it
+  throws and the taps wait.
+- **Writes** go the saveEntry way: `_userEncrypt` → `entries.add` for an
+  account; `_guestStoreValue` for a guest (encrypted under the PIN, or plain
+  for a guest who chose no PIN, as every entry of theirs is). The entry has the
+  mood only (spectrum value when Full spectrum is on), `recordedAt` = the tap,
+  `loggedVia: 'reminder'`, no `autoFilled` (it's the user's own report).
+- **The queue is cleared only after a save**, one day at a time: a failed save
+  keeps its tap; a tap the native side failed to drop is dropped next time
+  because its day is then logged.
+- The queue holds the mood category and the day only. It is never shown, so the
+  home strip / widget PIN rule doesn't apply. The widget doesn't show queued taps.
+- Note after filing: `mq144.filedOne` / `filedMany` / `alreadyLogged`
+  (`BB.moodQueue.toast`). Settings → Daily Mood Reminder has a hint line
+  (`mq144.settingsHint`, phone app only).
+- Tests: `TZ=Europe/London node scripts/test-mood-queue.mjs` (the real module,
+  a fake native queue, real AES-GCM) and `scripts/test-native-144.mjs`
+  (Playwright: home → journal → filed, encrypted under a guest PIN, a logged
+  day kept, nothing written before the guest's storage is ready, the
+  reminder's buttons).
 
 ## 3. Algorithm Flowcharts
 

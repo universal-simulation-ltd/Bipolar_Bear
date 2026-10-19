@@ -41,6 +41,8 @@
   <script src="js/shared/user-count.js"></script>
   <script src="js/shared/universal-id.js"></script>
   <script src="js/shared/pin-reauth.js"></script>
+  <script src="js/shared/mood-queue.js"></script>
+  <script src="js/shared/bio-unlock.js"></script>
   <meta name="description" content="Checkin with the Bear. Track your bipolar mood, energy, sleep and medication daily with Bipolar Bear.">
   <meta name="robots" content="noindex, nofollow">
 
@@ -1604,6 +1606,22 @@
           <div id="appLockRowStatus" role="status" aria-live="polite" style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;line-height:1.4;"></div>
         </div>
 
+        <!-- Unlock with Face ID / Touch ID / fingerprint (bio144, 1.44). Phone
+             app only, while a PIN lock is on (the app lock above, or a guest's
+             PIN) and the phone has biometrics. Unticked by default; the PIN
+             stays as the fallback. BB.bioUnlock (js/shared/bio-unlock.js),
+             _syncBioRow / _onBioToggle in js/journal.js. -->
+        <div id="bioUnlockRow" style="display:none;margin-bottom:16px;text-align:left;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="min-width:0;">
+              <label for="bioUnlockToggle" id="bioUnlockLabel" style="display:block;font-weight:600;color:#495057;font-size:0.95em;cursor:pointer;">Unlock with Face ID</label>
+              <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;" data-i18n="bio144.rowDesc">Instead of typing your PIN. Your PIN still works if it doesn’t recognise you.</div>
+            </div>
+            <label class="bb-switch"><input type="checkbox" id="bioUnlockToggle" onchange="_onBioToggle(this)"><span class="bb-slider"></span></label>
+          </div>
+          <div id="bioUnlockStatus" role="status" aria-live="polite" style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;line-height:1.4;"></div>
+        </div>
+
         <!-- Guest-only: signing in is optional and only backs up data (hidden once signed in) -->
         <button id="settingsGuestSignIn" onclick="closeSettingsModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-size:0.92em;font-weight:700;cursor:pointer;margin-bottom:6px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
         <div id="settingsGuestSignInNote" style="display:none;color:var(--text-muted-ink);font-size:0.78em;text-align:center;margin-bottom:14px;" data-i18n="journal.settings.guestSignInNote">Optional — everything works without an account. Sign in to sync across devices.</div>
@@ -1654,6 +1672,7 @@
             <label for="reminderEnabled" style="flex: 1; color: var(--text-muted-ink); font-size: 0.95em; cursor: pointer;" data-i18n="journal.settings.remindersOn">Reminders on:</label>
             <label class="bb-switch"><input type="checkbox" id="reminderEnabled" onchange="_onReminderToggleChange()"><span class="bb-slider"></span></label>
           </div>
+          <div id="reminderMoodHint" style="display:none;color:var(--text-muted-ink);font-size:0.8em;line-height:1.4;margin:-4px 0 10px;" data-i18n="mq144.settingsHint">Tap a mood on the reminder to log it without opening the app. It goes into your journal the next time you open Bipolar Bear.</div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <label for="weeklySummaryEnabled" style="flex: 1; color: var(--text-muted-ink); font-size: 0.95em; cursor: pointer;" data-i18n="journal.settings.weeklySummary">Weekly summary (Sundays):</label>
             <label class="bb-switch"><input type="checkbox" id="weeklySummaryEnabled" onchange="_onWeeklyToggleChange()" checked><span class="bb-slider"></span></label>

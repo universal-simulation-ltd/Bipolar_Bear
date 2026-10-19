@@ -2973,6 +2973,7 @@ function _tt(k, vars, fallback) {
           }
           _allEntries = [];
           _writeRecentMoods([]);
+          _fileReminderMoods();
           if (_undecryptableCount > 0) {
             // Not an empty journal: the notice above says so. No "No entries
             // yet" and no import offer, which would add a second history.
@@ -3008,6 +3009,7 @@ function _tt(k, vars, fallback) {
         _allEntries = entries;
         setTimeout(() => { try { _trkMaybeAutoClean(); } catch (_) {} }, 0);
         _writeRecentMoods(entries);
+        _fileReminderMoods();
         _updateMedBtn();
         _syncStableStreak(entries);
 
@@ -4773,6 +4775,7 @@ function _tt(k, vars, fallback) {
       }
       const st = document.getElementById('guestPinRowStatus');
       if (st && status !== undefined) st.textContent = status;
+      _syncBioRow();
     }
 
     async function _guestPinRowAction() {
@@ -5169,9 +5172,60 @@ function _tt(k, vars, fallback) {
       vis('appLockSetBtn', !on && nat);
       vis('appLockChangeBtn', on && nat && _appLockNativeOn());
       vis('appLockOffBtn', on);
+      _syncBioRow();
       const st = document.getElementById('appLockRowStatus');
       if (st && status !== undefined) st.textContent = status;
     }
+
+    // ── Unlock with Face ID / Touch ID / fingerprint (bio144, BB.bioUnlock) ──
+    // One switch for whichever PIN lock this phone has: a signed-in user's app
+    // lock (_appLockNativeOn) or a guest's PIN. Off by default; the PIN stays
+    // as the fallback. With no lock left, a switch that is on is turned off,
+    // which also forgets a kept guest key.
+    function _bioLockMode() {
+      if (!isNative()) return null;
+      if (currentUser) return _appLockNativeOn() ? 'native' : null;
+      if (_hasCachedFbUser()) return 'unknown'; // an account still being restored
+      if (_appLockNativeOn()) return 'native';
+      return _guestHasPin() ? 'guest' : null;
+    }
+    function _syncBioRow(status) {
+      const row = document.getElementById('bioUnlockRow');
+      if (!row || !(window.BB && BB.bioUnlock)) return;
+      const mode = _bioLockMode();
+      if (!mode || mode === 'unknown') {
+        row.style.display = 'none';
+        if (!mode && BB.bioUnlock.isOn()) BB.bioUnlock.turnOff();
+        return;
+      }
+      BB.bioUnlock.available().then(a => {
+        if (_bioLockMode() !== mode) return;
+        row.style.display = a.ok ? '' : 'none';
+        if (!a.ok) return;
+        const lbl = document.getElementById('bioUnlockLabel');
+        if (lbl) lbl.textContent = BB.bioUnlock.label(a.type);
+        const tg = document.getElementById('bioUnlockToggle');
+        if (tg) tg.checked = BB.bioUnlock.isOn();
+        const st = document.getElementById('bioUnlockStatus');
+        if (st && status !== undefined) st.textContent = status;
+      });
+    }
+    async function _onBioToggle(el) {
+      const mode = _bioLockMode();
+      if (!mode || mode === 'unknown' || !(window.BB && BB.bioUnlock)) { el.checked = false; return; }
+      const st = document.getElementById('bioUnlockStatus');
+      if (!el.checked) {
+        await BB.bioUnlock.turnOff();
+        if (st) st.textContent = '';
+        return;
+      }
+      el.disabled = true;
+      const r = await BB.bioUnlock.turnOn({ guest: mode === 'guest' });
+      el.disabled = false;
+      el.checked = r === 'ok';
+      if (st) st.textContent = r === 'ok' ? '' : BB.bioUnlock.text(r === 'needUnlock' ? 'needUnlock' : 'turnOnFailed');
+    }
+    window._onBioToggle = _onBioToggle;
     function _appLockAction(what) {
       if (!currentUser) return;
       if (what === 'set') {
@@ -15349,6 +15403,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       // Guest PIN row / signed-in App lock row (pin143).
       _syncGuestPinRow('');
       _syncAppLockRow('');
+      _syncBioRow('');
       // Incognito mode
       document.getElementById('incognitoModeToggle').checked = localStorage.getItem('incognitoMode') === 'true';
       // Private journal: signed in only, and read from the account each time
@@ -15421,6 +15476,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const weeklyEnabled = localStorage.getItem('weeklySummaryEnabled') === 'true';
       document.getElementById('reminderTime').value = savedTime;
       document.getElementById('reminderEnabled').checked = enabled;
+      const _rmHint = document.getElementById('reminderMoodHint');
+      if (_rmHint) _rmHint.style.display = (window.BB && BB.moodQueue) ? '' : 'none';
       document.getElementById('weeklySummaryEnabled').checked = weeklyEnabled;
       document.getElementById('healthSyncToggle').checked = BB.storage.get('HealthSyncEnabled') === '1';
 
@@ -17623,6 +17680,81 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
 
     // ────────────────────────────────────────────
+    // 3b. MOODS TAPPED ON THE DAILY REMINDER (1.44, DOCS §2.23)
+    // ────────────────────────────────────────────
+    // The reminder's mood buttons don't open the app: the native side queues
+    // the tap (js/shared/mood-queue.js has the whole story) and it is filed
+    // here, after every load and when the app comes back to the front.
+    // Filed exactly like a saved entry: encrypted under the journal key when
+    // signed in (never without it, and never while an entry won't open), or
+    // in the guest's own storage (_guestStoreValue). A day that already has an
+    // entry is never overwritten: its taps are dropped, with a note.
+    const _reminderMoodAdapter = {
+      async ready() {
+        if (currentUser) {
+          if (!db) return false;
+          if (!_userCryptoKey) _userCryptoKey = await _userImportKeyFromSession();
+          return !!_userCryptoKey && !_undecryptableCount;
+        }
+        // An account still being restored is not a guest (_gateGuestSave).
+        if (_hasCachedFbUser() || !_guestStorageReady()) return false;
+        if (_guestHasPin()) {
+          if (!_guestCryptoKey) _guestCryptoKey = await _guestImportKeyFromSession();
+          return !!_guestCryptoKey;
+        }
+        return true;
+      },
+      // Every day with an entry. Signed in: from the server (the plaintext
+      // timestamps, nothing decrypted), so a cache that misses another
+      // device's entry can't let a tap through; offline, this throws and the
+      // taps wait. Plus the loaded entries' own dates.
+      async loggedDays() {
+        const ts = [];
+        if (currentUser) {
+          const snap = await db.collection('entries').where('userId', '==', currentUser.uid).get({ source: 'server' });
+          snap.forEach(doc => { const t = doc.get('timestamp'); if (t != null) ts.push(t); });
+        } else {
+          _guestEntryRaws().forEach(([k]) => ts.push(Number(k.slice('entry:'.length))));
+        }
+        return BB.moodQueue.daysOf(_allEntries || [], ts);
+      },
+      async persist(entry) {
+        if (currentUser) {
+          if (!_userCryptoKey) throw new Error('The journal key is not unlocked');
+          const enc = await _userEncrypt(_userCryptoKey, { ...entry, userId: currentUser.uid });
+          await db.collection('entries').add({ userId: currentUser.uid, timestamp: entry.timestamp, ...enc });
+        } else {
+          // Encrypted under the PIN key (throws if it is locked), or plain
+          // for a guest who chose no PIN, as every entry of theirs is.
+          localStorage.setItem(`entry:${entry.timestamp}`, await _guestStoreValue(entry));
+        }
+      },
+      loggingToday: () => localStorage.getItem('journalDefaultToday') === 'true',
+      spectrum: () => _spectrumEnabled(),
+      done({ filed, dropped }) {
+        const day = k => _bbDate(new Date(k + 'T12:00:00'), { weekday: 'long', day: 'numeric', month: 'long' });
+        const lines = [];
+        if (filed.length === 1) lines.push(BB.t('mq144.filedOne', { mood: _moodCatLabel(filed[0].mood), day: day(filed[0].day) }));
+        else if (filed.length > 1) lines.push(BB.t('mq144.filedMany', { count: filed.length }));
+        dropped.forEach(d => lines.push(BB.t('mq144.alreadyLogged', { mood: _moodCatLabel(d.mood), day: day(d.day) })));
+        if (lines.length) BB.moodQueue.toast(lines.join('\n'));
+        if (filed.length) {
+          nativeHaptic('success');
+          const _reload = () => { if (_loadInProgress) setTimeout(_reload, 300); else { currentPage = 1; loadEntries(); } };
+          setTimeout(_reload, 0);
+        }
+      }
+    };
+    function _fileReminderMoods() {
+      if (!(window.BB && BB.moodQueue) || !isNative()) return;
+      BB.moodQueue.file(_reminderMoodAdapter);
+    }
+    // Back to the front, or a tap while the app is open (the native side
+    // fires 'bbmoodqueue').
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) _fileReminderMoods(); });
+    window.addEventListener('bbmoodqueue', _fileReminderMoods);
+
+    // ────────────────────────────────────────────
     // 4. LOCAL NOTIFICATIONS – daily mood reminder
     // ────────────────────────────────────────────
     async function initNotifications() {
@@ -17677,11 +17809,19 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const savedTime = localStorage.getItem('reminderTime') || '07:00';
         const [hour, minute] = savedTime.split(':').map(Number);
 
+        // The five moods as buttons: a tap is queued natively and filed by
+        // _fileReminderMoods() on the next open (BB.moodQueue, 1.44).
+        const _moodActions = !!(window.BB && BB.moodQueue);
+        if (_moodActions) {
+          await LocalNotifications.registerActionTypes(BB.moodQueue.actionTypes()).catch(e => console.warn('Reminder buttons:', e));
+        }
+
         await LocalNotifications.schedule({
           notifications: [{
             id: 1,
             title: '🐻 Bipolar Bear',
             body: BB.t('t143.notif.daily'),
+            ...(_moodActions ? { actionTypeId: BB.moodQueue.ACTION_TYPE } : {}),
             schedule: {
               on: { hour, minute },
               repeats: true,
