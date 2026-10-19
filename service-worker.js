@@ -1693,7 +1693,13 @@
 //   report 2026-10-19). _decodeFirestoreEntry now counts those in
 //   _undecryptableCount too, so the journal shows the "couldn't be opened"
 //   notice instead. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v347';
+// v348: that notice gets a "Try again" (_retryJournalKey): re-fetches the
+//   account's key — the Standard wrap via journalWrapKey (beats a stale device
+//   key), or the journal password for a Private account — and reloads. Tried
+//   once quietly 3s after a load with no key. Never mints a new key. New
+//   strings journal.undecryptableRetry / undecryptableStill, 10 languages.
+//   Touches js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v348';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

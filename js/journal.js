@@ -4014,6 +4014,63 @@ function _tt(k, vars, fallback) {
         entriesEl.parentNode.insertBefore(el, entriesEl);
       }
       el.textContent = BB.t('journal.undecryptable', { n: _undecryptableCount });
+      // Signed in, the account's key can usually still be had (the Standard
+      // wrap is rebuilt by journalWrapKey from the uid; a Private one from the
+      // journal password), so offer it rather than leave a dead end.
+      if (!currentUser) return;
+      const again = document.createElement('button');
+      again.type = 'button';
+      again.className = 'bb-undecryptable-retry';
+      again.style.cssText = 'display:block;margin:10px auto 0;padding:8px 18px;border-radius:999px;border:1px solid currentColor;background:none;color:inherit;font:inherit;font-weight:600;cursor:pointer;';
+      again.textContent = BB.t('journal.undecryptableRetry');
+      again.onclick = () => _retryJournalKey(again, true);
+      el.appendChild(again);
+      // Once per page, quietly: a key that failed on a bad connection at
+      // sign-in usually comes on the next try.
+      if (!_userCryptoKey && !_journalKeyAutoRetried) {
+        _journalKeyAutoRetried = true;
+        setTimeout(() => _retryJournalKey(null, false), 3000);
+      }
+    }
+
+    let _journalKeyAutoRetried = false;
+
+    /**
+     * Fetch the account's journal key again and reload the entries. Standard:
+     * from its server wrap (and it beats a stale device key). Private: the
+     * journal password, but only when the person asked (`ask`). Never mints a
+     * new key, which would leave these entries behind for good.
+     */
+    async function _retryJournalKey(btn, ask) {
+      if (!currentUser || !db) return;
+      if (btn) btn.disabled = true;
+      let ok = false;
+      try {
+        const doc = await db.collection('userSettings').doc(currentUser.uid).get({ source: 'server' });
+        const d = doc.exists ? doc.data() : null;
+        if (d && d.stdWrappedKey && d.stdWrappedKeyIv) {
+          try {
+            await _preferAccountKey(await _unwrapDataKey(d.stdWrappedKey, d.stdWrappedKeyIv, await _serverWrapKey()));
+            _userKeyMode = 'standard';
+            ok = true;
+          } catch (e) { console.warn('Standard journal key still unavailable', e); }
+        }
+        if (!ok && ask && d && (d.wrappedKey || d.encSalt)) {
+          ok = await _promptJournalKey(currentUser, d, 'unlock');
+        }
+      } catch (e) { console.warn('Journal key retry failed', e); }
+      if (ok) { loadEntries(); return; }
+      if (btn) {
+        btn.disabled = false;
+        const el = document.getElementById('bbUndecryptableNotice');
+        if (el && !el.querySelector('.bb-undecryptable-still')) {
+          const still = document.createElement('div');
+          still.className = 'bb-undecryptable-still';
+          still.style.cssText = 'margin-top:8px;font-size:0.9em;';
+          still.textContent = BB.t('journal.undecryptableStill');
+          el.appendChild(still);
+        }
+      }
     }
 
     /**
