@@ -1687,7 +1687,13 @@
 //   removeItem only exist in the plugin's JS wrapper, so every Keychain/Keystore
 //   call failed ("Failed to save PIN"; the journal key never cached).
 //   Touches js/shared/platform.js, js/journal.js, js/index.js.
-const CACHE_NAME = 'bipolarbear-v346';
+// v347: a signed-in journal whose key couldn't be resolved at all (no
+//   Keychain copy, Standard wrap unreachable) counted nothing, so every entry
+//   was dropped and it read "No entries yet" with the import offer (support
+//   report 2026-10-19). _decodeFirestoreEntry now counts those in
+//   _undecryptableCount too, so the journal shows the "couldn't be opened"
+//   notice instead. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v347';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

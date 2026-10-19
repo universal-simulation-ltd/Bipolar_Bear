@@ -3920,7 +3920,7 @@ function _tt(k, vars, fallback) {
     let _staleUserKeys = [];
     let _accountKeyChecked = false;
     let _accountKeyVerified = false; // _userCryptoKey is known to be the account's
-    let _undecryptableCount = 0;     // entries no key on this device opens
+    let _undecryptableCount = 0;     // entries no key on this device opens, or none to try
 
     async function _rawKeyB64(key) {
       const raw = await crypto.subtle.exportKey('raw', key);
@@ -4289,7 +4289,8 @@ function _tt(k, vars, fallback) {
             return null; // counted, and said so (_showUndecryptableNotice)
           }
         }
-        return null; // key not available — entry locked
+        _undecryptableCount++; // no key at all (it couldn't be resolved): say so, never "No entries yet"
+        return null;
       }
       return { id: doc.id, ...data }; // plaintext (pre-encryption entry)
     }
