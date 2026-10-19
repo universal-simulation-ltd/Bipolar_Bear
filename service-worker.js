@@ -1740,7 +1740,11 @@
 //   'var(--brand-primary)' ("Invalid color provided"). Now '#FF9500', and
 //   smallIcon 'ic_stat_notify' (ic_notification doesn't exist). Found on the
 //   emulator while testing the 1.44 reminder buttons. Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v354';
+// v355: Bipolar Anonymous Android back: with the first-run language picker
+//   (or the PIN check) on top, back leaves the app instead of doing nothing
+//   (BB.a11y.closeTop returns 'locked'). Checked on the emulator. Touches
+//   js/anonymous.js, js/shared/a11y.js.
+const CACHE_NAME = 'bipolarbear-v355';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -300,13 +300,15 @@
     }, 30);
   }
   // For Android's back button (js/anonymous.js): close the top dialog as
-  // Escape would. True when a dialog was open, closed or not (a lock screen
-  // or a must-answer prompt stays, and the back press is used up on it).
+  // Escape would. → true (closed one), false (none open), or 'locked' (a lock
+  // screen or a must-answer prompt such as the first-run language picker is
+  // on top: it stays, and the caller leaves instead, as Android's back would).
   root.a11y.closeTop = function () {
     scanDialogs();
     var d = topDialog();
     if (!d) return false;
-    if (!d.matches(root.a11y.lockSelector)) closeDialog(d);
+    if (d.matches(root.a11y.lockSelector)) return 'locked';
+    closeDialog(d);
     return true;
   };
 

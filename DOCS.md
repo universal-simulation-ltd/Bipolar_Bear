@@ -942,8 +942,8 @@ User opens anonymous.html
 - `bbAnonLastVisit` timestamp written to localStorage when the board loads; used by `index.html` to show "X new messages" badge under the Anonymous button
 - **Android back** (1.44, end of `js/anonymous.js`; Bipolar Anonymous got
   `@capacitor/app` in 1.44): one press closes the top sheet or dialog as a
-  backdrop tap would (`BB.a11y.closeTop()`, so the PIN check and the language
-  picker stay), else the wiki search bar, else goes back to the previous board
+  backdrop tap would (`BB.a11y.closeTop()`; with the PIN check or the
+  first-run language picker on top, back leaves instead), else the wiki search bar, else goes back to the previous board
   tab (a trail kept by wrapping `setTab`), else leaves: `index.html` in the
   Bear app, `App.exitApp()` in Bipolar Anonymous. Test: `scripts/test-native-144.mjs`.
 

@@ -371,6 +371,19 @@ if (fs.existsSync(path.join(anonDir, 'index.html'))) {
   const anon = await serve(anonDir);
   await backFlow(anon.base, 'index.html', 'exit');
   ok('Bipolar Anonymous app: the same, then the app closes (exitApp)');
+  {
+    // The first-run language picker must be answered: back leaves the app instead of closing it.
+    const { ctx, page } = await open(anon.base, 'index.html', { platform: 'android' });
+    await page.waitForFunction(() => window.__listeners.backButton && window.__listeners.backButton.length, null, { timeout: 6000 });
+    await page.evaluate(() => { localStorage.removeItem('bbLanguage'); BB.i18n.showPicker(() => {}); });
+    await sleep(300);
+    await page.evaluate(() => window.__listeners.backButton.forEach(f => f({ canGoBack: false })));
+    await sleep(200);
+    assert.ok((await LJ(page, '__calls') || []).includes('exitApp'));
+    assert.ok(await page.evaluate(() => !!document.getElementById('bbLangPicker')), 'picker left as it was');
+    await ctx.close();
+    ok('with the first-run language picker up, back leaves the app (the picker isn\'t dismissed)');
+  }
   anon.server.close();
 } else {
   console.log('  (skipped the Anonymous bundle: run node scripts/build-anonymous.js first)');

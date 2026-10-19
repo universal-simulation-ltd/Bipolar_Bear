@@ -6857,7 +6857,8 @@ if ('serviceWorker' in navigator && !(window.isNative && window.isNative())) {
 // and Bipolar Anonymous has from 1.44 (before that, back closed the app).
 // One press does the first of:
 //   1. close the open sheet or dialog, as a tap on its backdrop would
-//      (BB.a11y.closeTop; the PIN check and the language picker stay);
+//      (BB.a11y.closeTop); the PIN check and the first-run language
+//      picker aren't closed: back leaves, as in 4;
 //   2. close the wiki's search bar;
 //   3. go back to the board tab you were on before;
 //   4. leave: back to Bipolar Bear's home in the Bear app, or close
@@ -6887,8 +6888,15 @@ if ('serviceWorker' in navigator && !(window.isNative && window.isNative())) {
     return open.length ? open[open.length - 1] : null;
   }
 
+  function leave() {
+    if (!_isAnonymousApp) { location.replace('index.html'); return; }
+    App.exitApp();
+  }
+
   App.addListener('backButton', () => {
-    if (window.BB && BB.a11y && typeof BB.a11y.closeTop === 'function' && BB.a11y.closeTop()) return;
+    const top = window.BB && BB.a11y && typeof BB.a11y.closeTop === 'function' ? BB.a11y.closeTop() : false;
+    if (top === true) return;
+    if (top === 'locked') { leave(); return; }
     const ov = openSheet();
     if (ov) {
       if (ov.id === 'ov-thread') { closeThread(); return; }
@@ -6907,7 +6915,6 @@ if ('serviceWorker' in navigator && !(window.isNative && window.isNative())) {
         return;
       }
     }
-    if (!_isAnonymousApp) { location.replace('index.html'); return; }
-    App.exitApp();
+    leave();
   });
 })();
