@@ -1703,7 +1703,11 @@
 //   (showCalDayDetail, like "View today's entry") instead of the edit form;
 //   its ✏️ edits. Journal Notes step on by default for new users
 //   (_DEFAULT_DISABLED_STEPS = []). Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v349';
+// v350: each entry in the journal list has → (journal.ui.openEntry, 10
+//   languages) instead of ✏️; it opens the same day viewer, so long notes the
+//   list cuts short can be read in full, and the viewer's ✏️ edits. Touches
+//   js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v350';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

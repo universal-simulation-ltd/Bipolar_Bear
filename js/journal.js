@@ -3061,7 +3061,7 @@ function _tt(k, vars, fallback) {
                   ${entry.pdfHide ? `<span style="font-size:1em;line-height:1;opacity:0.7;" title="${BB.t('journal.ui.privateTitle')}">🕵️</span>` : ''}
                   ${entry.autoFilled ? `<span style="font-size:0.6em;font-weight:700;letter-spacing:0.05em;color:var(--brand-ink);border:1.5px solid rgba(255,149,0,0.45);border-radius:6px;padding:2px 4px;line-height:1;" title="${BB.t('journal.autofill.badgeTitle')}">${BB.t('journal.autofill.badge')}</span>` : ''}
                   ${entry.favourite ? `<span style="font-size:1em;color:var(--brand-ink);line-height:1;" title="${BB.t('journal.ui.favouriteTitle')}">★</span>` : ''}
-                  <button class="edit-btn" id="edit-${actualIndex}" title="${BB.t('journal.ui.editEntry')}" style="background:none; border:none; cursor:pointer; font-size:1.1em; padding:4px;">✏️</button>
+                  <button class="edit-btn" id="edit-${actualIndex}" title="${BB.t('journal.ui.openEntry')}" aria-label="${BB.t('journal.ui.openEntry')}" style="background:none; border:none; cursor:pointer; font-size:1.25em; font-weight:700; color:var(--brand-ink); padding:4px; line-height:1;">→</button>
                   <button class="delete-btn" id="delete-${actualIndex}" aria-label="${BB.t('a11y.deleteEntry')}">×</button>
                 </div>
               </div>
@@ -3172,7 +3172,10 @@ function _tt(k, vars, fallback) {
             editBtn.addEventListener('click', (e) => {
               e.preventDefault();
               e.stopPropagation();
-              openEditInForm(entry);
+              // The list cuts long notes short; → opens the calendar's day
+              // viewer, whose ✏️ edits (James, 2026-10-19).
+              const _d = new Date(entry.date);
+              showCalDayDetail(`${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`);
             });
           }
           const btn = document.getElementById(`delete-${actualIndex}`);
