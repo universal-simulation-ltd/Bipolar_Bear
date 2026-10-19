@@ -1699,7 +1699,11 @@
 //   once quietly 3s after a load with no key. Never mints a new key. New
 //   strings journal.undecryptableRetry / undecryptableStill, 10 languages.
 //   Touches js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v348';
+// v349: the banner's "📅 Last 24hrs ✓" opens the calendar's day viewer
+//   (showCalDayDetail, like "View today's entry") instead of the edit form;
+//   its ✏️ edits. Journal Notes step on by default for new users
+//   (_DEFAULT_DISABLED_STEPS = []). Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v349';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

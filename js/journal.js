@@ -128,11 +128,12 @@ function _tt(k, vars, fallback) {
     }
 
     // ── New-user defaults (James, 2026-10-12) ──
-    // Focus mode's wheel is on, and every journal step is on except Notes (it
-    // used to be Additional that started off). Anyone already using the app
-    // keeps the old defaults (wheel off, Additional off): once per device here,
-    // and for accounts in the userSettings sync (onboardingStep >= 1).
-    const _DEFAULT_DISABLED_STEPS = ['notes'];
+    // Focus mode's wheel is on, and every journal step is on (it used to be
+    // Additional that started off; Notes started off too until 2026-10-19).
+    // Anyone already using the app keeps the old defaults (wheel off,
+    // Additional off): once per device here, and for accounts in the
+    // userSettings sync (onboardingStep >= 1).
+    const _DEFAULT_DISABLED_STEPS = [];
     try {
       if (localStorage.getItem('bbDefaults20261012') === null) {
         if (_getOnboardingStep() >= 1) {
@@ -10011,22 +10012,10 @@ function _tt(k, vars, fallback) {
     }
     window.startOtherDateEntry = startOtherDateEntry;
 
+    // Opens the same viewer as a calendar day (and "View today's entry"); its
+    // ✏️ is the way into the edit form (James, 2026-10-19).
     function reviewOtherEntry() {
-      const dateStr = _otherDateStr();
-      const entry = _allEntries.find(e => {
-        if (!e.date) return false;
-        if (typeof e.date === 'string' && e.date.slice(0, 10) === dateStr) return true;
-        try { const d = new Date(e.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` === dateStr; } catch(_) { return false; }
-      });
-      if (!entry) return;
-      document.getElementById('todayCompleteSection').style.display = 'none';
-      const _inFm = typeof _fmEnabled !== 'undefined' && _fmEnabled;
-      if (!_inFm) document.getElementById('entryFormCard').style.display = '';
-      openEditInForm(entry);
-      if (!_inFm) {
-        const heading = document.getElementById('entryFormHeading');
-        if (heading) setTimeout(() => { const _t = heading.getBoundingClientRect().top + window.scrollY - 16; window.scrollTo({ top: _t, behavior: 'smooth' }); }, 50);
-      }
+      showCalDayDetail(_otherDateStr());
     }
     window.reviewOtherEntry = reviewOtherEntry;
 
