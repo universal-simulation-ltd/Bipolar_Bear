@@ -328,7 +328,15 @@
     var tt = e.touches[0], dx = tt.clientX - s.x0, dy = tt.clientY - s.y0;
     if (!s.lock) {
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-      if (dy > 0 && dy > Math.abs(dx) * 1.2) { s.lock = 'y'; s.c.style.transition = 'none'; s.c.style.animation = 'none'; }
+      if (dy > 0 && dy > Math.abs(dx) * 1.2) {
+        s.lock = 'y';
+        s.c.style.transition = 'none';
+        // Finish the slide-up if it's still running, rather than switching the
+        // animation off: turning it back on afterwards restarted it, so the
+        // sheet dropped and slid up again after snapping back (James, video
+        // 2026-10-20).
+        try { s.c.getAnimations().forEach(function (a) { a.finish(); }); } catch (_) {}
+      }
       else { s = null; return; }
     }
     e.preventDefault();
@@ -338,7 +346,7 @@
   function springBack(c) {
     c.style.transition = 'transform .3s cubic-bezier(.2,.9,.3,1)';
     c.style.transform = '';
-    setTimeout(function () { c.style.transition = ''; c.style.animation = ''; }, 320);
+    setTimeout(function () { c.style.transition = ''; }, 320);
   }
   function endSheet() {
     if (!s) return;
@@ -349,7 +357,7 @@
     S.c.style.transition = 'transform .2s ease-in';
     S.c.style.transform = 'translateY(' + (S.c.offsetHeight + 40) + 'px)';
     haptic();
-    var done = function () { S.c.style.transition = ''; S.c.style.transform = ''; S.c.style.animation = ''; };
+    var done = function () { S.c.style.transition = ''; S.c.style.transform = ''; };
     setTimeout(function () {
       S.ov.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       setTimeout(function () {
