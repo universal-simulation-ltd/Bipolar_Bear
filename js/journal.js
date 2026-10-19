@@ -17828,8 +17828,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               allowWhileIdle: true
             },
             sound: 'default',
-            smallIcon: 'ic_notification',
-            iconColor: 'var(--brand-primary)'
+            smallIcon: 'ic_stat_notify',
+            // A hex colour: Android's plugin refuses anything else ("Invalid
+            // color provided"), and with 'var(--brand-primary)' it scheduled
+            // nothing (found 2026-10-19 on the emulator). ic_stat_notify is the
+            // app's notification glyph (ic_notification doesn't exist).
+            iconColor: '#FF9500'
           }]
         });
 
@@ -17882,8 +17886,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               repeats: true,
               allowWhileIdle: true
             },
-            smallIcon: 'ic_notification',
-            iconColor: 'var(--brand-primary)'
+            smallIcon: 'ic_stat_notify',
+            iconColor: '#FF9500'
           }]
         });
       } catch (e) { console.warn('Weekly summary schedule error:', e); }
@@ -17911,8 +17915,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             title: BB.t('t143.notif.annivTitle'),
             body: BB.t('t143.notif.annivBody', { count: favCount }),
             schedule: { at: schedDate, allowWhileIdle: true },
-            smallIcon: 'ic_notification',
-            iconColor: 'var(--brand-primary)',
+            smallIcon: 'ic_stat_notify',
+            iconColor: '#FF9500',
             extra: { anniversaryMonth: month, anniversaryDay: day }
           }]
         });

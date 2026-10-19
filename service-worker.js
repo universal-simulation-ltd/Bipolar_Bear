@@ -1735,7 +1735,12 @@
 //   (js/anonymous.js; BB.a11y.closeTop in js/shared/a11y.js). Strings mq144.*,
 //   bio144.*, 10 languages. Touches index.html, journal.html, js/index.js,
 //   js/journal.js, js/anonymous.js, js/shared/a11y.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v353';
+// v354: Android never scheduled the daily reminder, weekly summary or
+//   favourite-anniversary notifications: the plugin refuses iconColor
+//   'var(--brand-primary)' ("Invalid color provided"). Now '#FF9500', and
+//   smallIcon 'ic_stat_notify' (ic_notification doesn't exist). Found on the
+//   emulator while testing the 1.44 reminder buttons. Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v354';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
