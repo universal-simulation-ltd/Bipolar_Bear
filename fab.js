@@ -381,6 +381,21 @@
       margin-bottom: 10px; outline: none; font-family: inherit; display: block;
     }
     .bb-auth-input:focus { border-color: var(--brand-primary); }
+    /* Apple / Google / passkey (2026-10-19). Apple's button is at least as
+       prominent as Google's (App Review 4.8, and Apple's own guidelines). */
+    /* Three more buttons make the sheet taller than a small phone: let it scroll. */
+    .bb-auth-box { max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .bb-auth-or { display: flex; align-items: center; gap: 10px; margin: 2px 0 10px; color: var(--text-muted-ink); font-size: 0.78em; }
+    .bb-auth-or::before, .bb-auth-or::after { content: ''; flex: 1; height: 1px; background: #e9ecef; }
+    .bb-auth-provider {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 12px; border-radius: 10px; border: 2px solid #e9ecef; background: #fff; color: #212529;
+      font-weight: 600; font-size: 0.92em; cursor: pointer; margin-bottom: 8px; font-family: inherit;
+      -webkit-tap-highlight-color: transparent; box-sizing: border-box;
+    }
+    .bb-auth-provider svg { width: 18px; height: 18px; flex: none; }
+    .bb-auth-provider:disabled { opacity: 0.6; cursor: default; }
+    .bb-auth-provider.bb-auth-apple { background: #000; border-color: #000; color: #fff; }
     /* ── Account modal ── */
     .bb-account-overlay {
       display: none; position: fixed; inset: 0;
@@ -692,6 +707,14 @@
           <div id="bbAuthLinks" style="display:flex;flex-wrap:wrap;justify-content:center;gap:2px 10px;margin:-2px 0 8px;">
             <button type="button" id="bbAuthAltA" style="background:none;border:none;color:var(--brand-ink);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
             <button type="button" id="bbAuthAltB" style="background:none;border:none;color:var(--brand-ink);font-size:0.85em;font-weight:600;cursor:pointer;padding:6px;-webkit-tap-highlight-color:transparent;font-family:inherit;"></button>
+          </div>
+          <!-- Apple / Google / passkey (js/shared/universal-id.js). Shown on the
+               email step, and only what this page can really do (BB.uid.signInOptions). -->
+          <div id="bbAuthProviders" style="display:none;">
+            <div class="bb-auth-or" id="bbAuthOr">or</div>
+            <button type="button" id="bbAuthApple" class="bb-auth-provider bb-auth-apple" style="display:none;"><svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.17-1 1.16-2.21 1.83-3.52 1.72a3.54 3.54 0 0 1-.03-.43c0-1.09.48-2.26 1.32-3.21.42-.48.96-.88 1.6-1.2.65-.31 1.26-.48 1.84-.51.02.15.04.3.04.46zm4.48 15.76c-.33.77-.73 1.48-1.18 2.13-.62.89-1.13 1.5-1.52 1.84-.61.56-1.26.85-1.96.86-.5 0-1.11-.14-1.82-.43-.71-.29-1.36-.43-1.96-.43-.63 0-1.3.14-2.02.43-.72.29-1.3.44-1.74.46-.67.03-1.34-.27-2.01-.89-.43-.37-.96-1.01-1.6-1.92-.69-.97-1.25-2.09-1.69-3.37C2.88 14.49 2.64 13.13 2.64 11.82c0-1.5.32-2.8.97-3.88a5.7 5.7 0 0 1 2.03-2.05 5.47 5.47 0 0 1 2.75-.78c.54 0 1.25.17 2.12.49.87.33 1.43.49 1.68.49.18 0 .81-.19 1.88-.58 1.01-.36 1.86-.51 2.56-.45 1.89.15 3.31.9 4.25 2.24-1.69 1.03-2.53 2.46-2.51 4.3.02 1.43.53 2.62 1.55 3.57.46.44.98.78 1.55 1.02-.12.36-.26.71-.4 1.05z"/></svg><span id="bbAuthAppleLabel">Continue with Apple</span></button>
+            <button type="button" id="bbAuthGoogle" class="bb-auth-provider bb-auth-google" style="display:none;"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.52 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.73z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.88-3c-1.07.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.29v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.29 14.29a7.2 7.2 0 0 1 0-4.58v-3.1H1.29a12 12 0 0 0 0 10.78l4-3.1z"/><path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44A11.97 11.97 0 0 0 12 0 12 12 0 0 0 1.29 6.61l4 3.1C6.23 6.88 8.88 4.77 12 4.77z"/></svg><span id="bbAuthGoogleLabel">Continue with Google</span></button>
+            <button type="button" id="bbAuthPasskey" class="bb-auth-provider bb-auth-passkey" style="display:none;"><span aria-hidden="true">🔑</span><span id="bbAuthPasskeyLabel">Use a passkey or security key</span></button>
           </div>
           <p id="bbAuthUidNote" style="margin:0 0 12px;font-size:0.75em;line-height:1.4;color:var(--text-muted-ink);text-align:center;" data-i18n="uid.note">Bipolar Bear signs you in with Universal ID, the UNI·SIM account. New here? The same code makes your account.</p>
           <button onclick="window.closeAuthModal()" style="width:100%;padding:11px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="auth.continueGuest">Continue as Guest</button>
@@ -1574,6 +1597,18 @@
   let _bbAuthAddr = '';
   /** A step's submit is in flight. */
   let _bbAuthBusy = false;
+  /**
+   * The Universal ID session came from Apple, Google or a passkey. Then no
+   * Bipolar Bear account is ever made unasked (uidSignIn with create: false):
+   * a provider can hand over an address this person never used here.
+   */
+  let _bbAuthNewMethod = false;
+  /** Apple hid the address behind a private relay (wording for the 'new' step). */
+  let _bbAuthRelay = false;
+  /** A line above the email field, after "I already have an account". */
+  let _bbAuthEmailNote = '';
+  /** What this page can offer: BB.uid.signInOptions(), once per page. */
+  let _bbAuthOptions = null;
 
   /** Translate a key, falling back to the English literal if i18n isn't ready. */
   function _bbT(key, fallback, vars) {
@@ -1598,6 +1633,9 @@
    *   password — email + password: a Bipolar Bear password, else a Universal ID one
    *   link     — this email already has a Bipolar Bear account: its password, once
    *   twostep  — the Universal ID has an authenticator: its 6-digit code
+   *   new      — Apple / Google / a passkey, and no Bipolar Bear account has
+   *              this Universal ID or its email: start one, or go back and
+   *              sign in the way the old account knows
    */
   function _bbAuthShowStep(step) {
     _bbAuthStep = step;
@@ -1606,6 +1644,7 @@
     const title = _bbAuthEl('bbAuthTitle');
     if (title) title.textContent = step === 'link' ? _bbT('uid.linkTitle', 'Connect your Bipolar Bear account')
       : step === 'twostep' ? _bbT('uid.twoStepTitle', 'Two-step verification')
+      : step === 'new' ? _bbT('signin144.newTitle', 'New to Bipolar Bear?')
       : _bbT('auth.welcome', 'Welcome to Bipolar Bear 🐻');
     show('bbAuthWhy', step === 'email' || step === 'password');
     const text = _bbAuthEl('bbAuthStepText');
@@ -1613,6 +1652,8 @@
       text.textContent = step === 'code' ? _bbT('uid.codeSent', '', { email: _bbAuthAddr })
                        : step === 'link' ? _bbT('uid.linkBody', '', { email: _bbAuthAddr })
                        : step === 'twostep' ? _bbT('uid.twoStepBody', '')
+                       : step === 'new' ? (_bbAuthRelay ? _bbT('signin144.newBodyRelay', '') : _bbT('signin144.newBody', '', { email: _bbAuthAddr }))
+                       : step === 'email' ? _bbAuthEmailNote
                        : '';
       text.style.display = text.textContent ? '' : 'none';
     }
@@ -1620,12 +1661,14 @@
     show('bbAuthCode', step === 'code' || step === 'twostep');
     show('bbAuthPassword', step === 'password' || step === 'link');
     show('bbAuthUidNote', step === 'email' || step === 'password');
+    _bbAuthShowProviders(step === 'email');
     const submit = _bbAuthEl('bbAuthSubmit');
     if (submit) {
       submit.disabled = false;
       submit.textContent = step === 'email' ? _bbT('uid.sendCode', 'Email me a sign-in code')
                          : step === 'link'  ? _bbT('uid.connect', 'Connect and sign in')
                          : step === 'twostep' ? _bbT('common.continue', 'Continue')
+                         : step === 'new' ? _bbT('signin144.createNew', 'Start a new account')
                          : _bbT('common.signIn', 'Sign In');
     }
     const alts = {
@@ -1634,12 +1677,15 @@
       password: ['useCode', null],
       link:     ['forgotPassword', 'differentEmail'],
       twostep:  ['differentEmail', null],
+      new:      ['haveAccount', null],
     }[step];
     ['bbAuthAltA', 'bbAuthAltB'].forEach((id, i) => {
       const btn = _bbAuthEl(id);
       if (!btn) return;
       btn.dataset.action = alts[i] || '';
-      btn.textContent = alts[i] ? _bbT('uid.' + alts[i], alts[i]) : '';
+      btn.textContent = !alts[i] ? ''
+        : alts[i] === 'haveAccount' ? _bbT('signin144.haveAccount', 'I already have an account')
+        : _bbT('uid.' + alts[i], alts[i]);
       btn.style.display = alts[i] ? '' : 'none';
     });
     const pw = _bbAuthEl('bbAuthPassword');
@@ -1647,7 +1693,8 @@
       pw.value = '';
       pw.autocomplete = 'current-password';
     }
-    const focus = (step === 'code' || step === 'twostep') ? 'bbAuthCode' : step === 'link' ? 'bbAuthPassword' : 'bbAuthEmail';
+    const focus = (step === 'code' || step === 'twostep') ? 'bbAuthCode' : step === 'link' ? 'bbAuthPassword'
+      : step === 'new' ? 'bbAuthSubmit' : 'bbAuthEmail';
     setTimeout(() => { const n = _bbAuthEl(focus); if (n && n.offsetParent) n.focus(); }, 30);
   }
 
@@ -1661,7 +1708,11 @@
     ['bbAuthEmail', 'bbAuthCode', 'bbAuthPassword'].forEach(id => { const n = _bbAuthEl(id); if (n) n.value = ''; });
     _bbAuthAddr = '';
     _bbAuthBusy = false;
+    _bbAuthNewMethod = false;
+    _bbAuthRelay = false;
+    _bbAuthEmailNote = '';
     _bbAuthShowStep('email');
+    _bbAuthLoadOptions();
     const verEl = _bbAuthEl('bbAuthVersion');
     if (verEl) verEl.textContent = (window.BB && window.BB.versionLabel) ? window.BB.versionLabel() : '';
     const modal = _bbAuthEl('bbAuthModal');
@@ -1886,12 +1937,15 @@
     return true;
   }
 
-  /** The Universal ID session is live: sign in to Bipolar Bear with it. */
-  async function _bbAuthFinishUid() {
+  /**
+   * The Universal ID session is live: sign in to Bipolar Bear with it.
+   * `makeNew`: the person chose "Start a new account" on the 'new' step.
+   */
+  async function _bbAuthFinishUid(makeNew) {
     if (await _bbAuthBeginTwoStep()) return;
     let r;
     try {
-      r = await window.BB.uid.finishSignIn();
+      r = await window.BB.uid.finishSignIn({ create: !!makeNew || !_bbAuthNewMethod });
     } catch (e) {
       // The server is the lock: it refuses a session that skipped two-step.
       if (e && e.details && e.details.reason === 'two-step' && await _bbAuthBeginTwoStep()) return;
@@ -1902,7 +1956,124 @@
       _bbAuthShowStep('link');
       return;
     }
+    if (r.status === 'new') {
+      _bbAuthAddr = r.email;
+      _bbAuthRelay = !!r.relay;
+      _bbAuthShowStep('new');
+      return;
+    }
     _bbAuthDone(r.created);
+  }
+
+  // ── Apple / Google / passkey ──────────────────────────────────────────────
+
+  /** Ask once per page what can be offered, then show it if the email step is up. */
+  function _bbAuthLoadOptions() {
+    if (_bbAuthOptions || !window.BB || !window.BB.uid || !window.BB.uid.signInOptions) return;
+    _bbAuthOptions = { apple: false, google: false, passkey: false, pending: true };
+    window.BB.uid.signInOptions().then(o => {
+      _bbAuthOptions = o || { apple: false, google: false, passkey: false };
+      _bbAuthShowProviders(_bbAuthStep === 'email');
+    });
+  }
+
+  function _bbAuthShowProviders(on) {
+    const o = _bbAuthOptions || {};
+    const box = _bbAuthEl('bbAuthProviders');
+    if (!box) return;
+    const any = !!(o.apple || o.google || o.passkey);
+    box.style.display = on && any ? '' : 'none';
+    if (!on || !any) return;
+    const set = (id, labelId, visible, key, fallback) => {
+      const b = _bbAuthEl(id);
+      if (b) { b.style.display = visible ? '' : 'none'; b.disabled = _bbAuthBusy; }
+      const l = _bbAuthEl(labelId);
+      if (l) l.textContent = _bbT(key, fallback);
+    };
+    // Apple first: at least as prominent as Google (App Review 4.8).
+    set('bbAuthApple', 'bbAuthAppleLabel', o.apple, 'signin144.apple', 'Continue with Apple');
+    set('bbAuthGoogle', 'bbAuthGoogleLabel', o.google, 'signin144.google', 'Continue with Google');
+    set('bbAuthPasskey', 'bbAuthPasskeyLabel', o.passkey, 'signin144.passkey', 'Use a passkey or security key');
+    const or = _bbAuthEl('bbAuthOr');
+    if (or) or.textContent = _bbT('signin144.or', 'or');
+  }
+
+  function _bbAuthProvidersDisabled(on) {
+    ['bbAuthApple', 'bbAuthGoogle', 'bbAuthPasskey', 'bbAuthSubmit'].forEach(id => {
+      const b = _bbAuthEl(id);
+      if (b) b.disabled = on;
+    });
+  }
+
+  /** A provider or passkey failure, in words (null: say nothing — they closed it). */
+  function _bbAuthProviderFailureText(r) {
+    if (!r || r.reason === 'cancelled') return null;
+    if (r.reason === 'no-passkey') return _bbT('signin144.errNoPasskey', 'No passkey or security key for a Universal ID was found. You can add one on the UNI·SIM Hub.');
+    if (r.reason === 'provider') return _bbT('signin144.errProvider', "That sign-in didn't finish. Please try again.");
+    return _bbUidFailureText(r.reason, r.retryAfter);
+  }
+
+  /** Firebase is loaded and initialised on this page (journal.html defers it). */
+  function _bbWhenFirebase() {
+    return new Promise(resolve => {
+      let tries = 0;
+      (function check() {
+        let ready = false;
+        try { ready = !!(window.firebase && firebase.apps && firebase.apps.length && firebase.auth); } catch (e) {}
+        if (ready || ++tries > 120) return resolve(ready);
+        setTimeout(check, 250);
+      })();
+    });
+  }
+
+  /** The session is in: carry on exactly as after an emailed code. */
+  async function _bbAuthAfterNewMethod() {
+    _bbAuthNewMethod = true;
+    _bbAuthOfferPassword('');
+    if (!(await _bbWhenFirebase())) { _bbAuthError(_bbUidFailureText('network')); return; }
+    await _bbAuthFinishUid();
+  }
+
+  /** "Continue with Apple / Google", "Use a passkey or security key". */
+  async function _bbAuthProvider(kind) {
+    if (_bbAuthBusy || !window.BB || !window.BB.uid) return;
+    _bbAuthError('');
+    _bbAuthBusy = true;
+    _bbAuthProvidersDisabled(true);
+    let leaving = false;
+    try {
+      const r = kind === 'passkey' ? await window.BB.uid.signInWithPasskey() : await window.BB.uid.startProvider(kind);
+      if (r && r.redirected) { leaving = true; return; }
+      if (!r || !r.ok) { _bbAuthError(_bbAuthProviderFailureText(r)); return; }
+      await _bbAuthAfterNewMethod();
+    } catch (e) {
+      _bbAuthError(_bbUidFailureText(e && e.code));
+    } finally {
+      if (!leaving) {
+        _bbAuthBusy = false;
+        _bbAuthProvidersDisabled(false);
+      }
+    }
+  }
+
+  /** Back from Apple or Google on the web (BB.uid.pendingReturn): reopen the sheet and finish. */
+  function _bbAuthResumeReturn() {
+    if (!window.BB || !window.BB.uid || !window.BB.uid.pendingReturn) return;
+    window.BB.uid.pendingReturn().then(async r => {
+      if (!r) return;
+      window.showAuthModal();
+      if (!r.ok) { _bbAuthError(_bbAuthProviderFailureText(r)); return; }
+      _bbAuthBusy = true;
+      _bbAuthProvidersDisabled(true);
+      try {
+        await _bbAuthAfterNewMethod();
+      } catch (e) {
+        _bbAuthError(_bbUidFailureText(e && e.code));
+      } finally {
+        _bbAuthBusy = false;
+        _bbAuthProvidersDisabled(false);
+      }
+    });
   }
 
   /** Hand the typed password to the journal (it unlocks the journal key), or withdraw it. */
@@ -1961,6 +2132,8 @@
         const r = await window.BB.uid.signInWithPassword(email, pw);
         if (!r.ok) { _bbAuthError(_bbUidFailureText(r.reason, r.retryAfter)); return; }
         await _bbAuthFinishUid();
+      } else if (_bbAuthStep === 'new') {
+        await _bbAuthFinishUid(true);
       } else if (_bbAuthStep === 'link') {
         if (!pw) return;
         _bbAuthOfferPassword(pw);
@@ -1996,6 +2169,14 @@
       _bbAuthShowStep('email');
     } else if (action === 'differentEmail') {
       if ((_bbAuthStep === 'link' || _bbAuthStep === 'twostep') && window.BB && window.BB.uid) window.BB.uid.signOut();
+      _bbAuthNewMethod = false;
+      _bbAuthShowStep('email');
+    } else if (action === 'haveAccount') {
+      // Nothing was made: drop the provider's session and sign in the old way.
+      if (window.BB && window.BB.uid) window.BB.uid.signOut();
+      _bbAuthNewMethod = false;
+      _bbAuthRelay = false;
+      _bbAuthEmailNote = _bbT('signin144.haveAccountNote', 'Sign in with the email your Bipolar Bear account uses. You can add Apple or Google to your Universal ID afterwards, on the UNI·SIM Hub.');
       _bbAuthShowStep('email');
     } else if (action === 'resend') {
       const r = await window.BB.uid.sendCode(_bbAuthAddr);
@@ -2026,6 +2207,11 @@
       const btn = _bbAuthEl(id);
       if (btn) btn.addEventListener('click', () => _bbAuthAlt(btn.dataset.action));
     });
+    [['bbAuthApple', 'apple'], ['bbAuthGoogle', 'google'], ['bbAuthPasskey', 'passkey']].forEach(([id, kind]) => {
+      const btn = _bbAuthEl(id);
+      if (btn) btn.addEventListener('click', () => _bbAuthProvider(kind));
+    });
+    _bbAuthResumeReturn();
     ['bbAuthEmail', 'bbAuthCode', 'bbAuthPassword'].forEach(id => {
       const n = _bbAuthEl(id);
       if (n) n.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); _bbAuthSubmit(); } });

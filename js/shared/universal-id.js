@@ -218,17 +218,380 @@
    *   proved with its password first (then `linkCurrentAccount`).
    *   Rejects with `{ code, message }`.
    */
-  function finishSignIn() {
+  function finishSignIn(opts) {
+    // `create: false` after Apple, Google or a passkey: the server answers
+    // `{ status: 'new' }` instead of making an account, and the sheet asks.
+    var create = !(opts && opts.create === false);
     _busy = true;
     return _accessToken().then(function (token) {
       if (!token) throw { code: 'no-session', message: '' };
-      return _callFunction('uidSignIn', { token: token });
+      return _callFunction('uidSignIn', create ? { token: token } : { token: token, create: false });
     }).then(function (r) {
       if (r && r.status === 'link') return { status: 'link', email: r.email || '' };
+      if (r && r.status === 'new') return { status: 'new', email: r.email || '', relay: !!r.relay };
       if (!r || !r.customToken) throw { code: 'internal', message: 'No sign-in token' };
       return firebase.auth().signInWithCustomToken(r.customToken)
         .then(function () { return { status: 'signed-in', created: !!r.created }; });
-    }).then(function (out) { _busy = false; return out; }, function (err) { _busy = false; throw err; });
+    }).then(function (out) {
+      _busy = false;
+      // 'link' and 'new' still need this session for the person's answer.
+      if (out.status === 'signed-in') _hold = false;
+      return out;
+    }, function (err) { _busy = false; throw err; });
+  }
+
+  // ── Apple, Google and passkeys (2026-10-19) ──────────────────────────────
+  // Each one ends in an ordinary Universal ID session, so everything after it
+  // is the emailed code's path: uidSignIn → the same uidLinks join → the same
+  // Firebase uid → the same journal and its key. Supabase links a provider to
+  // an existing Universal ID by itself when the provider's address is verified
+  // and matches; any other address is a different Universal ID, and
+  // finishSignIn({ create: false }) makes sure that never silently becomes a
+  // second, empty Bipolar Bear account.
+  //
+  //   Web: Apple and Google go to Supabase's /authorize with PKCE and come back
+  //     to this page with ?uidReturn=1&code=… (the code is useless without the
+  //     verifier kept in sessionStorage). Tokens in a URL are never accepted.
+  //   Native: the app's own BBSignIn plugin (bipolarbear-native). Apple on
+  //     iPhone is the system sheet (App Review 4.8); Google, and Apple on
+  //     Android, run in the system browser (ASWebAuthenticationSession / a
+  //     Custom Tab) and come back to <app id>://auth-callback with a code.
+  //   Passkeys: the Hub's passkeys, relying party app.unisim.co.uk (moving it
+  //     would orphan every passkey). The apps use the system passkey sheet,
+  //     allowed by the Hub's apple-app-site-association (webcredentials) and
+  //     assetlinks.json, and the session counts as two-step (0294). The
+  //     website can't run a ceremony for app.unisim.co.uk (hosted Supabase
+  //     refuses other origins, so Related Origin Requests are out): it goes
+  //     to app.unisim.co.uk/passkey-handoff, which runs it there and comes
+  //     back with a single-use code and our state in the fragment
+  //     (#bb_passkey=…&state=…). That session is an emailed-link one (aal1),
+  //     so an account with an authenticator app is asked for its code.
+  //
+  // ⚠️ A provider sign-in tells Supabase this site's address (the redirect).
+  // That is the price of Apple and Google; the emailed code still sends none.
+  // Apple's name is not asked for or kept.
+
+  var NATIVE_PLUGIN = 'BBSignIn';
+  var PKCE_KEY = 'bbUidPkce';
+  var RETURN_PARAM = 'uidReturn';
+  /** How long a provider round trip may take before its verifier is refused. */
+  var PKCE_MAX_AGE_MS = 15 * 60 * 1000;
+  var PASSKEY_RP_ID = 'app.unisim.co.uk';
+  /** The Hub page that runs a passkey sign-in for this website. */
+  var PASSKEY_HANDOFF_URL = 'https://app.unisim.co.uk/passkey-handoff';
+  /** The pages that Hub page will send a code back to (src/lib/bearPasskey.ts there). */
+  var PASSKEY_WEB_ORIGINS = ['https://www.bipolarbear.app', 'https://bipolarbear.app'];
+  var PASSKEY_STATE_KEY = 'bbUidPasskeyState';
+
+  /** Keeps a just-made session alive through Firebase's first "nobody signed in". */
+  var _hold = false;
+
+  function _isNative() {
+    try { var c = window.Capacitor; return !!(c && c.isNativePlatform && c.isNativePlatform()); } catch (e) { return false; }
+  }
+
+  function _plugin() {
+    if (!_isNative()) return null;
+    try {
+      var c = window.Capacitor;
+      if (c.isPluginAvailable && !c.isPluginAvailable(NATIVE_PLUGIN)) return null;
+      return (c.Plugins && c.Plugins[NATIVE_PLUGIN]) || null;
+    } catch (e) { return null; }
+  }
+
+  var _supportP = null;
+  /** What this app's native half can do, or null (a browser, or a build without it). */
+  function _nativeSupport() {
+    var p = _plugin();
+    if (!p || typeof p.support !== 'function') return Promise.resolve(null);
+    if (!_supportP) {
+      _supportP = Promise.resolve().then(function () { return p.support(); }).then(function (s) {
+        return s && (s.platform === 'ios' || s.platform === 'android') && _isCallback(s.callbackUrl) ? s : null;
+      }, function () { return null; });
+    }
+    return _supportP;
+  }
+
+  function _b64url(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  /** A PKCE verifier and its S256 challenge ('plain' only where WebCrypto is missing). */
+  function _pkce() {
+    var bytes = crypto.getRandomValues(new Uint8Array(32));
+    var verifier = Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+    var plain = { verifier: verifier, challenge: verifier, method: 'plain' };
+    var subtle = window.crypto && window.crypto.subtle;
+    if (!subtle || typeof TextEncoder === 'undefined') return Promise.resolve(plain);
+    return subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(function (d) {
+      return { verifier: verifier, challenge: _b64url(new Uint8Array(d)), method: 's256' };
+    }, function () { return plain; });
+  }
+
+  function _authorizeUrl(provider, redirectTo, p) {
+    return SUPABASE_URL + '/auth/v1/authorize?provider=' + encodeURIComponent(provider) +
+      '&redirect_to=' + encodeURIComponent(redirectTo) +
+      '&code_challenge=' + encodeURIComponent(p.challenge) +
+      '&code_challenge_method=' + p.method;
+  }
+
+  /** Store a token response from Supabase as this app's session. */
+  function _saveTokens(j) {
+    if (!j || !j.access_token || !j.refresh_token) throw { code: 'invalid_response', message: '' };
+    _save(_sessionFrom(j));
+  }
+
+  function _exchangeCode(code, verifier) {
+    return _auth('token?grant_type=pkce', { auth_code: code, code_verifier: verifier }).then(_saveTokens);
+  }
+
+  /** `scheme://auth-callback`, split by hand (old Android WebViews mis-parse custom schemes). */
+  function _splitCallback(value) {
+    var m = /^([a-zA-Z][a-zA-Z0-9+.-]*):\/\/([^/?#]*)([^?#]*)(\?[^#]*)?(#.*)?$/.exec(String(value || ''));
+    if (!m) return null;
+    return {
+      scheme: m[1].toLowerCase(), host: m[2].toLowerCase(),
+      query: new URLSearchParams((m[4] || '').slice(1)), fragment: new URLSearchParams((m[5] || '').slice(1)),
+    };
+  }
+
+  function _isCallback(url) {
+    var c = _splitCallback(url);
+    return !!(c && c.host === 'auth-callback' && c.scheme !== 'http' && c.scheme !== 'https');
+  }
+
+  function _errorFrom(params) {
+    for (var i = 0; i < params.length; i++) {
+      var p = params[i];
+      var msg = p.get('error_description') || p.get('error') || p.get('error_code');
+      if (msg) return String(msg).replace(/\+/g, ' ');
+    }
+    return null;
+  }
+
+  /**
+   * Read what came back to the app's callback address. Only a `code` is
+   * accepted: tokens in a fragment are refused, because on Android any app
+   * can fire this address at us, and a code is worthless without our verifier.
+   */
+  function _parseCallback(received, expected) {
+    var got = _splitCallback(received), want = _splitCallback(expected);
+    if (!got || !want || got.scheme !== want.scheme || got.host !== want.host) return { invalid: true };
+    var err = _errorFrom([got.query, got.fragment]);
+    if (err) return { error: err };
+    var code = got.query.get('code');
+    return code ? { code: code } : { invalid: true };
+  }
+
+  function _providerFailure(message) {
+    return { ok: false, reason: /cancel|denied|access_denied/i.test(message || '') ? 'cancelled' : 'provider', message: message || '', retryAfter: null };
+  }
+
+  function _nativeProvider(plugin, provider) {
+    return _nativeSupport().then(function (s) {
+      if (!s) throw { code: 'native-unavailable', message: '' };
+      if (provider === 'apple' && s.appleNative) {
+        return Promise.resolve(plugin.appleSignIn()).then(function (r) {
+          if (r && r.cancelled) return { ok: false, reason: 'cancelled', message: '', retryAfter: null };
+          if (!r || !r.identityToken || !r.nonce) throw { code: 'apple_no_token', message: '' };
+          // The RAW nonce: Apple was sent its SHA-256, and Supabase compares the two.
+          return _auth('token?grant_type=id_token', { provider: 'apple', id_token: r.identityToken, nonce: r.nonce })
+            .then(_saveTokens).then(function () { return { ok: true }; });
+        });
+      }
+      return _pkce().then(function (p) {
+        return Promise.resolve(plugin.oauthStart({ url: _authorizeUrl(provider, s.callbackUrl, p) })).then(function (r) {
+          if (r && r.cancelled) return { ok: false, reason: 'cancelled', message: '', retryAfter: null };
+          var cb = _parseCallback(r && r.url, s.callbackUrl);
+          if (cb.error) return _providerFailure(cb.error);
+          if (!cb.code) throw { code: 'invalid_callback', message: '' };
+          return _exchangeCode(cb.code, p.verifier).then(function () { return { ok: true }; });
+        });
+      });
+    });
+  }
+
+  /**
+   * Sign in to Universal ID with Apple or Google. Resolves `{ ok: true }` with
+   * the session stored (then call `finishSignIn({ create: false })`), or
+   * `{ ok: true, redirected: true }` on the web, where the page is leaving for
+   * the provider and `pendingReturn()` finishes the job when it comes back.
+   * Never rejects.
+   */
+  function startProvider(provider) {
+    if (provider !== 'apple' && provider !== 'google') return Promise.resolve(_failure({}));
+    _challenge = null;
+    if (_isNative()) {
+      var plugin = _plugin();
+      if (!plugin) return Promise.resolve(_failure({ code: 'native-unavailable' }));
+      return _nativeProvider(plugin, provider).catch(_failure);
+    }
+    return _pkce().then(function (p) {
+      var back = location.origin + location.pathname + '?' + RETURN_PARAM + '=1';
+      try {
+        sessionStorage.setItem(PKCE_KEY, JSON.stringify({ v: p.verifier, provider: provider, at: Date.now() }));
+      } catch (e) {
+        // Without the verifier the code that comes back can't be redeemed.
+        return _failure({});
+      }
+      location.assign(_authorizeUrl(provider, back, p));
+      return { ok: true, redirected: true };
+    }).catch(_failure);
+  }
+
+  /**
+   * The web return leg, read once when this script loads: null when this page
+   * load is not coming back from Apple or Google, else `{ ok: true, provider }`
+   * with the session stored, or a failure. The parameters leave the address
+   * bar straight away, so a reload never repeats it.
+   */
+  var _returnP = (function () {
+    if (_isNative() || typeof location === 'undefined' || typeof URL !== 'function') return Promise.resolve(null);
+    var url;
+    try { url = new URL(location.href); } catch (e) { return Promise.resolve(null); }
+    var frag = new URLSearchParams(url.hash.replace(/^#/, ''));
+    if (frag.has('bb_passkey') || frag.has('bb_passkey_error')) return _passkeyReturn(url, frag);
+    if (url.searchParams.get(RETURN_PARAM) !== '1') return Promise.resolve(null);
+    var code = url.searchParams.get('code');
+    var err = _errorFrom([url.searchParams, new URLSearchParams(url.hash.replace(/^#/, ''))]);
+    [RETURN_PARAM, 'code', 'error', 'error_code', 'error_description', 'state'].forEach(function (k) { url.searchParams.delete(k); });
+    // Tokens or an error in the fragment are dropped, never used.
+    if (/(^|[#&])(access_token|refresh_token|error)/.test(url.hash)) url.hash = '';
+    try { history.replaceState(history.state, '', url.pathname + url.search + url.hash); } catch (e) {}
+    var stored = null;
+    try { stored = JSON.parse(sessionStorage.getItem(PKCE_KEY) || 'null'); sessionStorage.removeItem(PKCE_KEY); } catch (e) {}
+    var provider = stored && stored.provider || null;
+    if (err) return Promise.resolve(Object.assign(_providerFailure(err), { provider: provider }));
+    if (!code || !stored || !stored.v || !(Date.now() - Number(stored.at) < PKCE_MAX_AGE_MS)) {
+      // Not a sign-in this tab started (or it took too long): nothing to redeem.
+      return Promise.resolve(code ? Object.assign(_providerFailure(''), { provider: provider }) : null);
+    }
+    _hold = true;
+    return _exchangeCode(code, stored.v).then(function () {
+      return { ok: true, provider: provider };
+    }, function (e) {
+      _hold = false;
+      return Object.assign(_failure(e), { provider: provider });
+    });
+  })();
+
+  /** Back from app.unisim.co.uk/passkey-handoff: redeem its code if our state matches. */
+  function _passkeyReturn(url, frag) {
+    var tokenHash = frag.get('bb_passkey'), err = frag.get('bb_passkey_error'), state = frag.get('state');
+    try { history.replaceState(history.state, '', url.pathname + url.search); } catch (e) {}
+    var stored = null;
+    try { stored = JSON.parse(sessionStorage.getItem(PASSKEY_STATE_KEY) || 'null'); sessionStorage.removeItem(PASSKEY_STATE_KEY); } catch (e) {}
+    var fail = function (reason) { return { ok: false, reason: reason, message: '', retryAfter: null, provider: 'passkey' }; };
+    // A code this tab did not ask for is never used: it could be someone
+    // else's account, and this person's journal would be saved into it.
+    if (!stored || !stored.s || stored.s !== state || !(Date.now() - Number(stored.at) < PKCE_MAX_AGE_MS)) {
+      return Promise.resolve(tokenHash ? fail('provider') : null);
+    }
+    if (err || !tokenHash) return Promise.resolve(fail(err === 'cancelled' ? 'cancelled' : 'provider'));
+    _hold = true;
+    return _auth('verify', { type: 'magiclink', token_hash: tokenHash }).then(_saveTokens).then(function () {
+      return { ok: true, provider: 'passkey' };
+    }, function (e) {
+      _hold = false;
+      return Object.assign(_failure(e), { provider: 'passkey' });
+    });
+  }
+
+  function pendingReturn() { return _returnP; }
+
+  // ── Passkeys and security keys ──
+
+  var _settingsP = null;
+  /** Supabase's public auth settings (which providers are on), cached per page. */
+  function _settings() {
+    if (!_settingsP) {
+      _settingsP = _auth('settings', null).then(function (j) { return j || {}; }, function () {
+        _settingsP = null;
+        return {};
+      });
+    }
+    return _settingsP;
+  }
+
+  /** Whether a passkey sign-in can be offered here. */
+  function _passkeyHere() {
+    if (_isNative()) return _nativeSupport().then(function (s) { return !!(s && s.passkeys); });
+    try {
+      // Only on the pages the Hub sends a code back to, in a browser with WebAuthn.
+      return Promise.resolve(PASSKEY_WEB_ORIGINS.indexOf(location.origin) !== -1 && !!window.PublicKeyCredential);
+    } catch (e) { return Promise.resolve(false); }
+  }
+
+  /**
+   * Which of Apple / Google / a passkey this sheet can offer here. Never rejects.
+   * ⚠️ App Review 4.8: an iPhone app offers Google only alongside Apple.
+   */
+  function signInOptions() {
+    return Promise.all([_settings(), _isNative() ? _nativeSupport() : Promise.resolve(null), _passkeyHere()])
+      .then(function (a) {
+        var ext = (a[0] && a[0].external) || {}, s = a[1];
+        var apple = ext.apple === true, google = ext.google === true;
+        if (_isNative() && !s) apple = google = false;
+        if (s && s.platform === 'ios' && !apple) google = false;
+        return { apple: apple, google: google, passkey: a[0].passkeys_enabled === true && a[2] === true };
+      }, function () { return { apple: false, google: false, passkey: false }; });
+  }
+
+  /**
+   * Sign in to Universal ID with a passkey or a security key (one the person
+   * added on the UNI·SIM Hub). The key must check it's you (PIN, fingerprint,
+   * Face ID). Native: the system passkey sheet; resolves `{ ok: true }` with
+   * the session stored. Web: `{ ok: true, redirected: true }`, the page is
+   * leaving for the Hub and `pendingReturn()` finishes it. Else a failure
+   * whose reason is 'cancelled', 'no-passkey' or a usual one. Never rejects.
+   */
+  /** The website's passkey sign-in: off to the Hub page, with a state only this tab knows. */
+  function _webPasskey() {
+    try {
+      var bytes = crypto.getRandomValues(new Uint8Array(32));
+      var state = Array.prototype.map.call(bytes, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+      sessionStorage.setItem(PASSKEY_STATE_KEY, JSON.stringify({ s: state, at: Date.now() }));
+      location.assign(PASSKEY_HANDOFF_URL + '?return=' + encodeURIComponent(location.origin + location.pathname) +
+        '&state=' + state);
+      return Promise.resolve({ ok: true, redirected: true });
+    } catch (e) {
+      return Promise.resolve(_failure({}));
+    }
+  }
+
+  function signInWithPasskey() {
+    _challenge = null;
+    if (!_isNative()) return _webPasskey();
+    var plugin = _plugin();
+    if (!plugin) return Promise.resolve(_failure({ code: 'native-unavailable' }));
+    return _auth('passkeys/authentication/options', {}).then(function (start) {
+      var options = start && start.options;
+      if (!start || !start.challenge_id || !options || options.rpId !== PASSKEY_RP_ID) {
+        throw { code: 'invalid_response', message: '' };
+      }
+      options.userVerification = 'required';
+      return Promise.resolve(plugin.passkeyGet({ options: JSON.stringify(options) })).then(function (r) {
+        if (r && r.cancelled) throw { code: 'cancelled', message: '' };
+        if (r && r.noCredential) throw { code: 'no-passkey', message: '' };
+        var c = r && r.credential;
+        if (typeof c === 'string') { try { c = JSON.parse(c); } catch (e) { c = null; } }
+        if (!c || !c.id || !c.response) throw { code: 'invalid_response', message: '' };
+        return c;
+      }).then(function (credential) {
+        return _auth('passkeys/authentication/verify', { challenge_id: start.challenge_id, credential: credential });
+      });
+    }).then(function (j) {
+      _saveTokens(j);
+      return { ok: true };
+    }).catch(function (e) {
+      var code = e && e.code;
+      if (code === 'cancelled' || code === 'no-passkey') {
+        return { ok: false, reason: code, message: (e && e.message) || '', retryAfter: null };
+      }
+      return _failure(e);
+    });
   }
 
   /**
@@ -355,6 +718,7 @@
     var s = _load();
     _clear();
     _challenge = null;
+    _hold = false;
     if (s) _auth('logout?scope=local', {}, s.access_token).catch(function () {});
   }
 
@@ -379,7 +743,7 @@
       return;
     }
     firebase.auth().onAuthStateChanged(function (user) {
-      if (!user && !_busy && _load()) signOut();
+      if (!user && !_busy && !_hold && _load()) signOut();
     });
   })(0);
 
@@ -389,6 +753,10 @@
     verifyCode: verifyCode,
     signInWithPassword: signInWithPassword,
     finishSignIn: finishSignIn,
+    startProvider: startProvider,
+    pendingReturn: pendingReturn,
+    signInWithPasskey: signInWithPasskey,
+    signInOptions: signInOptions,
     linkCurrentAccount: linkCurrentAccount,
     twoStepFactor: twoStepFactor,
     startTwoStep: startTwoStep,

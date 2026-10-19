@@ -1570,16 +1570,87 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   afresh from the Universal ID session (`BB.uid.refreshFirebaseSignIn`) instead
   of the password prompt. Deleting the Bipolar Bear account leaves the Universal
   ID alone, because other UNI·SIM apps use it (privacy.html §6 says so).
-- **Privacy.** Supabase is told nothing about Bipolar Bear: no redirect URL, no
-  metadata, no product code. The user-count beat stays anonymous, because
+- **Privacy.** With the emailed code or a password, Supabase is told nothing
+  about Bipolar Bear: no redirect URL, no metadata, no product code. Apple and
+  Google (2026-10-19) need a redirect, so those sign-ins do tell Supabase this
+  site's address or the app's `://auth-callback`; privacy.html §6 names Apple
+  and Google. Apple's name is never asked for or kept. The user-count beat stays anonymous, because
   privacy.html promises the install id "is never linked to your account". The
   Supabase ↔ Firebase join exists only in `uidLinks`.
 - **Server setup.** `uidSignIn` mints custom tokens, which needs the functions'
   runtime service account
   to hold **Service Account Token Creator** (`roles/iam.serviceAccountTokenCreator`)
   on itself. Without it, `uidSignIn` answers `INTERNAL` at that step.
-- **Not yet:** Google / Apple sign-in (needs the origins and native deep links)
-  and a "Change journal password" setting.
+- **Not yet:** a "Change journal password" setting.
+
+#### Apple, Google and passkeys (2026-10-19, v356; apps 1.44)
+
+James: "add Google and Apple logins as we do for the app.unisim.co.uk - also
+allow security keys". The sheet's email step shows **Continue with Apple**
+(first: App Review 4.8), **Continue with Google** and **Use a passkey or
+security key**, only where `BB.uid.signInOptions()` says they work (Supabase
+`/auth/v1/settings`; on iPhone Google only alongside Apple; old native builds
+without the plugin get none). Strings `signin144.*` in
+`js/shared/i18n-signin.js`.
+
+| | Web | iPhone | Android |
+|---|---|---|---|
+| Apple | `/authorize` + PKCE, back to this page `?uidReturn=1&code=` | system sheet → `id_token` grant (raw nonce) | Custom Tab → `com.bipolarbear.app://auth-callback?code=` |
+| Google | same as Apple (Google's screen names the Supabase host) | ASWebAuthenticationSession → `com.app.bipolarbear://auth-callback?code=` | Custom Tab |
+| Passkey / security key | `app.unisim.co.uk/passkey-handoff` → `#bb_passkey=<code>&state=` → `/verify` magiclink (aal1) | system passkey sheet, RP `app.unisim.co.uk` (aal2) | Credential Manager, RP `app.unisim.co.uk` (aal2) |
+
+- **The same account, the same journal.** Every route ends in an ordinary
+  Universal ID session, then the emailed code's path: `uidSignIn` →
+  `uidLinks/{supabaseUserId}` → the same Firebase uid → the same
+  `journalWrapKey` (keyed on the uid) and the same journal. Supabase links a
+  verified provider address to an existing Universal ID with that email by
+  itself. Nothing in `js/journal.js` knows how the person signed in.
+- **Never a second account unasked.** After Apple, Google or a passkey the
+  sheet calls `uidSignIn` with `create: false`. With no link and no Firebase
+  account for the address, it answers `{ status: 'new', email, relay }` and
+  makes nothing. The sheet's `new` step: **Start a new account** (asks again
+  without the flag) or **I already have an account** (drops the session; back
+  to the email step with a note that Apple / Google can be added on the Hub).
+  `relay` = Apple's private relay address, worded on its own. An address with
+  a Bipolar Bear password still gets `link`: the password once, never the
+  email alone. Callers without the flag behave as before.
+- **Codes only, and only ours.** The web return is redeemed only with the PKCE
+  verifier this tab kept (`sessionStorage.bbUidPkce`, 15 minutes); the native
+  callback only as a `code` for this app's scheme (tokens in a fragment are
+  refused: on Android any app can fire that address). The passkey code only
+  with the `state` this tab kept (`bbUidPasskeyState`): without it, anyone
+  could send someone to Bear with their own code and have that person's
+  journal saved into their account. Parameters leave the address bar at once.
+- **Passkeys stay on RP `app.unisim.co.uk`** (moving it orphans every
+  passkey). The website can't use WebAuthn Related Origin Requests: hosted
+  Supabase refuses `webauthn_rp_origins` outside the RP ID ("hostname must
+  equal the RP ID or be a subdomain"). So it uses the Hub page
+  (`unisim-central` `src/lib/bearPasskey.ts`), which runs the ceremony
+  without keeping a Hub session, swaps it for a single-use magic-link code
+  (`session-handoff`) and comes back. That session is aal1, so an account
+  with an authenticator app is asked for its code. The apps run the ceremony
+  themselves: iOS reports origin `https://app.unisim.co.uk` (Hub AASA
+  `webcredentials: ZH9C5TS86A.com.app.bipolarbear`, app entitlement
+  `webcredentials:app.unisim.co.uk`); Android reports
+  `android:apk-key-hash:8_dpwnbKY380XDiWogM_lI0T_gYQ14EtA7vApZP28pI` (Play
+  app signing key, in `webauthn_rp_origins`; Hub assetlinks
+  `get_login_creds`). Passkeys are added on the Hub, not here.
+- **Session kept while the person decides.** `_hold` stops the "Firebase says
+  nobody is signed in" sign-out from dropping a fresh provider session during
+  the `link` / `new` / `twostep` steps.
+- **Config (2026-10-19, Management API):** `uri_allow_list` +
+  `https://www.bipolarbear.app/**`, `https://bipolarbear.app/**`,
+  `com.app.bipolarbear://auth-callback`, `com.bipolarbear.app://auth-callback`;
+  `external_apple_client_id` + `com.app.bipolarbear`; `webauthn_rp_origins` +
+  the Android origin above. Apple App ID `com.app.bipolarbear`: Sign in with
+  Apple and Associated Domains.
+- **Native:** the app's own `BBSignIn` plugin (bipolarbear-native), not the
+  SDK's `UnisimSuiteAuth`: Bear isn't on the suite signing key, and that
+  plugin's `SUITE_AUTH` permission would clash on install.
+- **Tests:** `node scripts/test-uid-providers.mjs` (the real `uidSignIn`,
+  `uidLink`, `journalWrapKey` and `universal-id.js`, mocked network) and
+  `scripts/test-signin-sheet.mjs` (the real sheet in Chromium, served at
+  https://www.bipolarbear.app; needs Playwright).
 - **Never on Bipolar Anonymous** (James, 2026-10-13): no Universal ID on the
   board's page or app, so it stays anonymous for people who download it on
   its own. The board's existing email-code link (`verifyAnonCode`) is unchanged.

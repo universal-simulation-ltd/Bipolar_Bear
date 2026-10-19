@@ -1797,10 +1797,17 @@ async function syncFirebaseEmail(fbUser, email) {
   }
 }
 
+// `create: false` (sent after Apple, Google or a passkey, 2026-10-19): when no
+// Bipolar Bear account belongs to this Universal ID or its email, answer
+// `{ status: 'new' }` and make nothing. The person is asked first, because a
+// provider can hand over an address they never used here (Apple's private
+// relay, another Gmail), and a silent new account would look like a lost
+// journal. Callers that send nothing keep the old behaviour.
 exports.uidSignIn = onCall(
   { region: REGION, invoker: 'public' },
   async (request) => {
     const person  = await universalIdUser(request.data && request.data.token);
+    const allowCreate = !(request.data && request.data.create === false);
     const linkRef = db.collection(UID_LINKS).doc(person.id);
 
     // Twice at most: a parallel call can create the account between our look
@@ -1831,6 +1838,10 @@ exports.uidSignIn = onCall(
         }
         await writeUidLink(person.id, existing.uid, person.email, 'adopted');
         continue;
+      }
+
+      if (!allowCreate) {
+        return { status: 'new', email: person.email, relay: /@privaterelay\.appleid\.com$/i.test(person.email) };
       }
 
       try {

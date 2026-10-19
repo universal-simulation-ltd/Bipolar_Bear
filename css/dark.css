@@ -110,6 +110,12 @@ html.theme-dark .bb-account-box input, html.theme-dark .bb-account-box select {
 }
 html.theme-dark #bbAccountVersion, html.theme-dark #bbAuthVersion, html.theme-dark #bbFbMeta { color: var(--dk-muted) !important; }
 html.theme-dark #bbAuthWhy { color: var(--dk-text-2) !important; }
+/* Apple / Google / passkey buttons on the sign-in sheet (fab.js). Apple's
+   white style is the one its guidelines give for dark backgrounds. */
+html.theme-dark .bb-auth-provider { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text); }
+html.theme-dark .bb-auth-provider.bb-auth-apple { background: #fff; border-color: #fff; color: #000; }
+html.theme-dark .bb-auth-or { color: var(--dk-muted); }
+html.theme-dark .bb-auth-or::before, html.theme-dark .bb-auth-or::after { background: var(--dk-line); }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Home (index.html)

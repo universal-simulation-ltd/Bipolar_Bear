@@ -1744,7 +1744,18 @@
 //   (or the PIN check) on top, back leaves the app instead of doing nothing
 //   (BB.a11y.closeTop returns 'locked'). Checked on the emulator. Touches
 //   js/anonymous.js, js/shared/a11y.js.
-const CACHE_NAME = 'bipolarbear-v355';
+// v356: Continue with Apple / Continue with Google / Use a passkey or
+//   security key on the Universal ID sign-in sheet (fab.js,
+//   js/shared/universal-id.js). Web: Apple and Google through Supabase's
+//   /authorize with PKCE (?uidReturn=1&code=…); passkeys through
+//   app.unisim.co.uk/passkey-handoff (single-use code + our state in the
+//   fragment). After any of them uidSignIn gets create:false and answers
+//   'new' instead of making an account: "Start a new account" or "I already
+//   have an account". New precached file js/shared/i18n-signin.js
+//   (signin144.*, 10 languages). Privacy §6 names Apple and Google. Touches
+//   fab.js, css/dark.css, index.html, journal.html, survival-kit.html,
+//   privacy.html, functions/index.js. The apps need 1.44 (BBSignIn plugin).
+const CACHE_NAME = 'bipolarbear-v356';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1780,6 +1791,7 @@ const STATIC_ASSETS = [
   './js/shared/version-check.js',
   './js/shared/i18n.js',
   './js/shared/i18n-meds.js',
+  './js/shared/i18n-signin.js',
   './js/shared/crisis.js',
   './js/shared/safety-plan.js',
   './js/shared/translate.js',
