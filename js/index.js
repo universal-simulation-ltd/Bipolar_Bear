@@ -2798,8 +2798,17 @@ function _handleIndexJournalNav() {
     _applyOnboardingGating();
 
     // ── Welcome popup (first-ever launch) ──
+    // Never over the PIN lock: on a fresh install it can come up first, and the
+    // welcome card (same z-index, added later) painted over it. Wait until the
+    // lock is gone, and sit below it if it comes back.
+    function _pinLockShowing() {
+      const ov = document.getElementById('guestPinOverlay');
+      return !!(ov && ov.style.display && ov.style.display !== 'none');
+    }
     function _showWelcomePopup() {
       if (document.getElementById('bbWelcomeModal')) return;
+      if (_pinLockShowing()) { setTimeout(_showWelcomePopup, 500); return; }
+      if (BB.storage.get('WelcomeShown')) return;
       const overlay = document.createElement('div');
       overlay.id = 'bbWelcomeModal';
       // Built while the first-run language picker may still be up, so redraw
@@ -2814,7 +2823,7 @@ function _handleIndexJournalNav() {
       document.addEventListener('bb:languagechange', _renderWelcome);
       Object.assign(overlay.style, {
         position:'fixed', inset:'0', display:'flex', alignItems:'center', justifyContent:'center',
-        background:'rgba(0,0,0,0.6)', zIndex:'9999', cursor:'pointer',
+        background:'rgba(0,0,0,0.6)', zIndex:'9998', cursor:'pointer',
       });
       overlay.addEventListener('click', () => {
         document.removeEventListener('bb:languagechange', _renderWelcome);

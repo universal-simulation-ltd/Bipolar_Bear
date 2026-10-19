@@ -1707,7 +1707,10 @@
 //   languages) instead of ✏️; it opens the same day viewer, so long notes the
 //   list cuts short can be read in full, and the viewer's ✏️ edits. Touches
 //   js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v350';
+// v351: the first-launch welcome card waits while the PIN lock is up (on a
+//   fresh install it could paint over it: same z-index, added later) and now
+//   sits below it (9998). Touches js/index.js.
+const CACHE_NAME = 'bipolarbear-v351';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
