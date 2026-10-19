@@ -2062,7 +2062,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         BB.storage.remove('GuestPinSalt');
         BB.storage.remove('GuestNoPin');
         sessionStorage.removeItem('bbPinUnlocked');
-        try { window.Capacitor?.Plugins?.SecureStorage?.removeItem?.('bb_native_pin')?.catch?.(() => {}); } catch (e) {}
+        try { window.BB?.secureStorage?.removeItem?.('bb_native_pin')?.catch?.(() => {}); } catch (e) {}
 
         if (deleteAccount && currentUser) {
           try { await currentUser.delete(); _accountDeleted = true; }
@@ -3067,7 +3067,7 @@ function _handleIndexJournalNav() {
       const _isNat = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
       if (_isNat && BB.storage.get('NativePinEnabled') === '1') {
         try {
-          const _ss = window.Capacitor?.Plugins?.SecureStorage;
+          const _ss = window.BB?.secureStorage;
           const stored = _ss ? await Promise.race([
             _ss.getItem('bb_native_pin'),
             new Promise(r => setTimeout(() => r(null), 3000)),
@@ -3208,7 +3208,7 @@ function _handleIndexJournalNav() {
         if (await BB.pinReauth.confirm({ device: true }) !== 'ok') return;
         if (BB.storage.get('NativePinEnabled') !== '1') return;
         BB.storage.remove('NativePinEnabled');
-        await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
+        await (window.BB?.secureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
         if (window.BB && BB.pin) BB.pin.clearFailures();
         sessionStorage.setItem('bbPinUnlocked', '1');
         if (_afterPinUnlock()) return;

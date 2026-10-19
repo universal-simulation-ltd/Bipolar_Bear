@@ -101,9 +101,37 @@
     } catch (_) {}
   }
 
+  // The Keychain / Android Keystore, through @aparajita/capacitor-secure-storage.
+  // The page reaches the plugin through the raw bridge (Capacitor.Plugins), which
+  // only has its NATIVE methods: internalGetItem / internalSetItem /
+  // internalRemoveItem. getItem / setItem / removeItem live in the plugin's JS
+  // wrapper, which this app never imports, so calling them on the bridge always
+  // failed ("Failed to save PIN", and the journal key was never kept on the
+  // phone; found 2026-10-19). This mirrors the wrapper: same key prefix, sync
+  // off, KeychainAccess.whenUnlocked (0), so what it writes reads back the same.
+  // null when not native or the plugin is missing, as the old checks expect.
+  var _SS_PREFIX = 'capacitor-storage_';
+  function secureStorage() {
+    var p = isNative() && _cap() && _cap().Plugins && _cap().Plugins.SecureStorage;
+    if (!p || typeof p.internalSetItem !== 'function') return null;
+    return {
+      getItem: function (key) {
+        return p.internalGetItem({ prefixedKey: _SS_PREFIX + key, sync: false })
+          .then(function (r) { return r && r.data != null ? r.data : null; });
+      },
+      setItem: function (key, value) {
+        return p.internalSetItem({ prefixedKey: _SS_PREFIX + key, data: String(value), sync: false, access: 0 });
+      },
+      removeItem: function (key) {
+        return p.internalRemoveItem({ prefixedKey: _SS_PREFIX + key, sync: false });
+      },
+    };
+  }
+
   // Canonical namespace.
   window.BB = window.BB || {};
   window.BB.platform = { isNative: isNative, isIOS: isIOS, isAndroid: isAndroid, syncWidgetMoods: syncWidgetMoods };
+  Object.defineProperty(window.BB, 'secureStorage', { get: secureStorage, configurable: true });
 
   // Legacy globals — keep existing inline call sites working.
   window.isNative = isNative;

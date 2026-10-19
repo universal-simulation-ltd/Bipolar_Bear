@@ -1137,7 +1137,7 @@ function _tt(k, vars, fallback) {
       try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
       try { BB.secure.clearPending(); } catch (_) {}
       if (isNative()) {
-        const _ss = window.Capacitor?.Plugins?.SecureStorage;
+        const _ss = window.BB?.secureStorage;
         if (_ss) {
           _ss.removeItem('bb_user_key').catch(() => {});
           _ss.removeItem('bb_native_pin').catch(() => {});
@@ -3811,7 +3811,7 @@ function _tt(k, vars, fallback) {
       sessionStorage.setItem('bb_user_key', b64);
       if (isNative()) {
         try {
-          const _ss = window.Capacitor?.Plugins?.SecureStorage;
+          const _ss = window.BB?.secureStorage;
           if (_ss) {
             await Promise.race([
               _ss.setItem('bb_user_key', b64),
@@ -3833,7 +3833,7 @@ function _tt(k, vars, fallback) {
           // Only attempt Keychain once per session — concurrent calls can deadlock iOS Keychain.
           sessionStorage.setItem('_bbSSAttempted', '1');
           try {
-            const _ss = window.Capacitor?.Plugins?.SecureStorage;
+            const _ss = window.BB?.secureStorage;
             if (_ss) {
               // Race against 3 s — a hung native call must not stall the whole load path
               b64 = await Promise.race([
@@ -4998,7 +4998,7 @@ function _tt(k, vars, fallback) {
         if (_pinSetupBuffer === _pinSetupFirst) {
           if (_nativePinSetupMode) {
             try {
-              const _ss = window.Capacitor?.Plugins?.SecureStorage;
+              const _ss = window.BB?.secureStorage;
               if (!_ss) throw new Error('SecureStorage unavailable');
               await Promise.race([
                 _ss.setItem('bb_native_pin', _pinSetupFirst),
@@ -5125,7 +5125,7 @@ function _tt(k, vars, fallback) {
     /** Is `pin` the current app lock PIN? The phone's (Keychain) when it is on, else the account's. */
     async function _appLockVerify(pin) {
       if (_appLockNativeOn()) {
-        const _ss = window.Capacitor?.Plugins?.SecureStorage;
+        const _ss = window.BB?.secureStorage;
         if (!_ss) return false;
         const stored = await Promise.race([
           _ss.getItem('bb_native_pin'),
@@ -5180,7 +5180,7 @@ function _tt(k, vars, fallback) {
     async function _appLockTurnOff() {
       if (BB.storage.get('NativePinEnabled') === '1') {
         BB.storage.remove('NativePinEnabled');
-        await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
+        await (window.BB?.secureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
       }
       if (!_guestHasPin()) {
         BB.storage.remove('PinCode');
@@ -5220,7 +5220,7 @@ function _tt(k, vars, fallback) {
       BB.storage.remove('NativePinEnabled');
       _refreshRecentMoods();
       sessionStorage.removeItem('bbPinUnlocked');
-      await (window.Capacitor?.Plugins?.SecureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
+      await (window.BB?.secureStorage?.removeItem('bb_native_pin') ?? Promise.resolve()).catch(() => {});
       _nativePinSetupMode = false;
       closePinSetup();
       _updateNativePinBtn();
@@ -13281,7 +13281,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         BB.storage.remove('GuestNoPin');
         sessionStorage.removeItem('bbPinUnlocked');
         // Also clear the native Keychain PIN so it can't be reused after account reset
-        try { window.Capacitor?.Plugins?.SecureStorage?.removeItem?.('bb_native_pin')?.catch?.(() => {}); } catch(e) {}
+        try { window.BB?.secureStorage?.removeItem?.('bb_native_pin')?.catch?.(() => {}); } catch(e) {}
 
         // Account-deletion mode: delete the Firebase Auth record. We re-authed
         // upfront so this should succeed; if it doesn't, fall through to

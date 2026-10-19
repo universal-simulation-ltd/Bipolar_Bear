@@ -1682,7 +1682,12 @@
 //   welcome page and the 🔐 pop-up say entries are encrypted only with a PIN.
 //   Touches journal.html, js/journal.js, css/journal.css, js/index.js,
 //   index.html, fab.js, js/shared/i18n.js, privacy.html, welcome.html.
-const CACHE_NAME = 'bipolarbear-v345';
+// v346: BB.secureStorage (js/shared/platform.js) calls the secure-storage
+//   plugin's native internalGetItem/SetItem/RemoveItem. getItem/setItem/
+//   removeItem only exist in the plugin's JS wrapper, so every Keychain/Keystore
+//   call failed ("Failed to save PIN"; the journal key never cached).
+//   Touches js/shared/platform.js, js/journal.js, js/index.js.
+const CACHE_NAME = 'bipolarbear-v346';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
