@@ -6840,6 +6840,32 @@ document.getElementById('ms-save').addEventListener('click', async () => {
 });
 
 // ─────────────────────────────────────────────────────────────────
+// Native feel (js/shared/native-feel.js; test version, 2026-10-19)
+// ─────────────────────────────────────────────────────────────────
+// Swipe a post or a reply left: More (the same sheet as ⋯ and a long press)
+// and Delete when you may delete it, else Report. Tapping a post still opens
+// its thread, and a reply still swipes right to answer it. The ⋯ button is
+// hidden from sight, kept for VoiceOver.
+if (window.BB && BB.nf && BB.nf.on) {
+  const _nfActs = (card) => {
+    const acts = [];
+    if (card.querySelector('.more-btn') || card.classList.contains('comment-card')) {
+      acts.push({ label: _wt('anon.ux.more'), kind: 'more', run: () => openActions(card) });
+    }
+    const items = '.post-more-items ';
+    const del = card.querySelector(items + '[data-selfdelete],' + items + '[data-delete],' + items + '[data-cselfdelete],' + items + '[data-cdelete]');
+    const rep = card.querySelector(items + '[data-report],' + items + '[data-creport]');
+    if (del) acts.push({ label: _wt('common.delete'), kind: 'del', run: () => del.click() });
+    else if (rep) acts.push({ label: rep.title || _wt('anon.modbtn.reportPost'), kind: 'warn', run: () => rep.click() });
+    return acts;
+  };
+  BB.nf.rows({ row: '#post-list .post-card[data-pid]', hide: '.more-btn', actions: _nfActs });
+  BB.nf.rows({ row: '.comment-card', hide: '.more-btn', actions: _nfActs });
+  // Back to Bipolar Bear, when there is one to go back to.
+  BB.nf.setBack(() => { _goHome(); return true; }, () => _canGoBackToBB() || (!_bbUser && !_isAnonymousApp));
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Boot — driven by onAuthStateChanged; fallback if Firebase blocked
 // ─────────────────────────────────────────────────────────────────
 setTimeout(() => { if (!_anonInitialBoot) boot(null); }, 2500);

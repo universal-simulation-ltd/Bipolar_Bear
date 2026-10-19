@@ -17964,6 +17964,17 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     // first.
     function initEdgeSwipeHome() {
       if (typeof isAndroid === 'function' && isAndroid() && isNative()) return;
+      // Native feel (js/shared/native-feel.js): the page itself follows the
+      // finger instead of the round arrow.
+      if (window.BB && BB.nf && BB.nf.on) {
+        BB.nf.setBack(() => {
+          try { if (typeof saveDraft === 'function') saveDraft(); } catch (_) {}
+          if (typeof _advanceOnboardingStep === 'function') _advanceOnboardingStep(4);
+          location.replace('index.html');
+          return true;
+        });
+        return;
+      }
       const EDGE = 28, GO = 90;
       let x0 = 0, y0 = 0, active = false, armed = false, ind = null;
       const reset = () => {

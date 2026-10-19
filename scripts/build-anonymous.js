@@ -100,6 +100,7 @@ copyDir('fonts');
 copy('js/anonymous.js');
 const SHARED_MODULES = [
   'js/shared/platform.js',
+  'js/shared/native-feel.js',
   'js/shared/debug.js',
   'js/shared/brand-config.js',
   'js/shared/firebase-config.js',

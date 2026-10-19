@@ -1735,7 +1735,11 @@
 //   (js/anonymous.js; BB.a11y.closeTop in js/shared/a11y.js). Strings mq144.*,
 //   bio144.*, 10 languages. Touches index.html, journal.html, js/index.js,
 //   js/journal.js, js/anonymous.js, js/shared/a11y.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v353';
+// v353-nf1 (branch native-feel, a test version — James, 2026-10-19): new
+//   js/shared/native-feel.js on every page: tap a list row to open it, swipe
+//   it left for Delete; pop-ups are bottom sheets that swipe down to close;
+//   swipe from the left edge to go back; haptics. Phones only.
+const CACHE_NAME = 'bipolarbear-v353-nf1';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1776,6 +1780,7 @@ const STATIC_ASSETS = [
   './js/shared/translate.js',
   './js/shared/guest-data.js',
   './js/shared/secure-store.js',
+  './js/shared/native-feel.js',
   './js/shared/user-count.js',
   './js/shared/universal-id.js',
   './js/shared/auth-splash.js',
