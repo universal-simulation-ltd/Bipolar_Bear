@@ -1430,7 +1430,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // raw localStorage.
       const otherKeysToRemove = [
         'moodDefinitions', 'copingStrategies',
-        'currentMedList', 'medHistory', 'dailyGoals',
+        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'bbMedsCompareKey', 'dailyGoals',
         'unlockedAchievements',
       ];
       otherKeysToRemove.forEach(k => localStorage.removeItem(k));
@@ -1964,7 +1964,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
       try { BB.secure.clearPending(); } catch (_) {}
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
-         'rememberThis','myCommitments','customReminders','currentMedList','medHistory',
+         'rememberThis','myCommitments','customReminders','currentMedList','medHistory','medSideEffects','medBloodLevels','medPastChanges','bbMedsCompareKey',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
 
         localStorage.setItem('focusedModeEnabled', '1');
@@ -1974,7 +1974,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'incognitoMode', 'pdfHideByDefault',
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
-          'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange',
+          'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',

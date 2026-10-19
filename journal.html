@@ -29,6 +29,7 @@
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/onboarding.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/i18n-meds.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
@@ -98,6 +99,7 @@
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/journal.css">
   <link rel="stylesheet" href="css/dark.css">
+  <link rel="stylesheet" href="css/journal-meds.css">
 </head>
 <body>
 <div id="iphone-frame">
@@ -350,6 +352,8 @@
           <button type="button" class="medication-btn" data-medication="unsure" data-i18n="journal.med.unsure">🤷 Unsure</button>
           <button type="button" class="medication-btn medication-taken" data-medication="taken" data-i18n="journal.med.taken">Taken</button>
         </div>
+        <!-- Taken / missed per medicine (js/journal-meds.js chips; 1.44). -->
+        <div id="medDosesRow"></div>
       </div>
 
       <div class="form-group hidden-until-mood" id="notesSection">
@@ -776,6 +780,8 @@
         <div class="pdf-leaveout-title" data-i18n="pdf143.leaveOutTitle">Leave out of the report</div>
         <label class="pdf-opt"><input type="checkbox" id="pdfOmitCalendar" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitCalendar">Leave out the mood calendar</span></label>
         <label class="pdf-opt"><input type="checkbox" id="pdfOmitLifeChart" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitLifeChart">Leave out the life chart</span></label>
+        <label class="pdf-opt" id="pdfOmitMedsRow"><input type="checkbox" id="pdfOmitMeds" onchange="_pdfSaveLeaveOut()"><span data-i18n="meds144.omitMeds">Leave out the medicines page</span></label>
+        <label class="pdf-opt" id="pdfOmitCompareRow"><input type="checkbox" id="pdfOmitCompare" onchange="_pdfSaveLeaveOut()"><span data-i18n="meds144.omitCompare">Leave out the before / after comparison</span></label>
         <label class="pdf-opt" id="pdfOmitInsightsRow"><input type="checkbox" id="pdfOmitInsights" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitInsights">Leave out personalised insights</span></label>
         <div id="pdfOmitAdditionalWrap">
           <label class="pdf-opt"><input type="checkbox" id="pdfOmitAdditional" aria-controls="pdfOmitTrackersDetails" onchange="_pdfSaveLeaveOut()"><span data-i18n="pdf143.omitAdditional">Leave out additional data</span></label>
@@ -1199,6 +1205,8 @@
       <div id="medicationList" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
         <!-- Medications will be listed here -->
       </div>
+      <!-- 💊 My medicines: doses, side effects, blood levels, before / after (js/journal-meds.js). -->
+      <div style="margin:-8px 0 16px;"><button type="button" class="meds-btn" onclick="window.BBMeds && BBMeds.open()" data-i18n="meds144.hubBtn">💊 Doses, side effects and blood levels</button></div>
       
       <div style="margin-bottom: 15px;">
         <input type="text" id="newMedName" placeholder="Medication name" data-i18n-placeholder="journal.mods.medNamePlaceholder" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; margin-bottom: 10px; font-size: 1em;">
@@ -2013,6 +2021,8 @@
   <!-- Life chart + opt-in early-warning nudges. After journal.js (it is
        called from loadEntries/saveEntry), before fab.js (which stays last). -->
   <script src="js/journal-insights.js"></script>
+  <!-- Per-medicine tracking + the before / after comparison (1.44). -->
+  <script src="js/journal-meds.js"></script>
   <script src="fab.js"></script>
 </body>
 </html>

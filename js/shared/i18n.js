@@ -21165,6 +21165,13 @@
     // build wrote into an entry in whatever language was set then (js/journal.js
     // _trkSortLeftovers).
     tAll: function (key) { var out = []; Object.keys(_locales).forEach(function (c) { var v = _resolve(_locales[c], key); if (typeof v === 'string') out.push(v); }); return out; },
+    // Strings kept in their own file (js/shared/i18n-meds.js): add one
+    // namespace to a language. Never overwrites a namespace already here.
+    extend: function (code, tree) {
+      var loc = _locales[code];
+      if (!loc || !tree) return;
+      Object.keys(tree).forEach(function (ns) { if (!loc[ns]) loc[ns] = tree[ns]; });
+    },
   };
   window.BB.t = t;
 

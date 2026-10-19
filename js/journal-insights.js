@@ -18,8 +18,8 @@
  * Life chart (NIMH life-chart style): one bar per day above/below a "stable"
  * baseline (elevated/manic above, low/depressed below), a medication strip
  * (missed / unsure days) and sleep hours underneath, on one scrollable time
- * axis. Entries only record whether meds were taken that day — not which
- * medicines — so the medication markers are adherence, not list changes.
+ * axis. The markers use the day's single medication answer (adherence, not
+ * list changes); per-medicine doses (1.44) are in js/journal-meds.js.
  *
  * Early warnings are OFF by default (`earlyWarnEnabled` in localStorage and
  * userSettings). Everything is computed on this device from the user's own

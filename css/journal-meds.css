@@ -1,0 +1,122 @@
+/**
+ * Per-medicine tracking (1.44): the taken / missed chips on the medication
+ * step, and the 💊 My medicines sheet (doses, side effects, blood levels,
+ * before / after a change). js/journal-meds.js builds the markup.
+ *
+ * @file css/journal-meds.css
+ */
+
+/* ── Chips on the medication step (focus mode + classic form) ── */
+.med-doses { margin: 6px auto 10px; max-width: 340px; text-align: center; }
+.med-doses-q { font-size: 0.86em; font-weight: 700; color: #495057; margin-bottom: 2px; }
+.med-doses-hint { font-size: 0.74em; color: var(--text-muted-ink); margin-bottom: 8px; }
+.med-doses-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.med-dose-chip {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+  padding: 7px 12px; border-radius: 18px; font: inherit; font-size: 0.84em; font-weight: 600;
+  border: 1.5px solid #51cf66; background: #ebfbee; color: #1f7a33; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; overflow-wrap: anywhere; text-align: left;
+}
+.med-dose-chip.missed { border-color: #e8590c; background: #fff4e6; color: #a94600; }
+.med-dose-chip .mdc-dose { font-weight: 400; opacity: 0.8; }
+.med-doses-next { margin-top: 12px; }
+.med-doses-next button {
+  padding: 10px 28px; border-radius: 12px; border: none; font: inherit; font-weight: 700;
+  background: var(--brand-btn); color: var(--brand-btn-text, #fff); cursor: pointer;
+}
+html.theme-dark .med-doses-q { color: var(--dk-text); }
+html.theme-dark .med-dose-chip { background: #1f3324; color: #8ce99a; border-color: #2f9e44; }
+html.theme-dark .med-dose-chip.missed { background: #3a2617; color: #ffc078; border-color: #e8590c; }
+
+/* ── 💊 My medicines: a page on phones, a sheet on wider screens ── */
+#medsHubModal { z-index: 1002; }
+#medsHubModal .meds-sheet {
+  max-width: 520px; width: 100%; text-align: left; padding: 18px 16px 22px;
+  max-height: 90dvh; display: flex; flex-direction: column;
+}
+@media (max-width: 519px) {
+  #medsHubModal { padding: 0; align-items: stretch; }
+  #medsHubModal .meds-sheet {
+    max-width: none; max-height: none; height: 100%; border-radius: 0; margin: 0;
+    padding: calc(14px + env(safe-area-inset-top, 0px)) 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+}
+.meds-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.meds-head h3 { flex: 1; margin: 0 !important; font-size: 1.15em; }
+.meds-x {
+  width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(0,0,0,0.06);
+  font-size: 1.05em; cursor: pointer; color: #495057; flex-shrink: 0;
+}
+.meds-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 4px; }
+@media (min-width: 420px) { .meds-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.meds-tab {
+  padding: 9px 6px; border-radius: 10px; border: 1.5px solid #e9ecef; background: white; font: inherit;
+  font-size: 0.82em; font-weight: 600; color: var(--text-muted-ink); cursor: pointer; line-height: 1.2;
+  -webkit-tap-highlight-color: transparent;
+}
+.meds-tab.on { border-color: var(--brand-primary); background: var(--brand-tint, #fff4e6); color: var(--brand-ink); }
+.meds-tab[data-default-view="true"]::after { content: ' ★'; font-size: 0.8em; }
+.meds-tab-note { font-size: 0.72em; color: var(--text-muted-ink); min-height: 1.2em; margin-bottom: 6px; text-align: center; }
+.meds-body { overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1; min-height: 0; padding-bottom: 6px; }
+.meds-intro { font-size: 0.84em; color: var(--text-muted-ink); margin: 2px 0 12px !important; line-height: 1.45; }
+.meds-card { border: 1px solid #e9ecef; border-radius: 12px; padding: 12px; margin-bottom: 10px; background: white; }
+.meds-card h4 { margin: 0 0 8px; font-size: 0.92em; color: #343a40; }
+.meds-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f1f3f5; font-size: 0.86em; color: #495057; }
+.meds-row:last-child { border-bottom: none; }
+.meds-row .mr-main { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.meds-row .mr-sub { font-size: 0.85em; color: var(--text-muted-ink); }
+.meds-row .mr-date { font-size: 0.82em; color: var(--text-muted-ink); white-space: nowrap; }
+.meds-del { background: none; border: none; font-size: 1em; cursor: pointer; width: 36px; height: 36px; flex-shrink: 0; }
+.meds-bar { height: 7px; border-radius: 4px; background: #f1f3f5; overflow: hidden; margin-top: 4px; }
+.meds-bar > span { display: block; height: 100%; background: #51cf66; border-radius: 4px; }
+.meds-empty { font-size: 0.84em; color: var(--text-muted-ink); font-style: italic; padding: 4px 0; }
+.meds-form { display: grid; gap: 8px; }
+.meds-form label { font-size: 0.78em; font-weight: 600; color: #495057; display: grid; gap: 3px; }
+.meds-form input, .meds-form select, .meds-form textarea {
+  width: 100%; box-sizing: border-box; padding: 9px 10px; border: 2px solid #e9ecef; border-radius: 8px;
+  font: inherit; font-size: 0.95em; background: white; color: #212529;
+}
+.meds-form textarea { min-height: 64px; resize: vertical; }
+.meds-form .mf-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.meds-form .mf-err { color: #c92a2a; font-size: 0.8em; min-height: 1em; }
+.meds-btn {
+  padding: 10px 16px; border-radius: 10px; border: 2px solid var(--brand-primary); background: white;
+  color: var(--brand-ink); font: inherit; font-weight: 700; cursor: pointer; font-size: 0.9em;
+}
+.meds-btn.primary { background: var(--brand-btn); color: var(--brand-btn-text, #fff); border-color: transparent; }
+.meds-btn.link { border: none; background: none; text-decoration: underline; text-underline-offset: 2px; padding: 6px 0; }
+.meds-chart { width: 100%; height: auto; display: block; margin: 4px 0 2px; }
+.meds-chart .mc-grid { stroke: #e9ecef; stroke-width: 1; }
+.meds-chart .mc-line { stroke: var(--brand-primary); stroke-width: 2.2; fill: none; }
+.meds-chart .mc-dot { fill: var(--brand-primary); }
+.meds-chart text { fill: #6c757d; font-size: 10px; }
+.meds-framing { font-size: 0.8em; line-height: 1.45; color: #5c4a00; background: #fff9db; border-radius: 10px; padding: 9px 11px; margin: 0 0 12px; }
+.meds-short { font-size: 0.88em; font-weight: 700; color: var(--brand-ink); margin: 6px 0 4px; }
+.meds-cmp { width: 100%; border-collapse: collapse; font-size: 0.84em; }
+.meds-cmp th, .meds-cmp td { padding: 7px 4px; border-bottom: 1px solid #f1f3f5; text-align: right; color: #495057; }
+.meds-cmp th:first-child, .meds-cmp td:first-child { text-align: left; color: var(--text-muted-ink); font-weight: 600; }
+.meds-cmp thead th { color: #343a40; font-weight: 700; vertical-align: bottom; }
+.meds-cmp thead .mr-sub { font-size: 0.82em; }
+.meds-mix { display: flex; height: 12px; border-radius: 6px; overflow: hidden; background: #f1f3f5; margin: 4px 0; }
+.meds-mix > span { display: block; height: 100%; }
+.meds-mix-key { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 0.74em; color: var(--text-muted-ink); }
+.meds-mix-key i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; vertical-align: 0; }
+.meds-flag { font-size: 0.8em; color: #a94600; background: #fff4e6; border-radius: 8px; padding: 8px 10px; margin-top: 8px; line-height: 1.4; }
+.meds-details summary { cursor: pointer; font-weight: 700; color: var(--brand-ink); font-size: 0.88em; padding: 6px 0; }
+
+html.theme-dark .meds-x { background: rgba(255,255,255,0.08); color: var(--dk-text); }
+html.theme-dark .meds-tab { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-muted); }
+html.theme-dark .meds-tab.on { background: var(--brand-tint); border-color: var(--brand-primary); color: var(--dk-text); }
+html.theme-dark .meds-card { background: var(--dk-surface-2); border-color: var(--dk-line); }
+html.theme-dark .meds-card h4, html.theme-dark .meds-cmp thead th, html.theme-dark .meds-cmp th[colspan] { color: var(--dk-text) !important; }
+html.theme-dark .meds-row, html.theme-dark .meds-cmp td, html.theme-dark .meds-form label { color: var(--dk-text-2); }
+html.theme-dark .meds-row, html.theme-dark .meds-cmp th, html.theme-dark .meds-cmp td { border-color: var(--dk-line); }
+html.theme-dark .meds-bar, html.theme-dark .meds-mix { background: var(--dk-surface-3); }
+html.theme-dark .meds-form input, html.theme-dark .meds-form select, html.theme-dark .meds-form textarea { background: var(--dk-surface); border-color: var(--dk-line); color: var(--dk-text); }
+html.theme-dark .meds-btn { background: transparent; color: var(--dk-text); }
+html.theme-dark .meds-btn.primary { background: var(--brand-btn); color: #fff; }
+html.theme-dark .meds-chart .mc-grid { stroke: var(--dk-line); }
+html.theme-dark .meds-chart text { fill: var(--dk-muted); }
+html.theme-dark .meds-framing { background: #3a3317; color: #f5e9b8; }
+html.theme-dark .meds-flag { background: #3a2617; color: #ffc078; }
+html.theme-dark .meds-form .mf-err { color: #ff8787; }

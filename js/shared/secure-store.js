@@ -16,7 +16,9 @@
  * fields used to sit in Firestore in plaintext:
  *   currentMedList, moodDefinitions, moodMemories, copingStrategies,
  *   myCommitments, customReminders, survivalGratitude, rememberThis
- * (plus medHistory, v343, which was never anything but encrypted)
+ * (plus medHistory, v343, and the per-medicine logs medSideEffects,
+ * medBloodLevels and medPastChanges, 1.44, which were never anything but
+ * encrypted)
  * They are now one AES-GCM blob each — personalDetails/{uid}.secureEnc and
  * userSettings/{uid}.secureEnc — under the journal's data key, the same key
  * and the same Standard / Private model as the journal entries and the safety
@@ -49,9 +51,15 @@
   var root = window;
 
   var SETTINGS = ['currentMedList', 'moodDefinitions', 'moodMemories', 'copingStrategies',
-    'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis', 'medHistory'];
+    'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis', 'medHistory',
+    'medSideEffects', 'medBloodLevels', 'medPastChanges'];
   // Merged rather than replaced when this device has something to add.
-  var UNION_FIELDS = { medHistory: function (a, b) { return mergeHistory(a, b); } };
+  var UNION_FIELDS = {
+    medHistory: function (a, b) { return mergeHistory(a, b); },
+    medSideEffects: function (a, b) { return mergeById(a, b); },
+    medBloodLevels: function (a, b) { return mergeById(a, b); },
+    medPastChanges: function (a, b) { return mergeById(a, b); },
+  };
   var STRING_FIELDS = { rememberThis: true };
   var PERSONAL = ['personalName', 'personalDOB', 'personalMedicalNum', 'personalDiagnosis',
     'personalDiagnosisDate', 'personalAddress', 'personalMobile', 'personalEmail',
@@ -431,6 +439,116 @@
     return merged;
   }
 
+  // ── Medicine logs (1.44) ───────────────────────────────────────────────────
+  // Three lists kept like medHistory (device copy + the encrypted secureEnc
+  // blob, never plaintext in Firestore), one record per item with an `id`:
+  //   medSideEffects  {id, date:'YYYY-MM-DD', med, text}
+  //   medBloodLevels  {id, date, test, value:number, unit, note?}
+  //   medPastChanges  {id, date, type:'add'|'stop'|'dose', name, from?, to?}
+  //                   — a change from before the dated history began, typed
+  //                   in so it can be compared (medHistory starts at v343).
+  // Each record also carries `updatedAt` (ms). Deleting leaves a tombstone
+  // {id, deleted:true, updatedAt} with nothing else in it, so a copy on
+  // another device can't bring the item back. Devices merge by id: the newer
+  // updatedAt wins (mergeById).
+  var LOG_FIELDS = { sideEffects: 'medSideEffects', bloodLevels: 'medBloodLevels', pastChanges: 'medPastChanges' };
+  var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function _str(v, max) { return String(v == null ? '' : v).trim().slice(0, max); }
+  function _isItem(x) { return !!x && typeof x === 'object' && typeof x.id === 'string' && x.id !== ''; }
+  function _itemDate(x) { return typeof x.date === 'string' ? x.date : ''; }
+  /** a ∪ b by id; for the same id the later updatedAt wins (b on a tie). Oldest date first. */
+  function mergeById(a, b) {
+    var by = {}, order = [];
+    [].concat(Array.isArray(a) ? a : [], Array.isArray(b) ? b : []).forEach(function (x) {
+      if (!_isItem(x)) return;
+      var p = by[x.id];
+      if (!p) { by[x.id] = x; order.push(x.id); return; }
+      if ((Number(x.updatedAt) || 0) >= (Number(p.updatedAt) || 0)) by[x.id] = x;
+    });
+    return order.map(function (id) { return by[id]; }).sort(function (x, y) {
+      var dx = _itemDate(x), dy = _itemDate(y);
+      if (dx !== dy) return dx < dy ? -1 : 1;
+      return (Number(x.updatedAt) || 0) - (Number(y.updatedAt) || 0);
+    });
+  }
+  /** A clean copy of a new / edited record, or null when it isn't valid. */
+  function _cleanItem(kind, x) {
+    if (!x || typeof x !== 'object' || !DATE_RE.test(String(x.date || ''))) return null;
+    var out = { id: _str(x.id, 64), date: x.date };
+    if (kind === 'sideEffects') {
+      out.text = _str(x.text, 500);
+      if (!out.text) return null;
+      out.med = _str(x.med, 120);
+    } else if (kind === 'bloodLevels') {
+      var v = typeof x.value === 'number' ? x.value : Number(String(x.value == null ? '' : x.value).replace(',', '.'));
+      out.test = _str(x.test, 60);
+      if (!out.test || !isFinite(v) || String(x.value).trim() === '') return null;
+      out.value = v;
+      out.unit = _str(x.unit, 20);
+      var n = _str(x.note, 200);
+      if (n) out.note = n;
+    } else if (kind === 'pastChanges') {
+      if (['add', 'stop', 'dose'].indexOf(x.type) < 0) return null;
+      out.type = x.type;
+      out.name = _str(x.name, 120);
+      if (!out.name) return null;
+      var f = _str(x.from, 60), t = _str(x.to, 60);
+      if (f) out.from = f;
+      if (t) out.to = t;
+    } else return null;
+    return out;
+  }
+  function _newId() {
+    var b = crypto.getRandomValues(new Uint8Array(9)), s = '';
+    for (var i = 0; i < b.length; i++) s += ('0' + b[i].toString(16)).slice(-2);
+    return s;
+  }
+  function logAll(kind) {
+    var f = LOG_FIELDS[kind];
+    var v = f ? readLocal('settings', f) : null;
+    return Array.isArray(v) ? v.filter(_isItem) : [];
+  }
+  /** The live records (no tombstones), oldest date first. */
+  function logList(kind) { return logAll(kind).filter(function (x) { return !x.deleted; }); }
+  function _logWrite(kind, list) {
+    lsSet(LOG_FIELDS[kind], JSON.stringify(list));
+    // An account gets it encrypted; a guest keeps it on the device only.
+    var u = currentUser();
+    if (u && fs()) {
+      var patch = {}; patch[LOG_FIELDS[kind]] = list;
+      return save(u.uid, 'settings', patch);
+    }
+    return Promise.resolve('device');
+  }
+  /** Add or replace a record. Resolves {item, status} or null (invalid). */
+  function logPut(kind, item) {
+    var c = _cleanItem(kind, item);
+    if (!c) return Promise.resolve(null);
+    if (!c.id) c.id = _newId();
+    c.updatedAt = Date.now();
+    var list = mergeById(logAll(kind), [c]);
+    return _logWrite(kind, list).then(function (st) { return { item: c, status: st }; });
+  }
+  function logRemove(kind, id) {
+    if (!id) return Promise.resolve(null);
+    var list = mergeById(logAll(kind), [{ id: String(id), deleted: true, updatedAt: Date.now() }]);
+    return _logWrite(kind, list);
+  }
+  /** Fold records from a backup in (never replaces). Returns the merged list. */
+  function logMergeIn(kind, items) {
+    if (!LOG_FIELDS[kind] || !Array.isArray(items)) return logAll(kind);
+    var clean = items.map(function (x) {
+      if (_isItem(x) && x.deleted) return { id: x.id, deleted: true, updatedAt: Number(x.updatedAt) || 0 };
+      var c = _cleanItem(kind, x);
+      if (!c || !c.id) return null;
+      c.updatedAt = Number(x.updatedAt) || 0;
+      return c;
+    }).filter(Boolean);
+    var merged = mergeById(logAll(kind), clean);
+    lsSet(LOG_FIELDS[kind], JSON.stringify(merged));
+    return merged;
+  }
+
   // Pending saves go up as soon as a key turns up (the journal puts it in
   // sessionStorage during its own auth listener), so keep trying for a while
   // after sign-in. Fires 'bb:secure-sync' with the views when anything synced.
@@ -476,6 +594,15 @@
     ensureBaseline: ensureBaseline,
     merge: mergeHistory,
     mergeIn: mergeIn,
+  };
+  root.BB.medLog = {
+    FIELDS: Object.assign({}, LOG_FIELDS),
+    all: logAll,
+    list: logList,
+    put: logPut,
+    remove: logRemove,
+    mergeIn: logMergeIn,
+    merge: mergeById,
   };
   root.BB.secure = {
     SETTINGS: SETTINGS.slice(),

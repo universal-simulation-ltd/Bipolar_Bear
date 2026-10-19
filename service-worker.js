@@ -1710,7 +1710,22 @@
 // v351: the first-launch welcome card waits while the PIN lock is up (on a
 //   fresh install it could paint over it: same z-index, added later) and now
 //   sits below it (9998). Touches js/index.js.
-const CACHE_NAME = 'bipolarbear-v351';
+// v352: per-medicine tracking (1.44). Entries add medDoses {name: taken|
+//   missed} beside the day's medication answer (old days read as one answer;
+//   nothing rewritten); "Which did you miss?" chips on the medication step.
+//   💊 My medicines sheet (js/journal-meds.js, css/journal-meds.css): taken
+//   per medicine, missed-dose history, side effects, blood levels with a
+//   chart, and the before / after comparison of a medicine change (≥21
+//   logged days each side, equal windows ≤90 d, auto-filled days out, other
+//   changes flagged). New encrypted settings medSideEffects / medBloodLevels
+//   / medPastChanges (BB.medLog, secure-store.js). PDF: Medicines section and
+//   Before / after page (each with a Leave out tick). Backup now includes
+//   currentMedList and the logs (merged on restore); CSV Medicines column;
+//   Bipolar UK import per medicine. Strings meds144.* in
+//   js/shared/i18n-meds.js (BB.i18n.extend), 10 languages. Touches
+//   journal.html, js/journal.js, js/journal-insights.js, js/index.js,
+//   js/survival-kit.js, js/shared/i18n.js, js/shared/secure-store.js.
+const CACHE_NAME = 'bipolarbear-v352';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1732,6 +1747,7 @@ const STATIC_ASSETS = [
   './js/index.js',
   './js/journal.js',
   './js/journal-insights.js',
+  './js/journal-meds.js',
   './js/survival-kit.js',
   './js/anonymous.js',
 
@@ -1744,6 +1760,7 @@ const STATIC_ASSETS = [
   './js/shared/medications.js',
   './js/shared/version-check.js',
   './js/shared/i18n.js',
+  './js/shared/i18n-meds.js',
   './js/shared/crisis.js',
   './js/shared/safety-plan.js',
   './js/shared/translate.js',
@@ -1780,6 +1797,7 @@ const STATIC_ASSETS = [
   './css/welcome.css',
   './css/index.css',
   './css/journal.css',
+  './css/journal-meds.css',
   './css/survival-kit.css',
   './css/dark.css',
   './css/anonymous.css',

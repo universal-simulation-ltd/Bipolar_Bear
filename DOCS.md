@@ -1686,7 +1686,8 @@ edits in the page scripts. Rules tests: `scripts/firestore-rules`
 **Encrypted personal details and survival-kit lists** (`BB.secure`).
 `personalDetails/{uid}` and these `userSettings` fields — `currentMedList,
 moodDefinitions, moodMemories, copingStrategies, myCommitments,
-customReminders, survivalGratitude, rememberThis, medHistory` — live only inside a
+customReminders, survivalGratitude, rememberThis, medHistory`, and from 1.44
+`medSideEffects, medBloodLevels, medPastChanges` (§2.23) — live only inside a
 `secureEnc` blob (`{_enc,_iv,v,updatedAt}`, AES-GCM under the journal data
 key, the safety-plan pattern). localStorage keeps the device copy under the
 same keys, so the pages render as before. The key comes from
@@ -2009,6 +2010,85 @@ Code: the `_trk*` block in `js/journal.js` (after `closeDeleteCustomFieldModal`)
 names that fit alone; otherwise all five go to 0.62 → 0.58em together, and
 if one still doesn't fit they take two lines (`.qc-two`), breaking only at
 the soft hyphens. The bears' accessible names stay `mood.*`.
+
+### 2.23 Per-medicine tracking and the before / after comparison (2026-10-19, v352, for 1.44)
+
+`js/journal-meds.js` (`BBMeds`), `css/journal-meds.css`, strings in
+`js/shared/i18n-meds.js` (`meds144.*`, 10 languages, added with
+`BB.i18n.extend`). Opened from 💊 **Doses, side effects and blood levels**
+in Manage medications and in the medication stat detail.
+
+**A day's doses.** An entry keeps `medication` (`taken` | `not-taken` |
+`unsure`), the one answer for the day that every older build reads and
+writes, and now also `medDoses: {"<name>": "taken" | "missed"}` for the
+medicines on the list that day. Old days have no `medDoses`:
+`BBMeds.dosesOf(entry)` returns `{status, perMed: null}`, so the single answer
+stands for every medicine. Nothing is rewritten. Editing an old day keeps it
+that way unless the medication answer is changed (`_medDosesForSave`). New
+days still get `medication`: all taken → `taken`, any missed → `not-taken`.
+- The medicines for a day: the current list for today; for an earlier day
+  the list replayed back from `medHistory` + typed-in past changes
+  (`BBMeds.listOnDay`); an entry being edited uses its own `medDoses` names.
+- Focus mode: Taken → all taken, and it moves on as before. Not taken with
+  two or more medicines shows "Which did you miss?" chips (all missed until
+  tapped) and waits for Next. One medicine: the answer is its answer. The
+  classic form shows the same chips under the three buttons. Unsure → no
+  `medDoses`.
+- `medDoses` is inside the entry, so it is encrypted exactly like the rest of
+  the entry (journal key; a guest's PIN key, or plain for a guest without a
+  PIN).
+
+**Logs** (`BB.medLog` in `secure-store.js`), stored like `medHistory`: a
+device copy in localStorage and the account copy only inside
+`userSettings.secureEnc` (they are in `SETTINGS`, so `resetPatch()` clears
+them; never a plaintext field, so no rules change):
+- `medSideEffects` `{id, date, med, text}`
+- `medBloodLevels` `{id, date, test, value, unit, note?}` (a decimal comma is
+  read), charted per test (SVG on screen, lines in the PDF)
+- `medPastChanges` `{id, date, type: add|stop|dose, name, from?, to?}`: a
+  change from before `medHistory` began (v343), typed in to compare it.
+Each has `updatedAt`. Delete leaves a tombstone `{id, deleted, updatedAt}` with
+nothing else in it. Devices merge by id, newer `updatedAt` wins
+(`mergeById`, a `UNION_FIELDS` entry). No key (Private, locked) → pending,
+as for the other fields.
+
+**Missed doses.** `BBMeds.adherence(entries, from, to)`: taken / missed per
+medicine, only from days recorded per medicine; the overall share uses every
+answered day. `BBMeds.missedLog()`: newest first; an old not-taken day shows
+as "one answer for the whole day".
+
+**Before / after** (`BBMeds.compare(entries, change, {events})`). Changes =
+`medHistory` add / stop / dose events (not baselines, renames or imports)
+plus typed-in past changes. For change day C: W = min(90, days from the first
+logged day to C−1, days from C+1 to today). Before = [C−W, C−1], after =
+[C+1, C+W]. A logged day is a non-auto-filled entry with a mood, latest entry
+per day. Both sides need ≥21 logged days. If short: `need` = days of daily
+logging from tomorrow that would make it ("Keep logging: N more days
+needed"); `reason: 'before'` when the widest before-window can't reach 21;
+`reason: 'afterGap'` when the widest window is already past and has gaps.
+Shown: logged days, stable %, high ↔ low switches a month (polarity changes
+between consecutive non-stable days), average sleep and energy, meds taken
+%, the mood mix, and custom yes/no trackers (% yes). Other changes inside
+either window are named. The framing copy says it's patterns, not proof.
+The picked change is remembered on the device (`bbMedsCompareKey`).
+
+**PDF.** After the life chart: a Medicines section (taken per medicine over
+90 days, missed doses over 30, side effects, blood levels with a chart), then
+a Before / after page for the picked change, or the newest one with enough
+data. Each has an unticked "Leave out" tick (`bbPdfOmitMeds`,
+`bbPdfOmitCompare`), offered only when the report would have it.
+
+**Backup / CSV / imports.** The backup now carries `currentMedList` (it was
+missing) and the three logs. A restore merges: medicines the device lacks are
+added by name; logs merge by id; nothing is replaced. The CSV has a
+`Medicines` column ("Lithium: taken; Quetiapine: missed"). The Bipolar UK
+import sets `medDoses` taken for each medicine with a dose ticked (unticked
+ones stay unknown, not missed).
+
+Cleared on logout and reset with the other medicine keys. The sheet's tabs
+take a double-tap to set the default tab (`bbMedsHubTab`, cleared by Reset).
+The daily medication reminder (`meds-reminder.js`) is still one reminder.
+Test: `node scripts/test-med-tracking.mjs` (9 scenarios).
 
 ## 3. Algorithm Flowcharts
 
