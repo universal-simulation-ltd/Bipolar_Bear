@@ -194,7 +194,8 @@ console.log('The dock\'s 💊 Medication');
   // A dock past the tutorial (unlocked) with 🆘 hidden, so a slot is free.
   const { ctx, page } = await open('/index.html', { meds: [{ name: 'Lithium', dosage: '800 mg' }], extra: { bbFabsUnlocked: '1', bbFabFirstRunDone: '1', bbWaFabHidden: '1' } });
   await page.waitForFunction(() => typeof window._openFabPicker === 'function');
-  const free = await page.evaluate(() => [1, 2, 3, 4].find(s => { const p = document.getElementById('fabPh' + s); return p && getComputedStyle(p).display !== 'none'; }));
+  // Wait for fab.js to lay the dock out: read straight away, no + shows yet.
+  const free = await (await page.waitForFunction(() => [1, 2, 3, 4].find(s => { const p = document.getElementById('fabPh' + s); return p && getComputedStyle(p).display !== 'none'; }), null, { timeout: 15000 }).catch(() => null))?.jsonValue();
   assert.ok(free, 'no empty dock slot');
   await page.evaluate(s => document.getElementById('fabPh' + s).click(), free);
   const opts = await page.evaluate(() => [...document.querySelectorAll('#bbFabPickerOptions button')].map(b => b.textContent));
@@ -223,6 +224,40 @@ console.log('The dock\'s 💊 Medication');
   assert.equal(await page.isVisible('#medsExtraFab'), false);
   assert.equal(await page.isVisible('#medsHubModal .meds-dock-hide'), false);
   ok('on the journal 💊 opens the sheet in place; its "Hide this button" takes 💊 off the dock');
+  await ctx.close();
+}
+console.log('The dock\'s 🧰 Survival Kit and 💬 Bipolar Anonymous');
+{
+  const { ctx, page } = await open('/index.html', { extra: { bbFabsUnlocked: '1', bbFabFirstRunDone: '1', bbWaFabHidden: '1' } });
+  await page.waitForFunction(() => typeof window._openFabPicker === 'function');
+  // Wait for fab.js to lay the dock out: read straight away, no + shows yet.
+  const free = await (await page.waitForFunction(() => [1, 2, 3, 4].find(s => { const p = document.getElementById('fabPh' + s); return p && getComputedStyle(p).display !== 'none'; }), null, { timeout: 15000 }).catch(() => null))?.jsonValue();
+  assert.ok(free, 'no empty dock slot');
+  const pick = async (re) => {
+    await page.evaluate(s => document.getElementById('fabPh' + s).click(), free);
+    const opts = await page.evaluate(() => [...document.querySelectorAll('#bbFabPickerOptions button')].map(b => b.textContent));
+    assert.ok(opts.some(x => re.test(x)), JSON.stringify(opts));
+    await page.evaluate(src => { const r = new RegExp(src); [...document.querySelectorAll('#bbFabPickerOptions button')].find(b => r.test(b.textContent)).click(); }, re.source);
+  };
+  // Signed out, 💬 opens the sign-in dialog and stays on the page (negative control).
+  await pick(/💬\s*Bipolar Anonymous/);
+  assert.equal(await page.evaluate(s => localStorage.getItem('bbFabSlot_' + s), free), 'anon');
+  assert.equal(await page.isVisible('#anonExtraFab'), true);
+  await page.evaluate(() => { window._authAsked = 0; window.showAuthModal = () => { window._authAsked++; }; });
+  await page.click('#anonExtraFab');
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => window._authAsked), 1);
+  assert.match(page.url(), /index\.html$/);
+  ok('"Add to dock" offers 💬 Bipolar Anonymous; signed out it asks you to sign in and stays put');
+  // 🧰 replaces it in the same slot (it's offered again: 💬 is no longer free) and opens the Survival Kit.
+  await page.evaluate(s => localStorage.removeItem('bbFabSlot_' + s), free);
+  await page.evaluate(() => window._applyFabDock && window._applyFabDock());
+  await pick(/🧰\s*Survival Kit/);
+  assert.equal(await page.evaluate(s => localStorage.getItem('bbFabSlot_' + s), free), 'survival');
+  await page.click('#survivalExtraFab');
+  await page.waitForURL(/survival-kit\.html/);
+  await page.waitForSelector('#survivalExtraFab', { state: 'visible', timeout: 15000 });
+  ok('"Add to dock" offers 🧰 Survival Kit, and it opens the Survival Kit (where it stays on the dock)');
   await ctx.close();
 }
 {

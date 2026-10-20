@@ -2148,7 +2148,13 @@ unchanged.
   it goes to `journal.html?openMeds=1`, which drops the parameter and opens
   the sheet once no PIN lock / splash / welcome is showing (gives up after
   30 s). While 💊 is docked the sheet ends with "🙈 Hide this button".
-- Test: `scripts/test-meds-list.mjs` (12 checks).
+- **Dock shortcuts (v369):** `survival` (🧰, `openSurvivalFromDock`:
+  `survival-kit.html`; on that page, back to all sections at the top) and
+  `anon` (💬, `openAnonFromDock`: `anonymous.html`; signed out it opens the
+  sign-in dialog, like the home page's locked button). Both go straight
+  there, so neither has a sheet with "Hide this button": the home page's
+  Reset dock takes them off.
+- Test: `scripts/test-meds-list.mjs` (14 checks).
 
 **A day's doses.** An entry keeps `medication` (`taken` | `not-taken` |
 `unsure`), the one answer for the day that every older build reads and

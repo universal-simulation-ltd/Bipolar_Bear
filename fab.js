@@ -186,6 +186,11 @@
     { id: 'goals',     icon: '🎯', label: 'Goals',       desc: 'View your survival kit goals' },
     // James, 2026-10-20: the 💊 My medicines sheet (js/journal-meds.js).
     { id: 'meds',      icon: '💊', label: 'Medication',  desc: 'Your medicines and doses, changes, side effects and blood tests' },
+    // James, 2026-10-20: shortcuts to the other two places. A tap goes
+    // straight there, so there is no sheet with "Hide this button"; the
+    // home page's Reset dock takes them off.
+    { id: 'survival',  icon: '🧰', label: 'Survival Kit',      desc: 'Open your survival kit' },
+    { id: 'anon',      icon: '💬', label: 'Bipolar Anonymous', desc: 'Open the community board' },
   ];
 
   /** Public figures shown by the Celebrity FAB. `wiki` is the URL slug. */
@@ -222,7 +227,7 @@
     return (s && s !== key) ? s : c.field;
   }
   /** Map from extra FAB id → DOM id of the injected button. */
-  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab' };
+  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab', survival: 'survivalExtraFab', anon: 'anonExtraFab' };
 
   // ── Appearance (automatic / light / dark) ─────────────────────────────────
   // Stored in localStorage.bbTheme ('auto' | 'light' | 'dark', default auto =
@@ -626,6 +631,8 @@
       <button class="bb-extra-fab" id="goalsExtraFab" onclick="openGoalsModal()" title="My goals" data-i18n-title="fab.goals.title" style="display:none;">🎯</button>
       <button class="bb-extra-fab" id="quicknoteExtraFab" onclick="openQuickNoteModal()" title="Quick note" data-i18n-title="quickNote.title" style="display:none;">📝</button>
       <button class="bb-extra-fab" id="medsExtraFab" onclick="openMedsFromDock()" title="Medication" data-i18n-title="fab.picker.medsLabel" style="display:none;">💊</button>
+      <button class="bb-extra-fab" id="survivalExtraFab" onclick="openSurvivalFromDock()" title="Survival Kit" data-i18n-title="fab.picker.survivalLabel" style="display:none;">🧰</button>
+      <button class="bb-extra-fab" id="anonExtraFab" onclick="openAnonFromDock()" title="Bipolar Anonymous" data-i18n-title="fab.picker.anonLabel" style="display:none;">💬</button>
 
       <!-- FAB picker sheet -->
       <div id="bbFabPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFabPicker();">
@@ -1476,6 +1483,27 @@
   window.openMedsFromDock = function () {
     if (window.BBMeds && typeof window.showMedicationList === 'function') { window.showMedicationList(); return; }
     window.location.href = 'journal.html?openMeds=1';
+  };
+
+  /** The dock's 🧰: the Survival Kit (on that page: back to all its sections, at the top). */
+  window.openSurvivalFromDock = function () {
+    if (typeof window.skShowGrid === 'function') {
+      window.skShowGrid({ nav: 'all', scroll: false });
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('scroll-view')?.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) {}
+      return;
+    }
+    window.location.href = 'survival-kit.html';
+  };
+  /**
+   * The dock's 💬: the Bipolar Anonymous board. It needs an account, so
+   * signed out it opens the sign-in dialog, as the home page's locked
+   * button does.
+   */
+  window.openAnonFromDock = function () {
+    let user = window.currentUser;
+    try { if (!user && window.firebase && firebase.auth) user = firebase.auth().currentUser; } catch (_) {}
+    if (!user && typeof window.showAuthModal === 'function') { window.showAuthModal(); return; }
+    window.location.href = 'anonymous.html';
   };
 
   window.openStatsModal = function () {

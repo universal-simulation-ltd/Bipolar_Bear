@@ -1813,7 +1813,9 @@
 //   to today opens this month, and a closed Survival kit drawer keeps its
 //   tab lit. js/journal-meds.js, css/journal-meds.css, js/journal.js,
 //   css/journal.css, js/survival-kit.js.
-const CACHE_NAME = 'bipolarbear-v368';
+// v369: 🧰 Survival Kit and 💬 Bipolar Anonymous in Add to dock (fab.js,
+//   js/shared/i18n.js).
+const CACHE_NAME = 'bipolarbear-v369';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
