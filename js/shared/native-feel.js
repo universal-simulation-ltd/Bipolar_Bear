@@ -455,7 +455,6 @@
   // ── Bipolar Bear's lists ─────────────────────────────────────────────
   // (Bipolar Anonymous registers its posts and replies in js/anonymous.js.)
   api.rows({ row: '#entries .entry', open: '.edit-btn', del: '.delete-btn' });
-  api.rows({ row: '.medication-item', open: '.medication-edit', del: '.medication-delete' });
   api.rows({ row: '#goalsList > div', open: 'button[onclick^="editGoal"]', del: 'button[onclick^="deleteGoal"]' });
   api.rows({ row: '#medInfoList > div', open: 'button[onclick^="editMedication"]', del: 'button[onclick^="deleteMedication"]' });
   api.rows({ row: '#gratitudeList > div', open: 'button[onclick^="editGratitudeItem"]', del: 'button[onclick^="deleteGratitudeItem"]' });
@@ -471,7 +470,10 @@
       if (del) a.push({ label: t('common.delete', 'Delete'), kind: 'del', run: function () { del.click(); } });
       return a;
     } });
-  // 💊 My medicines (js/journal-meds.js): side effects, blood levels, past changes.
+  // 💊 My medicines (js/journal-meds.js). Your medicines first (tap to change
+  // the name or dose, swipe to remove), then side effects, blood levels and
+  // past changes (swipe to delete). Rules match in order, so .meds-cur wins.
+  api.rows({ row: '.meds-cur', open: '.meds-edit', del: '.meds-rm' });
   api.rows({ row: '.meds-row', del: '.meds-del' });
   // My safety plan: no edit, so a swipe is the only way to remove an item.
   api.rows({ row: '.bbsp-list > li', del: '.bbsp-rm' });

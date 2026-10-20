@@ -547,7 +547,7 @@
   /** opts.test: open the Blood levels form ready for that test (the due card's button). */
   function open(tab, opts) {
     _tab = TABS.indexOf(tab) >= 0 ? tab : (savedTab() || 'doses');
-    _tabNote = ''; _showAllMissed = false;
+    _tabNote = ''; _showAllMissed = false; _editIdx = -1;
     _prefillTest = opts && opts.test ? String(opts.test) : null;
     var m = ensureModal();
     render();
@@ -599,10 +599,60 @@
       '<div class="meds-head"><h3 id="medsHubTitle">' + esc(t('hubTitle')) + '</h3><button type="button" class="meds-x" aria-label="' + esc(tt('a11y.close')) + '" onclick="BBMeds.close()">✕</button></div>' +
       '<div class="meds-tabs" role="group" aria-label="' + esc(t('tabsLabel')) + '">' + tabs + '</div>' +
       '<div class="meds-tab-note" aria-live="polite">' + esc(_tabNote || (_tab !== (saved || 'doses') ? hint : '')) + '</div>' +
-      '<div class="meds-body" data-tab="' + _tab + '">' + body + '</div></div>';
+      '<div class="meds-body" data-tab="' + _tab + '">' + body + '</div>' + _dockHideHtml() + '</div>';
     var nb = m.querySelector('.meds-body');
     if (nb && st) nb.scrollTop = st;
     if (_tab === 'compare') _wireCompare(m);
+  }
+
+  /** On the dock (fab.js, 'meds'): "🙈 Hide this button", like the dock's other sheets. */
+  function _dockHideHtml() {
+    var docked = false;
+    try { for (var s = 1; s <= 4; s++) if (BB.storage.get('FabSlot_' + s) === 'meds') docked = true; } catch (_) {}
+    return docked ? '<button type="button" class="meds-btn link meds-dock-hide" onclick="BBMeds._dockHide()">' + esc(tt('common.hideButton')) + '</button>' : '';
+  }
+
+  // ── Your medicines ─────────────────────────────────────────────────────────
+  // James, 2026-10-20: this sheet replaces the old "My Medications" window, so
+  // the list is edited here: add a medicine, change its name or dose, take it
+  // off. The writes are journal.js's (BBMedList.save: the dated medHistory
+  // first, then the device copy and the encrypted account copy), so this
+  // module never stores currentMedList itself.
+  var _editIdx = -1;
+  function _medFields(m) {
+    return '<div class="mf-2"><label>' + esc(t('medName')) + '<input name="name" maxlength="80" autocomplete="off" placeholder="' + esc(t('medNamePh')) + '" value="' + esc(m ? m.name : '') + '"></label>' +
+      '<label>' + esc(t('medDose')) + '<input name="dose" maxlength="80" autocomplete="off" placeholder="' + esc(t('medDosePh')) + '" value="' + esc(m ? m.dosage : '') + '"></label></div>';
+  }
+  function listHtml() {
+    var L = currentList();
+    var rows = L.map(function (m, i) {
+      if (i === _editIdx) {
+        return '<form class="meds-form meds-cur-edit" onsubmit="event.preventDefault();BBMeds._medSave(this,' + i + ')">' + _medFields(m) +
+          '<div class="mf-err" aria-live="polite"></div><div class="meds-cur-btns"><button type="submit" class="meds-btn primary">' + esc(tt('common.save')) + '</button>' +
+          '<button type="button" class="meds-btn" onclick="BBMeds._medEdit(-1)">' + esc(tt('common.cancel')) + '</button></div></form>';
+      }
+      return '<div class="meds-row meds-cur"><div class="mr-main"><strong>' + esc(m.name) + '</strong>' + (m.dosage ? '<div class="mr-sub">' + esc(m.dosage) + '</div>' : '') + '</div>' +
+        '<button type="button" class="meds-del meds-edit" aria-label="' + esc(t('medChangeA', { name: m.name })) + '" title="' + esc(t('medChangeA', { name: m.name })) + '" onclick="BBMeds._medEdit(' + i + ')">✏️</button>' +
+        '<button type="button" class="meds-del meds-rm" aria-label="' + esc(t('medRemoveA', { name: m.name })) + '" title="' + esc(t('medRemoveA', { name: m.name })) + '" onclick="BBMeds._medRemove(' + i + ')">🗑️</button></div>';
+    }).join('');
+    return '<div class="meds-card meds-list"><h4>' + esc(t('medsListTitle')) + '</h4>' + (rows || '<div class="meds-empty">' + esc(t('medsListNone')) + '</div>') +
+      '<details class="meds-details meds-add"' + (L.length ? '' : ' open') + '><summary>➕ ' + esc(t('medAdd')) + '</summary>' +
+      '<form class="meds-form" onsubmit="event.preventDefault();BBMeds._medAdd(this)">' + _medFields(null) +
+      '<div class="mf-err" aria-live="polite"></div><button type="submit" class="meds-btn primary">' + esc(t('medAdd')) + '</button></form></details>' +
+      '<p class="meds-intro" style="margin:8px 0 0">' + esc(t('medsListNote')) + '</p></div>';
+  }
+  /** The new list, or an error message for the form. skip: the row being edited. */
+  function _checkMed(name, dose, skip) {
+    if (!name) return { err: t('medNeedName') };
+    if (!dose) return { err: t('medNeedDose') };
+    var dup = currentList().some(function (m, i) { return i !== skip && norm(m.name) === norm(name); });
+    return dup ? { err: t('medDup', { name: name }) } : {};
+  }
+  function _saveList(next, opts) {
+    var S = root.BBMedList;
+    if (!S || !S.save) return false;
+    S.save(next, opts);
+    return true;
   }
 
   // Doses: taken / missed per medicine, and the missed-dose history.
@@ -622,7 +672,7 @@
       return '<div class="meds-row"><div class="mr-main">' + esc(x.names ? t('missedList', { names: x.names.join(', ') }) : t('missedAll')) + '</div>' +
         '<div class="mr-date">' + esc(fmtDate(x.day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</div></div>';
     }).join('');
-    return '<p class="meds-intro">' + esc(t('dosesIntro')) + '</p>' +
+    return listHtml() + '<p class="meds-intro">' + esc(t('dosesIntro')) + '</p>' +
       '<div class="meds-card">' + (rows || '<div class="meds-empty">' + esc(t('dosesNone')) + '</div>') +
       (a.pct != null ? '<div class="mr-sub" style="margin-top:8px;font-size:0.8em;color:var(--text-muted-ink);">' + esc(t('overall', { pct: a.pct })) + '</div>' : '') + '</div>' +
       '<div class="meds-card"><h4>' + esc(t('missedTitle')) + '</h4>' + (mrows || '<div class="meds-empty">' + esc(t('missedNone')) + '</div>') +
@@ -854,6 +904,32 @@
   }
   var actions = {
     _tab: pickTab,
+    _medEdit: function (i) { _editIdx = i; render(); },
+    _medAdd: function (form) {
+      var name = _val(form, 'name'), dose = _val(form, 'dose');
+      var c = _checkMed(name, dose, -1);
+      if (c.err) { _formErr(form, c.err); return; }
+      var next = currentList().concat([{ name: name, dosage: dose }]);
+      if (_saveList(next)) render();
+    },
+    _medSave: function (form, i) {
+      var L = currentList(), was = L[i];
+      if (!was) { _editIdx = -1; render(); return; }
+      var name = _val(form, 'name'), dose = _val(form, 'dose');
+      var c = _checkMed(name, dose, i);
+      if (c.err) { _formErr(form, c.err); return; }
+      L[i] = { name: name, dosage: dose };
+      _editIdx = -1;
+      if (_saveList(L, { rename: { from: was.name, to: name } })) render();
+    },
+    _medRemove: function (i) {
+      var L = currentList(), m = L[i];
+      if (!m || !confirm(t('medRemoveConfirm', { name: m.name }))) return;
+      L.splice(i, 1);
+      _editIdx = -1;
+      if (_saveList(L)) render();
+    },
+    _dockHide: function () { if (root._hideExtraFab) root._hideExtraFab('meds'); render(); },
     _more: function () { _showAllMissed = true; render(); },
     _del: function (kind, id) {
       if (!confirm(t('deleteConfirm'))) return;
@@ -1195,6 +1271,8 @@
       if (m && m.classList.contains('active')) render();
     },
     open: open, close: close,
+    /** The medicine list changed elsewhere (another device, a sync): redraw if open. */
+    refresh: function () { var m = document.getElementById('medsHubModal'); if (m && m.classList.contains('active')) render(); },
     namesForDay: namesForDay, chipsHtml: chipsHtml, entryNote: entryNote, csvCell: csvCell, describe: describe,
     events: events, reportComparison: reportComparison, drawPdf: drawPdf, drawComparePdf: drawComparePdf,
     chartsOn: chartsOn, chartData: chartData, markerText: markerText, tb: tb, fmtNum: fmtNum,

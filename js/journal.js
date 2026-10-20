@@ -13893,8 +13893,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
 
     // Medication List Management
+    // 💊 My Meds (the form), Manage meds (focus mode) and the dock's 💊 open
+    // the 💊 My medicines sheet (js/journal-meds.js), which holds the list
+    // too since v362 (James, 2026-10-20: it replaces the old "My Medications"
+    // window). It opens straight away; the account copy is fetched after,
+    // so a change made on another device shows as soon as it arrives.
     async function showMedicationList() {
-      // Fetch latest from Firestore so cross-page changes show immediately
+      if (window.BBMeds) BBMeds.open('doses');
       if (currentUser && db) {
         try {
           const doc = await db.collection('userSettings').doc(currentUser.uid).get();
@@ -13906,14 +13911,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         } catch(e) {}
       }
       loadMedicationList();
-      document.getElementById('medicationModal').classList.add('active');
     }
 
-    function closeMedicationModal() {
-      document.getElementById('medicationModal').classList.remove('active');
-      document.getElementById('newMedName').value = '';
-      document.getElementById('newMedDose').value = '';
-      // Rebuild focus mode steps in case meds were added/removed so medication step & display updates immediately
+    /** The list changed (here, a sync, another device): the button, the sheet, focus mode. */
+    function loadMedicationList() {
+      _updateMedBtn();
+      if (window.BBMeds && BBMeds.refresh) BBMeds.refresh();
+      // Rebuild focus mode's steps so the medication step matches the list.
       if (typeof _fmActive !== 'undefined' && _fmActive) {
         const _prevId = _fmSteps[_fmStepIndex] ? _fmSteps[_fmStepIndex].id : null;
         _fmSteps = _buildFocusedSteps();
@@ -13923,38 +13927,19 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       }
     }
 
-    function loadMedicationList() {
-      _updateMedBtn();
-      const medications = JSON.parse(localStorage.getItem('currentMedList') || '[]');
-      const listContainer = document.getElementById('medicationList');
-
-      if (medications.length === 0) {
-        listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted-ink); padding: 20px;">' + BB.t('journal.ui.noMedsYet') + '</div>';
-        return;
-      }
-
-      listContainer.innerHTML = medications.map((med, index) => `
-        <div class="medication-item">
-          <div class="medication-info">
-            <div class="medication-name">${_esc(med.name)}</div>
-            <div class="medication-dose">${_esc(med.dosage || '')}</div>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <button class="medication-edit" data-med-index="${index}" title="${BB.t('journal.ui.editTitle')}" style="background:none;border:none;font-size:1.1em;cursor:pointer;padding:4px;">✏️</button>
-            <button class="medication-delete" data-med-index="${index}" style="font-size:1.1em;">×</button>
-          </div>
-        </div>
-      `).join('');
-
-      // Use a single delegated listener on the container rather than per-button listeners,
-      // which would accumulate on every loadMedicationList() call and fire multiple times.
-      listContainer.onclick = (e) => {
-        const editBtn = e.target.closest('.medication-edit');
-        const delBtn  = e.target.closest('.medication-delete');
-        if (editBtn) { e.preventDefault(); e.stopPropagation(); editMedication(parseInt(editBtn.dataset.medIndex)); }
-        if (delBtn)  { e.preventDefault(); e.stopPropagation(); deleteMedication(parseInt(delBtn.dataset.medIndex)); }
-      };
+    /**
+     * Save a new medicine list (the 💊 My medicines sheet's add / change /
+     * remove). The dated medHistory first, then the device copy, then the
+     * encrypted account copy — the order the old window used.
+     * opts.rename: {from, to} when an edit changed a name.
+     */
+    function _saveMedList(next, opts) {
+      _recordMedChange(next, opts);
+      localStorage.setItem('currentMedList', JSON.stringify(next));
+      syncMedListToFirestore(next);
+      loadMedicationList();
     }
+    window.BBMedList = { save: _saveMedList };
 
     function _updateMedBtn() {
       const meds = JSON.parse(localStorage.getItem('currentMedList') || '[]');
@@ -14092,35 +14077,6 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       db.collection('userSettings').doc(currentUser.uid)
         .set({ stableStreak: streak, stableStreakStart: startDate }, { merge: true })
         .catch(e => console.warn('[BB] stableStreak sync failed', e));
-    }
-
-    function addMedication() {
-      const name = document.getElementById('newMedName').value.trim();
-      const dosage = document.getElementById('newMedDose').value.trim();
-
-      if (!name) { alert(BB.t('journal.dlg.enterMedName')); return; }
-      if (!dosage) { alert(BB.t('journal.dlg.enterDosage')); return; }
-
-      const medications = JSON.parse(localStorage.getItem('currentMedList') || '[]');
-      medications.push({ name, dosage });
-      _recordMedChange(medications);
-      localStorage.setItem('currentMedList', JSON.stringify(medications));
-      syncMedListToFirestore(medications);
-
-      document.getElementById('newMedName').value = '';
-      document.getElementById('newMedDose').value = '';
-      loadMedicationList();
-    }
-
-    function deleteMedication(index) {
-      if (!confirm(BB.t('journal.dlg.removeMed'))) return;
-
-      const medications = JSON.parse(localStorage.getItem('currentMedList') || '[]');
-      medications.splice(index, 1);
-      _recordMedChange(medications);
-      localStorage.setItem('currentMedList', JSON.stringify(medications));
-      syncMedListToFirestore(medications);
-      loadMedicationList();
     }
 
     // ── Edit Entry ──
@@ -14703,34 +14659,6 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     window.closeBudgetModal = closeBudgetModal;
     window.saveBudgetSetting = saveBudgetSetting;
 
-
-    function editMedication(index) {
-      const medications = JSON.parse(localStorage.getItem('currentMedList') || '[]');
-      const med = medications[index];
-      if (!med) return;
-
-      document.getElementById('newMedName').value = med.name;
-      document.getElementById('newMedDose').value = med.dosage || '';
-
-      // Change Add button to Save
-      const addBtn = document.querySelector('#medicationModal .confirm-btn');
-      const originalHTML = addBtn.innerHTML;
-      addBtn.textContent = BB.t('journal.saveChanges');
-      addBtn.onclick = () => {
-        const name = document.getElementById('newMedName').value.trim();
-        const dosage = document.getElementById('newMedDose').value.trim();
-        if (!name || !dosage) { alert(BB.t('journal.dlg.fillBothFields')); return; }
-        medications[index] = { ...med, name, dosage };
-        _recordMedChange(medications, { rename: { from: med.name, to: name } });
-        localStorage.setItem('currentMedList', JSON.stringify(medications));
-        syncMedListToFirestore(medications);
-        addBtn.innerHTML = originalHTML;
-        addBtn.onclick = addMedication;
-        document.getElementById('newMedName').value = '';
-        document.getElementById('newMedDose').value = '';
-        loadMedicationList();
-      };
-    }
 
     async function showMissingDates() {
       try {
@@ -17492,9 +17420,6 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     window.saveAndOpenJournal = saveAndOpenJournal;
     window.toggleJournal = toggleJournal;
     window.showMedicationList = showMedicationList;
-    window.closeMedicationModal = closeMedicationModal;
-    window.addMedication = addMedication;
-    window.deleteMedication = deleteMedication;
     window.openEditModal = openEditModal;
     window.openEditInForm = openEditInForm;
     window.closeEditModal = closeEditModal;
@@ -18977,6 +18902,23 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           if (cm) cm.classList.add('active');
         }, 600);
       });
+    }
+
+    // The dock's 💊 on another page (fab.js openMedsFromDock): open the 💊 My
+    // medicines sheet once nothing is in front of the journal — never over a
+    // PIN lock, the sign-in splash or the welcome. Gives up after 30 s.
+    if (new URLSearchParams(window.location.search).get('openMeds') === '1') {
+      try { const _u = new URL(window.location.href); _u.searchParams.delete('openMeds'); history.replaceState(history.state, '', _u.pathname + _u.search + _u.hash); } catch (_) {}
+      const _medsBlockers = ['#guestPinOverlay', '#pinOverlay', '#pinSleepOverlay', '#pinE2eeModal', '#bbPinReauth', '#bbAuthSplash', '#bbWelcomeModal'];
+      const _shown = el => { if (!el || !el.getClientRects().length) return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05; };
+      const _t0 = Date.now();
+      const _tryOpenMeds = () => {
+        if (Date.now() - _t0 > 30000) return;
+        const _busy = !window.BBMeds || document.readyState !== 'complete' || _medsBlockers.some(sel => _shown(document.querySelector(sel)));
+        if (_busy) { setTimeout(_tryOpenMeds, 400); return; }
+        if (typeof window.showMedicationList === 'function') window.showMedicationList();
+      };
+      setTimeout(_tryOpenMeds, 600);
     }
 
     // Auto-open stats if navigated from Stats FAB

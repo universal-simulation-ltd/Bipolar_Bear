@@ -2120,8 +2120,28 @@ the soft hyphens. The bears' accessible names stay `mood.*`.
 
 `js/journal-meds.js` (`BBMeds`), `css/journal-meds.css`, strings in
 `js/shared/i18n-meds.js` (`meds144.*`, 10 languages, added with
-`BB.i18n.extend`). Opened from 💊 **Doses, side effects and blood levels**
-in Manage medications and in the medication stat detail.
+`BB.i18n.extend`). Opened from 💊 **My Meds** (the form), **Manage meds**
+(focus mode), the medication stat detail and the dock's 💊 **Medication**.
+
+**Your medicines (v362, James 2026-10-20: the sheet replaces the old "My
+Medications" window, `#medicationModal`, now gone).** The Doses tab starts
+with the list: add a medicine (name + dose, both required, no duplicate
+names), ✏️ change its name or dose in place, 🗑️ remove it (asks first). On
+phones (native feel) a row taps to change and swipes to remove (`.meds-cur`).
+The sheet never writes `currentMedList` itself: `window.BBMedList.save(next,
+opts)` in `js/journal.js` records the change in `medHistory` first (add /
+dose / rename / stop, dated now; an edited name passes `opts.rename`), then
+the device copy, then the encrypted account copy, then
+`loadMedicationList()` (the My Meds button, the open sheet, focus mode's
+steps). `showMedicationList()` opens the sheet at once and fetches the
+account copy after. The survival kit's medicines section is separate and
+unchanged.
+- **Dock:** `meds` in `_FAB_EXTRAS` (`fab.js`, `#medsExtraFab`,
+  `openMedsFromDock`). On the journal it opens the sheet; on the other pages
+  it goes to `journal.html?openMeds=1`, which drops the parameter and opens
+  the sheet once no PIN lock / splash / welcome is showing (gives up after
+  30 s). While 💊 is docked the sheet ends with "🙈 Hide this button".
+- Test: `scripts/test-meds-list.mjs` (12 checks).
 
 **A day's doses.** An entry keeps `medication` (`taken` | `not-taken` |
 `unsure`), the one answer for the day that every older build reads and

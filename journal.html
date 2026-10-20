@@ -1219,28 +1219,8 @@
     </div>
   </div>
 
-  <div class="confirm-modal" id="medicationModal">
-    <div class="confirm-content" style="max-width: 500px;">
-      <h3 data-i18n="journal.mods.medTitle">My Medications</h3>
-      <p style="color: var(--text-muted-ink); margin-bottom: 20px;" data-i18n="journal.mods.medDesc">Track your current medications and dosages</p>
-      
-      <div id="medicationList" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
-        <!-- Medications will be listed here -->
-      </div>
-      <!-- 💊 My medicines: doses, side effects, blood levels, before / after (js/journal-meds.js). -->
-      <div style="margin:-8px 0 16px;"><button type="button" class="meds-btn" onclick="window.BBMeds && BBMeds.open()" data-i18n="meds144.hubBtn">💊 Doses, side effects and blood levels</button></div>
-      
-      <div style="margin-bottom: 15px;">
-        <input type="text" id="newMedName" placeholder="Medication name" data-i18n-placeholder="journal.mods.medNamePlaceholder" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; margin-bottom: 10px; font-size: 1em;">
-        <input type="text" id="newMedDose" placeholder="Dosage (e.g., 10mg, twice daily)" data-i18n-placeholder="journal.mods.medDosePlaceholder" style="width: 100%; padding: 10px; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1em;">
-      </div>
-      
-      <div class="confirm-buttons">
-        <button class="confirm-btn" onclick="addMedication()" style="background: white; color: var(--brand-ink); border: 2px solid var(--brand-primary);" data-i18n="journal.mods.addMed">Add Medication</button>
-        <button class="confirm-btn confirm-btn-no" onclick="closeMedicationModal()" data-i18n="common.close">Close</button>
-      </div>
-    </div>
-  </div>
+  <!-- The old "My Medications" window was here. Since v362 the medicine list
+       is edited in the 💊 My medicines sheet (js/journal-meds.js, Doses tab). -->
 
   <!-- Goals List Modal -->
   <div class="confirm-modal" id="goalsModal">

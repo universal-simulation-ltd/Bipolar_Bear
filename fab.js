@@ -184,6 +184,8 @@
     { id: 'stats',     icon: '📊', label: 'Statistics',  desc: 'Open your mood journal stats' },
     { id: 'celeb',     icon: '⭐', label: 'Celebrity',   desc: 'Famous people with bipolar disorder' },
     { id: 'goals',     icon: '🎯', label: 'Goals',       desc: 'View your survival kit goals' },
+    // James, 2026-10-20: the 💊 My medicines sheet (js/journal-meds.js).
+    { id: 'meds',      icon: '💊', label: 'Medication',  desc: 'Your medicines and doses, changes, side effects and blood tests' },
   ];
 
   /** Public figures shown by the Celebrity FAB. `wiki` is the URL slug. */
@@ -220,7 +222,7 @@
     return (s && s !== key) ? s : c.field;
   }
   /** Map from extra FAB id → DOM id of the injected button. */
-  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab' };
+  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab' };
 
   // ── Appearance (automatic / light / dark) ─────────────────────────────────
   // Stored in localStorage.bbTheme ('auto' | 'light' | 'dark', default auto =
@@ -623,6 +625,7 @@
       <button class="bb-extra-fab" id="celebExtraFab" onclick="openCelebModal()" title="Famous people with bipolar" data-i18n-title="fab.celeb.tooltip" style="display:none;">⭐</button>
       <button class="bb-extra-fab" id="goalsExtraFab" onclick="openGoalsModal()" title="My goals" data-i18n-title="fab.goals.title" style="display:none;">🎯</button>
       <button class="bb-extra-fab" id="quicknoteExtraFab" onclick="openQuickNoteModal()" title="Quick note" data-i18n-title="quickNote.title" style="display:none;">📝</button>
+      <button class="bb-extra-fab" id="medsExtraFab" onclick="openMedsFromDock()" title="Medication" data-i18n-title="fab.picker.medsLabel" style="display:none;">💊</button>
 
       <!-- FAB picker sheet -->
       <div id="bbFabPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFabPicker();">
@@ -1460,6 +1463,17 @@
   // ── Extra FAB modals ──────────────────────────────────────────────────────
 
   /** Open the Statistics teaser modal — links across to journal.html. */
+  /**
+   * The dock's 💊: the 💊 My medicines sheet. It needs the journal's
+   * decrypted entries, so on the other pages it opens the journal, which
+   * opens the sheet once nothing (a PIN lock) is in front (?openMeds=1,
+   * js/journal.js).
+   */
+  window.openMedsFromDock = function () {
+    if (window.BBMeds && typeof window.showMedicationList === 'function') { window.showMedicationList(); return; }
+    window.location.href = 'journal.html?openMeds=1';
+  };
+
   window.openStatsModal = function () {
     const _m = document.getElementById('bbStatsModal');
     if (_m) _m.style.display = 'flex';

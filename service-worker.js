@@ -1784,7 +1784,12 @@
 //   page, phones only: tap a list row to open it, swipe it left for Delete;
 //   pop-ups are bottom sheets that swipe down to close; swipe from the left
 //   edge to go back; grouped settings rows; haptics.
-const CACHE_NAME = 'bipolarbear-v361';
+// v362: the 💊 My medicines sheet holds the medicine list (add / change the
+//   dose or name / remove; the old "My Medications" window is gone), and
+//   💊 Medication can go on the dock (?openMeds=1 opens it from other pages).
+//   journal.html, js/journal.js, js/journal-meds.js, css/journal-meds.css,
+//   js/shared/i18n-meds.js, js/shared/i18n.js, js/shared/native-feel.js, fab.js.
+const CACHE_NAME = 'bipolarbear-v362';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

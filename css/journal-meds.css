@@ -67,6 +67,11 @@ html.theme-dark .med-dose-chip.missed { background: #3a2617; color: #ffc078; bor
 .meds-row .mr-sub { font-size: 0.85em; color: var(--text-muted-ink); }
 .meds-row .mr-date { font-size: 0.82em; color: var(--text-muted-ink); white-space: nowrap; }
 .meds-del { background: none; border: none; font-size: 1em; cursor: pointer; width: 36px; height: 36px; flex-shrink: 0; }
+/* Your medicines (the list, first on the Doses tab): one row edits in place. */
+.meds-cur-edit { padding: 8px 0; border-bottom: 1px solid #f1f3f5; }
+.meds-cur-btns { display: flex; gap: 8px; }
+.meds-cur-btns .meds-btn { flex: 1; }
+.meds-dock-hide { display: block; margin: 10px auto 0; color: var(--text-muted-ink); font-size: 0.8em; }
 .meds-bar { height: 7px; border-radius: 4px; background: #f1f3f5; overflow: hidden; margin-top: 4px; }
 .meds-bar > span { display: block; height: 100%; background: #51cf66; border-radius: 4px; }
 .meds-empty { font-size: 0.84em; color: var(--text-muted-ink); font-style: italic; padding: 4px 0; }
@@ -120,7 +125,7 @@ html.theme-dark .meds-tab.on { background: var(--brand-tint); border-color: var(
 html.theme-dark .meds-card { background: var(--dk-surface-2); border-color: var(--dk-line); }
 html.theme-dark .meds-card h4, html.theme-dark .meds-cmp thead th, html.theme-dark .meds-cmp th[colspan] { color: var(--dk-text) !important; }
 html.theme-dark .meds-row, html.theme-dark .meds-cmp td, html.theme-dark .meds-form label { color: var(--dk-text-2); }
-html.theme-dark .meds-row, html.theme-dark .meds-cmp th, html.theme-dark .meds-cmp td { border-color: var(--dk-line); }
+html.theme-dark .meds-row, html.theme-dark .meds-cmp th, html.theme-dark .meds-cmp td, html.theme-dark .meds-cur-edit { border-color: var(--dk-line); }
 html.theme-dark .meds-bar, html.theme-dark .meds-mix { background: var(--dk-surface-3); }
 html.theme-dark .meds-form input, html.theme-dark .meds-form select, html.theme-dark .meds-form textarea { background: var(--dk-surface); border-color: var(--dk-line); color: var(--dk-text); }
 html.theme-dark .meds-btn { background: transparent; color: var(--dk-text); }
