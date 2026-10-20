@@ -2939,3 +2939,15 @@ html.theme-dark .pdf-progress-track { background: rgba(255,255,255,0.14); }
 .jm-box.jm-off .jm-name { color: #868e96; }
 html.theme-dark .jm-box.jm-off { background: var(--dk-surface-2, #2a2a2a); border-color: var(--dk-line, #3a3a3a); }
 html.theme-dark .jm-reset { color: var(--brand-primary); }
+
+/* Settings → Advanced: the index (James, 2026-10-20). One row per page. */
+.set-idx { display: flex; flex-direction: column; gap: 8px; }
+.set-idx-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 14px; min-height: 56px;
+  background: rgba(127,127,127,0.08); border: 1.5px solid #e9ecef; border-radius: 12px; font: inherit; color: #495057; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.set-idx-row:hover { border-color: var(--brand-primary); }
+.set-idx-row:focus-visible { outline: 3px solid var(--brand-primary); outline-offset: 2px; }
+.set-idx-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.set-idx-t { font-weight: 600; font-size: 0.95em; }
+.set-idx-d { font-size: 0.8em; color: var(--text-muted-ink); line-height: 1.35; }
+.set-idx-chev { font-size: 1.4em; line-height: 1; color: var(--text-muted-ink); }
+html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-text); background: var(--dk-surface-2); }

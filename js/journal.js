@@ -15480,12 +15480,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       _syncAppearanceCurrent();
 
       // Always open showing main panel
-      document.getElementById('settingsMainPanel').style.display = '';
-      document.getElementById('settingsMobilePanel').style.display = 'none';
-      document.getElementById('settingsAdvancedPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedJournalPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedMorePanel').style.display = 'none';
-      document.getElementById('settingsAdvancedMore2Panel').style.display = 'none';
+      _settingsShow('settingsMainPanel');
 
       // Guest PIN row / signed-in App lock row (pin143).
       _syncGuestPinRow('');
@@ -15627,12 +15622,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       if (_cw) { _cw.style.zIndex = ''; _cw.style.background = ''; _cw.style.borderRadius = ''; _cw.style.padding = ''; _cw.style.paddingBottom = ''; _cw.style.margin = ''; _cw.style.marginBottom = '16px'; }
       _applyJournalOnboardingGating(); // re-evaluate page overlay (hides bbHintOverlay if no longer blocking)
       // Always reset to main panel so sub-panels don't persist on next open
-      document.getElementById('settingsMainPanel').style.display = '';
-      document.getElementById('settingsAdvancedPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedJournalPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedMorePanel').style.display = 'none';
-      document.getElementById('settingsAdvancedMore2Panel').style.display = 'none';
-      document.getElementById('settingsAchievementsPanel').style.display = 'none';
+      _settingsShow('settingsMainPanel');
       _clearImportPointer();
       setTimeout(_maybeAskImport, 350);
     }
@@ -15676,64 +15666,59 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       document.querySelectorAll('.bb-import-label').forEach(el => el.remove());
     }
 
-    function openAdvancedJournal() {
-      document.getElementById('settingsAdvancedPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedJournalPanel').style.display = '';
-      _renderStepToggles();
+    // ── Settings pages (James, 2026-10-20) ──
+    // Advanced opens an index: 📱 Mobile (phone app only), 📓 Journal, 🎯 Focus
+    // mode, 📊 Stats, 👤 Account. Each page's ← Back returns to the index, and
+    // the index's ← Back to the first page. The old chain (Focus Mode →
+    // Journal → More → Delete →) and the Danger Zone page are gone: Account
+    // opens the same 👤 sheet as the home page (fab.js showAccountModal), which
+    // holds Delete account, and for a guest Delete all data & reset.
+    const _SETTINGS_PAGES = ['settingsMainPanel', 'settingsIndexPanel', 'settingsMobilePanel', 'settingsAdvancedPanel',
+      'settingsAdvancedJournalPanel', 'settingsAdvancedMorePanel', 'settingsAchievementsPanel'];
+    function _settingsShow(id) {
+      _SETTINGS_PAGES.forEach(p => { const el = document.getElementById(p); if (el) el.style.display = p === id ? '' : 'none'; });
       const modal = document.querySelector('#settingsModal .confirm-content');
       if (modal) modal.scrollTop = 0;
     }
-    function closeAdvancedJournal() {
-      document.getElementById('settingsAdvancedJournalPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedPanel').style.display = '';
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
+    function _syncSettingsIndex() {
+      const mob = document.getElementById('setIdxMobile');
+      if (mob) mob.style.display = isNative() ? '' : 'none';
+      const acc = document.querySelector('#setIdxAccount .set-idx-d');
+      if (acc) acc.textContent = BB.t(currentUser ? 'journal.settings.idxAccountDesc' : 'journal.settings.idxAccountGuestDesc');
     }
-    function openAdvancedMore() {
-      document.getElementById('settingsAdvancedJournalPanel').style.display = 'none';
-      document.getElementById('settingsAdvancedMorePanel').style.display = '';
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
+    function _openSettingsPage(page) {
+      if (page === 'account') {
+        // The home page's 👤 sheet, over Settings (a drawer on phones); closing
+        // it comes back to this index.
+        if (typeof window.showAccountModal === 'function') window.showAccountModal();
+        return;
+      }
+      applyTrackingPrefs();
+      if (page === 'mobile') { _settingsShow('settingsMobilePanel'); _updateNativePinBtn(); }
+      else if (page === 'focus') _settingsShow('settingsAdvancedPanel');
+      else if (page === 'journal') { _settingsShow('settingsAdvancedJournalPanel'); _renderStepToggles(); }
+      else if (page === 'stats') _settingsShow('settingsAdvancedMorePanel');
     }
-    function closeAdvancedMore() {
-      document.getElementById('settingsAdvancedMorePanel').style.display = 'none';
-      document.getElementById('settingsAdvancedJournalPanel').style.display = '';
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
+    function _settingsToIndex() {
+      _syncSettingsIndex();
+      _settingsShow('settingsIndexPanel');
     }
-    function openAdvancedMore2() {
-      document.getElementById('settingsAdvancedMorePanel').style.display = 'none';
-      document.getElementById('settingsAdvancedMore2Panel').style.display = '';
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
-      // Hide full reset for protected account
-      const _protected = currentUser && currentUser.email === 'inbox@jamesmarkey.co.uk';
-      const _resetEl = document.getElementById('fullResetSection');
-      const _lockedEl = document.getElementById('fullResetLocked');
-      if (_resetEl) _resetEl.style.display = _protected ? 'none' : '';
-      if (_lockedEl) _lockedEl.style.display = _protected ? '' : 'none';
-      // Re-label the section based on whether we're signed in: when signed in
-      // the action deletes the BipolarBear account itself, not just the data.
-      if (_resetEl && !_protected) {
-        const _isSignedIn = !!currentUser;
-        const _heading = _resetEl.querySelector('div:first-child');
-        const _desc    = _resetEl.querySelector('div:nth-child(2)');
-        const _btn     = _resetEl.querySelector('button');
-        if (_heading) _heading.textContent = _isSignedIn ? BB.t('t143.j.dangerDeleteTitle') : BB.t('journal.settings.fullReset');
-        if (_desc) {
-          _desc.textContent = _isSignedIn
-            ? BB.t('t143.j.dangerDeleteDesc')
-            : BB.t('journal.settings.fullResetDesc');
-        }
-        if (_btn) _btn.textContent = _isSignedIn ? BB.t('t143.j.dangerDeleteTitle') : BB.t('journal.settings.fullResetBtn');
+    function _closeSettingsIndex() {
+      _settingsShow('settingsMainPanel');
+      if (BB.storage.get('SettingsHintDone') === '1' && BB.storage.get('CustomiseFormHintDone') !== '1') {
+        _showCustomiseFormHint();
+      } else if (BB.storage.get('CustomiseAdditionalHintDone') === '1' && BB.storage.get('CloseSettingsHintDone') !== '1') {
+        _showCloseSettingsHint();
       }
     }
-    function closeAdvancedMore2() {
-      document.getElementById('settingsAdvancedMore2Panel').style.display = 'none';
-      document.getElementById('settingsAdvancedMorePanel').style.display = '';
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
-    }
+    window._openSettingsPage = _openSettingsPage;
+    window._settingsToIndex = _settingsToIndex;
+    window._closeSettingsIndex = _closeSettingsIndex;
+    // The old names, for anything that still calls them.
+    function openAdvancedJournal() { _openSettingsPage('journal'); }
+    function closeAdvancedJournal() { _settingsToIndex(); }
+    function openAdvancedMore() { _openSettingsPage('stats'); }
+    function closeAdvancedMore() { _settingsToIndex(); }
     function _toggleElaborateResponses() {
       const on = document.getElementById('elaborateResponsesToggle').checked;
       localStorage.setItem('elaborateResponsesEnabled', on ? 'true' : 'false');
@@ -17094,41 +17079,11 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const _advH = document.getElementById('advancedSettingsBadgeHint');
       if (_advH) _advH.style.display = 'none';
       applyTrackingPrefs();
-      if (isNative()) {
-        document.getElementById('settingsMainPanel').style.display = 'none';
-        document.getElementById('settingsMobilePanel').style.display = '';
-        _updateNativePinBtn();
-      } else {
-        document.getElementById('settingsMainPanel').style.display = 'none';
-        document.getElementById('settingsAdvancedPanel').style.display = '';
-      }
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
+      _settingsToIndex();
     }
-    function closeMobileSettings() {
-      document.getElementById('settingsMobilePanel').style.display = 'none';
-      document.getElementById('settingsMainPanel').style.display = '';
-    }
-    function _openFocusModeSettings() {
-      applyTrackingPrefs();
-      document.getElementById('settingsMobilePanel').style.display = 'none';
-      document.getElementById('settingsAdvancedPanel').style.display = '';
-      const modal = document.querySelector('#settingsModal .confirm-content');
-      if (modal) modal.scrollTop = 0;
-    }
-    function closeAdvancedSettings() {
-      document.getElementById('settingsAdvancedPanel').style.display = 'none';
-      if (isNative()) {
-        document.getElementById('settingsMobilePanel').style.display = '';
-      } else {
-        document.getElementById('settingsMainPanel').style.display = '';
-        if (BB.storage.get('SettingsHintDone') === '1' && BB.storage.get('CustomiseFormHintDone') !== '1') {
-          _showCustomiseFormHint();
-        } else if (BB.storage.get('CustomiseAdditionalHintDone') === '1' && BB.storage.get('CloseSettingsHintDone') !== '1') {
-          _showCloseSettingsHint();
-        }
-      }
-    }
+    function closeMobileSettings() { _settingsToIndex(); }
+    function _openFocusModeSettings() { _openSettingsPage('focus'); }
+    function closeAdvancedSettings() { _settingsToIndex(); }
     window.openAdvancedSettings = openAdvancedSettings;
     window.closeMobileSettings = closeMobileSettings;
     window._openFocusModeSettings = _openFocusModeSettings;

@@ -1797,7 +1797,11 @@
 //   drawers (swipe down = back a page), sheets ride the keyboard, swipe
 //   deletes wait behind "Deleted · Undo". js/shared/native-feel.js,
 //   js/survival-kit.js, js/shared/i18n.js (common.deleted / common.undo).
-const CACHE_NAME = 'bipolarbear-v364';
+// v365: Settings → Advanced is an index (Mobile, Journal, Focus mode, Stats,
+//   Account); the Danger Zone page is gone, Account opens fab.js's 👤 sheet
+//   (with a guest mode). journal.html, js/journal.js, css/journal.css, fab.js,
+//   js/shared/native-feel.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v365';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

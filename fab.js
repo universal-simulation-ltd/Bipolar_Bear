@@ -732,7 +732,9 @@
           <div style="font-size:1.6em;margin-bottom:4px;text-align:center;">👤</div>
           <div id="bbAccountEmail" style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:16px;word-break:break-all;text-align:center;"></div>
           <div id="bbAccountMsg" style="font-size:0.85em;margin-bottom:12px;display:none;padding:8px 12px;border-radius:8px;"></div>
-          <button onclick="window._bbAccountLogout()" style="width:100%;padding:12px;background:white;color:#dc3545;border:2px solid #dc3545;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="account.signOut">Sign out</button>
+          <button id="bbAccountSignOut" onclick="window._bbAccountLogout()" style="width:100%;padding:12px;background:white;color:#dc3545;border:2px solid #dc3545;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="account.signOut">Sign out</button>
+          <!-- A guest (opened from the journal's Settings → Advanced → Account): sign in instead of out. -->
+          <button id="bbAccountGuestSignIn" onclick="window.closeAccountModal();window.showAuthModal&&window.showAuthModal()" style="display:none;width:100%;padding:12px;background:var(--brand-btn);color:var(--brand-btn-text,#fff);border:none;border-radius:10px;font-size:0.95em;font-weight:700;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="journal.settings.guestSignIn">☁️ Sign in to back up your data</button>
           <div id="bbAccountPassSection" style="margin-bottom:10px;">
             <div id="bbAccountPassFields" style="display:none;margin-bottom:8px;">
               <input type="password" id="bbAccountCurrentPass" placeholder="Current password" data-i18n-placeholder="account.currentPassword" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;outline:none;font-family:inherit;">
@@ -778,7 +780,9 @@
           <!-- Universal ID accounts: the password, email and two-step live on the UNI·SIM Hub. -->
           <a id="bbAccountUidLink" href="https://app.unisim.co.uk/profile" target="_blank" rel="noopener" style="display:none;width:100%;box-sizing:border-box;padding:12px;margin-bottom:10px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;text-align:center;text-decoration:none;-webkit-tap-highlight-color:transparent;" data-i18n="uid.manage">Manage your Universal ID ↗</a>
           <div id="bbAccountDeleteSection" style="margin-bottom:10px;padding-top:10px;border-top:1px solid #e9ecef;">
-            <button onclick="window._bbAccountDelete()" style="width:100%;padding:12px;background:rgba(201,42,42,0.08);color:#c92a2a;border:2px solid #c92a2a;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.deleteAccount">🗑️ Delete account</button>
+            <button id="bbAccountDeleteBtn" onclick="window._bbAccountDelete()" style="width:100%;padding:12px;background:rgba(201,42,42,0.08);color:#c92a2a;border:2px solid #c92a2a;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.deleteAccount">🗑️ Delete account</button>
+            <!-- A guest: what the journal's Danger Zone page (gone in v365) did. -->
+            <div id="bbAccountResetDesc" style="display:none;color:var(--text-muted-ink);font-size:0.78em;margin-top:6px;line-height:1.4;text-align:center;" data-i18n="journal.settings.fullResetDesc">Permanently delete all journal entries and reset all settings to their defaults. This cannot be undone.</div>
           </div>
           <div id="bbAccountDeleteLocked" style="display:none;margin-bottom:10px;padding-top:10px;border-top:1px solid #e9ecef;">
             <div style="color:var(--text-muted-ink);font-size:0.82em;padding:10px;border:1.5px solid #dee2e6;border-radius:10px;text-align:center;" data-i18n="account.deleteLocked">🔒 Account cannot be deleted</div>
@@ -1751,6 +1755,17 @@
   window.showAccountModal = function () {
     const _fb  = window.firebase;
     const user = _fb && _fb.auth ? _fb.auth().currentUser : null;
+    // Signed in, or a guest (the journal's Settings → Advanced → Account opens
+    // this for everyone, James 2026-10-20): a guest gets Sign in instead of
+    // Sign out / password / email, and Delete all data & reset instead of
+    // Delete account. Language and Personal information are for both.
+    const _guest = !user;
+    [['bbAccountSignOut', !_guest], ['bbAccountGuestSignIn', _guest], ['bbAccountResetDesc', _guest]].forEach(([id, on]) => {
+      const n = document.getElementById(id);
+      if (n) n.style.display = on ? '' : 'none';
+    });
+    const delBtn = document.getElementById('bbAccountDeleteBtn');
+    if (delBtn) delBtn.textContent = _bbT(_guest ? 'journal.settings.fullResetBtn' : 'account.deleteAccount', _guest ? '🗑️ Delete All Data & Reset Settings' : '🗑️ Delete account');
     const emailEl    = document.getElementById('bbAccountEmail');
     const msg        = document.getElementById('bbAccountMsg');
     const passFields = document.getElementById('bbAccountPassFields');
@@ -1776,10 +1791,11 @@
     const _uidOnly = !!(user && window.BB && window.BB.uid && window.BB.uid.isUidOnly(user));
     ['bbAccountPassSection', 'bbAccountEmailSection'].forEach(id => {
       const n = document.getElementById(id);
-      if (n) n.style.display = _uidOnly ? 'none' : '';
+      if (n) n.style.display = (_uidOnly || _guest) ? 'none' : '';
     });
     const uidLink = document.getElementById('bbAccountUidLink');
-    if (uidLink) uidLink.style.display = (_uidOnly || (window.BB && window.BB.uid && window.BB.uid.hasSession())) ? 'block' : 'none';
+    if (uidLink) uidLink.style.display = (!_guest && (_uidOnly || (window.BB && window.BB.uid && window.BB.uid.hasSession()))) ? 'block' : 'none';
+    if (emailEl && _guest) emailEl.textContent = _bbT('t143.j.guestMode', 'Guest mode');
     const langSel = document.getElementById('bbLangSelect');
     if (langSel && window.BB && window.BB.i18n) langSel.value = window.BB.i18n.getLang();
     // Protected demo/owner account can't be deleted — mirrors the same guard
@@ -1830,6 +1846,10 @@
    */
   window._bbAccountDelete = function () {
     window.closeAccountModal();
+    // Opened over the journal's Settings: close those too, as the Danger
+    // Zone's button did, so the delete's own dialogs are on top.
+    const _set = document.getElementById('settingsModal');
+    if (_set && _set.classList.contains('active') && typeof window.closeSettingsModal === 'function') window.closeSettingsModal();
     if (typeof window.confirmDeleteAll === 'function') {
       window.confirmDeleteAll();
     } else {

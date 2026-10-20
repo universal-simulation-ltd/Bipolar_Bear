@@ -1651,6 +1651,51 @@
         </div>
       </div>
 
+      <!-- ADVANCED INDEX (James, 2026-10-20: "the first page of advanced should
+           be like an index"). Each row opens its page; each page's ← Back
+           comes back here. Mobile shows in the phone app only. Account opens
+           the same 👤 account sheet as the home page (fab.js showAccountModal),
+           over Settings; it replaced the Danger Zone page. _openSettingsPage /
+           _syncSettingsIndex in js/journal.js. -->
+      <div id="settingsIndexPanel" style="display: none; text-align: left;">
+        <div style="display:flex;align-items:center;margin-bottom:16px;">
+          <div style="min-width:52px;"></div>
+          <h3 style="margin:0;flex:1;text-align:center;" data-i18n="journal.settings.advTitle">Advanced</h3>
+          <div style="min-width:52px;"></div>
+        </div>
+        <div class="set-idx" role="list">
+          <button type="button" id="setIdxMobile" class="set-idx-row" onclick="_openSettingsPage('mobile')" style="display:none;">
+            <span class="set-idx-txt"><span class="set-idx-t" data-i18n="journal.settings.idxMobile">📱 Mobile</span><span class="set-idx-d" data-i18n="journal.settings.idxMobileDesc">Daily reminder, weekly summary, health data</span></span>
+            <span class="set-idx-chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" id="setIdxJournal" class="set-idx-row" onclick="_openSettingsPage('journal')">
+            <span class="set-idx-txt"><span class="set-idx-t" data-i18n="journal.settings.idxJournal">📓 Journal</span><span class="set-idx-d" data-i18n="journal.settings.idxJournalDesc">Full spectrum, suggested mood, private journal, early warnings</span></span>
+            <span class="set-idx-chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" id="setIdxFocus" class="set-idx-row" onclick="_openSettingsPage('focus')">
+            <span class="set-idx-txt"><span class="set-idx-t" data-i18n="journal.settings.focusMode">🎯 Focus mode</span><span class="set-idx-d" data-i18n="journal.settings.idxFocusDesc">One question at a time, and how each step works</span></span>
+            <span class="set-idx-chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" id="setIdxStats" class="set-idx-row" onclick="_openSettingsPage('stats')">
+            <span class="set-idx-txt"><span class="set-idx-t" data-i18n="journal.settings.idxStats">📊 Stats</span><span class="set-idx-d" data-i18n="journal.settings.idxStatsDesc">Start date, blood results on your charts, Incognito</span></span>
+            <span class="set-idx-chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" id="setIdxAccount" class="set-idx-row" onclick="_openSettingsPage('account')">
+            <span class="set-idx-txt"><span class="set-idx-t" data-i18n="journal.settings.idxAccount">👤 Account</span><span class="set-idx-d">Sign out, email, password, language, delete account</span></span>
+            <span class="set-idx-chev" aria-hidden="true">›</span>
+          </button>
+        </div>
+
+        <button onclick="_closeSettingsIndex()" style="width:100%;margin-top:16px;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
+
+        <div style="margin-top:16px;text-align:center;">
+          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
+            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
+            <span class="settings-platform-info"></span>
+          </div>
+        </div>
+      </div>
+
       <!-- MOBILE SETTINGS PANEL -->
       <div id="settingsMobilePanel" style="display: none; text-align: left;">
         <div style="display:flex;align-items:center;margin-bottom:16px;">
@@ -1694,10 +1739,7 @@
 
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 20px;">
 
-        <div style="display:flex;gap:10px;">
-          <button onclick="closeMobileSettings()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
-          <button onclick="_openFocusModeSettings()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.focusModeBtn">Focus Mode →</button>
-        </div>
+        <button onclick="_settingsToIndex()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
 
         <div style="margin-top:16px;text-align:center;">
           <div class="settings-notif-info" style="color:var(--text-muted-ink);font-size:0.78em;"></div>
@@ -1757,10 +1799,7 @@
 
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
-        <div style="display:flex;gap:10px;">
-          <button onclick="closeAdvancedSettings()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
-          <button onclick="openAdvancedJournal()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.journalBtn">Journal →</button>
-        </div>
+        <button onclick="_settingsToIndex()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
@@ -1814,10 +1853,7 @@
 
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
-        <div style="display:flex;gap:10px;">
-          <button onclick="closeAdvancedJournal()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
-          <button onclick="openAdvancedMore()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.moreBtn">More →</button>
-        </div>
+        <button onclick="_settingsToIndex()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
@@ -1877,10 +1913,7 @@
 
         <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
 
-        <div style="display:flex;gap:10px;">
-          <button onclick="closeAdvancedMore()" style="flex:1;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
-          <button onclick="openAdvancedMore2()" style="flex:1;background:rgba(108,117,125,0.08);border:1.5px solid #adb5bd;color:#495057;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.deleteBtn">Delete →</button>
-        </div>
+        <button onclick="_settingsToIndex()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
 
         <div style="margin-top:16px;text-align:center;">
           <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
@@ -1892,39 +1925,9 @@
         </div>
       </div>
 
-      <!-- ADVANCED MORE 2 PANEL -->
-      <div id="settingsAdvancedMore2Panel" style="display: none; text-align: left;">
-        <div style="display:flex;align-items:center;margin-bottom:16px;">
-          <div style="min-width:52px;"></div>
-          <h3 style="margin:0;flex:1;text-align:center;" data-i18n="journal.settings.dangerTitle">Danger Zone</h3>
-          <div style="min-width:52px;"></div>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
-
-        <div id="fullResetSection" style="margin-bottom: 16px;">
-          <div style="font-weight: 600; margin-bottom: 6px; color: #495057; font-size: 0.95em;" data-i18n="journal.settings.fullReset">🗑️ Full Reset</div>
-          <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-bottom: 10px;" data-i18n="journal.settings.fullResetDesc">Permanently delete all journal entries and reset all settings to their defaults. This cannot be undone.</div>
-          <button onclick="closeSettingsModal(); confirmDeleteAll();" style="width:100%;background:rgba(201,42,42,0.08);border:1.5px solid #c92a2a;color:#c92a2a;font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="journal.settings.fullResetBtn">🗑️ Delete All Data &amp; Reset Settings</button>
-        </div>
-        <div id="fullResetLocked" style="display:none;margin-bottom:16px;">
-          <div style="font-weight:600;margin-bottom:6px;color:#495057;font-size:0.95em;" data-i18n="journal.settings.fullReset">🗑️ Full Reset</div>
-          <div style="color:var(--text-muted-ink);font-size:0.82em;padding:10px;border:1.5px solid #dee2e6;border-radius:20px;text-align:center;" data-i18n="account.deleteLocked">🔒 Account cannot be deleted</div>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid #e9ecef; margin-bottom: 16px;">
-
-        <button onclick="closeAdvancedMore2()" style="width:100%;background:rgba(255,149,0,0.1);border:1.5px solid var(--brand-primary);color:var(--brand-ink);font-size:0.9em;cursor:pointer;padding:10px;font-weight:600;border-radius:20px;" data-i18n="common.back">← Back</button>
-
-        <div style="margin-top:16px;text-align:center;">
-          <div style="color: var(--text-muted-ink); font-size: 0.78em; line-height: 1.8;">
-            <span class="settings-version-info" onclick="document.getElementById('changelogModal').classList.add('active')" style="cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px;">v1.4</span>
-            <span class="settings-platform-info"></span>
-            <div class="settings-notif-info"></div>
-            <div class="settings-health-info"></div>
-          </div>
-        </div>
-      </div>
+      <!-- The Danger Zone page (Full Reset / Delete account) was here until
+           v365. Both live in the 👤 Account sheet now (fab.js), reached from
+           Advanced → Account and the home page's 👤. -->
 
       <!-- ACHIEVEMENTS PANEL -->
       <div id="settingsAchievementsPanel" style="display: none;">

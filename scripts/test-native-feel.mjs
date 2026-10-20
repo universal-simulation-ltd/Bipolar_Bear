@@ -195,21 +195,30 @@ try {
   await sleep(700);
   check('swipe down closes the viewer', !(await modalOpen('#calDayModal.active')));
 
-  // ── Settings: "→" opens the next page as a drawer; swipe down goes back a page ──
+  // ── Settings: Advanced's index and its pages open as drawers; swipe down goes back a page ──
   await ev(`showSettingsModal()`);
   await sleep(600);
   await ev(`document.getElementById('settingsContent').scrollTop = 1e6`); await sleep(200);
   await tapSel('#advancedSettingsBtn');
   await sleep(120);
-  const anim = await ev(`document.getElementById('settingsContent').getAnimations().map(a => a.animationName).join(',')`);
+  let anim = await ev(`document.getElementById('settingsContent').getAnimations().map(a => a.animationName).join(',')`);
   await sleep(500);
-  const pg = () => ev(`['settingsMainPanel','settingsAdvancedPanel','settingsAdvancedJournalPanel'].find(id => document.getElementById(id).style.display !== 'none')`);
-  check('Settings: Advanced → slides up as a new drawer', await pg() === 'settingsAdvancedPanel' && /nf-up/.test(anim), anim);
-  await shot('04-settings-advanced');
+  const pg = () => ev(`['settingsMainPanel','settingsIndexPanel','settingsAdvancedMorePanel'].find(id => document.getElementById(id).style.display !== 'none')`);
+  check('Settings: Advanced slides its index up as a new drawer', await pg() === 'settingsIndexPanel' && /nf-up/.test(anim), anim);
+  await tapSel('#setIdxStats');
+  await sleep(120);
+  anim = await ev(`document.getElementById('settingsContent').getAnimations().map(a => a.animationName).join(',')`);
+  await sleep(500);
+  check('a row (📊 Stats) slides its page up as a drawer', await pg() === 'settingsAdvancedMorePanel' && /nf-up/.test(anim), anim);
+  await shot('04-settings-stats');
   let sr = await rect('#settingsModal .confirm-content');
   await drag(sr.x + sr.w / 2, sr.y + 16, sr.x + sr.w / 2, sr.y + 300, 10, 15);
   await sleep(700);
-  check('swipe down goes back one page, Settings stays open', await pg() === 'settingsMainPanel' && await modalOpen('#settingsModal.active'));
+  check('swipe down goes back to the index, Settings stays open', await pg() === 'settingsIndexPanel' && await modalOpen('#settingsModal.active'));
+  sr = await rect('#settingsModal .confirm-content');
+  await drag(sr.x + sr.w / 2, sr.y + 16, sr.x + sr.w / 2, sr.y + 300, 10, 15);
+  await sleep(700);
+  check('again: back to the first page', await pg() === 'settingsMainPanel' && await modalOpen('#settingsModal.active'));
   sr = await rect('#settingsModal .confirm-content');
   await ev(`document.getElementById('settingsContent').scrollTop = 0`); await sleep(200);
   await drag(sr.x + sr.w / 2, sr.y + 16, sr.x + sr.w / 2, sr.y + 330, 10, 15);

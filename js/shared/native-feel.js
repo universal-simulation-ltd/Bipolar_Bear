@@ -592,11 +592,12 @@
     if (e.key === 'Escape' && openDrawer && openDrawer._nfClose && !anySheetOpen()) openDrawer._nfClose();
   });
 
-  // Settings (journal): each "→" opens the next page as a new drawer that
-  // slides up; going back drops the page in from above. A swipe down on a
+  // Settings (journal): Advanced's index and each page it opens slide up as
+  // a new drawer; going back drops the page in from above. A swipe down on a
   // page past the first presses its ← Back (_nfBack) instead of closing.
-  var SET_DEPTH = { settingsMainPanel: 0, settingsMobilePanel: 1, settingsAchievementsPanel: 1, settingsAdvancedPanel: 2,
-    settingsAdvancedJournalPanel: 3, settingsAdvancedMorePanel: 4, settingsAdvancedMore2Panel: 5 };
+  // The first page, Advanced's index (and Achievements), then the index's pages.
+  var SET_DEPTH = { settingsMainPanel: 0, settingsIndexPanel: 1, settingsAchievementsPanel: 1, settingsMobilePanel: 2,
+    settingsAdvancedPanel: 2, settingsAdvancedJournalPanel: 2, settingsAdvancedMorePanel: 2 };
   function settingsPages() {
     var ov = document.getElementById('settingsModal'), host = document.getElementById('settingsContent');
     if (!ov || !host) return;

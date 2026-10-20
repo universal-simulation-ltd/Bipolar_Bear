@@ -2433,10 +2433,17 @@ file, so the page scripts barely change.
     sections use it (`skOpenSection` / `skShowGrid`, `_skDrawer()`); the grid
     stays put. ✕, the backdrop, a swipe down, Escape, the edge swipe and
     Android back close it.
-  - Settings (journal): each "→" slides the sheet up again as a new drawer
-    (a MutationObserver on the panels, depth `SET_DEPTH`); back drops the
-    page in from above; a swipe down presses the page's ← Back
-    (`#settingsModal._nfBack`) and only closes on the first page.
+  - Settings (journal): Advanced is an index since v365 (James: "the first
+    page of advanced should be like an index"): 📱 Mobile (app only), 📓
+    Journal, 🎯 Focus mode, 📊 Stats, 👤 Account (`#settingsIndexPanel`,
+    `_openSettingsPage` / `_settingsToIndex` / `_settingsShow` in
+    `js/journal.js`; the old open*/close* names are aliases). Account opens
+    fab.js `showAccountModal()` over Settings; it has a guest mode (Sign in,
+    Delete all data & reset), which replaced the Danger Zone page. Each page
+    slides the sheet up again as a new drawer (a MutationObserver on the
+    panels, depth `SET_DEPTH`); back drops the page in from above; a swipe
+    down presses the page's ← Back (`#settingsModal._nfBack`) and only closes
+    on the first page. Test: `scripts/test-settings-index.mjs`.
   - The keyboard: while a text box in a sheet or drawer has focus, the sheet
     sits on the keyboard (`visualViewport`); a textarea makes it full height
     (`.nf-kb`, `.nf-kb-full`). Android resizes the page itself, so the gap is

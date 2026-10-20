@@ -125,9 +125,9 @@ const shot = async (page, name, el) => {
   if (el) await page.locator(el).first().screenshot({ path: p }); else await page.screenshot({ path: p });
 };
 
-// Settings → Advanced → Journal → More is the Stats page (the web path; the
-// phone adds Mobile settings before Advanced). Walk it as a person would.
-const openStatsSettings = (page) => page.evaluate(() => { openAdvancedSettings(); openAdvancedJournal(); openAdvancedMore(); });
+// Settings → Advanced (an index since v365) → 📊 Stats. Walk it as a person
+// would.
+const openStatsSettings = (page) => page.evaluate(() => { openAdvancedSettings(); _openSettingsPage('stats'); });
 
 console.log('Blood results on the charts');
 {
