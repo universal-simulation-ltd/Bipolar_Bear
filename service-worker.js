@@ -1819,7 +1819,10 @@
 //   with a one-time hint after the first Add to dock (fab.js,
 //   js/shared/i18n.js); Settings' App lock buttons inline on the right
 //   (journal.html).
-const CACHE_NAME = 'bipolarbear-v370';
+// v371: Bipolar Anonymous easter egg: five taps on the board logo open the
+//   🕹️ Bear Arcade (js/anonymous.js, anonymous.html; build-anonymous.js
+//   bundles js/shared/bear-arcade.js).
+const CACHE_NAME = 'bipolarbear-v371';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

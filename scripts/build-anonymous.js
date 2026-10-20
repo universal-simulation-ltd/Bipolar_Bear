@@ -113,6 +113,9 @@ const SHARED_MODULES = [
   'js/shared/user-count.js',
   'js/shared/anon-push.js',
   'js/shared/secure-store.js',
+  // Not in anonymous.html: loaded by js/anonymous.js on the logo easter egg
+  // (five taps opens the 🕹️ Bear Arcade). Its bears are images/moods/sm.
+  'js/shared/bear-arcade.js',
 ];
 for (const f of SHARED_MODULES) copy(f);
 

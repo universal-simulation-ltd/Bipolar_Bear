@@ -586,6 +586,40 @@ function _goHome() {
 // Bipolar Anonymous bundle — there is no BipolarBear app to return to.
 function _canGoBackToBB() { return !!_bbUser && !_isAnonymousApp; }
 
+// Easter egg (James, 2026-10-20): tap the board's logo five times in a row
+// and the 🕹️ Bear Arcade opens, the same games as Bipolar Bear's dock
+// (js/shared/bear-arcade.js, loaded on the fifth tap). Where the logo also
+// goes back to Bipolar Bear, a single tap still does, after a short wait to
+// see whether more taps follow.
+const _LOGO_TAPS = 5, _LOGO_WINDOW_MS = 2500, _LOGO_HOME_WAIT_MS = 350;
+let _logoTaps = [], _logoHomeTimer = null;
+function _boardLogoTap() {
+  const now = Date.now();
+  _logoTaps = _logoTaps.filter(t => now - t < _LOGO_WINDOW_MS);
+  _logoTaps.push(now);
+  clearTimeout(_logoHomeTimer);
+  if (_logoTaps.length >= _LOGO_TAPS) {
+    _logoTaps = [];
+    try { if (BB.nf && BB.nf.haptic) BB.nf.haptic('medium'); } catch (_) {}
+    _openArcade();
+    return;
+  }
+  if (_logoTaps.length === 1 && _canGoBackToBB()) {
+    _logoHomeTimer = setTimeout(() => { _logoTaps = []; _goHome(); }, _LOGO_HOME_WAIT_MS);
+  }
+}
+window._boardLogoTap = _boardLogoTap;
+function _openArcade() {
+  if (window.BB && BB.arcade) { BB.arcade.open({}); return; }
+  if (document.getElementById('bbArcadeScript')) return;
+  const s = document.createElement('script');
+  s.id = 'bbArcadeScript';
+  s.src = 'js/shared/bear-arcade.js';
+  s.onload = () => { if (window.BB && BB.arcade) BB.arcade.open({}); };
+  s.onerror = () => s.remove();
+  document.head.appendChild(s);
+}
+
 // The board's top-left logo. Standalone users get the "Bipolar Anonymous"
 // wordmark: a small "BIPOLAR" stacked over "Anonymous" (css/anonymous.css
 // moves the sub line on top outside .logo-back). Users who arrived from BipolarBear get the
