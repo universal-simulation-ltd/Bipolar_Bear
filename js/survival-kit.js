@@ -2789,6 +2789,16 @@ function _skLocale() {
       } catch (e) { /* ignore */ }
     });
 
+    // ── Native feel (js/shared/native-feel.js): a swipe from the left edge
+    //    goes back the same way: an open section to the grid, else home. ──
+    if (window.BB && BB.nf && BB.nf.on) {
+      BB.nf.setBack(() => {
+        if (_skOpenId) { skShowGrid(); return false; }
+        location.replace('index.html');
+        return true;
+      });
+    }
+
     // ── Android back button: close an open modal, otherwise go to the home
     //    screen rather than exiting/minimising the app. ──
     document.addEventListener('DOMContentLoaded', () => {

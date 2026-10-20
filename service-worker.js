@@ -1779,7 +1779,12 @@
 // v360: Settings → Stats now holds "Show blood results on my charts" (was on
 //   the first Settings page) and Incognito Mode (was in Journal Options),
 //   beside the stats start date. journal.html only.
-const CACHE_NAME = 'bipolarbear-v360';
+// v361: native feel merged into main (James, 2026-10-20; branch native-feel,
+//   TestFlight Bear 60-62 / Anon 46-48): js/shared/native-feel.js on every
+//   page, phones only: tap a list row to open it, swipe it left for Delete;
+//   pop-ups are bottom sheets that swipe down to close; swipe from the left
+//   edge to go back; grouped settings rows; haptics.
+const CACHE_NAME = 'bipolarbear-v361';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1824,6 +1829,7 @@ const STATIC_ASSETS = [
   './js/shared/translate.js',
   './js/shared/guest-data.js',
   './js/shared/secure-store.js',
+  './js/shared/native-feel.js',
   './js/shared/user-count.js',
   './js/shared/universal-id.js',
   './js/shared/auth-splash.js',
