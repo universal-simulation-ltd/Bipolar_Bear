@@ -174,6 +174,42 @@ const T = M.dayKey(today);
   assert.equal(r.before.custom.addedSugar.pct, 50); assert.equal(r.after.custom.addedSugar.pct, 0);
   ok('switch rate, custom trackers and other medicine changes in either window');
 }
+{
+  // v358: the next test, the "had your test?" card, the line, the range.
+  const levels = [
+    { id: 'a', date: '2026-08-01', test: 'Lithium', value: 0.5 },
+    { id: 'b', date: '2026-09-01', test: 'Lithium', value: 0.7 },
+    { id: 'c', date: '2026-09-10', test: 'TSH', value: 2.1 },
+    { id: 'd', date: '2026-10-01', test: 'TSH', value: 2.6 },
+    { id: 'e', date: '2026-10-05', test: 'Vitamin D', value: 50 },
+    { id: 'f', date: '2026-10-06', test: 'Lithium', deleted: true },
+  ];
+  const plans = [
+    { id: 't:lithium', test: 'Lithium', due: '2026-10-15' },
+    { id: 't:tsh', test: 'TSH', due: '2026-09-20' },             // a TSH result on 1 Oct: done
+    { id: 't:vitamin d', test: 'Vitamin D', due: '2026-10-10', dismissed: '2026-10-10' },
+  ];
+  assert.equal(M.dueNow(levels, plans, '2026-10-14'), null, 'before the due date: nothing');
+  const d = M.dueNow(levels, plans, '2026-10-15');
+  assert.equal(d.test, 'Lithium'); assert.equal(d.due, '2026-10-15');
+  assert.equal(M.dueNow(levels.concat([{ id: 'g', date: '2026-10-15', test: 'lithium', value: 0.6 }]), plans, '2026-10-20'), null, 'a result on the due day ends it');
+  assert.equal(M.dueNow(levels, [{ ...plans[0], dismissed: '2026-10-15' }], '2026-10-20'), null, 'dismissed for that due date');
+  assert.equal(M.dueNow(levels, [{ ...plans[0], due: '2026-10-18', dismissed: '2026-10-15' }], '2026-10-20').due, '2026-10-18', 'a new due date brings it back');
+  assert.equal(M.dueNow(levels, [plans[0], { id: 't:x', test: 'X', due: '2026-10-01' }], '2026-10-20').test, 'X', 'one card: the earliest');
+  const series = M.bloodSeries(levels);
+  assert.deepEqual(M.lineTests(series).map(s => s.test), ['Lithium', 'TSH'], 'lithium first, one-result tests left out');
+  assert.deepEqual(M.lineTests([series[1], series[0]]).map(s => s.test), ['Lithium', 'TSH']);
+  assert.ok(M.isLithium('Litio') && M.isLithium('Li (serum)') && M.isLithium('锂') && !M.isLithium('Lipids'));
+  assert.deepEqual(M.markersIn(levels, '2026-09-01', '2026-10-01').map(m => m.date + ' ' + m.test), ['2026-09-01 Lithium', '2026-09-10 TSH', '2026-10-01 TSH'], 'markers between two days, no tombstones');
+  const sc = M.valueScale([0.5, 0.7], null);
+  assert.ok(sc.lo < 0.5 && sc.hi > 0.7);
+  const sr = M.valueScale([0.5, 0.7], { low: 0.4, high: 1.0 });
+  assert.ok(sr.lo < 0.4 && sr.hi > 1.0, 'the range is inside the scale');
+  assert.equal(M.hasRange({ low: 0.6 }), false, 'a range needs both ends');
+  assert.equal(M.hasRange({ low: 0.9, high: 0.6 }), false);
+  assert.equal(M.planOf(plans, ' lithium ').due, '2026-10-15');
+  ok('next test due: the card from the due date until a result on/after it or a dismissal; lithium first for the line; markers by date; the range only when both ends are typed in');
+}
 
 // ── Part 2: BB.medLog in secure-store.js ─────────────────────────────────────
 const src = fs.readFileSync(new URL('../js/shared/secure-store.js', import.meta.url), 'utf8');
@@ -292,5 +328,33 @@ const tick = () => new Promise(r => setTimeout(r, 3));
   assert.equal(blob.medSideEffects[0].text, 'Tired');
   assert.ok(!d2.ls.get('bbSecurePending'));
   ok('without the key a save waits on the device, then goes up encrypted');
+}
+{
+  // v358: medBloodPlans — one per test, encrypted only, merged across devices.
+  const raw = crypto.getRandomValues(new Uint8Array(32));
+  const docs = {};
+  const d1 = await makeEnv(docs, raw);
+  assert.equal(await d1.log.put('bloodPlans', { test: '  ' }), null, 'needs a test');
+  assert.equal(await d1.log.put('bloodPlans', { test: 'Lithium', low: '1', high: '0.5' }), null, 'low above high refused');
+  const r = await d1.log.put('bloodPlans', { test: 'Lithium', due: '2026-11-01', low: '0,6', high: '0.8', dismissed: 'soon' });
+  assert.equal(r.status, 'saved');
+  assert.deepEqual({ id: r.item.id, due: r.item.due, low: r.item.low, high: r.item.high, dismissed: r.item.dismissed }, { id: 't:lithium', due: '2026-11-01', low: 0.6, high: 0.8, dismissed: undefined });
+  await d1.log.put('bloodPlans', { test: 'LITHIUM', due: '2026-11-01', low: 0.6, high: 0.8, dismissed: '2026-11-01' });
+  assert.equal((await d1.log.list('bloodPlans')).length, 1, 'one plan per test, whatever the case');
+  const doc = docs['userSettings/u'];
+  assert.ok(!('medBloodPlans' in doc), 'not a plaintext field');
+  const flat = JSON.stringify(doc);
+  assert.ok(!flat.includes('2026-11-01') && !flat.toLowerCase().includes('lithium'), 'nothing readable in Firestore');
+  const blob = await openBlob(docs, raw);
+  assert.equal(blob.medBloodPlans[0].dismissed, '2026-11-01'); assert.equal(blob.medBloodPlans[0].high, 0.8);
+  const d2 = await makeEnv(docs, raw);
+  await d2.S.settings('u', docs['userSettings/u']);
+  assert.equal((await d2.log.list('bloodPlans'))[0].due, '2026-11-01', 'the other device reads it back');
+  assert.ok(d1.S.SETTINGS.includes('medBloodPlans') && d1.S.resetPatch().medBloodPlans, 'in SETTINGS and the reset patch');
+  // A backup restore merges it like the other logs.
+  const b = await makeEnv(null, null, false);
+  await b.log.mergeIn('bloodPlans', JSON.parse(d1.ls.get('medBloodPlans')));
+  assert.equal((await b.log.list('bloodPlans'))[0].low, 0.6);
+  ok('next test due + the person\'s range: one plan per test, encrypted only, read back on another device, restored from a backup');
 }
 console.log(`\n${pass} scenarios passed`);

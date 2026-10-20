@@ -1430,7 +1430,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // raw localStorage.
       const otherKeysToRemove = [
         'moodDefinitions', 'copingStrategies',
-        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'bbMedsCompareKey', 'dailyGoals',
+        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey', 'bbBloodChartTest', 'dailyGoals',
         'unlockedAchievements',
       ];
       otherKeysToRemove.forEach(k => localStorage.removeItem(k));
@@ -1964,7 +1964,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
       try { BB.secure.clearPending(); } catch (_) {}
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
-         'rememberThis','myCommitments','customReminders','currentMedList','medHistory','medSideEffects','medBloodLevels','medPastChanges','bbMedsCompareKey',
+         'rememberThis','myCommitments','customReminders','currentMedList','medHistory','medSideEffects','medBloodLevels','medPastChanges','medBloodPlans','bbMedsCompareKey',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
 
         localStorage.setItem('focusedModeEnabled', '1');
@@ -1975,6 +1975,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
+          'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbBloodDueReminder', 'bbWhatsNewSeen',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',
@@ -1985,7 +1986,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
         try {
           const _notif = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
-          if (_notif) _notif.cancel({ notifications: [{ id: 1 }, { id: 2 }] }).catch(() => {});
+          // 1 daily reminder, 2 weekly summary, 4000–4009 blood test due (v358).
+          if (_notif) _notif.cancel({ notifications: [{ id: 1 }, { id: 2 }].concat(Array.from({ length: 10 }, (_, i) => ({ id: 4000 + i }))) }).catch(() => {});
         } catch (_) {}
 
         Object.keys(localStorage).filter(k =>
@@ -3207,6 +3209,18 @@ function _handleIndexJournalNav() {
       }
     }
     window.idxBioUnlock = idxBioUnlock;
+
+    // ── New features sheet (js/shared/whats-new.js, v358) ──
+    // Once per release with an entry, for people updating (a fresh install
+    // skips it), when the home screen is idle: never over the PIN lock, the
+    // crisis / safety-plan sheets or any dialog (whats-new.js checks those).
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          if (window.BB && BB.whatsNew) BB.whatsNew.startBear({ bioMode: _idxBioMode });
+        } catch (e) { console.warn('whats new', e); }
+      }, 1200);
+    });
     // Each time the lock screen comes up (load, the 5-minute and background
     // relocks), offer the scan once.
     (function () {

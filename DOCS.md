@@ -439,6 +439,12 @@ bbJournalRange          "30"|"90"|"180"|"365"|"all" — the Your Journey range t
                                         set by a double tap on a tab (tapJournalRange in
                                         js/journal.js, orange mark; v294 — it was "tap the
                                         range showing" + ★). Pinch / wheel zoom never sets it
+bbBloodOnCharts         "1"           — "Show blood results on my charts" (§2.25; unticked = absent)
+bbBloodChartsAsked      "1"           — the one-time "Show this on your mood charts?" was offered
+bbBloodChartTest        string        — the test the life chart's line shows (picker; §2.25)
+bbBloodDueReminder      "1"           — remind me on the day a blood test is due (phone app)
+bbWhatsNewSeen          "1.44"        — newest release whose New features sheet was shown or
+                                        skipped (§2.25); Reset clears it, so it shows again
 bbJournalView           "calendar"|"life" — the Your Journey card's default view; set by a
                                         double tap on the Calendar / Life chart switch (the
                                         suite's useDefaultView gesture, orange mark; v293)
@@ -1785,7 +1791,8 @@ edits in the page scripts. Rules tests: `scripts/firestore-rules`
 `personalDetails/{uid}` and these `userSettings` fields — `currentMedList,
 moodDefinitions, moodMemories, copingStrategies, myCommitments,
 customReminders, survivalGratitude, rememberThis, medHistory`, and from 1.44
-`medSideEffects, medBloodLevels, medPastChanges` (§2.23) — live only inside a
+`medSideEffects, medBloodLevels, medPastChanges` (§2.23) and from v358
+`medBloodPlans` (§2.25) — live only inside a
 `secureEnc` blob (`{_enc,_iv,v,updatedAt}`, AES-GCM under the journal data
 key, the safety-plan pattern). localStorage keeps the device copy under the
 same keys, so the pages render as before. The key comes from
@@ -2190,6 +2197,9 @@ Test: `node scripts/test-med-tracking.mjs` (9 scenarios).
 
 ### 2.24 Mood buttons on the daily reminder (1.44, v353)
 
+> There is no switch for the buttons: they are on every daily reminder. The
+> New features sheet (§2.25) mentions them as a note on phones.
+
 James's feature-gap list (2026-10-13): "log from the reminder notification
 without opening the app". The daily reminder (`scheduleReminder`, id 1) has
 the five moods as buttons. A tap does not open the app, so the page and the
@@ -2254,6 +2264,120 @@ journal.js _fileReminderMoods() after every loadEntries(), on visibilitychange
   (Playwright: home → journal → filed, encrypted under a guest PIN, a logged
   day kept, nothing written before the guest's storage is ready, the
   reminder's buttons).
+
+### 2.25 Blood results on the charts, the next test, and the New features sheet (2026-10-20, v358, for 1.44)
+
+James agreed the plan on 2026-10-20. Strings: `blood144.*` in
+`js/shared/i18n-blood.js` and `whatsnew.*` in `js/shared/i18n-whatsnew.js`
+(10 languages, machine translated).
+
+**The Settings tick.** Journal ⚙️ Settings → **🩸 Show blood results on my
+charts** (`#bloodChartsRow`), unticked by default, this device only
+(`BB.bloodCharts` in `secure-store.js`: `isOn()`, `set(on)`, key
+`bbBloodOnCharts`; `set` fires `bb:bloodcharts`). The first time anyone
+saves a blood result, the Blood levels tab offers it once ("Show this on your
+mood charts?"; `bbBloodChartsAsked`), never again.
+
+**Life chart** (`js/journal-insights.js`, the Your Journey card, 1M / 3M / 6M
+/ 1Y / All). Only with the tick on (`BBMeds.chartData()` is null otherwise):
+- A 🩸 button on the day of each result, in a strip under the sleep bars
+  (`.lc-blood`, one per result in the chart's span). Tap / click puts
+  "Lithium 0.7 mmol/L · 12 Mar" in a bubble and in the chart's live line;
+  keyboard focus shows the bubble; each has that text as its `aria-label` and
+  `aria-describedby` the bubble. The year is added when it isn't this year.
+- From 6M (range ≥ 180 days): one test's results joined by a thin line over
+  the mood area on its own right-hand scale (3 ticks, `.lc-yright`). Lithium
+  first (`BBMeds.isLithium`: lithium / litium / litio / lítio / lit / li / 锂,
+  or the translated "Lithium"); a picker when two or more tests have ≥2
+  results (`bbBloodChartTest`). The person's range, if typed in, is shaded
+  behind the line. Redraws on `bb:bloodcharts`, `bb:bloodchange` (a result or
+  range saved / deleted) and `bb:secure-sync`.
+- The scale is the test's results plus the range, padded 12%
+  (`BBMeds.valueScale`).
+
+**PDF.** The 12-month mood chart (`_doExportPDF`, `_pdfStep('charts')`) gets
+a small red drop under the month of each result in the 12 months, placed by
+day within the month, and "Blood result" in its key; only with the tick on.
+
+**Next test due + the person's range** — `BB.medLog` kind `bloodPlans`,
+field `medBloodPlans`, one record per test:
+`{id: 't:<test, lower case>', test, due?, low?, high?, dismissed?, updatedAt}`.
+Stored like the other medicine logs (§2.23): the device copy in localStorage,
+the account copy only inside `userSettings.secureEnc` (in `SETTINGS` and
+`UNION_FIELDS`, merged by id; in the backup and merged on restore; cleared
+with the other medicine keys). No rules change.
+- The add-result form has an optional **Next test due** date; each test's
+  card has **Next test and your range** (due date, the optional reminder, and
+  From / To). Both ends or neither; the lower first; a decimal comma is read.
+- **No default range anywhere** and no "in range / out of range" wording: the
+  hint says "the range your prescriber gave you". It is a medical decision.
+- **The card** (`BBMeds.renderDueCard`, `#bloodDueSlot` beside the early-
+  warning card on the journal page): from the due date on, ONE card for the
+  earliest due test (`BBMeds.dueNow`): "Had your lithium test? · Add the
+  result". The button opens Blood levels with that test filled in and the
+  value box focused. It goes once a result dated on or after the due date is
+  added, or on × (`dismissed` = that due date, so a new due date brings it
+  back). The day's entry steps fill the screen, so it is never in them, and
+  the PIN screen covers the page.
+- **The reminder** (phone app only, off unless ticked, `bbBloodDueReminder`,
+  this phone only): a local notification at 9:00 on each due date, ids
+  4000–4009 (beside 1 daily, 2 weekly, 3000+ medication, 10000+
+  anniversaries). The text names no test ("🩸 Blood test due today"). Planned
+  again on every plan / result change and on each journal open; cancelled on
+  logout and reset. On the web the card is enough.
+
+**The New features sheet** (`js/shared/whats-new.js`, `BB.whatsNew`). A
+suite-wide rule (James, 2026-10-20): every app gets one, and @unisim/sdk will
+get a React copy, so the registry is plain data plus small functions:
+
+```
+{ '<version>': [ {
+    id, icon, titleKey, bodyKey,                 // bodyKey = one plain sentence
+    setting: { key, get(): boolean,              // the SAME setting as in Settings
+               set(on): boolean | string | Promise<boolean|string> }  // string = why it didn't take
+             | null,                             // null = a note line, no switch
+    applies(): boolean                           // only items that apply are shown
+} ] }
+```
+
+- `create({releases, seenKey, t})` → `{latest, items, shouldShow, show,
+  start, markSeen}`. `seenKey` is the **seenVersion** key (Bear:
+  `bbWhatsNewSeen`), holding the newest release shown or skipped; Reset
+  clears it.
+- `shouldShow({isFreshInstall, isBlocked})`: false when the newest release is
+  seen; a fresh install (`isFreshInstall()`, for Bear: onboarding not done and
+  no entries on the device) is marked seen and never shown; false while
+  `isBlocked()`; marked seen when no item applies; otherwise true.
+- `start(...)` polls each second until the page is visible, nothing is in
+  the way, and there has been no touch or key for 2.5 s, then shows it once
+  (marked seen on show). Gives up after 5 minutes; the next page load tries
+  again. `BB.whatsNew.screenBusy()` is the generic "something on top" check:
+  the PIN screens, the sign-in sheet and splash, the welcome card, the crisis
+  chat and safety plan, any `.confirm-modal.active` / `[aria-modal="true"]`.
+  The journal also waits while the day's entry steps (or the classic form)
+  are up, and while an account is still restoring.
+- The sheet: "✨ New features", "New in 1.44", one row per item (icon, title,
+  the sentence, the real switch, every switch as `get()` says, so all off for
+  something new), "You can change these any time in Settings", **Done**.
+  Nothing turns on without a tap.
+- Bipolar Bear's entries: `BB.whatsNew.bearReleases(ctx)`; pages call
+  `BB.whatsNew.startBear({isBusy, bioMode, isNative})` (index.js on the home
+  screen, journal.js), so whichever is idle first shows it. **1.44**:
+  - `bloodCharts` — Show blood results on my charts (`bbBloodOnCharts`).
+  - `bioUnlock` — Unlock with Face ID / Touch ID / your fingerprint
+    (`bbBioUnlock`, via `BB.bioUnlock.turnOn/turnOff`, so a scan is asked for;
+    a failed scan leaves it off with the reason). Only in the phone app with a
+    PIN lock on (`_idxBioMode` / `_bioLockMode`) and biometrics enrolled.
+  - `moodButtons` — a note, no switch (the reminder's mood buttons are always
+    on, §2.24). Phone app only.
+- For the next release, add `'1.45': [...]` to `bearReleases`; people who
+  missed 1.44 see only the newest entry.
+
+Tests: `node scripts/test-med-tracking.mjs` (11 scenarios; the plan helpers
+and `medBloodPlans` encrypted, read back on another device, restored from a
+backup) and `PLAYWRIGHT_MODULE=… node scripts/test-blood-charts.mjs` (23
+checks, with negative controls; `SHOTS=<dir>` also saves screenshots at
+390 px in English and German, light and dark, and the sample PDF).
 
 ## 3. Algorithm Flowcharts
 

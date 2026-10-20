@@ -1759,7 +1759,20 @@
 //   entries being unlocked counted), with each step's time in the console.
 //   js/shared/i18n-pdfprog.js (BB.i18n.extend), 10 languages. Touches
 //   journal.js, journal.html, css/journal.css.
-const CACHE_NAME = 'bipolarbear-v357';
+// v358: blood results on the mood charts (a 🩸 on the day of each result on
+//   the life chart and the PDF's 12-month mood chart; from 6M a line for one
+//   test on its own right-hand scale, with the person's own range shaded),
+//   only with the new Settings tick "Show blood results on my charts"
+//   (unticked; offered once after the first result). An optional "Next test
+//   due" date, a "Had your lithium test?" card from that day and an optional
+//   reminder on the day (phone app). A "New features" sheet for people who
+//   update (js/shared/whats-new.js). New precached files
+//   js/shared/whats-new.js, js/shared/i18n-blood.js, js/shared/i18n-whatsnew.js
+//   (10 languages). Touches index.html, journal.html, js/index.js,
+//   js/journal.js, js/journal-insights.js, js/journal-meds.js,
+//   js/survival-kit.js, js/shared/secure-store.js, css/journal.css,
+//   css/journal-meds.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v358';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1797,6 +1810,8 @@ const STATIC_ASSETS = [
   './js/shared/i18n-meds.js',
   './js/shared/i18n-signin.js',
   './js/shared/i18n-pdfprog.js',
+  './js/shared/i18n-blood.js',
+  './js/shared/i18n-whatsnew.js',
   './js/shared/crisis.js',
   './js/shared/safety-plan.js',
   './js/shared/translate.js',
@@ -1811,6 +1826,7 @@ const STATIC_ASSETS = [
   './js/shared/pin-reauth.js',
   './js/shared/mood-queue.js',
   './js/shared/bio-unlock.js',
+  './js/shared/whats-new.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',
 

@@ -232,6 +232,72 @@
     });
   }
 
+  // ── blood results on the charts, the next test, the person's range (v358) ──
+  // medBloodPlans: one record per test, {id: 't:<test>', test, due?, low?,
+  // high?, dismissed?}. The range is only ever what the person typed in:
+  // there is no default range anywhere (a medical decision, not ours).
+  function planId(test) { return 't:' + norm(test); }
+  /** The live plan for a test, or null. */
+  function planOf(plans, test) {
+    var id = planId(test);
+    for (var i = 0; i < (plans || []).length; i++) {
+      var p = plans[i];
+      if (p && !p.deleted && (p.id === id || norm(p.test) === norm(test))) return p;
+    }
+    return null;
+  }
+  function hasRange(p) { return !!p && isNum(p.low) && isNum(p.high) && Number(p.low) <= Number(p.high); }
+  /**
+   * The one "had your test?" card to show today, or null: a test whose next
+   * test was due on or before today, with no result dated on or after that
+   * day, and not dismissed for that due date. The earliest due date wins.
+   * → {test, due, plan}
+   */
+  function dueNow(levels, plans, today) {
+    var best = null;
+    (plans || []).forEach(function (p) {
+      if (!p || p.deleted || !fromKey(p.due) || p.due > today || p.dismissed === p.due) return;
+      var done = (levels || []).some(function (x) {
+        return x && !x.deleted && norm(x.test) === norm(p.test) && typeof x.date === 'string' && x.date >= p.due;
+      });
+      if (done) return;
+      if (!best || p.due < best.due) best = { test: p.test, due: p.due, plan: p };
+    });
+    return best;
+  }
+  var LITHIUM_RE = /^(lithium|litium|litio|lítio|lit|li|锂)(\b|$|\s|\(|锂)/;
+  function isLithium(test, extra) {
+    var n = norm(test);
+    return LITHIUM_RE.test(n) || (!!extra && n === norm(extra));
+  }
+  /** Tests that can have a line (two results or more): lithium first, then by first result. */
+  function lineTests(series, lithiumName) {
+    var list = (series || []).filter(function (s) { return s.points.length >= 2; });
+    var li = list.filter(function (s) { return isLithium(s.test, lithiumName); });
+    return li.concat(list.filter(function (s) { return li.indexOf(s) < 0; }));
+  }
+  /** Results dated between two day keys (inclusive), oldest first: [{test, unit, date, value, id}]. */
+  function markersIn(levels, fromK, toK) {
+    var out = [];
+    bloodSeries(levels).forEach(function (s) {
+      s.points.forEach(function (p) {
+        if ((fromK && p.date < fromK) || (toK && p.date > toK)) return;
+        out.push({ id: p.id, test: s.test, unit: p.unit || s.unit, date: p.date, value: p.value });
+      });
+    });
+    return out.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  }
+  /** The value scale for a test's line or chart: its results and the person's range, padded. */
+  function valueScale(values, plan) {
+    var vals = (values || []).filter(isNum).map(Number);
+    if (hasRange(plan)) vals.push(Number(plan.low), Number(plan.high));
+    if (!vals.length) return { lo: 0, hi: 1, pad: 0 };
+    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    if (hi === lo) { hi += Math.abs(hi) * 0.1 || 1; lo -= Math.abs(lo) * 0.1 || 1; }
+    var pad = (hi - lo) * 0.12;
+    return { lo: lo - pad, hi: hi + pad, pad: pad };
+  }
+
   // ── the comparison ──────────────────────────────────────────────────────────
   /** One record per logged day (latest entry; auto-filled days left out). */
   function dayRecords(entries) {
@@ -355,6 +421,8 @@
     aggregate: aggregate, dosesOf: dosesOf, dosesForAnswer: dosesForAnswer, namesWith: namesWith,
     allEvents: allEvents, listOnDay: listOnDay, changeEvents: changeEvents,
     adherence: adherence, missedLog: missedLog, bloodSeries: bloodSeries,
+    planId: planId, planOf: planOf, hasRange: hasRange, dueNow: dueNow, isLithium: isLithium,
+    lineTests: lineTests, markersIn: markersIn, valueScale: valueScale,
     dayRecords: dayRecords, windowStats: windowStats, compare: compare,
   };
 
@@ -370,6 +438,12 @@
     return v == null ? full : v;
   }
   function tt(key, vars) { try { return BB.t(key, vars); } catch (_) { return key; } }
+  /** blood144.* (js/shared/i18n-blood.js): the charts, next test and range strings. */
+  function tb(key, vars) {
+    var full = 'blood144.' + key, v = null;
+    try { v = BB.t(full, vars); } catch (_) {}
+    return v == null ? full : v;
+  }
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
@@ -390,6 +464,7 @@
   function moodName(c) { var v = tt('mood.' + c); return v && v !== 'mood.' + c ? v : c; }
   function lsGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (_) {} }
   function currentList() { try { return medList(JSON.parse(lsGet('currentMedList') || '[]')); } catch (_) { return []; } }
   function history() { try { return (BB.medHistory && BB.medHistory.get()) || []; } catch (_) { return []; } }
   function logList(kind) { try { return (BB.medLog && BB.medLog.list(kind)) || []; } catch (_) { return []; } }
@@ -469,13 +544,22 @@
     document.body.appendChild(m);
     return m;
   }
-  function open(tab) {
+  /** opts.test: open the Blood levels form ready for that test (the due card's button). */
+  function open(tab, opts) {
     _tab = TABS.indexOf(tab) >= 0 ? tab : (savedTab() || 'doses');
     _tabNote = ''; _showAllMissed = false;
+    _prefillTest = opts && opts.test ? String(opts.test) : null;
     var m = ensureModal();
     render();
     m.classList.add('active');
-    try { m.querySelector('.meds-x').focus(); } catch (_) {}
+    var focused = false;
+    if (_prefillTest && _tab === 'blood') {
+      var v = m.querySelector('#medsBlAdd input[name="value"]');
+      if (v) {
+        try { v.focus({ preventScroll: true }); v.scrollIntoView({ block: 'center' }); focused = true; } catch (_) {}
+      }
+    }
+    if (!focused) { try { m.querySelector('.meds-x').focus(); } catch (_) {} }
     document.addEventListener('keydown', _onKey);
   }
   function close() {
@@ -568,14 +652,12 @@
       '<div class="meds-card">' + (rows || '<div class="meds-empty">' + esc(t('seNone')) + '</div>') + '</div>';
   }
 
-  function chartSvg(s) {
+  function chartSvg(s, plan) {
     var pts = s.points;
     if (pts.length < 2) return '';
     var W = 320, H = 140, L = 34, R = 10, T = 10, B = 24;
-    var vals = pts.map(function (p) { return p.value; });
-    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
-    if (hi === lo) { hi += Math.abs(hi) * 0.1 || 1; lo -= Math.abs(lo) * 0.1 || 1; }
-    var pad_ = (hi - lo) * 0.12; lo -= pad_; hi += pad_;
+    var sc = valueScale(pts.map(function (p) { return p.value; }), plan);
+    var lo = sc.lo, hi = sc.hi, pad_ = sc.pad;
     var t0 = fromKey(pts[0].date).getTime(), t1 = fromKey(pts[pts.length - 1].date).getTime();
     var x = function (k) { return t1 === t0 ? L + (W - L - R) / 2 : L + (fromKey(k).getTime() - t0) / (t1 - t0) * (W - L - R); };
     var y = function (v) { return T + (hi - v) / (hi - lo) * (H - T - B); };
@@ -583,33 +665,68 @@
       return '<line class="mc-grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v).toFixed(1) + '" y2="' + y(v).toFixed(1) + '"/>' +
         '<text x="' + (L - 4) + '" y="' + (y(v) + 3).toFixed(1) + '" text-anchor="end">' + esc(fmtNum(v, 2)) + '</text>';
     }).join('');
+    // The person's own range, shaded (only when they typed one in).
+    var band = hasRange(plan) ? '<rect class="mc-band" x="' + L + '" width="' + (W - L - R) + '" y="' + y(Number(plan.high)).toFixed(1) +
+      '" height="' + Math.max(1, y(Number(plan.low)) - y(Number(plan.high))).toFixed(1) + '"><title>' + esc(tb('legendRange')) + '</title></rect>' : '';
     var path = pts.map(function (p, i) { return (i ? 'L' : 'M') + x(p.date).toFixed(1) + ' ' + y(p.value).toFixed(1); }).join(' ');
     var dots = pts.map(function (p) { return '<circle class="mc-dot" cx="' + x(p.date).toFixed(1) + '" cy="' + y(p.value).toFixed(1) + '" r="3.2"/>'; }).join('');
     var labels = '<text x="' + L + '" y="' + (H - 6) + '">' + esc(fmtDate(pts[0].date, { day: 'numeric', month: 'short', year: '2-digit' })) + '</text>' +
       '<text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end">' + esc(fmtDate(pts[pts.length - 1].date, { day: 'numeric', month: 'short', year: '2-digit' })) + '</text>';
-    return '<svg class="meds-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('blChartLabel', { test: s.test })) + '">' + grid + '<path class="mc-line" d="' + path + '"/>' + dots + labels + '</svg>';
+    return '<svg class="meds-chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(t('blChartLabel', { test: s.test })) + '">' + band + grid + '<path class="mc-line" d="' + path + '"/>' + dots + labels + '</svg>';
+  }
+  function plans() { return logList('bloodPlans'); }
+  function remindOn() { return lsGet(REMIND_KEY) === '1'; }
+  function _planHtml(s, plan) {
+    var idx = esc(planId(s.test));
+    var sum = [];
+    if (plan && plan.due) sum.push('<div class="mr-sub bl-plan-line">📅 ' + esc(tb('dueOn', { date: fmtDate(plan.due) })) + '</div>');
+    if (hasRange(plan)) sum.push('<div class="mr-sub bl-plan-line">' + esc(tb('rangeShown', { low: fmtNum(plan.low, 3), high: fmtNum(plan.high, 3), unit: s.unit || '' }).trim()) + '</div>');
+    var remind = coarseNative() ? '<label class="bl-check"><input type="checkbox" name="remind"' + (remindOn() ? ' checked' : '') + '> <span>' + esc(tb('remind')) + '</span></label>' +
+      '<div class="mr-sub" style="margin:-4px 0 6px">' + esc(tb('remindDesc')) + '</div>' : '';
+    return sum.join('') +
+      '<details class="meds-details bl-plan"' + (_openPlan === idx ? ' open' : '') + ' data-plan="' + idx + '"><summary>' + esc(tb('planFor')) + '</summary>' +
+      '<form class="meds-form" onsubmit="event.preventDefault();BBMeds._savePlan(this)">' +
+      '<input type="hidden" name="test" value="' + esc(s.test) + '">' +
+      '<label>' + esc(tb('nextDueShort')) + '<input type="date" name="due" value="' + esc(plan && plan.due ? plan.due : '') + '"></label>' + remind +
+      '<div class="bl-range-h">' + esc(tb('rangeTitle')) + '</div>' +
+      '<p class="meds-intro" style="margin:0 0 6px">' + esc(tb('rangeHint')) + '</p>' +
+      '<div class="mf-2"><label>' + esc(tb('rangeLow')) + '<input name="low" inputmode="decimal" maxlength="12" value="' + esc(plan && isNum(plan.low) ? fmtNum(plan.low, 3) : '') + '"></label>' +
+      '<label>' + esc(tb('rangeHigh')) + '<input name="high" inputmode="decimal" maxlength="12" value="' + esc(plan && isNum(plan.high) ? fmtNum(plan.high, 3) : '') + '"></label></div>' +
+      '<div class="mf-err" aria-live="polite"></div><button type="submit" class="meds-btn primary">' + esc(tt('common.save')) + '</button></form></details>';
+  }
+  function _offerHtml() {
+    if (!_offer) return '';
+    return '<div class="meds-card bl-offer" role="group" aria-labelledby="blOfferQ"><div class="bl-offer-q" id="blOfferQ">🩸 ' + esc(tb('offerTitle')) + '</div>' +
+      '<p class="meds-intro" style="margin:4px 0 10px">' + esc(tb('offerBody')) + '</p>' +
+      '<div class="bl-offer-btns"><button type="button" class="meds-btn primary" onclick="BBMeds._offerAnswer(true)">' + esc(tb('offerYes')) + '</button>' +
+      '<button type="button" class="meds-btn" onclick="BBMeds._offerAnswer(false)">' + esc(tb('offerNo')) + '</button></div></div>';
   }
   function bloodHtml() {
     var series = bloodSeries(logList('bloodLevels'));
+    var pl = plans();
     var cards = series.map(function (s) {
+      var plan = planOf(pl, s.test);
       var rows = s.points.slice().reverse().map(function (p) {
         return '<div class="meds-row"><div class="mr-main"><strong>' + esc(fmtNum(p.value, 3)) + (p.unit ? ' ' + esc(p.unit) : '') + '</strong>' +
           (p.note ? '<div class="mr-sub">' + esc(p.note) + '</div>' : '') + '</div><div class="mr-date">' + esc(fmtDate(p.date)) + '</div>' +
           '<button type="button" class="meds-del" aria-label="' + esc(t('deleteItem')) + '" title="' + esc(t('deleteItem')) + '" onclick="BBMeds._del(\'bloodLevels\',\'' + esc(p.id) + '\')">🗑️</button></div>';
       }).join('');
-      return '<div class="meds-card"><h4>🩸 ' + esc(s.test) + '</h4>' + chartSvg(s) + rows + '</div>';
+      return '<div class="meds-card"><h4>🩸 ' + esc(s.test) + '</h4>' + _planHtml(s, plan) + chartSvg(s, plan) + rows + '</div>';
     }).join('');
     var tests = series.map(function (s) { return s.test; });
     if (tests.map(norm).indexOf(norm(t('blLithium'))) < 0) tests.unshift(t('blLithium'));
     var last = series.length ? series[series.length - 1] : null;
-    return '<p class="meds-intro">' + esc(t('blIntro')) + '</p>' +
-      '<div class="meds-card"><h4>' + esc(t('blAdd')) + '</h4><form class="meds-form" onsubmit="event.preventDefault();BBMeds._addBlood(this)">' +
-      '<div class="mf-2"><label>' + esc(t('blTest')) + '<input name="test" list="medsBlTests" maxlength="60" value="' + esc(last ? last.test : t('blLithium')) + '"></label>' +
+    var pre = _prefillTest ? (series.filter(function (s) { return norm(s.test) === norm(_prefillTest); })[0] || { test: _prefillTest, unit: '' }) : null;
+    var useT = pre || last;
+    return '<p class="meds-intro">' + esc(t('blIntro')) + '</p>' + _offerHtml() +
+      '<div class="meds-card"><h4>' + esc(t('blAdd')) + '</h4><form class="meds-form" id="medsBlAdd" onsubmit="event.preventDefault();BBMeds._addBlood(this)">' +
+      '<div class="mf-2"><label>' + esc(t('blTest')) + '<input name="test" list="medsBlTests" maxlength="60" value="' + esc(useT ? useT.test : t('blLithium')) + '"></label>' +
       '<label>' + esc(t('date')) + '<input type="date" name="date" value="' + todayKey() + '" max="' + todayKey() + '"></label></div>' +
       '<datalist id="medsBlTests">' + tests.map(function (x) { return '<option value="' + esc(x) + '">'; }).join('') + '</datalist>' +
       '<div class="mf-2"><label>' + esc(t('blValue')) + '<input name="value" inputmode="decimal" maxlength="12" placeholder="0.6"></label>' +
-      '<label>' + esc(t('blUnit')) + '<input name="unit" maxlength="20" value="' + esc(last && last.unit ? last.unit : 'mmol/L') + '"></label></div>' +
+      '<label>' + esc(t('blUnit')) + '<input name="unit" maxlength="20" value="' + esc(useT && useT.unit ? useT.unit : (last && last.unit ? last.unit : 'mmol/L')) + '"></label></div>' +
       '<label>' + esc(t('blNote')) + '<input name="note" maxlength="200" placeholder="' + esc(t('blNotePlaceholder')) + '"></label>' +
+      '<label>' + esc(tb('nextDue')) + '<input type="date" name="nextDue" min="' + todayKey() + '"></label>' +
       '<div class="mf-err" aria-live="polite"></div><button type="submit" class="meds-btn primary">' + esc(tt('common.save')) + '</button></form></div>' +
       (cards || '<div class="meds-card"><div class="meds-empty">' + esc(t('blNone')) + '</div></div>');
   }
@@ -722,6 +839,12 @@
     }
   }
   var _pastOpen = false;
+  var _prefillTest = null, _offer = false, _openPlan = null;
+  var REMIND_KEY = 'bbBloodDueReminder', ASKED_KEY = 'bbBloodChartsAsked';
+  function coarseNative() {
+    try { return !!(root.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()); } catch (_) { return false; }
+  }
+  function chartsOn() { try { return !!(BB.bloodCharts && BB.bloodCharts.isOn()); } catch (_) { return false; } }
 
   function _formErr(form, msg) { var el = form.querySelector('.mf-err'); if (el) el.textContent = msg || ''; }
   function _val(form, n) { var el = form.elements[n]; return el ? String(el.value || '').trim() : ''; }
@@ -734,13 +857,45 @@
     _more: function () { _showAllMissed = true; render(); },
     _del: function (kind, id) {
       if (!confirm(t('deleteConfirm'))) return;
-      BB.medLog.remove(kind, id).then(render, render);
+      BB.medLog.remove(kind, id).then(render, render).then(function () { if (kind === 'bloodLevels') afterBloodChange(); });
     },
     _addSide: function (form) {
       BB.medLog.put('sideEffects', { date: _val(form, 'date'), text: _val(form, 'text'), med: _val(form, 'med') }).then(function (r) { _afterSave(r, form); });
     },
     _addBlood: function (form) {
-      BB.medLog.put('bloodLevels', { date: _val(form, 'date'), test: _val(form, 'test'), value: _val(form, 'value'), unit: _val(form, 'unit'), note: _val(form, 'note') }).then(function (r) { _afterSave(r, form); });
+      var test = _val(form, 'test'), nextDue = _val(form, 'nextDue');
+      BB.medLog.put('bloodLevels', { date: _val(form, 'date'), test: test, value: _val(form, 'value'), unit: _val(form, 'unit'), note: _val(form, 'note') }).then(function (r) {
+        if (!r) { _formErr(form, t('invalid')); return; }
+        _prefillTest = null;
+        // The first result ever: offer once to show results on the charts.
+        if (lsGet(ASKED_KEY) !== '1') { lsSet(ASKED_KEY, '1'); if (!chartsOn()) _offer = true; }
+        var next = nextDue ? putPlan(test, { due: nextDue }) : Promise.resolve();
+        return next.then(function () { render(); afterBloodChange(); });
+      });
+    },
+    _savePlan: function (form) {
+      var test = _val(form, 'test');
+      var lo = _val(form, 'low'), hi = _val(form, 'high');
+      var num = function (v) { return v === '' ? null : Number(v.replace(',', '.')); };
+      var l = num(lo), h = num(hi);
+      if ((l == null) !== (h == null) || (l != null && (!isFinite(l) || !isFinite(h)))) { _formErr(form, tb('rangeBoth')); return; }
+      if (l != null && l > h) { _formErr(form, tb('rangeBad')); return; }
+      var rem = form.elements.remind;
+      _openPlan = planId(test);
+      var setRemind = rem ? setReminder(!!rem.checked) : Promise.resolve(true);
+      setRemind.then(function (okR) {
+        return putPlan(test, { due: _val(form, 'due') || null, low: l, high: h }).then(function () {
+          render();
+          if (!okR) { var f = document.querySelector('#medsHubModal details[data-plan="' + _openPlan + '"] .mf-err'); if (f) f.textContent = tt('medsReminder.blocked'); }
+          afterBloodChange();
+        });
+      });
+    },
+    _offerAnswer: function (yes) {
+      _offer = false;
+      if (yes && BB.bloodCharts) BB.bloodCharts.set(true);
+      _tabNote = yes ? tb('offerDone') : '';
+      render();
     },
     _addPast: function (form) {
       _pastOpen = true;
@@ -750,6 +905,118 @@
       });
     },
   };
+
+  // ── next test, the "had your test?" card and its reminder ─────────────────
+  /** Merge a change into a test's plan (null removes a field). A new due date clears the old dismissal. */
+  function putPlan(test, patch) {
+    var cur = planOf(plans(), test) || {};
+    var next = { test: cur.test || test, due: cur.due, low: cur.low, high: cur.high, dismissed: cur.dismissed };
+    Object.keys(patch).forEach(function (k) { next[k] = patch[k] == null ? undefined : patch[k]; });
+    if (next.due !== cur.due && !('dismissed' in patch)) next.dismissed = undefined;
+    return BB.medLog.put('bloodPlans', next);
+  }
+  function afterBloodChange() {
+    renderDueCard();
+    scheduleDue();
+    try { root.dispatchEvent(new CustomEvent('bb:bloodchange')); } catch (_) {}
+  }
+  function _cardTest(test) {
+    // "Had your lithium test?" reads better in English; other languages keep it as typed.
+    return lang() === 'en' && /^[A-Z][a-z]/.test(test) ? test.charAt(0).toLowerCase() + test.slice(1) : test;
+  }
+  /** The one card, in #bloodDueSlot on the journal page (not in the entry steps). */
+  function renderDueCard() {
+    var slot = document.getElementById('bloodDueSlot');
+    if (!slot) return null;
+    var d = null;
+    try { d = dueNow(logList('bloodLevels'), plans(), todayKey()); } catch (_) {}
+    if (!d) { slot.innerHTML = ''; return null; }
+    slot.innerHTML = '<div class="bd-card" role="region" aria-labelledby="bdTitle">' +
+      '<button type="button" class="bd-x" aria-label="' + esc(tb('dueDismiss')) + '" title="' + esc(tb('dueDismiss')) + '" onclick="BBMeds._dismissDue()">×</button>' +
+      '<div class="bd-title" id="bdTitle"><span aria-hidden="true">🩸 </span>' + esc(tb('dueCard', { test: _cardTest(d.test) })) + '</div>' +
+      '<div class="bd-sub">' + esc(tb('dueSub', { date: fmtDate(d.due, { day: 'numeric', month: 'short' }) })) + '</div>' +
+      '<button type="button" class="bd-btn" onclick="BBMeds._openDue()">' + esc(tb('dueBtn')) + '</button></div>';
+    return d;
+  }
+  actions._openDue = function () {
+    var d = dueNow(logList('bloodLevels'), plans(), todayKey());
+    open('blood', d ? { test: d.test } : null);
+  };
+  actions._dismissDue = function () {
+    var d = dueNow(logList('bloodLevels'), plans(), todayKey());
+    if (!d) { renderDueCard(); return; }
+    var slot = document.getElementById('bloodDueSlot');
+    if (slot) slot.innerHTML = '';
+    putPlan(d.test, { dismissed: d.due }).then(renderDueCard, renderDueCard);
+  };
+
+  // Optional local notification on the due day, 9:00 (phone app only; off
+  // unless ticked; bbBloodDueReminder, this phone only). Ids 4000–4009,
+  // beside the mood reminder (1), the weekly summary (2), the medication
+  // reminders (3000+) and the anniversaries (10000+). The text names no test.
+  var DUE_ID = 4000, DUE_MAX = 10;
+  function lnPlugin() {
+    if (!coarseNative()) return null;
+    try { return (Capacitor.Plugins && Capacitor.Plugins.LocalNotifications) || null; } catch (_) { return null; }
+  }
+  function dueIds() { var ids = []; for (var i = 0; i < DUE_MAX; i++) ids.push({ id: DUE_ID + i }); return ids; }
+  function scheduleDue() {
+    var LN = lnPlugin();
+    if (!LN) return Promise.resolve(0);
+    return Promise.resolve().then(function () { return LN.cancel({ notifications: dueIds() }); }).catch(function () {}).then(function () {
+      if (!remindOn()) return 0;
+      return LN.checkPermissions().then(function (perm) {
+        if (!perm || perm.display !== 'granted') return 0;
+        var now = new Date(), list = [], lv = logList('bloodLevels');
+        plans().filter(function (p) { return fromKey(p.due); }).sort(function (a, b) { return a.due < b.due ? -1 : 1; }).forEach(function (p) {
+          if (list.length >= DUE_MAX) return;
+          var at = fromKey(p.due); at.setHours(9, 0, 0, 0);
+          if (at <= now) return;
+          if (lv.some(function (x) { return norm(x.test) === norm(p.test) && x.date >= p.due; })) return;
+          list.push({ id: DUE_ID + list.length, title: tb('notifTitle'), body: tb('notifBody'), schedule: { at: at, allowWhileIdle: true },
+            extra: { bbBloodDue: 1 }, sound: 'default', smallIcon: 'ic_stat_notify', iconColor: '#FF9500' });
+        });
+        return list.length ? Promise.resolve(LN.schedule({ notifications: list })).then(function () { return list.length; }) : 0;
+      });
+    }).catch(function (e) { try { console.warn('[meds] blood reminder', e); } catch (_) {} return 0; });
+  }
+  /** Turn the reminder on (asks for notifications) or off. → Promise<boolean> false when blocked. */
+  function setReminder(on) {
+    if (!on) { lsDel(REMIND_KEY); return scheduleDue().then(function () { return true; }); }
+    if (remindOn()) return Promise.resolve(true);
+    var LN = lnPlugin();
+    if (!LN) return Promise.resolve(false);
+    return Promise.resolve().then(function () { return LN.checkPermissions(); }).then(function (p) {
+      return p && p.display === 'granted' ? p : LN.requestPermissions();
+    }).then(function (p) {
+      if (!p || p.display !== 'granted') { lsDel(REMIND_KEY); return false; }
+      lsSet(REMIND_KEY, '1');
+      return true;
+    }, function () { return false; });
+  }
+  /** Logout / reset: forget the reminder and cancel what is scheduled. */
+  function clearDueReminder() {
+    lsDel(REMIND_KEY);
+    var LN = lnPlugin();
+    if (LN) { try { Promise.resolve(LN.cancel({ notifications: dueIds() })).catch(function () {}); } catch (_) {} }
+  }
+
+  /**
+   * What the mood charts need (life chart, PDF): null while "Show blood
+   * results on my charts" is off. → {levels, series, plans, lineTests}
+   */
+  function chartData() {
+    if (!chartsOn()) return null;
+    var levels = logList('bloodLevels');
+    var series = bloodSeries(levels);
+    return { levels: levels, series: series, plans: plans(), lineTests: lineTests(series, t('blLithium')) };
+  }
+  /** "Lithium 0.7 mmol/L · 12 Mar" (the year too when it isn't this year). */
+  function markerText(m) {
+    var o = { day: 'numeric', month: 'short' };
+    if (String(m.date).slice(0, 4) !== String(new Date().getFullYear())) o.year = 'numeric';
+    return tb('markerLabel', { test: m.test, value: fmtNum(m.value, 3) + (m.unit ? ' ' + m.unit : ''), date: fmtDate(m.date, o) });
+  }
 
   // ── PDF (jsPDF, mm) ────────────────────────────────────────────────────────
   function _box(doc, o, y, h, title) {
@@ -930,10 +1197,16 @@
     open: open, close: close,
     namesForDay: namesForDay, chipsHtml: chipsHtml, entryNote: entryNote, csvCell: csvCell, describe: describe,
     events: events, reportComparison: reportComparison, drawPdf: drawPdf, drawComparePdf: drawComparePdf,
+    chartsOn: chartsOn, chartData: chartData, markerText: markerText, tb: tb, fmtNum: fmtNum,
+    renderDueCard: renderDueCard, scheduleDue: scheduleDue, setReminder: setReminder, clearDueReminder: clearDueReminder,
+    putPlan: putPlan,
   });
+  function _boot() { try { renderDueCard(); scheduleDue(); } catch (_) {} }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _boot); else _boot();
   // Another device's lists arrived (secure-store sync): redraw if open.
   root.addEventListener('bb:secure-sync', function () {
     var m = document.getElementById('medsHubModal');
     if (m && m.classList.contains('active')) render();
+    renderDueCard();
   });
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1101,7 +1101,7 @@ function _tt(k, vars, fallback) {
       [
         'trackGoals', 'trackBudget', 'trackExercise', 'trackOutside',
         'trackAnxiety', 'trackAlcohol', 'trackEmotions',
-        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'bbMedsCompareKey', 'dailyGoals', 'dailyBudget',
+        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey', 'bbBloodChartTest', 'dailyGoals', 'dailyBudget',
         'statsStartDate', 'unlockedAchievements',
         'bbOnboardingStep',
         'bbFavAnniShown',
@@ -1121,6 +1121,7 @@ function _tt(k, vars, fallback) {
         'focusedModeEnabled', 'moreDataOpenByDefault', 'showMoodSuggestion',
         'moodLinkingEnabled', 'bb_draft',
         'earlyWarnEnabled', 'bbEarlyWarnSeen',
+        'bbBloodOnCharts', 'bbBloodChartsAsked',
         // "Already counted in counters/{userCount,anonUserCount}" mirrors.
         // Account-specific: leaving them behind would make the next account to
         // sign in on this device skip counting itself.
@@ -1128,6 +1129,7 @@ function _tt(k, vars, fallback) {
       ].forEach(k => localStorage.removeItem(k));
       sessionStorage.removeItem('bbPinUnlocked');
       sessionStorage.removeItem('bb_user_key');
+      try { if (window.BBMeds) BBMeds.clearDueReminder(); } catch (_) {}
       _userCryptoKey = null;
       _pendingAuthPassword = null;
       _userKeyMode = null;
@@ -5226,6 +5228,43 @@ function _tt(k, vars, fallback) {
       if (st) st.textContent = r === 'ok' ? '' : BB.bioUnlock.text(r === 'needUnlock' ? 'needUnlock' : 'turnOnFailed');
     }
     window._onBioToggle = _onBioToggle;
+
+    // ── Show blood results on my charts (v358, BB.bloodCharts) ──
+    // Unticked by default. The same setting as the New features sheet's
+    // switch; BB.bloodCharts.set fires bb:bloodcharts, which redraws the life
+    // chart and re-ticks this switch.
+    function _syncBloodChartsToggle() {
+      const tg = document.getElementById('bloodChartsToggle');
+      if (tg) tg.checked = !!(window.BB && BB.bloodCharts && BB.bloodCharts.isOn());
+    }
+    function _onBloodChartsToggle(el) {
+      if (window.BB && BB.bloodCharts) BB.bloodCharts.set(!!el.checked);
+    }
+    window._onBloodChartsToggle = _onBloodChartsToggle;
+    window.addEventListener('bb:bloodcharts', _syncBloodChartsToggle);
+
+    // ── New features sheet (js/shared/whats-new.js) ──
+    // Never over the PIN lock or a dialog (whats-new.js checks those), never
+    // while an entry is in progress, and not while an account is still
+    // restoring (its Face ID row depends on it).
+    function _journalBusyForWhatsNew() {
+      const vis = id => { const el = document.getElementById(id); return !!(el && el.offsetParent !== null && getComputedStyle(el).display !== 'none'); };
+      if (vis('focusedModeCard') || vis('entryFormCard')) return true;
+      return _bioLockMode() === 'unknown';
+    }
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        try {
+          if (!(window.BB && BB.whatsNew)) return;
+          BB.whatsNew.startBear({
+            isBusy: _journalBusyForWhatsNew,
+            bioMode: () => { const m = _bioLockMode(); return m === 'unknown' ? null : m; },
+            isNative: isNative,
+            onChange: () => { try { _syncBioRow(); _syncBloodChartsToggle(); } catch (_) {} },
+          });
+        } catch (e) { console.warn('whats new', e); }
+      }, 1200);
+    });
     function _appLockAction(what) {
       if (!currentUser) return;
       if (what === 'set') {
@@ -10936,7 +10975,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           'medHistory', // the dated medication changes (v343); merged back in on import
           // The medication list itself (it was missing until 1.44) and the
           // per-medicine logs; all merged back in on import, never replaced.
-          'currentMedList', 'medSideEffects', 'medBloodLevels', 'medPastChanges',
+          'currentMedList', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans',
         ];
         const settings = {};
         _settingsKeys.forEach(k => {
@@ -11384,7 +11423,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         {
           let _pdfText = '';
           try {
-            _pdfText = JSON.stringify(entries) + ['personalName','personalAddress','personalDiagnosis','personalEmergencyContact','personalNotes','currentMedList','customTrackingFields','medSideEffects','medBloodLevels','medPastChanges']
+            _pdfText = JSON.stringify(entries) + ['personalName','personalAddress','personalDiagnosis','personalEmergencyContact','personalNotes','currentMedList','customTrackingFields','medSideEffects','medBloodLevels','medPastChanges','medBloodPlans']
               .map(k => localStorage.getItem(k) || '').join(' ');
           } catch (_) {}
           await _pdfStep('fonts', 0.42);
@@ -12012,7 +12051,21 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
         // ── 12-MONTH MOOD TRENDS ──
         if (charts.mood !== false) {
-          const chartBoxHeight = 54;
+          // Blood results (v358): a small red drop on the day of each result,
+          // only with "Show blood results on my charts" ticked.
+          let _bloodMarks = [];
+          try {
+            const _bd = window.BBMeds && BBMeds.chartData ? BBMeds.chartData() : null;
+            if (_bd) {
+              const _p2 = n => String(n).padStart(2, '0');
+              const _from = months[0].year + '-' + _p2(months[0].month + 1) + '-01';
+              const _now = new Date();
+              const _to = _now.getFullYear() + '-' + _p2(_now.getMonth() + 1) + '-' + _p2(_now.getDate());
+              _bloodMarks = BBMeds.markersIn(_bd.levels, _from, _to);
+            }
+          } catch (_) { _bloodMarks = []; }
+          const _bloodRow = _bloodMarks.length ? 5 : 0;
+          const chartBoxHeight = 54 + _bloodRow;
           setDraw([220,220,220]); setFill([255,255,255]);
           doc.roundedRect(margin, y, pageW - margin*2, chartBoxHeight, 2, 2, 'FD');
           let chartY = y + 6;
@@ -12038,11 +12091,29 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             doc.setFontSize(5.5); setColor(grey); doc.setFont(undefined, 'normal');
             doc.text(m.label, x + barW/2, chartY + chartH + 4, { align: 'center' });
           });
+          // Blood results, placed by day within their month's column.
+          const _drop = (dx, dy) => {
+            doc.setFillColor(201, 42, 42);
+            doc.triangle(dx, dy - 1.7, dx - 0.72, dy - 0.25, dx + 0.72, dy - 0.25, 'F');
+            doc.circle(dx, dy, 0.78, 'F');
+          };
+          if (_bloodRow) {
+            const colW = chartW / months.length;
+            _bloodMarks.forEach(bm => {
+              const [by, bmo, bdd] = bm.date.split('-').map(Number);
+              const mi = months.findIndex(m => m.year === by && m.month === bmo - 1);
+              if (mi < 0) return;
+              const dim = new Date(by, bmo, 0).getDate();
+              _drop(chartX + mi * colW + ((bdd - 0.5) / dim) * barW, chartY + chartH + 8);
+            });
+          }
           // Key
-          chartY += chartH + 10;
+          chartY += chartH + 10 + _bloodRow;
           doc.setFontSize(6.5); doc.setFont(undefined, 'bold'); setColor(dark);
           const keyItemWidth = 20;
-          const totalKeyWidth = 10 + (moodOrder.length * keyItemWidth);
+          const _bloodKey = _bloodRow ? BBMeds.tb('pdfKey') : '';
+          const _bloodKeyW = _bloodRow ? 6 + doc.getTextWidth(_bloodKey) : 0;
+          const totalKeyWidth = 10 + (moodOrder.length * keyItemWidth) + _bloodKeyW;
           const keyStartX = (pageW - totalKeyWidth) / 2;
           doc.text(BB.t('journal.pdf.key'), keyStartX, chartY);
           let keyX = keyStartX + 10;
@@ -12052,6 +12123,11 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             doc.text(_moodCatLabel(mood), keyX + 4, chartY);
             keyX += keyItemWidth;
           });
+          if (_bloodRow) {
+            _drop(keyX + 1.2, chartY - 0.9);
+            setColor(grey); doc.setFont(undefined, 'normal');
+            doc.text(_bloodKey, keyX + 4, chartY);
+          }
           y += chartBoxHeight + 4;
         }
 
@@ -12691,7 +12767,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         }
 
         if (settings) {
-          const _mergedKeys = ['medHistory', 'currentMedList', 'medSideEffects', 'medBloodLevels', 'medPastChanges'];
+          const _mergedKeys = ['medHistory', 'currentMedList', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans'];
           Object.keys(settings).forEach(k => { if (!_mergedKeys.includes(k)) localStorage.setItem(k, settings[k]); });
           const _parse = v => { try { return typeof v === 'string' ? JSON.parse(v) : v; } catch (_) { return null; } };
           const _secPatch = {};
@@ -13220,6 +13296,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
         'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
         'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
+        // v358: blood results on the charts, and the New features sheet
+        // (Reset brings the sheet back).
+        'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbWhatsNewSeen',
       ];
       _keys.forEach(k => localStorage.removeItem(k));
       // Clear custom field toggle keys, label overrides, and tracking prefs (trackCustom_*, _labelOverride_*, trackXxx)
@@ -13254,7 +13333,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         }, { merge: true }).catch(() => {});
       }
       closeSettingsModal();
-      showToast(BB.t('journal.dlg.settingsResetToast'));
+      // showToast() only exists on the home page: here it threw after the
+      // reset, so the note never showed (found 2026-10-20). The mood queue's
+      // small note does the same job.
+      try { if (window.BB && BB.moodQueue && BB.moodQueue.toast) BB.moodQueue.toast(BB.t('journal.dlg.settingsResetToast')); } catch (_) {}
     }
     window.confirmResetSettings = confirmResetSettings;
 
@@ -13420,7 +13502,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         localStorage.removeItem('customReminders');
         localStorage.removeItem('currentMedList');
         localStorage.removeItem('medHistory');
-        ['medSideEffects', 'medBloodLevels', 'medPastChanges', 'bbMedsCompareKey'].forEach(k => localStorage.removeItem(k));
+        ['medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey'].forEach(k => localStorage.removeItem(k));
+        try { if (window.BBMeds) BBMeds.clearDueReminder(); } catch (_) {}
         localStorage.removeItem('dailyGoals');
         localStorage.removeItem('dailyBudget');
         localStorage.removeItem('logoVariant');
@@ -13436,6 +13519,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
+          'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbBloodDueReminder', 'bbWhatsNewSeen',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
@@ -15495,6 +15579,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       if (_wmToggle) _wmToggle.checked = !_wheelMode();
       document.getElementById('moodSuggestionToggle').checked = localStorage.getItem('showMoodSuggestion') === '1';
       if (window.BBInsights) window.BBInsights.syncSettingUI();
+      _syncBloodChartsToggle();
       document.getElementById('focusModeToggle').checked = _fmEnabled;
       document.getElementById('focusModeSubOptions').style.display = _fmEnabled ? '' : 'none';
       document.getElementById('fmConfirmStepToggle').checked = localStorage.getItem('fmConfirmStep') === 'true';

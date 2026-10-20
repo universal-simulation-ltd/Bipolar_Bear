@@ -16,8 +16,9 @@
  * fields used to sit in Firestore in plaintext:
  *   currentMedList, moodDefinitions, moodMemories, copingStrategies,
  *   myCommitments, customReminders, survivalGratitude, rememberThis
- * (plus medHistory, v343, and the per-medicine logs medSideEffects,
- * medBloodLevels and medPastChanges, 1.44, which were never anything but
+ * (plus medHistory, v343, the per-medicine logs medSideEffects,
+ * medBloodLevels and medPastChanges, 1.44, and medBloodPlans (each test's next
+ * due date and the person's own range, v358), which were never anything but
  * encrypted)
  * They are now one AES-GCM blob each — personalDetails/{uid}.secureEnc and
  * userSettings/{uid}.secureEnc — under the journal's data key, the same key
@@ -52,13 +53,14 @@
 
   var SETTINGS = ['currentMedList', 'moodDefinitions', 'moodMemories', 'copingStrategies',
     'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis', 'medHistory',
-    'medSideEffects', 'medBloodLevels', 'medPastChanges'];
+    'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans'];
   // Merged rather than replaced when this device has something to add.
   var UNION_FIELDS = {
     medHistory: function (a, b) { return mergeHistory(a, b); },
     medSideEffects: function (a, b) { return mergeById(a, b); },
     medBloodLevels: function (a, b) { return mergeById(a, b); },
     medPastChanges: function (a, b) { return mergeById(a, b); },
+    medBloodPlans: function (a, b) { return mergeById(a, b); },
   };
   var STRING_FIELDS = { rememberThis: true };
   var PERSONAL = ['personalName', 'personalDOB', 'personalMedicalNum', 'personalDiagnosis',
@@ -447,11 +449,17 @@
   //   medPastChanges  {id, date, type:'add'|'stop'|'dose', name, from?, to?}
   //                   — a change from before the dated history began, typed
   //                   in so it can be compared (medHistory starts at v343).
+  //   medBloodPlans   {id:'t:<test, lower case>', test, due?:'YYYY-MM-DD',
+  //                   low?:number, high?:number, dismissed?:'YYYY-MM-DD'}
+  //                   — one per test (v358): the next test's due date, the
+  //                   range the person's prescriber gave them (never a
+  //                   default), and the due date whose "had your test?" card
+  //                   they dismissed. No `date`: these aren't dated records.
   // Each record also carries `updatedAt` (ms). Deleting leaves a tombstone
   // {id, deleted:true, updatedAt} with nothing else in it, so a copy on
   // another device can't bring the item back. Devices merge by id: the newer
   // updatedAt wins (mergeById).
-  var LOG_FIELDS = { sideEffects: 'medSideEffects', bloodLevels: 'medBloodLevels', pastChanges: 'medPastChanges' };
+  var LOG_FIELDS = { sideEffects: 'medSideEffects', bloodLevels: 'medBloodLevels', pastChanges: 'medPastChanges', bloodPlans: 'medBloodPlans' };
   var DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
   function _str(v, max) { return String(v == null ? '' : v).trim().slice(0, max); }
   function _isItem(x) { return !!x && typeof x === 'object' && typeof x.id === 'string' && x.id !== ''; }
@@ -472,7 +480,26 @@
     });
   }
   /** A clean copy of a new / edited record, or null when it isn't valid. */
+  function _num(v) {
+    if (v == null || String(v).trim() === '') return null;
+    var n = typeof v === 'number' ? v : Number(String(v).replace(',', '.'));
+    return isFinite(n) ? n : null;
+  }
+  /** One test's plan: its id is the test's name in lower case. */
+  function _cleanPlan(x) {
+    var test = _str(x.test, 60);
+    if (!test) return null;
+    var out = { id: 't:' + test.toLowerCase().replace(/\s+/g, ' '), test: test };
+    if (DATE_RE.test(String(x.due || ''))) out.due = x.due;
+    var lo = _num(x.low), hi = _num(x.high);
+    if (lo != null && hi != null && lo > hi) return null;
+    if (lo != null) out.low = lo;
+    if (hi != null) out.high = hi;
+    if (DATE_RE.test(String(x.dismissed || ''))) out.dismissed = x.dismissed;
+    return out;
+  }
   function _cleanItem(kind, x) {
+    if (kind === 'bloodPlans') return x && typeof x === 'object' ? _cleanPlan(x) : null;
     if (!x || typeof x !== 'object' || !DATE_RE.test(String(x.date || ''))) return null;
     var out = { id: _str(x.id, 64), date: x.date };
     if (kind === 'sideEffects') {
@@ -603,6 +630,18 @@
     remove: logRemove,
     mergeIn: logMergeIn,
     merge: mergeById,
+  };
+  // "Show blood results on my charts" (journal ⚙️ Settings and the New
+  // features sheet, v358). Unticked by default; this device only.
+  var BLOOD_CHARTS_KEY = 'bbBloodOnCharts';
+  root.BB.bloodCharts = {
+    KEY: BLOOD_CHARTS_KEY,
+    isOn: function () { return lsGet(BLOOD_CHARTS_KEY) === '1'; },
+    set: function (on) {
+      if (on) lsSet(BLOOD_CHARTS_KEY, '1'); else lsDel(BLOOD_CHARTS_KEY);
+      try { root.dispatchEvent(new CustomEvent('bb:bloodcharts', { detail: { on: !!on } })); } catch (_) {}
+      return true;
+    },
   };
   root.BB.secure = {
     SETTINGS: SETTINGS.slice(),

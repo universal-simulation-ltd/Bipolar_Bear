@@ -90,6 +90,16 @@ html.theme-dark .med-dose-chip.missed { background: #3a2617; color: #ffc078; bor
 .meds-chart .mc-line { stroke: var(--brand-primary); stroke-width: 2.2; fill: none; }
 .meds-chart .mc-dot { fill: var(--brand-primary); }
 .meds-chart text { fill: #6c757d; font-size: 10px; }
+.meds-chart .mc-band { fill: rgba(32,201,151,0.15); }
+.meds-card .bl-plan-line { margin: -2px 0 4px; font-size: 0.8em; color: var(--text-muted-ink); }
+.bl-plan { margin: 6px 0 8px; }
+.bl-range-h { font-weight: 700; font-size: 0.82em; margin-top: 4px; }
+.bl-check { display: flex !important; flex-direction: row !important; align-items: center; gap: 8px; font-weight: 600; }
+.bl-check input { width: 20px; height: 20px; margin: 0; }
+.bl-offer { border-left: 5px solid var(--brand-primary, #ff9500); }
+.bl-offer .meds-btn.primary { box-shadow: var(--brand-btn-ring, none); }
+.bl-offer-q { font-weight: 700; }
+.bl-offer-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .meds-framing { font-size: 0.8em; line-height: 1.45; color: #5c4a00; background: #fff9db; border-radius: 10px; padding: 9px 11px; margin: 0 0 12px; }
 .meds-short { font-size: 0.88em; font-weight: 700; color: var(--brand-ink); margin: 6px 0 4px; }
 .meds-cmp { width: 100%; border-collapse: collapse; font-size: 0.84em; }
@@ -117,6 +127,8 @@ html.theme-dark .meds-btn { background: transparent; color: var(--dk-text); }
 html.theme-dark .meds-btn.primary { background: var(--brand-btn); color: #fff; }
 html.theme-dark .meds-chart .mc-grid { stroke: var(--dk-line); }
 html.theme-dark .meds-chart text { fill: var(--dk-muted); }
+html.theme-dark .meds-chart .mc-band { fill: rgba(56,217,169,0.18); }
+html.theme-dark .meds-card .bl-plan-line { color: var(--dk-muted); }
 html.theme-dark .meds-framing { background: #3a3317; color: #f5e9b8; }
 html.theme-dark .meds-flag { background: #3a2617; color: #ffc078; }
 html.theme-dark .meds-form .mf-err { color: #ff8787; }

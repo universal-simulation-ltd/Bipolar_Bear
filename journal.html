@@ -32,6 +32,8 @@
   <script src="js/shared/i18n-meds.js"></script>
   <script src="js/shared/i18n-signin.js"></script>
   <script src="js/shared/i18n-pdfprog.js"></script>
+  <script src="js/shared/i18n-blood.js"></script>
+  <script src="js/shared/i18n-whatsnew.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
@@ -45,6 +47,7 @@
   <script src="js/shared/pin-reauth.js"></script>
   <script src="js/shared/mood-queue.js"></script>
   <script src="js/shared/bio-unlock.js"></script>
+  <script src="js/shared/whats-new.js"></script>
   <meta name="description" content="Checkin with the Bear. Track your bipolar mood, energy, sleep and medication daily with Bipolar Bear.">
   <meta name="robots" content="noindex, nofollow">
 
@@ -547,6 +550,9 @@
     <div id="lowMoodSupportSlot"></div>
     <!-- Early-warning nudge card (opt-in) — rendered by js/journal-insights.js -->
     <div id="earlyWarnSlot"></div>
+    <!-- "Had your lithium test?" card, from the next test's due date (v358) —
+         rendered by js/journal-meds.js renderDueCard -->
+    <div id="bloodDueSlot"></div>
     <div id="journalToggleSection" style="display:none; text-align: center; margin: 20px 0;">
       <button onclick="toggleJournal()" id="journalToggleBtn" class="journal-toggle-btn" style="padding: 15px 30px; background: var(--brand-btn); color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.22); border: 2px solid rgba(255,255,255,0.6); border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 1.1em; backdrop-filter: blur(10px); -webkit-tap-highlight-color:transparent;" data-i18n="journal.btn.openJournal">
         📔 Open Journal
@@ -1585,6 +1591,20 @@
               <option value="dark" data-i18n="anon.ux.themeDark">Dark</option>
             </select>
           </details>
+        </div>
+
+        <!-- Show blood results on my charts (v358). Unticked by default; this
+             device only (BB.bloodCharts, localStorage bbBloodOnCharts). The New
+             features sheet's switch is the same setting. _onBloodChartsToggle
+             in js/journal.js. -->
+        <div id="bloodChartsRow" style="margin-bottom:16px;text-align:left;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div style="min-width:0;">
+              <label for="bloodChartsToggle" style="display:block;font-weight:600;color:#495057;font-size:0.95em;cursor:pointer;" data-i18n="blood144.settingTitle">🩸 Show blood results on my charts</label>
+              <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;" data-i18n="blood144.settingDesc">A 🩸 on the day of each result on your life chart and the PDF's mood chart.</div>
+            </div>
+            <label class="bb-switch"><input type="checkbox" id="bloodChartsToggle" onchange="_onBloodChartsToggle(this)"><span class="bb-slider"></span></label>
+          </div>
         </div>
 
         <!-- Guest-only PIN (pin143): Set a PIN encrypts every entry on this

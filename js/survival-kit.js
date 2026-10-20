@@ -2538,7 +2538,7 @@ function _skLocale() {
         'personalDOB', 'personalMedicalNum', 'personalDiagnosis',
         'personalDiagnosisDate', 'personalAddress', 'personalMobile',
         'personalEmail', 'personalEmergencyContact', 'personalNotes',
-        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'bbMedsCompareKey', 'copingStrategies', 'moodDefinitions',
+        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey', 'copingStrategies', 'moodDefinitions',
         'survivalGratitude',
         'bbFirstName', 'bipolarHelpedVoted', 'skAchievementUnlocked',
         // "Already counted in counters/{userCount,anonUserCount}" mirrors —

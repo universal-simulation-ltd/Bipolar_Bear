@@ -21,6 +21,14 @@
  * axis. The markers use the day's single medication answer (adherence, not
  * list changes); per-medicine doses (1.44) are in js/journal-meds.js.
  *
+ * Blood results (v358), only with Settings → "Show blood results on my
+ * charts" ticked (BB.bloodCharts, off by default): a 🩸 button on the day of
+ * each result in a strip under the sleep bars (tap / click / focus shows
+ * "Lithium 0.7 mmol/L · 12 Mar"); from 6M up, one test's results joined by a
+ * thin line over the mood area on its own right-hand scale, with the range
+ * the person typed in shaded (never a default range). Lithium first; a
+ * picker when two or more tests have a line (bbBloodChartTest, this device).
+ *
  * Early warnings are OFF by default (`earlyWarnEnabled` in localStorage and
  * userSettings). Everything is computed on this device from the user's own
  * history; wording is deliberately calm and non-diagnostic. Each pattern is
@@ -368,15 +376,18 @@
   var _entries = [];
   var _days = [];
   var _px = 3;
-  var LABEL_W = 60;
+  var LABEL_W = 60, RIGHT_W = 36, BLOOD_H = 22;
+  var LINE_KEY = 'bbBloodChartTest';
+  var LINE_MIN_DAYS = 180; // 6M, 1Y and All
   var TOP = 6, MOOD_H = 120, MID = TOP + MOOD_H / 2, UNIT = (MOOD_H / 2) / 2.2;
 
   function yForDev(dev) { return MID - dev * UNIT; }
 
-  function buildSvg(days, px, hasMeds) {
+  function buildSvg(days, px, hasMeds, blood) {
     var medsY = TOP + MOOD_H + 8, medsH = 6;
     var sleepTop = hasMeds ? medsY + medsH + 8 : TOP + MOOD_H + 10;
-    var sleepH = 36, axisY = sleepTop + sleepH + 14, H = axisY + 4;
+    var sleepH = 36, bloodY = sleepTop + sleepH + 4 + BLOOD_H / 2;
+    var axisY = sleepTop + sleepH + 14 + (blood ? BLOOD_H : 0), H = axisY + 4;
     var W = Math.max(1, Math.round(days.length * px));
     var gap = px > 5 ? 1 : 0;
     var bw = Math.max(px - gap, 0.8);
@@ -436,10 +447,23 @@
         p.push('<rect x="' + x + '" y="' + (sleepTop + sleepH - sh).toFixed(1) + '" width="' + bw + '" height="' + Math.max(sh, 0.5).toFixed(1) + '" fill="' + SLEEP_COLOR + '" opacity="0.75"/>');
       }
     }
+    // One test's results as a thin line over the mood area, on its own scale,
+    // with the person's range shaded.
+    if (blood && blood.line) {
+      var ln = blood.line, sc = ln.scale;
+      var vy = function (v) { return TOP + (sc.hi - v) / (sc.hi - sc.lo) * MOOD_H; };
+      if (ln.band) {
+        var bt = vy(ln.band[1]), bb = vy(ln.band[0]);
+        p.push('<rect class="lc-bband" x="0" width="' + W + '" y="' + bt.toFixed(1) + '" height="' + Math.max(1, bb - bt).toFixed(1) + '"/>');
+      }
+      var pts = ln.points.map(function (q) { return [(q.idx * px + px / 2), vy(q.value)]; });
+      if (pts.length > 1) p.push('<polyline class="lc-bline" points="' + pts.map(function (q) { return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' ') + '"/>');
+      pts.forEach(function (q) { p.push('<circle class="lc-bdot" cx="' + q[0].toFixed(1) + '" cy="' + q[1].toFixed(1) + '" r="2.6"/>'); });
+    }
     p.push('<rect id="lcHl" x="-10" y="' + TOP + '" width="' + Math.max(px, 2) + '" height="' + (sleepTop + sleepH - TOP) + '" class="lc-hl"/>');
     return {
       svg: '<svg class="lc-svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + esc(tr('lifeChart.title')) + '">' + p.join('') + '</svg>',
-      H: H, medsY: medsY, sleepTop: sleepTop, sleepH: sleepH
+      H: H, W: W, medsY: medsY, sleepTop: sleepTop, sleepH: sleepH, bloodY: bloodY
     };
   }
 
@@ -453,7 +477,80 @@
     lab(yForDev(-2), moodName('depressed'), 'lc-c-depressed');
     if (hasMeds) lab(g.medsY + 3, tr('lifeChart.meds'), 'lc-c-meds');
     lab(g.sleepTop + g.sleepH / 2, tr('lifeChart.sleep'), 'lc-c-sleep');
+    if (g.blood) lab(g.bloodY, bt('chartLabel'), 'lc-c-blood');
     return '<div class="lc-ylabels" style="height:' + g.H + 'px">' + L.join('') + '</div>';
+  }
+
+  // ── Blood results on the chart (v358) ─────────────────────────────────────
+  function meds() { return root.BBMeds && typeof root.BBMeds.chartData === 'function' ? root.BBMeds : null; }
+  function bt(k, vars) { var M = meds(); return M ? M.tb(k, vars) : k; }
+  /** What to draw: markers in the span, and (6M+) the line for one test. */
+  function bloodLayer(days, range) {
+    var M = meds(), data = null;
+    try { data = M ? M.chartData() : null; } catch (_) {}
+    if (!data || !days.length) return null;
+    var first = days[0].key, last = days[days.length - 1].key;
+    var idxOf = {};
+    days.forEach(function (d, i) { idxOf[d.key] = i; });
+    var marks = M.markersIn(data.levels, first, last).map(function (m) { m.idx = idxOf[m.date]; return m; })
+      .filter(function (m) { return m.idx != null; });
+    var out = { marks: marks, line: null, tests: [] };
+    if (range >= LINE_MIN_DAYS && data.lineTests.length) {
+      out.tests = data.lineTests.map(function (x) { return x.test; });
+      var want = lsGet(LINE_KEY), s = null;
+      data.lineTests.forEach(function (x) { if (!s && want && M.norm(x.test) === M.norm(want)) s = x; });
+      s = s || data.lineTests[0];
+      var plan = M.planOf(data.plans, s.test);
+      var pts = s.points.filter(function (q) { return idxOf[q.date] != null; }).map(function (q) { return { idx: idxOf[q.date], value: q.value }; });
+      if (pts.length) {
+        out.line = {
+          test: s.test, unit: s.unit, points: pts,
+          scale: M.valueScale(s.points.map(function (q) { return q.value; }), plan),
+          band: M.hasRange(plan) ? [Number(plan.low), Number(plan.high)] : null,
+        };
+      }
+    }
+    return out.marks.length || out.line ? out : null;
+  }
+  function rightLabelsHtml(g, line) {
+    var sc = line.scale, L = [];
+    var M = meds();
+    [sc.hi - sc.pad, (sc.hi + sc.lo) / 2, sc.lo + sc.pad].forEach(function (v) {
+      var y = TOP + (sc.hi - v) / (sc.hi - sc.lo) * MOOD_H;
+      L.push('<div class="lc-rlab" style="top:' + (y - 6).toFixed(1) + 'px">' + esc(M ? M.fmtNum(v, 2) : String(v)) + '</div>');
+    });
+    return '<div class="lc-yright" style="height:' + g.H + 'px" aria-hidden="true">' + L.join('') + '</div>';
+  }
+  function markersHtml(g, blood, px) {
+    var M = meds();
+    return blood.marks.map(function (m, i) {
+      var label = M.markerText(m);
+      var x = m.idx * px + px / 2;
+      return '<button type="button" class="lc-blood" data-i="' + i + '" data-date="' + m.date + '" data-test="' + esc(m.test) + '" style="left:' + (x - 11).toFixed(1) + 'px;top:' + (g.bloodY - 11).toFixed(1) + 'px" aria-label="' + esc(label) + '" data-label="' + esc(label) + '">🩸</button>';
+    }).join('') + '<div class="lc-tip" role="tooltip" id="lcBloodTip" hidden></div>';
+  }
+  function wireMarkers(host) {
+    var tip = host.querySelector('#lcBloodTip'), det = host.querySelector('.lc-detail');
+    if (!tip) return;
+    var plot = host.querySelector('.lc-plot');
+    var show = function (b, announce) {
+      tip.textContent = b.getAttribute('data-label');
+      tip.hidden = false;
+      var left = b.offsetLeft + 11, w = tip.offsetWidth, max = plot.offsetWidth;
+      tip.style.left = Math.max(2, Math.min(max - w - 2, left - w / 2)) + 'px';
+      tip.style.top = (b.offsetTop - tip.offsetHeight - 4) + 'px';
+      b.setAttribute('aria-describedby', 'lcBloodTip');
+      if (announce && det) det.textContent = b.getAttribute('data-label');
+    };
+    var hide = function () { tip.hidden = true; };
+    Array.prototype.forEach.call(host.querySelectorAll('.lc-blood'), function (b) {
+      b.addEventListener('click', function (e) { e.stopPropagation(); show(b, true); });
+      b.addEventListener('focus', function () { show(b, false); });
+      b.addEventListener('blur', hide);
+      b.addEventListener('keydown', function (e) { if (e.key === 'Escape') { hide(); } });
+    });
+    var svg = host.querySelector('.lc-svg');
+    if (svg) svg.addEventListener('click', hide);
   }
 
   function renderLifeChart(keepCentre) {
@@ -484,32 +581,44 @@
     var minStart = new Date(today); minStart.setDate(minStart.getDate() - (_range - 1));
     _days = buildDays(_entries, { minStart: minStart });
     var hasMeds = _days.some(function (d) { return d.med != null; });
+    var blood = null;
+    try { blood = bloodLayer(_days, _range); } catch (e) { try { console.warn('life chart blood', e); } catch (_) {} }
 
-    // Width available to the plot: card width minus the fixed label column.
-    var avail = Math.max(160, (host.clientWidth || 320) - LABEL_W);
+    // Width available to the plot: card width minus the fixed label column(s).
+    var avail = Math.max(160, (host.clientWidth || 320) - LABEL_W - (blood && blood.line ? RIGHT_W : 0));
     _px = avail / _range;
-    var g = buildSvg(_days, _px, hasMeds);
+    var g = buildSvg(_days, _px, hasMeds, blood);
+    g.blood = !!blood;
 
     var legend =
       '<span class="lc-key"><i style="background:' + MOOD_COLORS.elevated + '"></i><i style="background:' + MOOD_COLORS.manic + '"></i>' + esc(moodName('elevated')) + ' / ' + esc(moodName('manic')) + '</span>' +
       '<span class="lc-key"><i style="background:' + MOOD_COLORS.low + '"></i><i style="background:' + MOOD_COLORS.depressed + '"></i>' + esc(moodName('low')) + ' / ' + esc(moodName('depressed')) + '</span>' +
       '<span class="lc-key"><i style="background:' + SLEEP_COLOR + '"></i>' + esc(tr('lifeChart.legendSleep')) + '</span>' +
       (hasMeds ? '<span class="lc-key"><i style="background:#ff6b6b"></i>' + esc(tr('lifeChart.legendMeds')) + '</span>' : '') +
+      (blood && blood.marks.length ? '<span class="lc-key"><span aria-hidden="true">🩸</span>' + esc(bt('legendMarker')) + '</span>' : '') +
+      (blood && blood.line ? '<span class="lc-key"><i class="lc-key-line"></i>' + esc(bt('legendLine', { test: blood.line.test, unit: blood.line.unit || '' }).replace(' ()', '')) + '</span>' : '') +
+      (blood && blood.line && blood.line.band ? '<span class="lc-key"><i class="lc-key-band"></i>' + esc(bt('legendRange')) + '</span>' : '') +
       '<span class="lc-key lc-key-gap">' + esc(tr('lifeChart.legendGap')) + '</span>';
+    var M = meds();
+    var picker = blood && blood.line && blood.tests.length > 1 ?
+      '<label class="lc-bpick"><span>' + esc(bt('lineLabel')) + '</span><select id="lcBloodPick">' + blood.tests.map(function (x) {
+        return '<option value="' + esc(x) + '"' + (M.norm(x) === M.norm(blood.line.test) ? ' selected' : '') + '>' + esc(x) + '</option>';
+      }).join('') + '</select></label>' : '';
+    var plotInner = blood && blood.marks.length ? markersHtml(g, blood, _px) : '';
 
     host.innerHTML =
       '<div class="lc-head">' +
-        '<div class="lc-title">' + esc(tr('lifeChart.title')) + '</div>' +
+        '<div class="lc-title">' + esc(tr('lifeChart.title')) + '</div>' + picker +
       '</div>' +
       '<div class="lc-sub">' + esc(tr('lifeChart.subtitle')) + '</div>' +
       '<div class="lc-frame">' + labelsHtml(g, hasMeds) +
         // The scroller in a frame that shows when there is more chart either
         // side (James, 2026-10-04): an edge fade and a ‹ / › to step through.
         '<div class="lc-scrollwrap">' +
-          '<div class="lc-scroll" tabindex="0">' + g.svg + '</div>' +
+          '<div class="lc-scroll" tabindex="0"><div class="lc-plot" data-first="' + (_days.length ? _days[0].key : '') + '" data-px="' + _px + '" style="width:' + g.W + 'px;height:' + g.H + 'px">' + g.svg + plotInner + '</div></div>' +
           '<button type="button" class="lc-nudge lc-nudge-l" data-dir="-1" aria-label="' + esc(tr('lifeChart.earlier')) + '">‹</button>' +
           '<button type="button" class="lc-nudge lc-nudge-r" data-dir="1" aria-label="' + esc(tr('lifeChart.later')) + '">›</button>' +
-        '</div>' +
+        '</div>' + (blood && blood.line ? rightLabelsHtml(g, blood.line) : '') +
       '</div>' +
       '<div class="lc-detail" aria-live="polite">' + esc(tr('lifeChart.tapHint')) + '</div>' +
       '<div class="lc-legend">' + legend + '</div>';
@@ -523,6 +632,9 @@
       scroller.scrollLeft = scroller.scrollWidth; // newest at the right edge
     }
     wireChart(host, scroller);
+    if (blood && blood.marks.length) wireMarkers(host);
+    var pk = host.querySelector('#lcBloodPick');
+    if (pk) pk.addEventListener('change', function () { lsSet(LINE_KEY, pk.value); renderLifeChart(true); });
 
     // More-chart cues: the fade and ‹ / › show on a side only while there is
     // more to scroll that way, and hide at either end.
@@ -905,6 +1017,10 @@
     var boot = function () { try { renderSettingRow(); } catch (_) {} };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
     // Re-measure on rotation / resize so the visible range still fits.
+    // The Settings tick, a new / deleted result, a new range: redraw.
+    ['bb:bloodcharts', 'bb:bloodchange', 'bb:secure-sync'].forEach(function (ev) {
+      window.addEventListener(ev, function () { try { if (_entries.length) renderLifeChart(true); } catch (_) {} });
+    });
     var rz = null;
     window.addEventListener('resize', function () {
       clearTimeout(rz);
