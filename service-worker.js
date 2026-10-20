@@ -1801,7 +1801,9 @@
 //   Account); the Danger Zone page is gone, Account opens fab.js's 👤 sheet
 //   (with a guest mode). journal.html, js/journal.js, css/journal.css, fab.js,
 //   js/shared/native-feel.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v365';
+// v366: version 1.44 (_APP_VERSION in js/shared/brand-config.js), for the
+//   1.44 builds: Bear 1.44 (63), Anonymous 1.42 (49).
+const CACHE_NAME = 'bipolarbear-v366';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
