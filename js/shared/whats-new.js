@@ -113,7 +113,12 @@
     '.bbwn-done{width:100%;padding:13px;min-height:48px;border:none;border-radius:12px;background:var(--brand-btn,#c2410c);color:var(--brand-btn-text,#fff);box-shadow:var(--brand-btn-ring,none);font:inherit;font-weight:700;font-size:1em;cursor:pointer}' +
     'html.theme-dark .bbwn-sheet{background:#2a221b;color:#f3e9dc}html.theme-dark .bbwn-item{border-color:#4a3d31}' +
     'html.theme-dark .bbwn-v,html.theme-dark .bbwn-later{color:#c9b8a5}html.theme-dark .bbwn-b{color:#d8c9b6}' +
-    'html.theme-dark .bbwn-sw span{background:#5a4a3a}html.theme-dark .bbwn-sw span:before{background:#f5ebdd}html.theme-dark .bbwn-msg{color:#ff8787}';
+    'html.theme-dark .bbwn-sw span{background:#5a4a3a}html.theme-dark .bbwn-sw span:before{background:#f5ebdd}html.theme-dark .bbwn-msg{color:#ff8787}' +
+    // ⚠️ After the dark track: `html.theme-dark .bbwn-sw span` has the same
+    // specificity as `.bbwn-sw input:checked+span`, so without this an ON
+    // switch stayed brown in dark mode (only the knob moved). css/dark.css
+    // does the same for the settings page's .bb-switch.
+    'html.theme-dark .bbwn-sw input:checked+span{background:var(--brand-primary,#ff9500)}';
   function injectStyle() {
     if (document.getElementById('bbwnStyle')) return;
     var st = document.createElement('style');

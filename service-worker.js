@@ -1772,7 +1772,11 @@
 //   js/journal.js, js/journal-insights.js, js/journal-meds.js,
 //   js/survival-kit.js, js/shared/secure-store.js, css/journal.css,
 //   css/journal-meds.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v358';
+// v359: the New features sheet's switches show the brand colour when ON in
+//   dark mode too (an ON switch stayed brown: html.theme-dark's track rule
+//   had the same specificity as the :checked one and came later).
+//   js/shared/whats-new.js only.
+const CACHE_NAME = 'bipolarbear-v359';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
