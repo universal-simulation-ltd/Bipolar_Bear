@@ -348,6 +348,10 @@
       align-items: center; justify-content: center; padding: 20px;
     }
     .bb-fab-modal.open { display: flex; }
+    /* Hold to hide (James, 2026-10-20): no iOS callout or text selection on a held dock button. */
+    #chatFab, #quickNoteFab, #coffeeFab, .feedback-fab, #reviewFab, #gameFab, .bb-extra-fab {
+      -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
+    }
     /* The feedback switch's real checkbox is invisible; ring its track instead. */
     #bbFbNotify:focus-visible + #bbFbNotifyTrack { outline: 3px solid var(--focus-ring, #1f5fbf); outline-offset: 2px; }
     .bb-feedback-modal {
@@ -1035,6 +1039,7 @@
           closeFabPicker();
           _applyFabDock();
           _syncFabsToFirestore();
+          _dockHoldHint();
         });
         _opts.appendChild(_btn);
       }
@@ -1057,6 +1062,7 @@
           closeFabPicker();
           _applyFabDock();
           _syncFabsToFirestore();
+          _dockHoldHint();
         });
         _opts.appendChild(_btn);
       }
@@ -1085,6 +1091,153 @@
     _applyFabDock();
     _syncFabsToFirestore();
   };
+
+  // ── Hold a dock button to hide it ─────────────────────────────────────────
+  // James, 2026-10-20: tap and hold (or right-click) any dock shortcut for
+  // "Hide … from the dock?". The shortcuts that go straight to a page (🧰,
+  // 💬) have no sheet with "Hide this button", and this works the same for
+  // every button. The first time something is added to the dock, a hint says
+  // so (bbDockHoldHintDone).
+
+  /** Dock button element id → default FAB id; extras come from _extraMap. */
+  const _DEF_BTN = { chatFab: 'chat', quickNoteFab: 'e2ee', coffeeFab: 'coffee', reviewFab: 'review', gameFab: 'game' };
+  /** The `_showHidePermanently` type for each default FAB id. */
+  const _DEF_HIDE = { chat: 'chat', e2ee: 'quicknote', coffee: 'coffee', feedback: 'feedback', review: 'review', game: 'game' };
+  const _DOCK_SEL = '#chatFab, #quickNoteFab, #coffeeFab, .feedback-fab, #reviewFab, #gameFab, .bb-extra-fab';
+  const _HOLD_MS = 500;
+
+  /** The dock shortcut `el` is, as {kind: 'default'|'extra', id}, or null. */
+  function _dockItemOf(el) {
+    const btn = el && el.closest ? el.closest(_DOCK_SEL) : null;
+    if (!btn || btn.style.display === 'none') return null;
+    if (_DEF_BTN[btn.id]) return { kind: 'default', id: _DEF_BTN[btn.id], btn };
+    if (btn.classList.contains('feedback-fab')) return { kind: 'default', id: 'feedback', btn };
+    for (const k in _extraMap) if (_extraMap[k] === btn.id) return { kind: 'extra', id: k, btn };
+    return null;
+  }
+  function _dockItemDef(item) {
+    return (item.kind === 'default' ? _FAB_DEFAULTS : _FAB_EXTRAS).find(d => d.id === item.id) || { icon: '', label: item.id };
+  }
+
+  let _holdItem = null;
+  function _dockHoldClose() {
+    const m = document.getElementById('bbDockHoldModal');
+    if (m) m.classList.remove('open');
+    _holdItem = null;
+  }
+  window._dockHoldClose = _dockHoldClose;
+
+  /** "Hide 🧰 Survival Kit from the dock?" for `item`. */
+  function _dockHoldOpen(item) {
+    // While the dock is locked (the tutorial) nothing on it can be hidden.
+    if (BB.storage.get('FabsUnlocked') !== '1') return;
+    _holdItem = item;
+    let m = document.getElementById('bbDockHoldModal');
+    if (!m) {
+      m = document.createElement('div');
+      m.id = 'bbDockHoldModal';
+      m.className = 'bb-fab-modal';
+      m.setAttribute('role', 'dialog');
+      m.setAttribute('aria-modal', 'true');
+      m.setAttribute('aria-labelledby', 'bbDockHoldTitle');
+      m.addEventListener('click', e => { if (e.target === m) _dockHoldClose(); });
+      document.body.appendChild(m);
+    }
+    const def = _dockItemDef(item);
+    const name = _bbT('fab.picker.' + item.id + 'Label', def.label);
+    m.innerHTML = '<div style="background:white;border-radius:20px;padding:22px 22px 18px;text-align:center;max-width:320px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.22);">' +
+      '<div aria-hidden="true" style="font-size:2em;margin-bottom:6px;">' + def.icon + '</div>' +
+      '<div id="bbDockHoldTitle" style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:8px;"></div>' +
+      '<p style="font-size:0.86em;color:var(--text-muted-ink);line-height:1.5;margin:0 0 16px;"></p>' +
+      '<div style="display:flex;flex-direction:column;gap:8px;">' +
+      '<button type="button" id="bbDockHoldHide" style="padding:13px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font:inherit;font-weight:700;font-size:0.95em;cursor:pointer;-webkit-tap-highlight-color:transparent;"></button>' +
+      '<button type="button" id="bbDockHoldCancel" style="padding:10px;background:none;border:none;color:var(--text-muted-ink);font:inherit;font-size:0.9em;cursor:pointer;-webkit-tap-highlight-color:transparent;"></button>' +
+      '</div></div>';
+    m.querySelector('#bbDockHoldTitle').textContent = _bbT('fab.dockHold.title', 'Hide ' + name + ' from the dock?', { name });
+    m.querySelector('p').textContent = _bbT('fab.dockHold.body', 'You can add it back any time with the + on the dock.');
+    const hide = m.querySelector('#bbDockHoldHide');
+    hide.textContent = _bbT('fab.dockHold.hide', 'Hide');
+    hide.onclick = () => {
+      const it = _holdItem;
+      _dockHoldClose();
+      if (!it) return;
+      if (it.kind === 'extra') window._hideExtraFab(it.id);
+      else window._showHidePermanently(_DEF_HIDE[it.id]);
+    };
+    const cancel = m.querySelector('#bbDockHoldCancel');
+    cancel.textContent = _bbT('common.cancel', 'Cancel');
+    cancel.onclick = _dockHoldClose;
+    m.classList.add('open');
+    try { hide.focus({ preventScroll: true }); } catch (_) {}
+  }
+  window._dockHoldOpen = function (id) {
+    const el = document.getElementById(_extraMap[id] || Object.keys(_DEF_BTN).find(k => _DEF_BTN[k] === id) || '') ||
+      (id === 'feedback' ? document.querySelector('.feedback-fab') : null);
+    const item = _dockItemOf(el);
+    if (item) _dockHoldOpen(item);
+  };
+
+  (function () {
+    let timer = null, start = null, fired = 0;
+    const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } start = null; };
+    document.addEventListener('pointerdown', e => {
+      fired = 0; // a new press: only the release of a hold is swallowed
+      if (e.button) return;
+      const item = _dockItemOf(e.target);
+      if (!item) return;
+      cancel();
+      start = { x: e.clientX, y: e.clientY };
+      timer = setTimeout(() => {
+        timer = null;
+        fired = Date.now();
+        try { if (BB.nf && BB.nf.haptic) BB.nf.haptic('medium'); } catch (_) {}
+        _dockHoldOpen(item);
+      }, _HOLD_MS);
+    }, true);
+    document.addEventListener('pointermove', e => {
+      if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancel();
+    }, true);
+    ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, cancel, true));
+    window.addEventListener('scroll', cancel, true);
+    // The release after a hold is not a tap: it would open the button, or
+    // land on the question's Cancel (now under the finger) and shut it.
+    document.addEventListener('click', e => {
+      if (fired && Date.now() - fired < 1000) {
+        e.preventDefault(); e.stopImmediatePropagation(); fired = 0;
+      }
+    }, true);
+    // Right-click / the long-press menu: the same question, never the browser's menu.
+    document.addEventListener('contextmenu', e => {
+      const item = _dockItemOf(e.target);
+      if (!item) return;
+      e.preventDefault();
+      if (fired && Date.now() - fired < 1000) return;
+      cancel();
+      _dockHoldOpen(item);
+    }, true);
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.getElementById('bbDockHoldModal')?.classList.contains('open')) _dockHoldClose();
+    });
+  })();
+
+  /** Once, after the first "Add to dock": how to take a button off again. */
+  function _dockHoldHint() {
+    if (BB.storage.get('DockHoldHintDone') === '1') return;
+    BB.storage.set('DockHoldHintDone', '1');
+    const coarse = !!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    const el = document.createElement('div');
+    el.id = 'bbDockHoldHint';
+    el.setAttribute('role', 'status');
+    el.textContent = coarse
+      ? _bbT('fab.dockHold.hintTap', 'Tip: tap and hold a button on the dock to hide it.')
+      : _bbT('fab.dockHold.hintClick', 'Tip: click and hold (or right-click) a button on the dock to hide it.');
+    el.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:10050;max-width:420px;margin:0 auto;' +
+      'background:#212529;color:#fff;border-radius:12px;padding:12px 14px;font-size:0.88em;line-height:1.4;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.3);cursor:pointer;';
+    const gone = () => { el.remove(); };
+    el.addEventListener('click', gone);
+    document.body.appendChild(el);
+    setTimeout(gone, 7000);
+  }
 
   // ── Core FAB modal open/close ─────────────────────────────────────────────
   // Thin show/hide handlers wired to inline `onclick=` attributes.

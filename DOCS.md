@@ -2152,8 +2152,15 @@ unchanged.
   `survival-kit.html`; on that page, back to all sections at the top) and
   `anon` (💬, `openAnonFromDock`: `anonymous.html`; signed out it opens the
   sign-in dialog, like the home page's locked button). Both go straight
-  there, so neither has a sheet with "Hide this button": the home page's
-  Reset dock takes them off.
+  there, so neither has a sheet with "Hide this button"; hold them to hide.
+- **Hold to hide (v370):** any dock button (defaults and extras) held for
+  500 ms, or right-clicked, opens `#bbDockHoldModal` "Hide … from the
+  dock?" (`fab.js`, `_dockHoldOpen`). Hide uses the existing paths:
+  `_hideExtraFab` for extras, `_showHidePermanently` for defaults. The
+  release after a hold is swallowed (on a touch it would land on the
+  sheet's Cancel). Not while the dock is locked. The first Add to dock
+  shows a one-time hint (`bbDockHoldHintDone`). Test:
+  `scripts/test-dock-hold.mjs` (7, including a CDP touch hold).
 - Test: `scripts/test-meds-list.mjs` (14 checks).
 
 **A day's doses.** An entry keeps `medication` (`taken` | `not-taken` |

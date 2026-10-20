@@ -1595,13 +1595,19 @@
              builds synced (userSettings pinEnabled/pinHash). On the web it
              shows only while such an account PIN is on, to turn it off.
              _syncAppLockRow / _appLockAction in js/journal.js. -->
+        <!-- Text on the left, the buttons inline on the right, as in the
+             guest PIN row (James, 2026-10-20). Two buttons stack. -->
         <div id="appLockRow" style="display:none;margin-bottom:16px;text-align:left;">
-          <div style="font-weight:600;color:#495057;font-size:0.95em;" data-i18n="pin143.lockTitle">🔒 App lock (PIN)</div>
-          <div id="appLockRowDesc" style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;"></div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="min-width:0;">
+            <div style="font-weight:600;color:#495057;font-size:0.95em;" data-i18n="pin143.lockTitle">🔒 App lock (PIN)</div>
+            <div id="appLockRowDesc" style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;"></div>
+          </div>
+          <div style="flex-shrink:0;max-width:45%;display:flex;flex-direction:column;align-items:stretch;gap:6px;">
             <button type="button" id="appLockSetBtn" onclick="_appLockAction('set')" style="display:none;padding:8px 12px;min-height:44px;background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.set">Set a PIN</button>
             <button type="button" id="appLockChangeBtn" onclick="_appLockAction('change')" style="display:none;padding:8px 12px;min-height:44px;background:white;color:var(--brand-ink);border:2px solid var(--brand-primary);border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.change">Change PIN</button>
             <button type="button" id="appLockOffBtn" onclick="_appLockAction('off')" style="display:none;padding:8px 12px;min-height:44px;background:white;color:#b02a37;border:2px solid #dc3545;border-radius:10px;font-family:inherit;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="pin143.turnOff">Turn off</button>
+          </div>
           </div>
           <div id="appLockRowStatus" role="status" aria-live="polite" style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;line-height:1.4;"></div>
         </div>

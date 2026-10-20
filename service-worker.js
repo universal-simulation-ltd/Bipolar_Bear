@@ -1815,7 +1815,11 @@
 //   css/journal.css, js/survival-kit.js.
 // v369: 🧰 Survival Kit and 💬 Bipolar Anonymous in Add to dock (fab.js,
 //   js/shared/i18n.js).
-const CACHE_NAME = 'bipolarbear-v369';
+// v370: hold (or right-click) a dock button for "Hide … from the dock?",
+//   with a one-time hint after the first Add to dock (fab.js,
+//   js/shared/i18n.js); Settings' App lock buttons inline on the right
+//   (journal.html).
+const CACHE_NAME = 'bipolarbear-v370';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
