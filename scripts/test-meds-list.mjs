@@ -177,9 +177,14 @@ console.log('Your medicines, in the 💊 My medicines sheet');
   await page.evaluate(() => showMedicationList());
   await page.waitForSelector('#medsHubModal.active');
   assert.deepEqual(await listNames(page), ['Lithium|1000 mg']);
+  // A redraw (tab, refresh) fills the same sheet: a new one replayed the
+  // phone drawer's slide-up, so it came in twice on open and on every tap.
+  await page.evaluate(() => { window._sheet = document.querySelector('#medsHubModal .meds-sheet'); });
   await page.evaluate(() => BBMeds._tab('side'));
+  await page.evaluate(() => BBMeds.refresh());
+  assert.equal(await page.evaluate(() => window._sheet === document.querySelector('#medsHubModal .meds-sheet')), true, 'a redraw replaced the sheet');
   assert.match(await page.textContent('#medsHubModal select[name="med"]'), /Lithium/);
-  ok('after a reload the list is the same, and Side effects offers the medicines on it');
+  ok('after a reload the list is the same, Side effects offers the medicines on it, and a redraw keeps the same sheet');
   await ctx.close();
 }
 

@@ -81,6 +81,15 @@ html.theme-dark .med-dose-chip.missed { background: #3a2617; color: #ffc078; bor
   width: 100%; box-sizing: border-box; padding: 9px 10px; border: 2px solid #e9ecef; border-radius: 8px;
   font: inherit; font-size: 0.95em; background: white; color: #212529;
 }
+.meds-form label { min-width: 0; }
+/* Blood levels' Date / Next due: journal.css's global input[type="date"]
+   adds margin-left: 10px on top of the 100% width, and iOS gives date
+   inputs a minimum width of their own, so both ran past the form. */
+.meds-form input[type="date"] {
+  margin: 0; min-width: 0; max-width: 100%; display: block; text-align: left;
+  -webkit-appearance: none; appearance: none; min-height: 2.6em;
+}
+.meds-form input[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .meds-form textarea { min-height: 64px; resize: vertical; }
 .meds-form .mf-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .meds-form .mf-err { color: #c92a2a; font-size: 0.8em; min-height: 1em; }

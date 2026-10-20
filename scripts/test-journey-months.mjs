@@ -116,6 +116,8 @@ console.log('Your Journey: the 12 month boxes');
   assert.equal(b[8].sub, '✓');
   assert.ok(b.every(x => !x.on && !x.off));
   assert.match(await page.textContent('#monthCalendar .jm-head'), /Tap a month/);
+  // The boxes sit above the calendar's ‹ month › header (James, 2026-10-20).
+  assert.ok(await page.evaluate(() => !!(document.querySelector('#monthCalendar .jm-wrap').compareDocumentPosition(document.querySelector('#monthCalendar button[onclick="openCalMonthPicker()"]')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'the month boxes are not above the calendar');
   // Negative control: before a tap, the stats are the last 30 days (today not logged).
   assert.equal(await statDays(page), 29);
   ok('12 boxes, oldest first, ending with this month; the month with a gap says 29/30-style, a full one ✓; nothing picked yet and the stats are the last 30 days');
@@ -156,7 +158,8 @@ console.log('Your Journey: the 12 month boxes');
   const since90 = new Date(today); since90.setDate(since90.getDate() - 89);
   assert.equal(await statDays(page), 89 - (GAP >= key(since90) ? 1 : 0));
   assert.doesNotMatch(await statLabels(page), new RegExp(longName(monthOf(6))));
-  ok('"Back to today" returns to the last 3 months counted back from today');
+  assert.equal(await calTitle(page), longName(today), '"Back to today" left the calendar on another month');
+  ok('"Back to today" returns to the last 3 months counted back from today, and the calendar to this month');
 
   // A reload starts from today again.
   await page.click('#monthCalendar .jm-box >> nth=10');

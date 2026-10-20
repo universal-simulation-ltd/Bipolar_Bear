@@ -2925,9 +2925,9 @@ html.theme-dark .trk-progress { background: var(--dk-surface-3); }
 .pdf-progress .pdf-progress-note { margin: 14px 0 0; font-size: 0.8em; }
 html.theme-dark .pdf-progress-track { background: rgba(255,255,255,0.14); }
 
-/* Your Journey: the last 12 months under the calendar (James, 2026-10-20).
+/* Your Journey: the last 12 months above the calendar (James, 2026-10-20).
    Tapping one sets the stats' window (_pickJourneyMonth in js/journal.js). */
-.jm-wrap { margin-top: 12px; }
+.jm-wrap { margin-bottom: 14px; }
 .jm-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 0.78em; color: var(--text-muted-ink); margin-bottom: 8px; line-height: 1.35; }
 .jm-reset { background: none; border: none; color: var(--brand-ink); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 6px 0; min-height: 32px; -webkit-tap-highlight-color: transparent; }
 .jm-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }

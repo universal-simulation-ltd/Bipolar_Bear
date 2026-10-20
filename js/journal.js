@@ -1216,7 +1216,7 @@ function _tt(k, vars, fallback) {
       return _JOURNEY_RANGES.some(r => r[0] === n) ? n : 30;
     }
     let statsTimeframe = _storedJourneyRange(); // 30 | 90 | 180 | 365 | 'all'
-    // A month picked in the 12 boxes under the calendar (James, 2026-10-20):
+    // A month picked in the 12 boxes above the calendar (James, 2026-10-20):
     // the stats then end with that month and go back as many months as the
     // range — 1M is that month, 3M it and the 2 before, 6M, 1Y. null = the
     // usual window, counted back from today. Changing the range keeps the
@@ -3342,7 +3342,7 @@ function _tt(k, vars, fallback) {
       // window as the life chart and the feedback popup.
       const _rangeSince = new Date(); _rangeSince.setHours(0, 0, 0, 0);
       if (statsTimeframe !== 'all') _rangeSince.setDate(_rangeSince.getDate() - (statsTimeframe - 1));
-      // A month picked under the calendar: that month and the range's months before it.
+      // A month picked above the calendar: that month and the range's months before it.
       const _aw = _anchoredWindow();
       const statsEntries = _aw
         ? entries.filter(e => { const d = new Date(e.date); return d >= _aw.from && d <= _aw.to; })
@@ -10214,8 +10214,8 @@ function _tt(k, vars, fallback) {
     }
 
     /**
-     * The last 12 months as boxes under the month calendar (James,
-     * 2026-10-20). Each says whether every day was logged (green ✓) or how
+     * The last 12 months as boxes above the month calendar (James,
+     * 2026-10-20; moved up from under it the same day). Each says whether every day was logged (green ✓) or how
      * many were (amber "12/30"), counted up to yesterday — today is still in
      * progress — and from the first entry in the month the journal began.
      * Months before the first entry are greyed out and can't be picked.
@@ -10278,6 +10278,7 @@ function _tt(k, vars, fallback) {
       const now = new Date();
       if (year == null) {
         _journeyAnchor = null;
+        _monthCalOffset = 0; // "Back to today" opens today's month too
       } else {
         _journeyAnchor = { y: year, m: month };
         // Exact month arithmetic (applyCalMonthPicker's 30.44-day division drifts).
@@ -10387,6 +10388,7 @@ function _tt(k, vars, fallback) {
 
       container.innerHTML = `
         <div style="background:#f8f9fa;border-radius:15px;padding:16px;margin-top:12px;">
+          ${_monthBoxesHtml(moodByDate, today, year, month)}
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <button onclick="navigateMonthCal(-1)" aria-label="${BB.t('a11y.prevMonth')}" style="${navBtn}">‹</button>
             <button onclick="openCalMonthPicker()" style="font-weight:600;color:#495057;font-size:0.95em;background:none;border:none;cursor:pointer;padding:4px 8px;border-radius:8px;text-decoration:underline dotted;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;">${monthName}</button>
@@ -10395,7 +10397,6 @@ function _tt(k, vars, fallback) {
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">${dayHeaders}</div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cells}</div>
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;">${legend}</div>
-          ${_monthBoxesHtml(moodByDate, today, year, month)}
         </div>`;
     }
 

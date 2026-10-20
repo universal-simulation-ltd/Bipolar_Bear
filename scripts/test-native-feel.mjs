@@ -269,6 +269,10 @@ try {
   await ev(`skOpenSection('goals')`); await sleep(500);
   await tapSel('#goals .nf-drawer-x'); await sleep(400);
   check('✕ closes a drawer', await ev(`!document.querySelector('.nf-drawer-on')`));
+  // Closing a drawer leaves its tab lit, so the next one along is a tap away; "All" clears it.
+  check('a closed drawer keeps its nav tab lit, not "All"', await ev(`document.querySelector('.sk-tab.active')?.dataset.skTab`) === 'goals', await ev(`document.querySelector('.sk-tab.active')?.dataset.skTab`));
+  await ev(`document.querySelector('.sk-tab[data-sk-tab="all"]').click()`); await sleep(200);
+  check('tapping "All" lights "All" again', await ev(`document.querySelector('.sk-tab.active')?.dataset.skTab`) === 'all');
   // The edge swipe closes one; from the grid it goes home.
   await ev(`skOpenSection('mood-scale')`); await sleep(500);
   await drag(5, 400, 300, 400, 14, 14);

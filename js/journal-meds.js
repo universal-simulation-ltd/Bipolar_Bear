@@ -595,11 +595,21 @@
     } catch (e) { try { console.warn('[meds]', e); } catch (_) {} }
     var keepScroll = m.querySelector('.meds-body');
     var st = keepScroll && keepScroll.dataset.tab === _tab ? keepScroll.scrollTop : 0;
-    m.innerHTML = '<div class="confirm-content meds-sheet">' +
+    // Fill the sheet that is already there: a new .confirm-content replays
+    // native-feel's slide-up, so the drawer came in twice on open (the
+    // account copy's refresh) and again on every tap inside it.
+    var sheet = m.querySelector('.meds-sheet');
+    if (!sheet) {
+      sheet = document.createElement('div');
+      sheet.className = 'confirm-content meds-sheet';
+      m.innerHTML = '';
+      m.appendChild(sheet);
+    }
+    sheet.innerHTML =
       '<div class="meds-head"><h3 id="medsHubTitle">' + esc(t('hubTitle')) + '</h3><button type="button" class="meds-x" aria-label="' + esc(tt('a11y.close')) + '" onclick="BBMeds.close()">✕</button></div>' +
       '<div class="meds-tabs" role="group" aria-label="' + esc(t('tabsLabel')) + '">' + tabs + '</div>' +
       '<div class="meds-tab-note" aria-live="polite">' + esc(_tabNote || (_tab !== (saved || 'doses') ? hint : '')) + '</div>' +
-      '<div class="meds-body" data-tab="' + _tab + '">' + body + '</div>' + _dockHideHtml() + '</div>';
+      '<div class="meds-body" data-tab="' + _tab + '">' + body + '</div>' + _dockHideHtml();
     var nb = m.querySelector('.meds-body');
     if (nb && st) nb.scrollTop = st;
     if (_tab === 'compare') _wireCompare(m);

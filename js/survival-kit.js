@@ -132,6 +132,10 @@ function _skLocale() {
     const _SK_SECTION_IDS = ['mood-scale', 'coping-strategies', 'medications', 'gratitude',
       'goals', 'mind', 'books', 'media', 'memories', 'faq', 'steps', 'spiritual'];
     let _skOpenId = null;
+    // The tab a closed drawer leaves lit (James, 2026-10-20: people work
+    // through the sections one after another, so closing a drawer stays on
+    // its tab instead of jumping back to "All"). Cleared by tapping "All".
+    let _skNavId = null;
 
     function _skNavOffset() {
       const nav = document.querySelector('.sticky-nav');
@@ -146,7 +150,7 @@ function _skLocale() {
     }
 
     function updateActiveNav() {
-      const current = _skOpenId || 'all';
+      const current = _skOpenId || _skNavId || 'all';
       document.querySelectorAll('.sk-tab[data-sk-tab]').forEach(link => {
         const on = link.getAttribute('data-sk-tab') === current;
         link.classList.toggle('active', on);
@@ -220,6 +224,7 @@ function _skLocale() {
       document.querySelectorAll('.section.sk-open').forEach(s => { s.classList.remove('sk-open'); if (window.BB && BB.nf && BB.nf.drawer) BB.nf.drawer.close(s); });
       if (wasDrawer) opts = Object.assign({}, opts, { scroll: false });
       container.classList.remove('sk-focused');
+      _skNavId = wasDrawer && opts.nav !== 'all' ? wasOpen : null;
       _skOpenId = null;
       if (opts.hash !== false) _skSetHash('');
       updateActiveNav();
@@ -297,7 +302,7 @@ function _skLocale() {
       const id = String(hash || '').replace(/^#/, '');
       if (_SK_SECTION_IDS.indexOf(id) !== -1) { skOpenSection(id, { hash: false }); return true; }
       if (id === 'help') { skGoToHelp(); return true; }
-      if (id === 'all' || (!id && !fromLoad)) { skShowGrid({ hash: false, scroll: !fromLoad }); return true; }
+      if (id === 'all' || (!id && !fromLoad)) { skShowGrid({ hash: false, scroll: !fromLoad, nav: id === 'all' ? 'all' : undefined }); return true; }
       return false;
     }
 
@@ -312,7 +317,7 @@ function _skLocale() {
       const href = a.getAttribute('href') || '';
       const m = href.match(/^(?:survival-kit\.html)?#([\w-]+)$/);
       if (!m) return;
-      if (m[1] === 'all') { e.preventDefault(); skShowGrid(); return; }
+      if (m[1] === 'all') { e.preventDefault(); skShowGrid({ nav: 'all' }); return; }
       if (_SK_SECTION_IDS.indexOf(m[1]) !== -1 || m[1] === 'help') {
         e.preventDefault();
         _skRouteHash('#' + m[1]);

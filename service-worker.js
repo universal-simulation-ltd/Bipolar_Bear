@@ -1807,7 +1807,13 @@
 //   PDF's 12-month energy chart grows from a line at 5), and "Missed
 //   medication" for a day with one Not taken answer. js/journal.js,
 //   js/shared/i18n.js, js/shared/i18n-meds.js.
-const CACHE_NAME = 'bipolarbear-v367';
+// v368: My medicines fills its sheet instead of rebuilding it (the phone
+//   drawer slid up twice on open and on every tap), Blood levels' date boxes
+//   fit the form on iPhone, the month boxes sit above the calendar and Back
+//   to today opens this month, and a closed Survival kit drawer keeps its
+//   tab lit. js/journal-meds.js, css/journal-meds.css, js/journal.js,
+//   css/journal.css, js/survival-kit.js.
+const CACHE_NAME = 'bipolarbear-v368';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
