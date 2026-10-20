@@ -1216,6 +1216,30 @@ function _tt(k, vars, fallback) {
       return _JOURNEY_RANGES.some(r => r[0] === n) ? n : 30;
     }
     let statsTimeframe = _storedJourneyRange(); // 30 | 90 | 180 | 365 | 'all'
+    // A month picked in the 12 boxes under the calendar (James, 2026-10-20):
+    // the stats then end with that month and go back as many months as the
+    // range — 1M is that month, 3M it and the 2 before, 6M, 1Y. null = the
+    // usual window, counted back from today. Changing the range keeps the
+    // month; "Back to today" clears it; All ignores it. Not saved: a reload
+    // starts from today again. Only the stats follow it (the life chart and
+    // the feedback popup keep counting back from today).
+    let _journeyAnchor = null; // { y, m }
+    const _RANGE_MONTHS = { 30: 1, 90: 3, 180: 6, 365: 12 };
+    function _anchoredWindow() {
+      if (!_journeyAnchor || statsTimeframe === 'all') return null;
+      const n = _RANGE_MONTHS[statsTimeframe] || 1;
+      return {
+        n,
+        from: new Date(_journeyAnchor.y, _journeyAnchor.m - (n - 1), 1),
+        to: new Date(_journeyAnchor.y, _journeyAnchor.m + 1, 0, 23, 59, 59, 999),
+      };
+    }
+    /** "September 2026", or "Jul – Sep 2026" / "Nov 2025 – Jan 2026". */
+    function _anchoredLabel(w) {
+      if (w.n === 1) return _bbDate(w.to, { month: 'long', year: 'numeric' });
+      const sameYear = w.from.getFullYear() === w.to.getFullYear();
+      return _bbDate(w.from, sameYear ? { month: 'short' } : { month: 'short', year: 'numeric' }) + ' – ' + _bbDate(w.to, { month: 'short', year: 'numeric' });
+    }
     let _journeyRangeNote = '';
     const _RANGE_DOUBLE_TAP_MS = 350;
     let _journeyLastTap = null;  // { r, at } — the previous tap, for the double tap
@@ -3300,14 +3324,18 @@ function _tt(k, vars, fallback) {
       // window as the life chart and the feedback popup.
       const _rangeSince = new Date(); _rangeSince.setHours(0, 0, 0, 0);
       if (statsTimeframe !== 'all') _rangeSince.setDate(_rangeSince.getDate() - (statsTimeframe - 1));
-      const statsEntries = statsTimeframe !== 'all'
+      // A month picked under the calendar: that month and the range's months before it.
+      const _aw = _anchoredWindow();
+      const statsEntries = _aw
+        ? entries.filter(e => { const d = new Date(e.date); return d >= _aw.from && d <= _aw.to; })
+        : statsTimeframe !== 'all'
         ? entries.filter(e => new Date(e.date) >= _rangeSince)
         : (statsStartDate ? entries.filter(e => e.date >= statsStartDate) : entries);
 
       // Nothing logged inside the range: say so rather than averaging nothing.
       if (!statsEntries.length) {
         currentStatsEntries = [];
-        statsContainer.innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">${_esc(BB.t('journal.stats.noneInRange', { period: _journeyRangeLabel(statsTimeframe) }))}</div></div>`;
+        statsContainer.innerHTML = `<div class="stat-card" style="grid-column:1/-1;"><div class="stat-label">${_esc(BB.t('journal.stats.noneInRange', { period: _aw ? _anchoredLabel(_aw) : _journeyRangeLabel(statsTimeframe) }))}</div></div>`;
         document.getElementById('streakStats').innerHTML = '';
         return;
       }
@@ -3414,7 +3442,7 @@ function _tt(k, vars, fallback) {
         }
       }
 
-      const timeframeLabel = _journeyRangeLabel(statsTimeframe);
+      const timeframeLabel = _aw ? _anchoredLabel(_aw) : _journeyRangeLabel(statsTimeframe);
 
       // "since" date: for all-time use statsStartDate/oldest entry; otherwise the range's first day
       let sinceDateLabel = '';
@@ -10168,52 +10196,13 @@ function _tt(k, vars, fallback) {
     }
 
     /**
-     * The calendar months a multi-month timeframe window covers, each clipped to
-     * the part that's inside the window and already finished.
-     *
-     * Scoring stops at YESTERDAY. Today is still in progress — the entry for it
-     * may not have been written yet — so counting it would leave the current
-     * month permanently amber until the moment the day is logged.
-     *
-     * The window is counted back from today (not from the most recent entry, as
-     * the stats card's "since" label does) — these boxes are about which days are
-     * missing, so anchoring anywhere else makes "already finished" incoherent.
-     *
-     * @param {Date} today midnight today
-     * @returns {Array<{year:number, month:number, from:Date, to:Date}>} empty for
-     *   'all' and for windows under 60 days, which sit inside one or two months
-     *   and are already fully visible in the calendar below.
-     */
-    function _timeframeMonthSpans(today) {
-      if (typeof statsTimeframe !== 'number' || statsTimeframe < 60) return [];
-      const start = new Date(today);
-      start.setDate(start.getDate() - (statsTimeframe - 1));
-      // Last scoreable day. On the 1st of a month this lands in the previous
-      // month, so the current month contributes no span and its box drops out
-      // (the `from <= to` guard below) rather than showing a meaningless 0/0.
-      const lastDay = new Date(today);
-      lastDay.setDate(lastDay.getDate() - 1);
-      const endMonth = new Date(lastDay.getFullYear(), lastDay.getMonth(), 1);
-      const spans = [];
-      let cur = new Date(start.getFullYear(), start.getMonth(), 1);
-      // Ceiling so a large custom window (say 800 days) can't emit an unreadable
-      // wall of boxes. Trimmed from the oldest end below, keeping recent months.
-      while (cur <= endMonth && spans.length < 400) {
-        const mStart = new Date(cur.getFullYear(), cur.getMonth(), 1);
-        const mEnd   = new Date(cur.getFullYear(), cur.getMonth() + 1, 0);
-        const from = mStart < start ? start : mStart;
-        const to   = mEnd > lastDay ? lastDay : mEnd;
-        if (from <= to) spans.push({ year: cur.getFullYear(), month: cur.getMonth(), from, to });
-        cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
-      }
-      return spans.length > 12 ? spans.slice(spans.length - 12) : spans;
-    }
-
-    /**
-     * Row of per-month completeness boxes shown above the calendar on the 60d /
-     * 90d (and 60+ custom) timeframes. Green when every in-window day of that
-     * month has an entry, amber when any are missing. Tapping one opens that
-     * month in the calendar below.
+     * The last 12 months as boxes under the month calendar (James,
+     * 2026-10-20). Each says whether every day was logged (green ✓) or how
+     * many were (amber "12/30"), counted up to yesterday — today is still in
+     * progress — and from the first entry in the month the journal began.
+     * Months before the first entry are greyed out and can't be picked.
+     * Tapping one sets the stats' window (_journeyAnchor) and opens that
+     * month in the calendar; the months inside the window are outlined.
      *
      * @param {Object<string, object>} moodByDate date-key → entry, as built by
      *   displayMonthCalendar
@@ -10221,47 +10210,65 @@ function _tt(k, vars, fallback) {
      * @param {number} openYear  year currently shown in the calendar
      * @param {number} openMonth month currently shown in the calendar
      */
-    function _monthCompletenessHtml(moodByDate, today, openYear, openMonth) {
-      const spans = _timeframeMonthSpans(today);
-      if (spans.length < 2) return '';
-      const boxes = spans.map(sp => {
+    function _monthBoxesHtml(moodByDate, today, openYear, openMonth) {
+      const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+      let first = null;
+      Object.keys(moodByDate).forEach(k => { if (!first || k < first) first = k; });
+      const firstDay = first ? new Date(+first.slice(0, 4), +first.slice(5, 7) - 1, +first.slice(8, 10)) : null;
+      const w = _anchoredWindow();
+      const boxes = [];
+      for (let i = 11; i >= 0; i--) {
+        const y = new Date(today.getFullYear(), today.getMonth() - i, 1).getFullYear();
+        const m = new Date(today.getFullYear(), today.getMonth() - i, 1).getMonth();
+        const mStart = new Date(y, m, 1), mEnd = new Date(y, m + 1, 0);
+        const name = _bbDate(mStart, { month: 'short' });
+        const longName = _bbDate(mStart, { month: 'long', year: 'numeric' });
+        const inWin = !!w && mStart >= w.from && mStart <= w.to;
+        const isAnchor = !!_journeyAnchor && _journeyAnchor.y === y && _journeyAnchor.m === m;
+        if (!firstDay || mEnd < firstDay) {
+          boxes.push(`<button type="button" class="jm-box jm-off" disabled aria-label="${_esc(longName)}">` +
+            `<span class="jm-name">${_esc(name)}</span><span class="jm-sub">–</span></button>`);
+          continue;
+        }
+        const from = firstDay > mStart ? firstDay : mStart;
+        const to = mEnd > yesterday ? yesterday : mEnd;
         let logged = 0, total = 0;
-        const d = new Date(sp.from);
-        while (d <= sp.to) {
+        for (const d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
           total++;
-          const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-          if (moodByDate[key]) logged++;
-          d.setDate(d.getDate() + 1);
+          if (moodByDate[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`]) logged++;
         }
         const complete = total > 0 && logged === total;
-        const color = complete ? '#2ECC40' : '#FF851B';
-        const name = _bbDate(new Date(sp.year, sp.month, 1), { month: 'long' });
-        const isOpen = sp.year === openYear && sp.month === openMonth;
-        // The month is only PART of the window at the oldest end, so say how many
-        // days were actually judged — otherwise "12/23" for a 31-day month reads
-        // like a bug rather than the window starting mid-month.
-        const partial = sp.from.getDate() !== 1 || (sp.to.getDate() !== new Date(sp.year, sp.month + 1, 0).getDate());
-        const title = BB.t(partial ? 't143.cal.boxTitlePartial' : 't143.cal.boxTitle', { month: _bbDate(new Date(sp.year, sp.month, 1), { month: 'long', year: 'numeric' }), n: logged, count: total });
-        return `<button type="button" onclick="_openMonthFromBox(${sp.year},${sp.month})" title="${title}"
-            style="flex:1 1 0;min-width:74px;background:${color}1a;border:${isOpen ? `2.5px solid ${color}` : `1.5px solid ${color}66`};border-radius:12px;padding:8px 6px;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;">
-            <span style="font-size:0.8em;font-weight:700;color:${_readableInk(color)};">${name}</span>
-            <span style="font-size:0.72em;font-weight:600;color:var(--text-muted-ink);">${complete ? '✓' : `${logged}/${total}`}</span>
-          </button>`;
-      }).join('');
-      return `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;">${boxes}</div>`;
+        const color = total === 0 ? '#adb5bd' : complete ? '#2ECC40' : '#FF851B';
+        const partial = from.getDate() !== 1 || to.getDate() !== mEnd.getDate();
+        const title = total ? BB.t(partial ? 't143.cal.boxTitlePartial' : 't143.cal.boxTitle', { month: longName, n: logged, count: total }) : longName;
+        const isOpen = !w && y === openYear && m === openMonth;
+        const border = inWin ? `${isAnchor ? 3 : 2}px solid var(--brand-primary)` : isOpen ? `2.5px solid ${color}` : `1.5px solid ${color}66`;
+        boxes.push(`<button type="button" class="jm-box${inWin ? ' jm-in' : ''}" onclick="_pickJourneyMonth(${y},${m})" aria-pressed="${inWin}" title="${_esc(title)}" aria-label="${_esc(title)}"` +
+          ` style="background:${color}1a;border:${border};">` +
+          `<span class="jm-name" style="color:${_readableInk(color)};">${_esc(name)}</span>` +
+          `<span class="jm-sub">${total === 0 ? '–' : complete ? '✓' : `${logged}/${total}`}</span></button>`);
+      }
+      const head = w
+        ? `<div class="jm-head" aria-live="polite"><span>${_esc(BB.t('journal.lifeChart.monthsShowing', { period: _anchoredLabel(w) }))}</span>` +
+          `<button type="button" class="jm-reset" onclick="_pickJourneyMonth(null)">${_esc(BB.t('journal.lifeChart.monthsUpToday'))}</button></div>`
+        : `<div class="jm-head" aria-live="polite"><span>${_esc(BB.t('journal.lifeChart.monthsPick'))}</span></div>`;
+      return `<div class="jm-wrap">${head}<div class="jm-grid" role="group" aria-label="${_esc(BB.t('journal.lifeChart.rangeLabel'))}">${boxes.join('')}</div></div>`;
     }
 
-    /** Open a month from a completeness box in the calendar below. */
-    function _openMonthFromBox(year, month) {
+    /** A month box: the stats end with that month (null: back to today), and the calendar opens on it. */
+    function _pickJourneyMonth(year, month) {
       const now = new Date();
-      // Exact month arithmetic — applyCalMonthPicker's 30.44-day division is only
-      // approximate and drifts across long spans.
-      _monthCalOffset = Math.min(0, (year - now.getFullYear()) * 12 + (month - now.getMonth()));
+      if (year == null) {
+        _journeyAnchor = null;
+      } else {
+        _journeyAnchor = { y: year, m: month };
+        // Exact month arithmetic (applyCalMonthPicker's 30.44-day division drifts).
+        _monthCalOffset = Math.min(0, (year - now.getFullYear()) * 12 + (month - now.getMonth()));
+      }
+      displayStats(_allEntries);
       displayMonthCalendar(_monthCalEntries, document.getElementById('monthCalendar'));
-      const cal = document.getElementById('monthCalendar');
-      if (cal) { try { cal.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {} }
     }
-    window._openMonthFromBox = _openMonthFromBox;
+    window._pickJourneyMonth = _pickJourneyMonth;
 
     function displayMonthCalendar(entries, container) {
       if (!container) return;
@@ -10370,7 +10377,7 @@ function _tt(k, vars, fallback) {
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;">${dayHeaders}</div>
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${cells}</div>
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;">${legend}</div>
-          ${_monthCompletenessHtml(moodByDate, today, year, month)}
+          ${_monthBoxesHtml(moodByDate, today, year, month)}
         </div>`;
     }
 

@@ -1789,7 +1789,10 @@
 //   💊 Medication can go on the dock (?openMeds=1 opens it from other pages).
 //   journal.html, js/journal.js, js/journal-meds.js, css/journal-meds.css,
 //   js/shared/i18n-meds.js, js/shared/i18n.js, js/shared/native-feel.js, fab.js.
-const CACHE_NAME = 'bipolarbear-v362';
+// v363: Your Journey's last 12 months as boxes under the month calendar; a
+//   tap sets the stats' window (that month + the range's months before).
+//   js/journal.js, css/journal.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v363';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

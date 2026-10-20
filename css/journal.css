@@ -2924,3 +2924,18 @@ html.theme-dark .trk-progress { background: var(--dk-surface-3); }
 .pdf-progress-fill { height: 100%; width: 0; border-radius: inherit; background: var(--brand-primary); transition: width 0.25s ease; }
 .pdf-progress .pdf-progress-note { margin: 14px 0 0; font-size: 0.8em; }
 html.theme-dark .pdf-progress-track { background: rgba(255,255,255,0.14); }
+
+/* Your Journey: the last 12 months under the calendar (James, 2026-10-20).
+   Tapping one sets the stats' window (_pickJourneyMonth in js/journal.js). */
+.jm-wrap { margin-top: 12px; }
+.jm-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 0.78em; color: var(--text-muted-ink); margin-bottom: 8px; line-height: 1.35; }
+.jm-reset { background: none; border: none; color: var(--brand-ink); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 6px 0; min-height: 32px; -webkit-tap-highlight-color: transparent; }
+.jm-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.jm-box { border-radius: 12px; padding: 7px 4px; min-height: 48px; cursor: pointer; font: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; -webkit-tap-highlight-color: transparent; }
+.jm-box .jm-name { font-size: 0.8em; font-weight: 700; }
+.jm-box .jm-sub { font-size: 0.72em; font-weight: 600; color: var(--text-muted-ink); }
+.jm-box.jm-in { box-shadow: 0 0 0 1px var(--brand-primary) inset; }
+.jm-box.jm-off { background: #f1f3f5; border: 1.5px solid #e9ecef; color: #adb5bd; cursor: default; }
+.jm-box.jm-off .jm-name { color: #868e96; }
+html.theme-dark .jm-box.jm-off { background: var(--dk-surface-2, #2a2a2a); border-color: var(--dk-line, #3a3a3a); }
+html.theme-dark .jm-reset { color: var(--brand-primary); }

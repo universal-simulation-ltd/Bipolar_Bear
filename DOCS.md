@@ -448,6 +448,13 @@ bbWhatsNewSeen          "1.44"        — newest release whose New features shee
 bbJournalView           "calendar"|"life" — the Your Journey card's default view; set by a
                                         double tap on the Calendar / Life chart switch (the
                                         suite's useDefaultView gesture, orange mark; v293)
+                                        Under the month calendar: the last 12 months as boxes
+                                        (v363, _monthBoxesHtml). A tap sets _journeyAnchor (not
+                                        saved): the stats end with that month and go back the
+                                        range's months (1M = it, 3M = it + 2 before, 6M, 1Y);
+                                        "Back to today" clears it; All ignores it; the life chart
+                                        and feedback keep counting from today.
+                                        scripts/test-journey-months.mjs
 
 ── Settings ─────────────────────────────────────────────────────────────────
 journalDefaultToday     "true"|null   — log today vs yesterday (no switch since v0.77: always yesterday, because an entry's sleep is the night after its day)
