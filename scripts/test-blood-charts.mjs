@@ -125,6 +125,10 @@ const shot = async (page, name, el) => {
   if (el) await page.locator(el).first().screenshot({ path: p }); else await page.screenshot({ path: p });
 };
 
+// Settings → Advanced → Journal → More is the Stats page (the web path; the
+// phone adds Mobile settings before Advanced). Walk it as a person would.
+const openStatsSettings = (page) => page.evaluate(() => { openAdvancedSettings(); openAdvancedJournal(); openAdvancedMore(); });
+
 console.log('Blood results on the charts');
 {
   // Negative control: the tick is off by default → nothing on the chart.
@@ -137,9 +141,17 @@ console.log('Blood results on the charts');
   assert.equal(await page.evaluate(() => localStorage.getItem('bbBloodOnCharts')), null);
   ok('negative control: unticked by default, so no 🩸, no line, no band (0 markers)');
 
-  // Tick it in ⚙️ Settings.
+  // Tick it in ⚙️ Settings → Stats (moved off the main page in v360, with
+  // Incognito Mode: the settings that change stats or exports live there).
   await page.evaluate(() => showSettingsModal());
+  assert.equal(await page.isVisible('#bloodChartsRow'), false, 'blood row still on the main Settings page');
+  await openStatsSettings(page);
   await page.waitForSelector('#bloodChartsRow', { state: 'visible' });
+  assert.equal(await page.evaluate(() => ['bloodChartsRow', 'incognitoModeToggle', 'statsStartDateInput']
+    .every(id => document.getElementById('settingsAdvancedMorePanel').contains(document.getElementById(id)))), true,
+    'blood, Incognito and the stats start date are not all on the Stats page');
+  assert.equal(await page.evaluate(() => document.getElementById('settingsAdvancedJournalPanel').contains(document.getElementById('incognitoModeToggle'))), false);
+  ok('Settings: the blood switch and Incognito Mode are on the Stats page (not the main page or Journal Options)');
   assert.equal(await page.isChecked('#bloodChartsToggle'), false);
   await page.click('#bloodChartsRow .bb-switch');
   assert.equal(await page.evaluate(() => localStorage.getItem('bbBloodOnCharts')), '1');
@@ -306,6 +318,7 @@ console.log('New features sheet');
   assert.equal(await page.evaluate(() => localStorage.getItem('bbBloodOnCharts')), '1');
   await page.click('.bbwn-done');
   await page.evaluate(() => showSettingsModal());
+  await openStatsSettings(page);
   assert.equal(await page.isChecked('#bloodChartsToggle'), true);
   await page.click('#bloodChartsRow .bb-switch');
   assert.equal(await page.evaluate(() => BB.bloodCharts.isOn()), false);
@@ -430,6 +443,7 @@ if (SHOTS) {
       await page.click('#medsHubModal details[data-plan="t:lithium"] summary');
       await shot(page, 'blood-tab-' + tag);
       await page.evaluate(() => { BBMeds.close(); showSettingsModal(); });
+      await openStatsSettings(page);
       await (await page.$('#bloodChartsRow')).scrollIntoViewIfNeeded();
       await shot(page, 'settings-' + tag, '#settingsContent');
       await ctx.close();

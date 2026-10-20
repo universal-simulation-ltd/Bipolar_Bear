@@ -2271,8 +2271,10 @@ James agreed the plan on 2026-10-20. Strings: `blood144.*` in
 `js/shared/i18n-blood.js` and `whatsnew.*` in `js/shared/i18n-whatsnew.js`
 (10 languages, machine translated).
 
-**The Settings tick.** Journal ⚙️ Settings → **🩸 Show blood results on my
-charts** (`#bloodChartsRow`), unticked by default, this device only
+**The Settings tick.** Journal ⚙️ Settings → Advanced → Journal → More, the
+**Stats** page (`#settingsAdvancedMorePanel`; since v360, beside Incognito
+Mode and the stats start date: settings that change stats or exports live
+there) → **🩸 Show blood results on my charts** (`#bloodChartsRow`), unticked by default, this device only
 (`BB.bloodCharts` in `secure-store.js`: `isOn()`, `set(on)`, key
 `bbBloodOnCharts`; `set` fires `bb:bloodcharts`). The first time anyone
 saves a blood result, the Blood levels tab offers it once ("Show this on your

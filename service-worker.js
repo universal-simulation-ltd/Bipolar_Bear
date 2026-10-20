@@ -1776,7 +1776,10 @@
 //   dark mode too (an ON switch stayed brown: html.theme-dark's track rule
 //   had the same specificity as the :checked one and came later).
 //   js/shared/whats-new.js only.
-const CACHE_NAME = 'bipolarbear-v359';
+// v360: Settings → Stats now holds "Show blood results on my charts" (was on
+//   the first Settings page) and Incognito Mode (was in Journal Options),
+//   beside the stats start date. journal.html only.
+const CACHE_NAME = 'bipolarbear-v360';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
