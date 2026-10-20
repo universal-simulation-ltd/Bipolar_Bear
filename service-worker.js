@@ -1803,7 +1803,11 @@
 //   js/shared/native-feel.js, js/shared/i18n.js.
 // v366: version 1.44 (_APP_VERSION in js/shared/brand-config.js), for the
 //   1.44 builds: Bear 1.44 (63), Anonymous 1.42 (49).
-const CACHE_NAME = 'bipolarbear-v366';
+// v367: energy shown against 5 = normal ("5 (Normal)", never "x/10"; the
+//   PDF's 12-month energy chart grows from a line at 5), and "Missed
+//   medication" for a day with one Not taken answer. js/journal.js,
+//   js/shared/i18n.js, js/shared/i18n-meds.js.
+const CACHE_NAME = 'bipolarbear-v367';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

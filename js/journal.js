@@ -3269,6 +3269,24 @@ function _tt(k, vars, fallback) {
     }
     window.retryLoadEntries = retryLoadEntries;
 
+    // Energy is a 0–10 scale with 5 as normal (the middle of the picker:
+    // Not enough · Less than usual · Normal · More than usual · Too much), so it
+    // is never shown as "x/10", which reads as if 10 were the goal (James,
+    // 2026-10-20). The word for a value or an average, without its emoji
+    // (the PDF can't draw emoji), and "5.2 (Normal)".
+    function _energyWord(v) {
+      const n = Number(v);
+      if (!isFinite(n)) return '';
+      const key = n < 1.5 ? 'notEnough' : n < 3.5 ? 'less' : n <= 6.5 ? 'normal' : n < 8.5 ? 'more' : 'tooMuch';
+      return BB.t('journal.energy.' + key).replace(/^[^\p{L}\p{N}]+/u, '').trim();
+    }
+    function _energyStr(v) {
+      const n = Number(v);
+      if (v == null || v === '' || !isFinite(n)) return '-';
+      return `${Number.isInteger(n) ? n : n.toFixed(1)} (${_energyWord(n)})`;
+    }
+    window._energyStr = _energyStr;
+
     function displayStats(entries) {
       const statsContainer = document.getElementById('stats');
       const _statsBlock = document.getElementById('statsAndCalendarBlock');
@@ -3542,7 +3560,7 @@ function _tt(k, vars, fallback) {
         title.textContent = BB.t('journal.stats.energyChart');
         body.innerHTML = sorted.map(e => {
           const d = _bbDate(e.date,{day:'numeric',month:'short'});
-          return row(d, `${e.energy}/10`, e.energy/10, 'var(--brand-primary)');
+          return row(d, _energyStr(e.energy));
         }).join('');
       } else if (type === 'sleep') {
         title.textContent = BB.t('journal.stats.sleepChart');
@@ -3684,7 +3702,7 @@ function _tt(k, vars, fallback) {
       rows.push(`<div style="margin-bottom:6px;"><b>${_lb('mood')}</b> ${_moodLabelNum(entry.mood)}</div>`);
       if (entry.energy != null) {
         const _stepsStr = entry.steps != null ? ` | 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps/1000)+'k' : entry.steps}` : '';
-        rows.push(`<div style="margin-bottom:6px;"><b>${_lb('energy')}</b> ${entry.energy}/10${_stepsStr}</div>`);
+        rows.push(`<div style="margin-bottom:6px;"><b>${_lb('energy')}</b> ${_energyStr(entry.energy)}${_stepsStr}</div>`);
       }
       if (entry.sleep  != null) rows.push(`<div style="margin-bottom:6px;"><b>${_lb('sleep')}</b> ${entry.sleep}h</div>`);
       rows.push(`<div style="margin-bottom:6px;"><b>${_lb('medication')}</b> ${entry.medication === 'not-taken' ? BB.t('journal.med.notTaken') : entry.medication === 'unsure' ? BB.t('journal.med.unsure') : BB.t('journal.med.taken')}</div>`);
@@ -10488,7 +10506,7 @@ function _tt(k, vars, fallback) {
         html += `<div>`;
         if (entry.energy !== undefined) {
           const _stepsStr = entry.steps != null ? ` | 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps/1000)+'k' : entry.steps}` : '';
-          html += _calRow('⚡', _t('journal.label.energy'), `${entry.energy}/10${_stepsStr}`);
+          html += _calRow('⚡', _t('journal.label.energy'), `${_energyStr(entry.energy)}${_stepsStr}`);
         }
         if (entry.sleep  != null) html += _calRow('😴', _t('journal.label.sleep'),  `${entry.sleep}h`);
         if (entry.sleepQuality) html += _calRow(entry.sleepQuality === 'good' ? '😊' : entry.sleepQuality === 'bad' ? '😴' : '😐', _t('journal.label.sleepQuality'), _tVal(entry.sleepQuality));
@@ -10767,7 +10785,7 @@ function _tt(k, vars, fallback) {
           <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;">
             <div class="chart-bar" style="height: ${heightPx}px; background: ${moodColors[_moodCat(entry.mood)]}"
                  title="${BB.t('t143.j.labelColon', { label: BB.t('journal.label.mood') })} ${_moodLabelNum(entry.mood)}
-${BB.t('t143.j.labelColon', { label: BB.t('journal.label.energy') })} ${entry.energy}/10
+${BB.t('t143.j.labelColon', { label: BB.t('journal.label.energy') })} ${_energyStr(entry.energy)}
 ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.sleep') })} ${entry.sleep}h${entry.steps != null ? `\n${BB.t('t143.j.labelColon', { label: BB.t('t143.pdfx.steps') })} ${_bbNum(entry.steps)}` : ''}
 ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken')}"></div>
             <div class="chart-label">${date.getDate()}/${date.getMonth() + 1}</div>
@@ -10914,7 +10932,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
                     <div style="display: flex; flex-direction: column; gap: ${gapSize}px;">
                       ${week.map(day => {
                         const tooltipText = day.entry ?
-                          `${_bbDate(day.date)}: ${_moodLabelNum(day.mood)}\\n${BB.t('journal.label.energy')}: ${day.entry.energy}/10, ${BB.t('journal.label.sleep')}: ${day.entry.sleep}h` :
+                          `${_bbDate(day.date)}: ${_moodLabelNum(day.mood)}\\n${BB.t('journal.label.energy')}: ${_energyStr(day.entry.energy)}, ${BB.t('journal.label.sleep')}: ${day.entry.sleep}h` :
                           _bbDate(day.date);
                         return `
                         <div style="
@@ -11795,7 +11813,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         doc.setFont(undefined, 'normal'); setColor(grey);
         doc.text(BB.t('journal.pdf.avgEnergyLevel'),margin + 4, ly);
         setColor(dark); doc.setFont(undefined, 'bold');
-        doc.text(`${avgEnergyAll}/10`, margin + colW - 4, ly, { align: 'right' });
+        doc.text(_energyStr(avgEnergyAll), margin + colW - 4, ly, { align: 'right' });
         ly += 5;
         
         doc.setFont(undefined, 'normal'); setColor(grey);
@@ -11849,7 +11867,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         doc.setFont(undefined, 'normal'); setColor(grey);
         doc.text(BB.t('journal.pdf.avgEnergyLevel'),col2 + 4, ry);
         setColor(dark); doc.setFont(undefined, 'bold');
-        doc.text(recent.length ? `${avgEnergyRecent}/10` : '-', col2 + colW - 4, ry, { align: 'right' });
+        doc.text(recent.length ? _energyStr(avgEnergyRecent) : '-', col2 + colW - 4, ry, { align: 'right' });
         ry += 5;
         
         doc.setFont(undefined, 'normal'); setColor(grey);
@@ -12164,9 +12182,31 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           doc.text(BB.t('journal.pdf.energyTrends').toUpperCase(), margin + 4, tY);
           setDraw(orange); doc.setLineWidth(0.4);
           doc.line(margin + 4, tY + 1, pageW - margin - 4, tY + 1);
-          tY += 7;
-          const maxEnergy = 10;
-          renderAvgBars(m => m.energies.length ? m.energies.reduce((s,v)=>s+v,0)/m.energies.length : null, maxEnergy, [255,149,0], tY, 18, v => v.toFixed(1));
+          tY += 4;
+          // Bars grow from a line at 5 (normal): up for more energy than
+          // usual, down for less, green while within a point of 5. A tall
+          // bar means far from usual, not better (James, 2026-10-20).
+          doc.setFontSize(5.5); doc.setFont(undefined, 'normal'); setColor(grey);
+          doc.text(BB.t('journal.pdf.energyKey'), margin + 4, tY);
+          tY += 2;
+          const half = 10, mid = tY + half, bW = (chartW / months.length) - 1.5;
+          setDraw([190,190,190]); doc.setLineWidth(0.3);
+          doc.line(chartX, mid, chartX + chartW, mid);
+          months.forEach((m, i) => {
+            const x = chartX + i * (chartW / months.length);
+            if (m.energies.length) {
+              const avg = m.energies.reduce((s,v)=>s+v,0) / m.energies.length;
+              const d = Math.max(-5, Math.min(5, avg - 5));
+              const h = Math.max(0.6, Math.abs(d) / 5 * half);
+              const rgb = Math.abs(d) <= 1 ? [81,207,102] : d > 0 ? [255,149,0] : [132,94,247];
+              setFill(rgb);
+              doc.rect(x, d >= 0 ? mid - h : mid, bW, h, 'F');
+              doc.setFontSize(5); doc.setFont(undefined, 'bold'); setColor(rgb);
+              doc.text(avg.toFixed(1), x + bW / 2, d >= 0 ? mid - h - 1 : mid + h + 2.6, { align: 'center' });
+            }
+            doc.setFontSize(5.5); setColor(grey); doc.setFont(undefined, 'normal');
+            doc.text(m.label, x + bW / 2, mid + half + 4.5, { align: 'center' });
+          });
           y += tH + 4;
         }
 
@@ -12508,7 +12548,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               return cf ? `  ·  ${_pdfCustomLabel(cf)}: ${val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
             }).filter(Boolean).join('');
           const _moodLabel = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
-          const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${entry.energy}/10  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', (entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken')) + (window.BBMeds && BBMeds.entryNote(entry) ? ' (' + BBMeds.entryNote(entry) + ')' : ''))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
+          const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${_energyStr(entry.energy)}  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', (entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken')) + (window.BBMeds && BBMeds.entryNote(entry) ? ' (' + BBMeds.entryNote(entry) + ')' : ''))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
           const detailLines = doc.splitTextToSize(detail, pageW - margin - (dotX + 35));
           doc.text(detailLines, dotX + 35, y);
           y += (detailLines.length - 1) * 4;
@@ -14975,7 +15015,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const bits = [
           `${_moodEmoji(p.mood)} ${_moodCatLabel(p.mood)}`,
           `🛌 ${p.sleep}h`,
-          `⚡ ${p.energy}/10`
+          `⚡ ${_energyStr(p.energy)}`
         ];
         if (p.steps != null) bits.push(`🏃 ${p.steps >= 1000 ? Math.round(p.steps / 1000) + 'k' : p.steps}`);
         return `

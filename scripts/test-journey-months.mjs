@@ -166,6 +166,14 @@ console.log('Your Journey: the 12 month boxes');
   await page.waitForSelector('#monthCalendar .jm-box');
   assert.ok((await boxes(page)).every(x => !x.on));
   ok('a picked month is not kept: a reload starts from today');
+
+  // Energy reads against 5 = normal, never "x/10" (James, 2026-10-20).
+  const en = await page.evaluate(() => [0, 3, 4, 5, 6.6, 7.4, 10, '5.0'].map(v => _energyStr(v)));
+  assert.deepEqual(en, ['0 (Not enough)', '3 (Less than usual)', '4 (Normal)', '5 (Normal)', '6.6 (More than usual)', '7.4 (More than usual)', '10 (Too much)', '5 (Normal)']);
+  await page.evaluate(() => showStatDetail('energy'));
+  const eb = await page.textContent('#statDetailBody');
+  assert.ok(/\(Normal\)/.test(eb) && !/\/10/.test(eb), eb.slice(0, 120));
+  ok('energy reads "5 (Normal)", "7.4 (More than usual)"… against 5 = normal, and the energy list has no "/10"');
   await ctx.close();
 }
 {
