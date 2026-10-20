@@ -2408,6 +2408,50 @@ backup) and `PLAYWRIGHT_MODULE=… node scripts/test-blood-charts.mjs` (23
 checks, with negative controls; `SHOTS=<dir>` also saves screenshots at
 390 px in English and German, light and dark, and the sample PDF).
 
+### 2.26 Native feel on phones (merged v361; stage 3 v364)
+
+`js/shared/native-feel.js` (`BB.nf`), loaded after `platform.js` on index,
+journal, survival kit and anonymous (and in `build-anonymous.js`). On only on
+phones: `html.is-native`, or a coarse pointer at ≤600px; `localStorage.bbNativeFeel`
+`'0'` / `'1'` forces it. It adds `html.nf`. Everything is driven from this one
+file, so the page scripts barely change.
+
+- **List rows** (`BB.nf.rows({row, open, del, actions, hide, undo})`): tap a
+  row to open it, swipe left for actions, a full swipe deletes. The page's own
+  ✏️ / × / ⋯ stay in the DOM for VoiceOver, visually hidden; the actions click
+  them.
+- **Sheets:** every pop-up is a bottom sheet with a grabber at ≤700px. Swipe
+  down clicks the backdrop; failing that the sheet's Cancel / Close / ✕; failing
+  that it springs back. A sheet may set `_nfBack()` (go back a page; true if it
+  did) and `_nfClose()`.
+- **Swipe back** from the left edge (`BB.nf.setBack(fn, can)`; not Android).
+- **Stage 3 (James, 2026-10-20): no tab bar or pushed screens; the buttons
+  open drawers.**
+  - `BB.nf.drawer.open(el, onClose)` / `.close(el)` / `.available()`: a page
+    section becomes a bottom drawer over the page (`.nf-drawer-on`, a
+    backdrop, a grabber + ✕ row, `role="dialog"`). The survival kit's
+    sections use it (`skOpenSection` / `skShowGrid`, `_skDrawer()`); the grid
+    stays put. ✕, the backdrop, a swipe down, Escape, the edge swipe and
+    Android back close it.
+  - Settings (journal): each "→" slides the sheet up again as a new drawer
+    (a MutationObserver on the panels, depth `SET_DEPTH`); back drops the
+    page in from above; a swipe down presses the page's ← Back
+    (`#settingsModal._nfBack`) and only closes on the first page.
+  - The keyboard: while a text box in a sheet or drawer has focus, the sheet
+    sits on the keyboard (`visualViewport`); a textarea makes it full height
+    (`.nf-kb`, `.nf-kb-full`). Android resizes the page itself, so the gap is
+    0 there and nothing moves.
+  - Undo: a rule with `undo` hides the row (`.nf-gone`) behind "Deleted ·
+    Undo" for 5 s, then runs the page's own delete with `window.confirm`
+    answered yes (`undo` as a function runs a custom path: journal entries
+    press `confirmDelete()` behind `.nf-silent`). The next touch elsewhere,
+    another delete, hiding the page or leaving it carries it out first, and
+    that touch is swallowed. On: entries, goals, survival-kit lists,
+    reminders, 💊 My medicines rows, the safety plan. Not the anonymous board
+    (server data; it keeps its confirms).
+- Test: `scripts/test-native-feel.mjs` (headless Chrome over CDP with real
+  touches, 36 checks; it serves and seeds the app itself).
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

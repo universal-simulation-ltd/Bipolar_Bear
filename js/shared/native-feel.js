@@ -22,6 +22,24 @@
  *
  * Plus haptics on switches and on the gestures above. localStorage
  * bbNativeFeel = '0' / '1' forces it off / on (for testing on a desktop).
+ *
+ * Stage 3 (James, 2026-10-20: "the navigation design should stay as is but
+ * could be rebuilt with the buttons opening drawers"). No tab bar, no pushed
+ * screens; the buttons stay where they are and open drawers:
+ *  4. Drawers. BB.nf.drawer.open(el, onClose) turns a page section into a
+ *     bottom drawer over the page (the survival kit's sections), with a
+ *     grabber, ✕, a backdrop, and swipe down to close. In the journal's
+ *     Settings each "→" slides the next page up as a new drawer, and a swipe
+ *     down goes back one page (its own ← Back) instead of closing Settings.
+ *  5. Writing rides the keyboard: a sheet or drawer with a text box in use
+ *     sits on top of the keyboard (visualViewport), and a textarea makes it
+ *     full height, so the whole sheet is a composer.
+ *  6. Undo. A swipe Delete on a list that opts in (rule.undo) hides the row
+ *     behind "Deleted · Undo" for 5 s and only then runs the page's own
+ *     delete, its confirm answered yes. Undo just shows the row again. The
+ *     next touch anywhere else, leaving the page or the app, or another
+ *     delete, carries the pending one out first, and that touch is
+ *     swallowed, so nothing acts on a list about to redraw.
  */
 (function () {
   'use strict';
@@ -111,7 +129,35 @@
     + 'html.nf .thread-close-btn{min-width:44px;min-height:44px}'
     + 'html.nf .like-btn,html.nf .comment-btn{min-height:40px}'
     // Sheets measure against the visible viewport, so the keyboard can't hide a Send button.
-    + 'html.nf .sheet{max-height:90dvh}';
+    + 'html.nf .sheet{max-height:90dvh}'
+    // 4. Drawers (BB.nf.drawer) and Settings' pages opening as new drawers.
+    + '@media (max-width:700px){'
+    +   'html.nf .nf-drawer-on{display:block!important;position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;'
+    +     'margin:0!important;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;z-index:950;box-sizing:border-box;'
+    +     'border-radius:16px 16px 0 0;background:#fff;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px))!important;'
+    +     'box-shadow:0 -6px 30px rgba(0,0,0,.22);animation:nf-up .32s cubic-bezier(.2,.9,.3,1)}'
+    +   'html.theme-dark.nf .nf-drawer-on{background:var(--dk-surface,#262019)}'
+    + '}'
+    + '#nfDrawerBack{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:949;animation:nf-fade .2s ease-out}'
+    + 'html.nf-drawer-lock,html.nf-drawer-lock body{overflow:hidden!important}'
+    // The drawer's top row: the grabber in the middle, ✕ on the right, above
+    // the section's own heading (which may have its own tick on the right).
+    + '.nf-drawer-top{position:sticky;top:-14px;display:grid;grid-template-columns:36px 1fr 36px;align-items:center;margin:-8px -6px 6px;z-index:3}'
+    + '.nf-drawer-grab{justify-self:center;width:36px;height:5px;border-radius:3px;background:rgba(128,128,128,.45)}'
+    + '.nf-drawer-x{grid-column:3;width:36px;height:36px;border:0;border-radius:50%;background:rgba(127,127,127,.16);color:inherit;font-size:16px;line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent}'
+    + '@keyframes nf-back{from{transform:translateY(-14px);opacity:.3}to{transform:none;opacity:1}}'
+    + 'html.nf .nf-back-in{animation:nf-back .24s ease-out}'
+    // 5. A sheet riding the keyboard (transform / max-height set inline).
+    + 'html.nf .nf-kb{transition:transform .18s ease-out;animation:none!important}'
+    + 'html.nf .nf-kb-full{border-radius:14px 14px 0 0!important}'
+    // 6. Undo: the row waits hidden; the bar sits above the dock.
+    + 'html.nf .nf-gone{display:none!important}'
+    + '.nf-silent{visibility:hidden!important}'
+    + '@keyframes nf-snack{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}'
+    + '.nf-snack{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:10050;display:flex;align-items:center;'
+    +   'justify-content:space-between;gap:12px;padding:6px 6px 6px 16px;border-radius:12px;background:#2b2622;color:#fff;'
+    +   'font:500 15px/1.3 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3);animation:nf-snack .22s ease-out;max-width:520px;margin:0 auto}'
+    + '.nf-snack-undo{background:none;border:0;color:#ffb366;font:700 15px/1 inherit;font-family:inherit;padding:0 14px;min-height:44px;cursor:pointer;-webkit-tap-highlight-color:transparent}';
   var styleEl = document.createElement('style');
   styleEl.id = 'nf-style';
   styleEl.textContent = css;
@@ -149,9 +195,21 @@
     return null;
   }
   function actionsFor(m) {
-    if (m.rule.actions) return m.rule.actions(m.row) || [];
-    var del = m.rule.del && m.row.querySelector(m.rule.del);
-    return del ? [{ label: t('common.delete', 'Delete'), kind: 'del', run: function () { del.click(); } }] : [];
+    var acts;
+    if (m.rule.actions) acts = m.rule.actions(m.row) || [];
+    else {
+      var del = m.rule.del && m.row.querySelector(m.rule.del);
+      acts = del ? [{ label: t('common.delete', 'Delete'), kind: 'del', run: function () { del.click(); } }] : [];
+    }
+    // A list that opts in to undo: its Delete waits behind "Deleted · Undo".
+    if (m.rule.undo) {
+      acts = acts.map(function (a) {
+        if (a.kind !== 'del') return a;
+        var commit = typeof m.rule.undo === 'function' ? function () { m.rule.undo(m.row, a.run); } : a.run;
+        return { label: a.label, kind: a.kind, run: function () { deferDelete(m.row, commit); } };
+      });
+    }
+    return acts;
   }
   function layerFor(m) {
     var row = m.row;
@@ -206,6 +264,13 @@
   document.addEventListener('touchstart', function (e) {
     g = null;
     if (e.touches.length !== 1) return;
+    // A delete waiting behind Undo: any other touch carries it out, and this
+    // touch does nothing (the list is about to redraw under it).
+    if (pend && !within(e.target, '.nf-snack')) {
+      flushDelete();
+      swallowUntil = Date.now() + 450;
+      return;
+    }
     var tt = e.touches[0];
     if (openRow && !openRow.isConnected) openRow = null;
     if (openRow && !openRow.contains(e.target)) {
@@ -312,14 +377,21 @@
   document.addEventListener('touchstart', function (e) {
     s = null;
     // A row inside a sheet can start either: rows take sideways moves only, sheets downward ones.
-    if (e.touches.length !== 1) return;
-    var ov = within(e.target, OPEN_SEL);
-    if (!ov || e.target === ov) return;
-    var c = e.target;
-    while (c && c.parentElement !== ov) c = c.parentElement;
-    if (!c) return;
-    if (within(e.target, 'input[type="range"],textarea,select,.bb-switch,[data-nf-nodrag]')) return;
+    if (e.touches.length !== 1 || pend) return;
+    var ov = within(e.target, OPEN_SEL), c;
+    if (ov) {
+      if (e.target === ov) return;
+      c = e.target;
+      while (c && c.parentElement !== ov) c = c.parentElement;
+      if (!c) return;
+    } else {
+      // A drawer is its own sheet: it scrolls itself and closes with _nfClose.
+      ov = c = within(e.target, '.nf-drawer-on');
+      if (!ov) return;
+    }
+    if (within(e.target, 'input,textarea,select,.bb-switch,[data-nf-nodrag]')) return;
     for (var n = e.target; n && n !== ov; n = n.parentElement) if (n.scrollTop > 0) return;
+    if (c === ov && c.scrollTop > 0) return;
     var tt = e.touches[0];
     s = { ov: ov, c: c, x0: tt.clientX, y0: tt.clientY, t0: Date.now(), lock: null, dy: 0 };
   }, { passive: true, capture: true });
@@ -354,6 +426,15 @@
     if (S.lock !== 'y') return;
     var v = S.dy / Math.max(1, Date.now() - S.t0);
     if (S.dy < 110 && v < 0.6) { springBack(S.c); return; }
+    // A sheet with pages (Settings): down goes back one page, not out.
+    if (S.ov._nfBack && S.ov._nfBack()) { haptic(); springBack(S.c); return; }
+    if (S.ov._nfClose) {
+      S.c.style.transition = 'transform .2s ease-in';
+      S.c.style.transform = 'translateY(' + (S.c.offsetHeight + 40) + 'px)';
+      haptic();
+      setTimeout(function () { S.ov._nfClose(); S.c.style.transition = ''; S.c.style.transform = ''; }, 190);
+      return;
+    }
     S.c.style.transition = 'transform .2s ease-in';
     S.c.style.transform = 'translateY(' + (S.c.offsetHeight + 40) + 'px)';
     haptic();
@@ -447,6 +528,220 @@
   // A page restored from the back/forward cache must not come back slid away.
   window.addEventListener('pageshow', function () { var p = page(); if (p) { p.style.transform = ''; p.style.opacity = ''; p.style.boxShadow = ''; } });
 
+  // ── 4. Drawers ───────────────────────────────────────────────────────
+  // A page section opened from a button becomes a bottom drawer over the
+  // page (phones only, up to 700px). The section stays where it is in the
+  // DOM; only its classes change. onClose is the page's own "back" (the
+  // survival kit's skShowGrid), called by ✕, the backdrop and a swipe down.
+  var drawerBack = null, openDrawer = null;
+  function drawerAvailable() {
+    try { return !!window.matchMedia && window.matchMedia('(max-width:700px)').matches; } catch (_) { return false; }
+  }
+  function drawerClose(el) {
+    if (!el || !el.classList.contains('nf-drawer-on')) return;
+    el.classList.remove('nf-drawer-on');
+    if (el._nfTop && el._nfTop.parentNode === el) el.removeChild(el._nfTop);
+    el._nfTop = null; el._nfClose = null;
+    if (el._nfRole === null) el.removeAttribute('role'); else if (el._nfRole !== undefined) el.setAttribute('role', el._nfRole);
+    el.removeAttribute('aria-modal');
+    el.style.transform = ''; el.style.transition = '';
+    if (openDrawer === el) {
+      openDrawer = null;
+      if (drawerBack && drawerBack.parentNode) drawerBack.parentNode.removeChild(drawerBack);
+      html.classList.remove('nf-drawer-lock');
+    }
+  }
+  function drawerOpen(el, onClose) {
+    if (openDrawer && openDrawer !== el) drawerClose(openDrawer);
+    if (!drawerBack) {
+      drawerBack = document.createElement('div');
+      drawerBack.id = 'nfDrawerBack';
+      drawerBack.addEventListener('click', function () { if (openDrawer && openDrawer._nfClose) openDrawer._nfClose(); });
+    }
+    document.body.appendChild(drawerBack);
+    openDrawer = el;
+    el._nfClose = onClose || function () { drawerClose(el); };
+    if (!el._nfTop) {
+      var top = document.createElement('div');
+      top.className = 'nf-drawer-top';
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'nf-drawer-x';
+      x.textContent = '✕';
+      x.setAttribute('aria-label', t('common.close', 'Close'));
+      x.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); if (el._nfClose) el._nfClose(); });
+      var grab = document.createElement('span');
+      grab.className = 'nf-drawer-grab';
+      grab.setAttribute('aria-hidden', 'true');
+      top.appendChild(document.createElement('span'));
+      top.appendChild(grab);
+      top.appendChild(x);
+      el.insertBefore(top, el.firstChild);
+      el._nfTop = top;
+    }
+    el._nfRole = el.hasAttribute('role') ? el.getAttribute('role') : null;
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.classList.add('nf-drawer-on');
+    el.scrollTop = 0;
+    html.classList.add('nf-drawer-lock');
+    try { el._nfTop.firstChild.focus({ preventScroll: true }); } catch (_) {}
+  }
+  api.drawer = { available: drawerAvailable, open: drawerOpen, close: drawerClose };
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && openDrawer && openDrawer._nfClose && !anySheetOpen()) openDrawer._nfClose();
+  });
+
+  // Settings (journal): each "→" opens the next page as a new drawer that
+  // slides up; going back drops the page in from above. A swipe down on a
+  // page past the first presses its ← Back (_nfBack) instead of closing.
+  var SET_DEPTH = { settingsMainPanel: 0, settingsMobilePanel: 1, settingsAchievementsPanel: 1, settingsAdvancedPanel: 2,
+    settingsAdvancedJournalPanel: 3, settingsAdvancedMorePanel: 4, settingsAdvancedMore2Panel: 5 };
+  function settingsPages() {
+    var ov = document.getElementById('settingsModal'), host = document.getElementById('settingsContent');
+    if (!ov || !host) return;
+    var shown = function () {
+      for (var id in SET_DEPTH) {
+        var el = document.getElementById(id);
+        if (el && el.style.display !== 'none') return id;
+      }
+      return null;
+    };
+    var cur = shown();
+    new MutationObserver(function () {
+      var id = shown();
+      if (!id || id === cur) return;
+      var fwd = SET_DEPTH[id] > (SET_DEPTH[cur] || 0);
+      cur = id;
+      if (!ov.classList.contains('active')) return;
+      if (fwd) {
+        // The whole sheet slides up again, like a new drawer opening.
+        host.style.animation = 'none'; void host.offsetWidth; host.style.animation = '';
+        haptic();
+      } else {
+        var el = document.getElementById(id);
+        el.classList.remove('nf-back-in'); void el.offsetWidth; el.classList.add('nf-back-in');
+      }
+    }).observe(host, { attributes: true, attributeFilter: ['style'], subtree: true });
+    ov._nfBack = function () {
+      var id = shown();
+      if (!id || !SET_DEPTH[id]) return false;
+      var b = document.getElementById(id).querySelector('button[data-i18n="common.back"]');
+      if (!b) return false;
+      b.click();
+      return true;
+    };
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', settingsPages); else settingsPages();
+
+  // ── 5. Writing rides the keyboard ────────────────────────────────────
+  // iOS lays the keyboard over the page, so a bottom sheet's text box and
+  // Send button end up under it. While a text box in a sheet or drawer has
+  // focus, the sheet sits on the keyboard (the visual viewport's bottom); a
+  // textarea also makes it full height. Android resizes the page itself, so
+  // there the gap is 0 and nothing changes.
+  var vv = window.visualViewport, kbEl = null;
+  var TYPING = 'textarea,[contenteditable="true"],input:not([type]),input[type="text"],input[type="search"],input[type="email"],input[type="tel"],input[type="url"],input[type="number"],input[type="password"]';
+  function kbHost(el) {
+    var ov = within(el, OPEN_SEL);
+    if (ov) { var c = el; while (c && c.parentElement !== ov) c = c.parentElement; return c; }
+    return within(el, '.nf-drawer-on');
+  }
+  function kbClear() {
+    if (!kbEl) return;
+    kbEl.classList.remove('nf-kb', 'nf-kb-full');
+    kbEl.style.removeProperty('max-height'); kbEl.style.height = ''; kbEl.style.transform = '';
+    kbEl = null;
+  }
+  function kbFit() {
+    if (!kbEl || !vv) return;
+    var gap = window.innerHeight - (vv.offsetTop + vv.height);
+    if (gap < 60) { kbClear(); return; }
+    var full = kbEl._nfFull;
+    kbEl.classList.add('nf-kb');
+    kbEl.classList.toggle('nf-kb-full', !!full);
+    // !important: the sheet CSS caps max-height with !important.
+    kbEl.style.setProperty('max-height', Math.max(160, vv.height - 8) + 'px', 'important');
+    kbEl.style.height = full ? Math.max(160, vv.height - 8) + 'px' : '';
+    kbEl.style.transform = 'translateY(' + (-gap) + 'px)';
+    var f = document.activeElement;
+    if (f && kbEl.contains(f)) { try { f.scrollIntoView({ block: 'nearest' }); } catch (_) {} }
+  }
+  api.kbFit = kbFit;
+  document.addEventListener('focusin', function (e) {
+    var el = e.target;
+    if (!el || !el.matches || !el.matches(TYPING)) return;
+    var h = kbHost(el);
+    if (!h) return;
+    if (kbEl && kbEl !== h) kbClear();
+    kbEl = h;
+    kbEl._nfFull = el.tagName === 'TEXTAREA' || !!el.isContentEditable;
+    kbFit();
+    setTimeout(kbFit, 120); setTimeout(kbFit, 400);
+  }, true);
+  document.addEventListener('focusout', function () {
+    setTimeout(function () {
+      var a = document.activeElement;
+      if (kbEl && !(a && a.matches && a.matches(TYPING) && kbEl.contains(a))) kbClear();
+    }, 150);
+  }, true);
+  if (vv) { vv.addEventListener('resize', kbFit); vv.addEventListener('scroll', kbFit); }
+
+  // ── 6. Undo ──────────────────────────────────────────────────────────
+  var pend = null, snackEl = null;
+  function snackHide() { if (snackEl && snackEl.parentNode) snackEl.parentNode.removeChild(snackEl); }
+  function snackShow(onUndo) {
+    if (!snackEl) {
+      snackEl = document.createElement('div');
+      snackEl.className = 'nf-snack';
+      snackEl.setAttribute('role', 'status');
+    }
+    snackEl.innerHTML = '';
+    var sp = document.createElement('span');
+    sp.textContent = t('common.deleted', 'Deleted');
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'nf-snack-undo';
+    b.textContent = t('common.undo', 'Undo');
+    b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); onUndo(); });
+    snackEl.appendChild(sp); snackEl.appendChild(b);
+    document.body.appendChild(snackEl);
+  }
+  function deferDelete(row, commit) {
+    flushDelete();
+    setRow(row, 0, false);
+    if (row._nfL) row._nfL.classList.remove('nf-armed');
+    if (openRow === row) openRow = null;
+    row.classList.add('nf-gone');
+    var P = pend = { row: row, commit: commit };
+    P.timer = setTimeout(flushDelete, 5000);
+    snackShow(function () {
+      if (pend !== P) return;
+      clearTimeout(P.timer);
+      pend = null;
+      row.classList.remove('nf-gone');
+      snackHide();
+      haptic();
+    });
+  }
+  /** Carry out the delete waiting behind Undo, through the page's own path. */
+  function flushDelete() {
+    if (!pend) return;
+    var P = pend; pend = null;
+    clearTimeout(P.timer);
+    snackHide();
+    var oc = window.confirm;
+    window.confirm = function () { return true; };
+    try { P.commit(); } catch (e) { try { console.warn('[nf] delete', e); } catch (_) {} }
+    finally { window.confirm = oc; }
+    // The page redraws the list without it; if it is still there (the delete
+    // failed, or this list doesn't redraw), show it again.
+    setTimeout(function () { P.row.classList.remove('nf-gone'); }, 1500);
+  }
+  api.flushDelete = flushDelete;
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') flushDelete(); });
+  window.addEventListener('pagehide', flushDelete);
+
   // ── Haptics on switches and tick boxes ───────────────────────────────
   document.addEventListener('change', function (e) {
     if (e.target && e.target.matches && e.target.matches('input[type="checkbox"],input[type="radio"]')) haptic();
@@ -454,15 +749,24 @@
 
   // ── Bipolar Bear's lists ─────────────────────────────────────────────
   // (Bipolar Anonymous registers its posts and replies in js/anonymous.js.)
-  api.rows({ row: '#entries .entry', open: '.edit-btn', del: '.delete-btn' });
-  api.rows({ row: '#goalsList > div', open: 'button[onclick^="editGoal"]', del: 'button[onclick^="deleteGoal"]' });
-  api.rows({ row: '#medInfoList > div', open: 'button[onclick^="editMedication"]', del: 'button[onclick^="deleteMedication"]' });
-  api.rows({ row: '#gratitudeList > div', open: 'button[onclick^="editGratitudeItem"]', del: 'button[onclick^="deleteGratitudeItem"]' });
-  api.rows({ row: '#survivalGoalsList > div', open: 'button[onclick^="editSurvivalGoal"]', del: 'button[onclick^="deleteSurvivalGoal"]' });
-  api.rows({ row: '#memoriesList > div', open: 'button[onclick^="editMemory"]', del: 'button[onclick^="deleteMemory"]' });
-  api.rows({ row: '#copingStrategiesList > div', open: 'button[onclick^="openEditCopingModal"]', del: 'button[onclick^="deleteCopingStrategy"]' });
+  // Journal entries: the delete is the page's confirm sheet; Undo presses its
+  // Delete unseen (.nf-silent) once the 5 s are up.
+  api.rows({ row: '#entries .entry', open: '.edit-btn', del: '.delete-btn',
+    undo: function (row, run) {
+      var m = document.getElementById('confirmModal');
+      if (!m || typeof window.confirmDelete !== 'function') { run(); return; }
+      m.classList.add('nf-silent');
+      run();
+      Promise.resolve(window.confirmDelete()).then(function () { m.classList.remove('nf-silent'); }, function () { m.classList.remove('nf-silent'); });
+    } });
+  api.rows({ row: '#goalsList > div', open: 'button[onclick^="editGoal"]', del: 'button[onclick^="deleteGoal"]', undo: true });
+  api.rows({ row: '#medInfoList > div', open: 'button[onclick^="editMedication"]', del: 'button[onclick^="deleteMedication"]', undo: true });
+  api.rows({ row: '#gratitudeList > div', open: 'button[onclick^="editGratitudeItem"]', del: 'button[onclick^="deleteGratitudeItem"]', undo: true });
+  api.rows({ row: '#survivalGoalsList > div', open: 'button[onclick^="editSurvivalGoal"]', del: 'button[onclick^="deleteSurvivalGoal"]', undo: true });
+  api.rows({ row: '#memoriesList > div', open: 'button[onclick^="editMemory"]', del: 'button[onclick^="deleteMemory"]', undo: true });
+  api.rows({ row: '#copingStrategiesList > div', open: 'button[onclick^="openEditCopingModal"]', del: 'button[onclick^="deleteCopingStrategy"]', undo: true });
   // Reminders: the header opens and closes the reminder, so a tap keeps doing that.
-  api.rows({ row: '#customRemindersContainer .accordion > div:first-child', del: 'button[onclick^="deleteReminder"]', hide: 'button[onclick^="editReminder"]',
+  api.rows({ row: '#customRemindersContainer .accordion > div:first-child', del: 'button[onclick^="deleteReminder"]', hide: 'button[onclick^="editReminder"]', undo: true,
     actions: function (row) {
       var ed = row.querySelector('button[onclick^="editReminder"]'), del = row.querySelector('button[onclick^="deleteReminder"]');
       var a = [];
@@ -473,8 +777,8 @@
   // 💊 My medicines (js/journal-meds.js). Your medicines first (tap to change
   // the name or dose, swipe to remove), then side effects, blood levels and
   // past changes (swipe to delete). Rules match in order, so .meds-cur wins.
-  api.rows({ row: '.meds-cur', open: '.meds-edit', del: '.meds-rm' });
-  api.rows({ row: '.meds-row', del: '.meds-del' });
+  api.rows({ row: '.meds-cur', open: '.meds-edit', del: '.meds-rm', undo: true });
+  api.rows({ row: '.meds-row', del: '.meds-del', undo: true });
   // My safety plan: no edit, so a swipe is the only way to remove an item.
-  api.rows({ row: '.bbsp-list > li', del: '.bbsp-rm' });
+  api.rows({ row: '.bbsp-list > li', del: '.bbsp-rm', undo: true });
 })();

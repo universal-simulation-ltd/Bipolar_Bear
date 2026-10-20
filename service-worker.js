@@ -1792,7 +1792,12 @@
 // v363: Your Journey's last 12 months as boxes under the month calendar; a
 //   tap sets the stats' window (that month + the range's months before).
 //   js/journal.js, css/journal.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v363';
+// v364: native feel stage 3 (James, 2026-10-20: buttons open drawers, no tab
+//   bar): survival-kit sections as drawers, Settings pages slide up as new
+//   drawers (swipe down = back a page), sheets ride the keyboard, swipe
+//   deletes wait behind "Deleted · Undo". js/shared/native-feel.js,
+//   js/survival-kit.js, js/shared/i18n.js (common.deleted / common.undo).
+const CACHE_NAME = 'bipolarbear-v364';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

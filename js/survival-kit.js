@@ -167,11 +167,33 @@ function _skLocale() {
       } catch (_) {}
     }
 
+    // Phones with native feel (js/shared/native-feel.js): a section opens as a
+    // bottom drawer over the grid instead of replacing it (James, 2026-10-20:
+    // "the buttons opening drawers"). ✕, the backdrop, a swipe down, the edge
+    // swipe and Android back all close it with skShowGrid.
+    function _skDrawer() { return !!(window.BB && BB.nf && BB.nf.on && BB.nf.drawer && BB.nf.drawer.available()); }
+
     function skOpenSection(id, opts) {
       opts = opts || {};
       const section = document.getElementById(id);
       const container = document.getElementById('skContainer');
       if (!section || !container || _SK_SECTION_IDS.indexOf(id) === -1) return;
+      if (_skDrawer()) {
+        document.querySelectorAll('.section.sk-open').forEach(s => { if (s !== section) { s.classList.remove('sk-open'); BB.nf.drawer.close(s); } });
+        container.classList.remove('sk-focused');
+        section.classList.add('sk-open');
+        section.classList.remove('collapsed');
+        _skOpenId = id;
+        _skMarkVisited(id);
+        if (id === 'media' && !window._skCelebPhotos) {
+          window._skCelebPhotos = true;
+          try { showCeleb(); } catch (_) {}
+        }
+        if (opts.hash !== false) _skSetHash(id);
+        updateActiveNav();
+        BB.nf.drawer.open(section, () => skShowGrid({ scroll: false }));
+        return;
+      }
       document.querySelectorAll('.section.sk-open').forEach(s => s.classList.remove('sk-open'));
       section.classList.add('sk-open');
       section.classList.remove('collapsed');
@@ -193,7 +215,10 @@ function _skLocale() {
       const container = document.getElementById('skContainer');
       if (!container) return;
       const wasOpen = _skOpenId;
-      document.querySelectorAll('.section.sk-open').forEach(s => s.classList.remove('sk-open'));
+      // A drawer (phones): the grid never moved, so there is nothing to scroll back to.
+      const wasDrawer = !!document.querySelector('.section.nf-drawer-on');
+      document.querySelectorAll('.section.sk-open').forEach(s => { s.classList.remove('sk-open'); if (window.BB && BB.nf && BB.nf.drawer) BB.nf.drawer.close(s); });
+      if (wasDrawer) opts = Object.assign({}, opts, { scroll: false });
       container.classList.remove('sk-focused');
       _skOpenId = null;
       if (opts.hash !== false) _skSetHash('');
