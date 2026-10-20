@@ -11283,6 +11283,45 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
     window._togglePdfChart = _togglePdfChart;
 
+    // ── PDF: progress while the report is made (James, 2026-10-20: "it took a
+    // long time … can we show a loading progress as it's making the pdf").
+    // jsPDF draws on the main thread, so the page can't repaint mid-build:
+    // each step yields a frame (_pdfStep) so the overlay shows where it is.
+    // Also logs each step's time to the console, to find what is slow.
+    let _pdfT0 = 0, _pdfTLast = 0, _pdfTStep = '';
+    function _pdfProgressEls() {
+      return {
+        modal: document.getElementById('pdfProgressModal'),
+        step: document.getElementById('pdfProgressStep'),
+        bar: document.getElementById('pdfProgressBar'),
+        fill: document.getElementById('pdfProgressFill'),
+      };
+    }
+    function _pdfProgressSet(text, fraction) {
+      const el = _pdfProgressEls();
+      if (!el.modal) return;
+      el.modal.classList.add('active');
+      if (text != null && el.step) el.step.textContent = text;
+      const pct = Math.max(0, Math.min(100, Math.round(fraction * 100)));
+      if (el.fill) el.fill.style.width = pct + '%';
+      if (el.bar) el.bar.setAttribute('aria-valuenow', String(pct));
+    }
+    async function _pdfStep(key, fraction) {
+      const now = performance.now();
+      if (!_pdfT0) _pdfT0 = now;
+      if (_pdfTStep) console.log('[BB pdf] ' + _pdfTStep + ': ' + Math.round(now - _pdfTLast) + ' ms');
+      _pdfTStep = key; _pdfTLast = now;
+      _pdfProgressSet(BB.t('pdfprog.' + key), fraction);
+      // Two frames: one to lay the overlay out, one to paint it.
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }
+    function _pdfProgressHide() {
+      if (_pdfTStep) console.log('[BB pdf] ' + _pdfTStep + ': ' + Math.round(performance.now() - _pdfTLast) + ' ms; total ' + Math.round(performance.now() - _pdfT0) + ' ms');
+      _pdfT0 = 0; _pdfTLast = 0; _pdfTStep = '';
+      const el = _pdfProgressEls();
+      if (el.modal) el.modal.classList.remove('active');
+    }
+
     async function _doExportPDF(leftPeriod, rightPeriod, charts, recentEntriesPeriod, leaveOut) {
       if (!charts) charts = { mood: true, sleep: true, energy: true };
       if (!recentEntriesPeriod) recentEntriesPeriod = '30d';
@@ -11291,10 +11330,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const _omitTrackers = new Set(leaveOut.trackers || []);
       const _trackerShown = id => !leaveOut.additional && !_omitTrackers.has(id);
       try {
+        await _pdfStep('preparing', 0.02);
         if (typeof window.jspdf === 'undefined') {
           try { await BB.loadJsPdf(); }
-          catch (e) { alert(BB.t('journal.dlg.pdfLibLoading')); return; }
+          catch (e) { _pdfProgressHide(); alert(BB.t('journal.dlg.pdfLibLoading')); return; }
         }
+        await _pdfStep('loading', 0.06);
 
         // Load ALL entries — and DECRYPT them. On Firestore only userId/timestamp are
         // plaintext; everything else (mood, date, energy, sleep, notes…) lives in an
@@ -11304,7 +11345,17 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const entries = [];
         if (currentUser) {
           const snapshot = await db.collection('entries').where('userId', '==', currentUser.uid).get();
-          const decoded = await Promise.all(snapshot.docs.map(doc => _decodeFirestoreEntry(doc)));
+          // Unlocking each entry is the slow part of a long journal: count it.
+          const _pdfTotal = snapshot.docs.length;
+          let _pdfDone = 0;
+          await _pdfStep('unlocking', 0.1);
+          const decoded = await Promise.all(snapshot.docs.map(doc => _decodeFirestoreEntry(doc).then(e => {
+            _pdfDone++;
+            if (_pdfDone % 25 === 0 || _pdfDone === _pdfTotal) {
+              _pdfProgressSet(BB.t('pdfprog.unlockingN', { done: _pdfDone, total: _pdfTotal }), 0.1 + 0.3 * (_pdfDone / Math.max(1, _pdfTotal)));
+            }
+            return e;
+          })));
           decoded.forEach(e => { if (e) entries.push(e); });
         } else {
           for (let i = 0; i < localStorage.length; i++) {
@@ -11323,7 +11374,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           }
         }
 
-        if (entries.length === 0) { alert(BB.t('journal.dlg.noDataExport')); return; }
+        if (entries.length === 0) { _pdfProgressHide(); alert(BB.t('journal.dlg.noDataExport')); return; }
         entries.sort((a, b) => a.timestamp - b.timestamp);
 
         const { jsPDF } = window.jspdf;
@@ -11336,6 +11387,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             _pdfText = JSON.stringify(entries) + ['personalName','personalAddress','personalDiagnosis','personalEmergencyContact','personalNotes','currentMedList','customTrackingFields','medSideEffects','medBloodLevels','medPastChanges']
               .map(k => localStorage.getItem(k) || '').join(' ');
           } catch (_) {}
+          await _pdfStep('fonts', 0.42);
           await BB.loadPdfFont(doc, _pdfText);
         }
         const pageW = doc.internal.pageSize.width;
@@ -11400,6 +11452,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           return y;
         }
 
+        await _pdfStep('summary', 0.5);
         // ── STATS ──
         const now = Date.now();
         const _filterByPeriod = (arr, period) => {
@@ -11902,6 +11955,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           }
         }
 
+        await _pdfStep('charts', 0.58);
         // ── PAGE 2: TREND CHARTS + PERSONALISED INSIGHTS ──
         const _anyChartOn = charts.mood !== false || charts.sleep !== false || charts.energy !== false || charts.steps !== false || charts.sleepQ !== false || charts.goals !== false || charts.budget !== false;
         if (_anyChartOn) { doc.addPage(); y = margin; }
@@ -12109,6 +12163,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           }
         }
 
+        await _pdfStep('lifeChart', 0.66);
         // ── LIFE CHART (last 90 days, js/journal-insights.js) ──
         // Its own tick in "Leave out of the report" (James, 2026-10-17); it
         // used to come only with the 12-month charts.
@@ -12116,6 +12171,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           y = window.BBInsights.drawLifeChartPdf(doc, entries, { margin, pageW, pageH, y });
         }
 
+        await _pdfStep('medicines', 0.72);
         // ── MEDICINES: taken per medicine, missed doses, side effects, blood
         // levels; then the before / after page (js/journal-meds.js, 1.44).
         // Each has its own "Leave out" tick; both are drawn only with data.
@@ -12126,6 +12182,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           y = BBMeds.drawComparePdf(doc, entries, { margin, pageW, pageH, y });
         }
 
+        await _pdfStep('calendar', 0.8);
         // ── MOOD CALENDAR: the journal's dotted "All" calendar ──
         // One dot per day in weekly columns (Sunday first, like the app), the
         // past year or from the stats start date / first entry when that is
@@ -12246,6 +12303,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           } catch (e) { console.warn('PDF mood calendar skipped', e); }
         }
 
+        await _pdfStep('insights', 0.86);
         // ── PERSONALISED INSIGHTS ──
         {
           const pdfSorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -12303,6 +12361,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           }
         }
 
+        await _pdfStep('entries', 0.9);
         // ── RECENT ENTRIES start on next page ──
         if (recentEntriesPeriod !== 'none') {
         const _recentCutoff = recentEntriesPeriod === 'all' ? 0
@@ -12392,6 +12451,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         });
         } // end recentEntriesPeriod !== 'none'
 
+        await _pdfStep('finishing', 0.96);
         // ── FOOTER on every page ──
         const totalPages = doc.internal.getNumberOfPages();
         for (let p = 1; p <= totalPages; p++) {
@@ -12406,6 +12466,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         }
 
         // Save
+        await _pdfStep('saving', 1);
         const filename = `bipolarbear-${new Date().toISOString().split('T')[0]}.pdf`;
         
         // Native app (Capacitor)
@@ -12416,6 +12477,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
             
             if (Filesystem) {
               const pdfData = doc.output('datauristring').split(',')[1]; // Get base64
+              _pdfProgressHide();
               
               const result = await Filesystem.writeFile({
                 path: filename,
@@ -12437,6 +12499,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
                 alert(BB.t('journal.dlg.pdfSavedDocs') + filename);
               }
             } else {
+              _pdfProgressHide();
               alert(BB.t('journal.dlg.pdfFsPluginNA'));
             }
           } catch (nativeError) {
@@ -12448,6 +12511,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         else if (/Android|webOS|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
           try {
             const blob = doc.output('blob');
+            _pdfProgressHide();
             const url = URL.createObjectURL(blob);
             
             // Try to open in new tab (works better on mobile)
@@ -12477,13 +12541,17 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           }
         } else {
           // Desktop
+          _pdfProgressHide();
           doc.save(filename);
           console.log('PDF saved:', filename);
           alert(BB.t('journal.dlg.pdfReportDownloaded'));
         }
       } catch (error) {
         console.error('Error exporting PDF:', error);
+        _pdfProgressHide();
         alert(BB.t('journal.dlg.pdfExportFail') + error.message);
+      } finally {
+        _pdfProgressHide();
       }
     }
 

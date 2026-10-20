@@ -1755,7 +1755,11 @@
 //   (signin144.*, 10 languages). Privacy §6 names Apple and Google. Touches
 //   fab.js, css/dark.css, index.html, journal.html, survival-kit.html,
 //   privacy.html, functions/index.js. The apps need 1.44 (BBSignIn plugin).
-const CACHE_NAME = 'bipolarbear-v356';
+// v357: a progress overlay while the PDF report is made (step, bar, the
+//   entries being unlocked counted), with each step's time in the console.
+//   js/shared/i18n-pdfprog.js (BB.i18n.extend), 10 languages. Touches
+//   journal.js, journal.html, css/journal.css.
+const CACHE_NAME = 'bipolarbear-v357';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1792,6 +1796,7 @@ const STATIC_ASSETS = [
   './js/shared/i18n.js',
   './js/shared/i18n-meds.js',
   './js/shared/i18n-signin.js',
+  './js/shared/i18n-pdfprog.js',
   './js/shared/crisis.js',
   './js/shared/safety-plan.js',
   './js/shared/translate.js',

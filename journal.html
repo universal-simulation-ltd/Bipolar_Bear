@@ -31,6 +31,7 @@
   <script src="js/shared/i18n.js"></script>
   <script src="js/shared/i18n-meds.js"></script>
   <script src="js/shared/i18n-signin.js"></script>
+  <script src="js/shared/i18n-pdfprog.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
@@ -798,6 +799,17 @@
         <button class="confirm-btn confirm-btn-no" data-i18n="common.cancel" onclick="document.getElementById('pdfExportModal').classList.remove('active')">Cancel</button>
         <button class="confirm-btn confirm-btn-yes" style="background:var(--brand-btn);border-color:transparent;color:white;" onclick="document.getElementById('pdfExportModal').classList.remove('active');_doExportPDF(document.getElementById('pdfLeftPeriod').value,document.getElementById('pdfRightPeriod').value,{mood:document.getElementById('pdfChartMood').dataset.on==='1',sleep:document.getElementById('pdfChartSleep').dataset.on==='1',energy:document.getElementById('pdfChartEnergy').dataset.on==='1',steps:document.getElementById('pdfChartSteps').dataset.on==='1'&&document.getElementById('pdfChartSteps').style.display!=='none',sleepQ:document.getElementById('pdfChartSleepQ').dataset.on==='1'&&document.getElementById('pdfChartSleepQ').style.display!=='none',goals:document.getElementById('pdfChartGoals').dataset.on==='1'&&document.getElementById('pdfChartGoals').style.display!=='none',budget:document.getElementById('pdfChartBudget').dataset.on==='1'&&document.getElementById('pdfChartBudget').style.display!=='none'},document.getElementById('pdfRecentEntries').value,_pdfLeaveOutFromSheet())" data-i18n="t143.pdfx.generate">Generate PDF</button>
       </div>
+    </div>
+  </div>
+
+  <!-- PDF progress (journal.js _pdfStep, 2026-10-20): shown while the report is made. -->
+  <div class="confirm-modal" id="pdfProgressModal" role="dialog" aria-modal="true" aria-labelledby="pdfProgressTitle" aria-describedby="pdfProgressStep">
+    <div class="confirm-content pdf-progress" style="max-width:320px;">
+      <div class="pdf-progress-spin" aria-hidden="true"></div>
+      <h3 id="pdfProgressTitle" data-i18n="pdfprog.title">Making your PDF…</h3>
+      <p id="pdfProgressStep" class="pdf-progress-step" aria-live="polite"></p>
+      <div id="pdfProgressBar" class="pdf-progress-track" role="progressbar" aria-labelledby="pdfProgressTitle" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="pdfProgressFill" class="pdf-progress-fill"></div></div>
+      <p class="pdf-progress-note" data-i18n="pdfprog.note">A long journal can take a little while. Please keep the app open.</p>
     </div>
   </div>
 
