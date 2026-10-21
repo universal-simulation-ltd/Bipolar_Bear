@@ -235,6 +235,10 @@ html.theme-dark .fm-hero-badge,
 html.theme-dark .step-hero-badge { background: rgba(81,207,102,0.14); color: #8ce99a; border-color: rgba(81,207,102,0.4); }
 html.theme-dark .fm-hero-badge.guess { background: rgba(255,149,0,0.12); border-color: rgba(255,149,0,0.4); }
 html.theme-dark .fm-wheel-btn { background: var(--dk-surface-2); color: var(--dk-text-2); }
+/* Runway (spacer) pills stay invisible: the rule above outranks journal.css's
+   transparent background, which left an empty dark pill on the medication
+   and sleep-quality wheels. */
+html.theme-dark .fm-wheel-btn.fm-wheel-runway { background: transparent; }
 html.theme-dark .fm-wheel-btn.fm-wheel-runway.sel { color: var(--dk-text-2); }
 html.theme-dark #fmContent .mood-btn { background: rgba(255,255,255,0.05); box-shadow: none; }
 /* The mood wash over the page: quieter on dark so it tints rather than glows. */
