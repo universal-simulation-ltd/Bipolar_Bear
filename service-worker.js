@@ -1827,7 +1827,10 @@
 // v373: auto-fill from health asks "Fill in the rest" (mood, medication,
 //   trackers) before saving, one day or many (js/journal.js, journal.html,
 //   i18n); the review step puts the bear beside the mood and date.
-const CACHE_NAME = 'bipolarbear-v373';
+// v374: board admin delete / pin / publish refresh the sign-in token first and
+//   say when the server refuses, instead of "Post deleted" with the post still
+//   there (js/anonymous.js, i18n).
+const CACHE_NAME = 'bipolarbear-v374';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

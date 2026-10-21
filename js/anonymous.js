@@ -376,6 +376,22 @@ function _ensureAuthSession() {
   return _anonAuthPromise;
 }
 
+// Before an admin write: a session, with a fresh ID token. The rules check the
+// token's email, and boot's user.reload() refreshes only the profile the app
+// reads — so after the account's email was synced (uidSignIn) the app could
+// show admin tools while the token still carried the old address, and every
+// delete was refused (James, 2026-10-21).
+async function _adminSession() {
+  await _ensureAuthSession();
+  const u = typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser;
+  if (u && !u.isAnonymous) await u.getIdToken(true).catch(() => {});
+}
+
+/** The toast for a failed admin write: refused by the rules, or anything else. */
+function _adminFailKey(err) {
+  return err && err.code === 'permission-denied' ? 'anon.toast.adminRefused' : 'anon.toast.adminActionFailed';
+}
+
 // The Firebase uid of this session (anonymous or BipolarBear account), or null.
 function _authUid() {
   try {
@@ -4751,7 +4767,7 @@ async function approveSuggestion(id) {
   const x = suggestions.find(s => s.id === id);
   if (!x || !db || !profile.isAdmin) return;
   try {
-    await _ensureAuthSession();
+    await _adminSession();
     const _aref = db.collection(BB_BRAND.collections.posts).doc();
     await _aref.set(await _withOwner(_aref.path, {
       name:        x.name,
@@ -4784,7 +4800,7 @@ async function approveSuggestion(id) {
 async function rejectSuggestion(id) {
   if (!db || !profile.isAdmin) return;
   try {
-    await _ensureAuthSession();
+    await _adminSession();
     await db.collection(BB_BRAND.collections.annSuggestions).doc(id).update({
       status:     'rejected',
       reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -4949,16 +4965,19 @@ function closeThread() {
 // Hard-delete a comment from a thread (self-remove or admin-remove) and keep
 // the parent post's commentCount in step. The open thread's snapshot listener
 // drops the comment from the list on the next tick.
-function deleteComment(parentId, commentId, opts) {
+async function deleteComment(parentId, commentId, opts) {
   const admin = !!(opts && opts.admin);
   if (!db || !parentId || !commentId) return;
   const postRef = db.collection(BB_BRAND.collections.posts).doc(parentId);
-  postRef.collection('comments').doc(commentId).delete()
-    .then(() => postRef.update({
-      commentCount: firebase.firestore.FieldValue.increment(-1),
-    }).catch(() => {}))
-    .catch(err => console.error('[Thread] comment delete failed', err));
-  showHint(_wt(admin ? 'anon.misc.commentDeleted' : 'anon.misc.commentRemoved'));
+  try {
+    if (admin) await _adminSession();
+    await postRef.collection('comments').doc(commentId).delete();
+    postRef.update({ commentCount: firebase.firestore.FieldValue.increment(-1) }).catch(() => {});
+    showHint(_wt(admin ? 'anon.misc.commentDeleted' : 'anon.misc.commentRemoved'));
+  } catch (err) {
+    console.error('[Thread] comment delete failed', err);
+    showHint(_wt(admin ? _adminFailKey(err) : 'anon.toast.adminActionFailed'));
+  }
 }
 
 // The self-delete / admin-delete overlays are shared between feed posts and
@@ -5312,6 +5331,7 @@ async function handlePin(postId, tab) {
   const isPinned = !!post.pinned;
 
   try {
+    await _adminSession();
     if (!isPinned) {
       // Unpin any existing pinned post in this tab first (one pin per tab)
       const existing = await db.collection(BB_BRAND.collections.posts)
@@ -5329,7 +5349,7 @@ async function handlePin(postId, tab) {
     }
   } catch (e) {
     console.error('[Admin] pin failed', e);
-    showHint(_wt('anon.toast.pinFailed'));
+    showHint(_wt(e && e.code === 'permission-denied' ? 'anon.toast.adminRefused' : 'anon.toast.pinFailed'));
   }
 }
 
@@ -6374,14 +6394,22 @@ function setupOverlayActions() {
 // ─────────────────────────────────────────────────────────────────
 // Admin: delete post
 // ─────────────────────────────────────────────────────────────────
-function adminDeletePost(id) {
+// Says "deleted" only once the server has taken it: a refused write used to
+// show the toast anyway and leave the post where it was.
+async function adminDeletePost(id) {
   if (!db || !id) return;
-  db.collection(BB_BRAND.collections.posts).doc(id).update({
-    deleted: true,
-    deletedByAdmin: true,
-    deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
-  }).catch(err => console.error('[Admin] delete failed', err));
-  showHint(_wt('anon.toast.postDeleted'));
+  try {
+    await _adminSession();
+    await db.collection(BB_BRAND.collections.posts).doc(id).update({
+      deleted: true,
+      deletedByAdmin: true,
+      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showHint(_wt('anon.toast.postDeleted'));
+  } catch (err) {
+    console.error('[Admin] delete failed', err);
+    showHint(_wt(_adminFailKey(err)));
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
