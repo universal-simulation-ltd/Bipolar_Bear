@@ -5731,6 +5731,10 @@ function _tt(k, vars, fallback) {
 
     function _fmIsTracking(key, legacy) {
       if (_editFieldOverrides !== null) return !!_editFieldOverrides[key];
+      return _trackingPref(key, legacy);
+    }
+    /** The saved tracking switch, ignoring any per-entry edit overrides. */
+    function _trackingPref(key, legacy) {
       if (localStorage.getItem(key) !== null) return localStorage.getItem(key) === 'true';
       if (legacy) return localStorage.getItem(legacy) === 'true';
       return key === 'trackBudget'; // trackBudget on by default
@@ -6453,6 +6457,7 @@ function _tt(k, vars, fallback) {
       _fmDayFillBusy       = false;
       _fmDayFillMsg        = null;
       _fmDayFillSnapshot   = null;
+      if (_afAsk && _afAsk.where === 'day') _afAsk = null;
       _fmClearExitedView();
       const _rsO = document.getElementById('fmResumeSection');
       if (_rsO) _rsO.style.display = 'none';
@@ -6950,8 +6955,15 @@ function _tt(k, vars, fallback) {
       const _freshFirstStep = _fmStepIndex === 0 && _fmHighWater === 0;
       document.getElementById('focusedModeCard').classList.toggle('fm-fresh-first', _freshFirstStep);
       // Title / subtitle / eyebrow
-      document.getElementById('fmTitle').textContent    = (step.id === 'mood' && _fmLinkMoodPickerOpen) ? _fmAlsoTitle() : step.title;
-      document.getElementById('fmSubtitle').textContent = step.subtitle || '';
+      const _dayFillAsk = step.id === 'mood' && _afAsk && _afAsk.where === 'day';
+      document.getElementById('fmTitle').textContent    = _dayFillAsk ? BB.t('journal.autofill.askTitle')
+        : (step.id === 'mood' && _fmLinkMoodPickerOpen) ? _fmAlsoTitle() : step.title;
+      document.getElementById('fmSubtitle').textContent = _dayFillAsk ? BB.t('journal.autofill.askSub') : (step.subtitle || '');
+      // Review step: no "Ready to save" / "Your entry at a glance" on screen —
+      // the bear row says it, and the list gets the room (James, 2026-10-21).
+      // The title stays for VoiceOver.
+      document.getElementById('fmTitle').classList.toggle('sr-only', step.id === 'done');
+      document.getElementById('fmSubtitle').style.display = step.id === 'done' ? 'none' : '';
       const _eyebrowEl = document.getElementById('fmEyebrow');
       if (_eyebrowEl) {
         const _eb = _FM_EYEBROWS[step.id] && !(step.id === 'sleep' && _sleepNotYet()) ? _FM_EYEBROWS[step.id]() : '';
@@ -7379,13 +7391,144 @@ function _tt(k, vars, fallback) {
       return s < 1000 ? 0 : s < 3000 ? 3 : s < 10000 ? 5 : s < 20000 ? 7 : 10;
     }
 
+    // ── "Fill in the rest": asked after Health has filled sleep and steps ──
+    /*
+     * Health only knows sleep and steps. Before an auto-filled entry is saved —
+     * one day from focus mode, or several from the missing-days auto-complete —
+     * the user says what the rest should be (James, 2026-10-21): the mood, with
+     * Health's guess picked and marked when the mood suggestion is switched on;
+     * the medication answer; and each tracker they have switched on. Anything
+     * left blank stays blank. One state object serves both flows, and `where`
+     * says which one is showing it.
+     */
+    let _afAsk = null; // { where:'day'|'bulk', mood, perDay, suggested, showMed, med, rows, ans }
+
+    function _afSuggestionOn() { return localStorage.getItem('showMoodSuggestion') === '1'; }
+
+    /** The trackers the journal asks about, in the more_data step's order. */
+    function _afAskRows() {
+      if (_getDisabledSteps().includes('more_data')) return [];
+      const del = JSON.parse(localStorage.getItem('deletedBuiltinFields') || '[]');
+      const vY = BB.t('journal.value.yes'), vN = BB.t('journal.value.no'), vTrack = BB.t('journal.value.onTrack');
+      const lvl = (hi, mid, lo, e) => [
+        { v: hi,  l: (e || '😰') + ' ' + BB.t('journal.value.moreThanUsual') },
+        { v: mid, l: '😐 ' + BB.t('journal.value.normal') },
+        { v: lo,  l: '😌 ' + BB.t('journal.value.lessThanUsual') }];
+      const rows = [];
+      const add = (key, label, opts) => rows.push({ key, label, opts });
+      if (_trackingPref('trackGoals'))
+        add('goals', BB.t('journal.q.goalProgress'), [{ v: 'none', l: '❌ ' + vN }, { v: 'some', l: '✅ ' + vTrack }]);
+      if (_trackingPref('trackBudget'))
+        add('budget', BB.t('journal.q.keptBudget'), [{ v: 'no', l: '❌ ' + BB.t('t143.j.over') }, { v: 'yes', l: '✅ ' + vTrack }]);
+      if (_trackingPref('trackExercise') && !del.includes('trackExercise'))
+        add('exercise', BB.t('journal.q.exercise'), [{ v: 'no', l: '🛋️ ' + vN }, { v: 'yes', l: '🏋️ ' + vY }]);
+      if (_trackingPref('trackOutside') && !del.includes('trackOutside'))
+        add('outside', BB.t('journal.q.outside'), [{ v: 'no', l: '🏠 ' + vN }, { v: 'yes', l: '🌤️ ' + vY }]);
+      if (_trackingPref('trackAnxiety', 'trackEmotions') && !del.includes('trackAnxiety')) {
+        add('anxiety', BB.t('journal.q.anxiety'), lvl('high', 'medium', 'low'));
+        add('stress', BB.t('journal.q.stress'), lvl('high', 'medium', 'low'));
+        add('irritability', BB.t('journal.q.irritability'), lvl('yes', 'medium', 'no', '😤'));
+      }
+      if (_trackingPref('trackAlcohol') && !del.includes('trackAlcohol'))
+        add('alcohol', _getBuiltinFieldLabel('trackAlcohol', BB.t('journal.q.alcohol')), [{ v: 'yes', l: '🍺 ' + vY }, { v: 'no', l: '✅ ' + vN }]);
+      try {
+        getCustomFields().forEach(f => {
+          if (!_trackingPref(`trackCustom_${f.id}`)) return;
+          const no  = { v: 'no',  l: `${f.positive === 'no' ? '✅' : '✗'} ${vN}` };
+          const yes = { v: 'yes', l: `${f.positive === 'no' && f.emoji ? f.emoji : '✅'} ${vY}` };
+          add('custom:' + f.id, `${f.emoji || '📝'} ${f.label}`, f.positive === 'no' ? [yes, no] : [no, yes]);
+        });
+      } catch (e) {}
+      return rows;
+    }
+
+    /** A tracker's answer on the form being filled (get), or set it. */
+    function _afField(key, v) {
+      const set = v !== undefined;
+      if (key.startsWith('custom:')) {
+        const id = key.slice(7);
+        if (set) { if (v) selectedCustom[id] = v; else delete selectedCustom[id]; }
+        return selectedCustom[id] || null;
+      }
+      switch (key) {
+        case 'goals':        if (set) selectedGoals = v;        return selectedGoals;
+        case 'budget':       if (set) selectedBudget = v;       return selectedBudget;
+        case 'exercise':     if (set) selectedExercise = v;     return selectedExercise;
+        case 'outside':      if (set) selectedOutside = v;      return selectedOutside;
+        case 'anxiety':      if (set) selectedAnxiety = v;      return selectedAnxiety;
+        case 'stress':       if (set) selectedStress = v;       return selectedStress;
+        case 'irritability': if (set) selectedIrritability = v; return selectedIrritability;
+        case 'alcohol':      if (set) selectedAlcohol = v;      return selectedAlcohol;
+      }
+      return null;
+    }
+
+    function _afAskReady() { return !!(_afAsk && (_afAsk.mood || _afAsk.perDay)); }
+
+    /** The questions only; each flow puts its own buttons under them. */
+    function _afAskHtml() {
+      const a = _afAsk;
+      if (!a) return '';
+      const pill = (sel, onclick, html) => `<button type="button" aria-pressed="${sel}" onclick="${onclick}" style="flex:1;min-width:0;padding:8px 4px;border:1.5px solid ${sel ? 'var(--brand-primary)' : '#dee2e6'};border-radius:10px;background:${sel ? 'var(--brand-tint,#fff6ec)' : 'white'};color:${sel ? '#212529' : '#6c757d'};font-size:0.82em;font-weight:${sel ? '600' : '400'};cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:center;line-height:1.3;">${html}</button>`;
+      const head = t => `<div style="font-size:0.78em;font-weight:700;color:var(--text-muted-ink);text-transform:uppercase;letter-spacing:0.05em;margin:0 0 7px;">${t}</div>`;
+      const row = html => `<div style="display:flex;gap:6px;margin-bottom:14px;">${html}</div>`;
+
+      const tagged = a.suggested && _afSuggestionOn();
+      let html = head(_esc(BB.t('journal.label.mood')));
+      if (a.where === 'bulk' && _afSuggestionOn())
+        html += row(pill(a.perDay, "_afAskPick('mood','perDay')", _esc(BB.t('journal.autofill.askPerDay'))));
+      html += row(['manic', 'elevated', 'stable', 'low', 'depressed'].map(m => pill(!a.perDay && a.mood === m, `_afAskPick('mood','${m}')`,
+        `<img src="images/moods/${m}.png" alt="" style="width:28px;height:28px;display:block;margin:0 auto 3px;">${_esc(_moodCatLabel(m))}` +
+        (tagged && a.suggested === m ? `<span style="display:block;font-size:0.82em;font-weight:700;color:var(--brand-ink);margin-top:2px;">${_esc(BB.t('journal.autofill.askSuggested'))}</span>` : ''))).join(''));
+
+      if (a.showMed) {
+        html += head(_esc(BB.t('journal.label.medication')));
+        html += row([['not-taken', 'journal.med.notTaken'], ['unsure', 'journal.med.unsure'], ['taken', 'journal.med.taken']]
+          .map(([v, k]) => pill(a.med === v, `_afAskPick('med','${v}')`, _esc(BB.t(k)))).join(''));
+      }
+
+      if (a.rows.length) {
+        html += head(_esc(BB.t('journal.fm.moreDataTitle')));
+        a.rows.forEach((r, i) => {
+          html += `<div style="font-size:0.88em;font-weight:600;color:#495057;margin:0 0 6px;">${_esc(r.label)}</div>`;
+          html += row(r.opts.map((o, j) => pill(a.ans[r.key] === o.v, `_afAskPick(${i},${j})`, _esc(o.l))).join(''));
+        });
+      }
+      if (a.showMed || a.rows.length)
+        html += `<p style="font-size:0.78em;color:var(--text-muted-ink);line-height:1.45;margin:0 0 4px;">${_esc(BB.t('journal.autofill.askClear'))}</p>`;
+      return html;
+    }
+
+    /** Mood is required (tapping it again keeps it); everything else toggles off. */
+    function _afAskPick(what, val) {
+      const a = _afAsk;
+      if (!a) return;
+      if (what === 'mood') {
+        a.perDay = val === 'perDay';
+        a.mood = a.perDay ? null : val;
+      } else if (what === 'med') {
+        a.med = a.med === val ? null : val;
+      } else {
+        const r = a.rows[what], o = r && r.opts[val];
+        if (!o) return;
+        a.ans[r.key] = a.ans[r.key] === o.v ? null : o.v;
+      }
+      const body = document.getElementById('afAskBody-' + a.where);
+      if (body) body.innerHTML = _afAskHtml();
+      if (a.where === 'bulk') { _updateAutoFillBtn(); return; }
+      const go = document.getElementById('afAskGo-day');
+      if (go) { go.disabled = !_afAskReady(); go.style.opacity = go.disabled ? '0.5' : ''; }
+    }
+    window._afAskPick = _afAskPick;
+
     // ── One-tap auto-fill for yesterday (focused mode, first step) ──────────
     /*
      * The missing-days auto-complete fills gaps in bulk from the missing-entries
      * modal. This is the same idea for the one day the journal is actually
      * pointed at: a button on the mood step that reads yesterday's sleep and
-     * steps from the phone's health app, derives mood and energy from them with
-     * the same rules (_suggestMoodFromHealth / _energyFromSteps), and drops the
+     * steps from the phone's health app, derives energy and a suggested mood
+     * from them with the same rules (_suggestMoodFromHealth / _energyFromSteps),
+     * asks what the rest should be ("Fill in the rest", above), and drops the
      * user on the summary step to review and save.
      *
      * Offered only where there is health data to fill from — native build,
@@ -7469,24 +7612,73 @@ function _tt(k, vars, fallback) {
         return;
       }
 
+      // Nothing is set yet: "Fill in the rest" asks first, and only
+      // _fmDayFillApply writes to the form.
       const cat = _suggestMoodFromHealth(steps, sleepH) || 'stable';
-      selectedMood = _spectrumEnabled() ? _FM_SPECTRUM_FOR_CAT[cat] : cat;
+      const cur = (selectedMood != null && selectedMood !== '') ? _moodCat(selectedMood) : null;
+      const rows = _afAskRows();
+      _afAsk = {
+        where: 'day', steps, sleepH, suggested: cat, perDay: false,
+        mood: _afSuggestionOn() ? cat : (cur === 'good' ? 'stable' : cur),
+        showMed: !_getDisabledSteps().includes('medication'),
+        med: selectedMedication || null,
+        rows, ans: Object.fromEntries(rows.map(r => [r.key, _afField(r.key)]))
+      };
+      nativeHaptic('success');
+      _renderFocusedStep();
+      const card = document.getElementById('focusedModeCard');
+      if (card) card.scrollTop = 0;
+    }
+    window._fmAutoFillDay = _fmAutoFillDay;
+
+    /** The "Fill in the rest" page, shown in place of the mood step. */
+    function _fmDayFillAskHtml() {
+      const a = _afAsk;
+      const got = [];
+      if (a.sleepH != null) got.push(`🛌 ${a.sleepH}h`);
+      if (a.steps != null) got.push(`🏃 ${BB.t('journal.sync.steps', { n: a.steps })}`, `⚡ ${_energyStr(_energyFromSteps(a.steps))}`);
+      const ready = _afAskReady();
+      return `<div style="text-align:left;">
+          <div style="background:var(--brand-tint,#fff6ec);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:16px;font-size:0.85em;color:#495057;line-height:1.45;">
+            <b>${_esc(BB.t('journal.autofill.fromHealth'))}</b><br>${_esc(got.join(' · '))}
+          </div>
+          <div id="afAskBody-day">${_afAskHtml()}</div>
+          <div style="display:flex;gap:10px;margin-top:12px;">
+            <button type="button" onclick="_fmDayFillAskBack()" style="flex:1;padding:12px;background:white;border:1.5px solid #dee2e6;border-radius:14px;color:#495057;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_esc(BB.t('common.back'))}</button>
+            <button type="button" id="afAskGo-day" onclick="_fmDayFillApply()" ${ready ? '' : 'disabled'} style="flex:2;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:0.95em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;${ready ? '' : 'opacity:0.5;'}">${_esc(BB.t('journal.autofill.askReview'))}</button>
+          </div>
+        </div>`;
+    }
+
+    function _fmDayFillAskBack() {
+      _afAsk = null;
+      _renderFocusedStep();
+    }
+    window._fmDayFillAskBack = _fmDayFillAskBack;
+
+    /** Writes Health's values and the answers to the form, then the summary. */
+    function _fmDayFillApply() {
+      const a = _afAsk;
+      if (!a || a.where !== 'day' || !_afAskReady()) return;
+      selectedMood = _spectrumEnabled() ? _FM_SPECTRUM_FOR_CAT[a.mood] : a.mood;
       selectedLinkedMoods = [];
-      if (steps != null) {
-        selectedEnergy  = _energyFromSteps(steps);
+      if (a.steps != null) {
+        selectedEnergy  = _energyFromSteps(a.steps);
         _fmEnergyClear  = false;
       }
-      if (sleepH != null) {
-        selectedSleep      = sleepH;
+      if (a.sleepH != null) {
+        selectedSleep      = a.sleepH;
         _fmSleepClear      = false;
         _sleepHealthSynced = true;
       }
+      if (a.showMed) _medSetAnswer(a.med);
+      a.rows.forEach(r => _afField(r.key, a.ans[r.key] || null));
       _fmDayFillSnapshot = { mood: selectedMood, energy: selectedEnergy, sleep: selectedSleep };
-      nativeHaptic('success');
+      _afAsk = null;
       scheduleDraftSave();
       _fmGoToDone();
     }
-    window._fmAutoFillDay = _fmAutoFillDay;
+    window._fmDayFillApply = _fmDayFillApply;
 
     // ── Regular (full) form: synced badge on the energy + sleep steps ──
     // The big floating emoji + value readout were removed by request; the step
@@ -7538,6 +7730,7 @@ function _tt(k, vars, fallback) {
       const cap = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : '';
       switch (step.id) {
         case 'mood': {
+          if (_afAsk && _afAsk.where === 'day') return _fmDayFillAskHtml();
           const _chooseMoodHintDone = BB.storage.get('_fmChooseMoodHintDone') === '1';
           const _showChooseMoodHint = !_chooseMoodHintDone && !editingEntry;
           const _showFmTip = !BB.storage.get('_fmMoodTipShown') && _chooseMoodHintDone && BB.storage.get('_fmTapHoldHintReady') === '1';
@@ -8379,15 +8572,19 @@ function _tt(k, vars, fallback) {
           const _dayFillNote = _fmDayFillIntact()
             ? `<div style="background:var(--brand-tint,#fff6ec);border:1px solid rgba(255,149,0,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:0.82em;color:var(--text-muted-ink);line-height:1.45;text-align:left;">${BB.t('journal.autofill.dayReview')}</div>`
             : '';
-          // Bear hero: the chosen mood shown big, instead of as a summary row.
-          // Other moods felt that day: a smaller line under the main one.
-          const _linkedHero = _fmAlsoMoodsLine(26);
+          // Bear row: the chosen mood's bear on the left; the mood, any other
+          // moods felt that day and the date on the right, so the list below
+          // gets the height (James, 2026-10-21).
+          const _linkedHero = _fmAlsoMoodsLine(22);
           const _doneAura = _FM_AURAS[_moodCat(selectedMood)] || '';
-          const _heroHtml = `<div class="fm-hero">
+          const _heroHtml = `<div class="fm-hero fm-hero-row">
               <div class="fm-hero-emoji-wrap">${_fmSparksHtml()}<div class="fm-aura" data-type="${_doneAura}">${_AURA_HTML[_doneAura] || ''}</div>
                 <div class="fm-hero-emoji"><img src="${_moodImg(selectedMood)}" alt=""></div>
               </div>
-              <div class="fm-hero-value" style="color:${_fmMoodInk(_moodCat(selectedMood))};">${_moodLabelNum(selectedMood)}</div>${_linkedHero}
+              <div class="fm-hero-text">
+                <div class="fm-hero-value" style="color:${_fmMoodInk(_moodCat(selectedMood))};">${_moodLabelNum(selectedMood)}</div>${_linkedHero}
+                ${_doneDate ? `<div class="fm-done-date">📅 ${_doneDate}</div>` : ''}
+              </div>
             </div>`;
           // Delete + Save styled as wheel pills, sitting in the wheel slot.
           const _noChanges = editingEntry && !_hasEditChanges();
@@ -8402,7 +8599,7 @@ function _tt(k, vars, fallback) {
                 <span class="fm-wheel-emoji">${_saveEmoji}</span><span class="fm-wheel-label">${_saveLabel}</span>
               </button>
             </div>`;
-          return `${_heroHtml}${_doneDate ? `<div style="text-align:center;font-size:0.92em;color:var(--text-muted-ink);margin-bottom:10px;">📅 ${_doneDate}</div>` : ''}${_dayFillNote}<div class="fm-done-list" style="display:block;background:#f8f9fa;border-radius:14px;padding:16px;border-left:4px solid ${mc};max-width:100%;text-align:left;">
+          return `${_heroHtml}${_dayFillNote}<div class="fm-done-list" style="display:block;background:#f8f9fa;border-radius:14px;padding:16px;border-left:4px solid ${mc};max-width:100%;text-align:left;">
             ${rows.map(r=>{const idx=_fmSteps.findIndex(s=>s.id===r.step);const editBtn=idx>=0?`<button onclick="_fmReturnToDone=true;_fmGoTo(${idx})" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.82em;cursor:pointer;padding:2px 4px;-webkit-tap-highlight-color:transparent;flex-shrink:0;" title="${BB.t('journal.ui.editTitle')}">✏️</button>`:'';if(r.note){return `<details style="padding:3px 0;"><summary style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent;">${r.wrap?`<span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>`:`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>`}${editBtn}<span style="font-size:0.65em;color:var(--text-muted-ink);flex-shrink:0;margin-left:2px;transition:transform 0.15s;" class="bb-note-chev">▶</span></summary><div style="font-size:0.82em;color:#495057;padding:5px 0 3px 12px;font-style:italic;word-break:break-word;line-height:1.4;">📝 ${r.note}</div></details>`;}return r.wrap?`<div style="padding:3px 0;"><div style="display:flex;align-items:center;gap:8px;font-size:0.9em;color:#495057;"><span style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;flex:1;">${r.text}</span>${editBtn}</div></div>`:`<div style="padding:3px 0;"><div style="display:flex;align-items:center;flex-wrap:nowrap;gap:6px;font-size:0.9em;color:#495057;min-width:0;"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${r.text}</span>${editBtn}</div></div>`;}).join('')}
           </div>${_privRow}${_suggestion}${_actions}`;
         }
@@ -8848,6 +9045,8 @@ function _tt(k, vars, fallback) {
 
     function _fmGoTo(index) {
       if (index < 0 || index >= _fmSteps.length) return;
+      // Leaving the step behind "Fill in the rest" (a summary chip) drops it.
+      if (_afAsk && _afAsk.where === 'day') _afAsk = null;
       // Reset sleep quality intent when revisiting the sleep step so user must long-press again
       if (_fmSteps[index] && _fmSteps[index].id === 'sleep') _fmWantsSleepQuality = false;
       _fmStepIndex = index;
@@ -14964,6 +15163,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
       _autoFillPlan = null;
       _autoFillBusy = false;
+      _afAsk = null;
+      _autoFillStage(null);
       document.getElementById('autoFillIntro').style.display = '';
       document.getElementById('autoFillPreview').style.display = 'none';
       document.getElementById('autoFillFoot').style.display = 'none';
@@ -15013,8 +15214,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         // reading differently for the same day is worse than either format is.
         const dateStr = _bbDate(p.date, { weekday: 'short', day: 'numeric', month: 'short' });
         const source  = BB.t(p.source === 'health' ? 'journal.autofill.fromHealth' : 'journal.autofill.fromTypical');
+        // The mood guess is only shown where the mood suggestion is on; the
+        // next screen ("Fill in the rest") asks for the mood either way.
         const bits = [
-          `${_moodEmoji(p.mood)} ${_moodCatLabel(p.mood)}`,
+          ...(_afSuggestionOn() ? [`${_moodEmoji(p.mood)} ${_moodCatLabel(p.mood)}`] : []),
           `🛌 ${p.sleep}h`,
           `⚡ ${_energyStr(p.energy)}`
         ];
@@ -15030,10 +15233,43 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           </label>`;
       }).join('');
 
-      document.getElementById('autoFillFoot').style.display = '';
-      document.getElementById('autoFillActions').style.display = '';
+      _autoFillStage('list');
       _updateAutoFillBtn();
     }
+
+    /** Which half of the modal shows: the day list, "Fill in the rest", or neither. */
+    function _autoFillStage(stage) {
+      const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+      show('autoFillIntro', stage !== 'ask');
+      show('autoFillPreview', stage === 'list');
+      show('autoFillFoot', stage === 'list');
+      show('autoFillActions', stage === 'list');
+      show('autoFillAsk', stage === 'ask');
+      show('autoFillAskActions', stage === 'ask');
+    }
+
+    /** List → "Fill in the rest". The answers survive going back to the list. */
+    function showAutoFillAsk() {
+      if (!_autoFillPlan || !_autoFillPlan.some(p => p.include)) return;
+      if (!_afAsk || _afAsk.where !== 'bulk') {
+        _afAsk = {
+          where: 'bulk', suggested: null, perDay: _afSuggestionOn(), mood: null,
+          showMed: !_getDisabledSteps().includes('medication'), med: null,
+          rows: _afAskRows(), ans: {}
+        };
+      }
+      document.getElementById('afAskBody-bulk').innerHTML = _afAskHtml();
+      _autoFillStage('ask');
+      _updateAutoFillBtn();
+      const box = document.querySelector('#autoFillModal .confirm-content');
+      if (box) box.scrollTop = 0;
+    }
+    window.showAutoFillAsk = showAutoFillAsk;
+
+    function backToAutoFillList() {
+      if (_autoFillPlan) _renderAutoFillPreview();
+    }
+    window.backToAutoFillList = backToAutoFillList;
 
     function toggleAutoFillDay(i, checked) {
       if (_autoFillPlan && _autoFillPlan[i]) _autoFillPlan[i].include = !!checked;
@@ -15043,40 +15279,55 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
     function _updateAutoFillBtn() {
       const btn = document.getElementById('autoFillConfirmBtn');
+      const next = document.getElementById('autoFillNextBtn');
       if (!btn || !_autoFillPlan) return;
       const n = _autoFillPlan.filter(p => p.include).length;
-      btn.disabled = n === 0 || _autoFillBusy;
+      if (next) {
+        next.disabled = n === 0;
+        next.style.opacity = next.disabled ? '0.5' : '';
+      }
+      btn.disabled = n === 0 || _autoFillBusy || !_afAskReady();
       btn.style.opacity = btn.disabled ? '0.5' : '';
       btn.textContent = BB.t('journal.autofill.confirm', { count: n });
     }
 
-    /** A plan row → a full entry object, shaped exactly like a saved one. */
+    /**
+     * A plan row → a full entry object, shaped exactly like a saved one. The
+     * "Fill in the rest" answers go on every day; a blank answer stays null.
+     */
     function _buildAutoFilledEntry(plan) {
+      const a = _afAsk || { ans: {} };
+      const ans = k => a.ans[k] || null;
+      let medDoses = null;
+      try { if (a.med && window.BBMeds) medDoses = BBMeds.dosesForAnswer(a.med, BBMeds.namesForDay(plan.key)); } catch (e) {}
+      const custom = {};
+      Object.keys(a.ans).forEach(k => { if (k.startsWith('custom:') && a.ans[k]) custom[k.slice(7)] = a.ans[k]; });
       const date = new Date(plan.date);
       date.setHours(12, 0, 0, 0); // noon, matching saveEntry's date handling
       const now = new Date();
       const entry = {
         date: date.toISOString(),
-        mood: plan.mood,
+        mood: (a.mood && !a.perDay) ? a.mood : plan.mood,
         linkedMood: null,
         linkedMoods: [],
         energy: plan.energy,
         sleep: plan.sleep,
         sleepQuality: null,
-        medication: null,
-        goals: null,
-        alcohol: null,
-        exercise: null,
-        anxiety: null,
-        irritability: null,
-        stress: null,
-        outside: null,
+        medication: a.med || null,
+        medDoses,
+        goals: ans('goals'),
+        alcohol: ans('alcohol'),
+        exercise: ans('exercise'),
+        anxiety: ans('anxiety'),
+        irritability: ans('irritability'),
+        stress: ans('stress'),
+        outside: ans('outside'),
         smoking: null,
         drugs: null,
         notes: '',
         intention: '',
-        customFields: {},
-        budget: null,
+        customFields: custom,
+        budget: ans('budget'),
         pdfHidden: false,
         favourite: false,
         timestamp: date.getTime(),
@@ -15119,7 +15370,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     async function runAutoFill() {
       if (!_autoFillPlan || _autoFillBusy) return;
       const chosen = _autoFillPlan.filter(p => p.include);
-      if (!chosen.length) return;
+      if (!chosen.length || !_afAskReady()) return;
 
       // Guests choose before their first save: a PIN (it derives the key that
       // encrypts localStorage entries) or none (pin143). saveAndOpenJournal()
@@ -15134,9 +15385,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       _autoFillBusy = true;
       _updateAutoFillBtn();
       const statusEl = document.getElementById('autoFillStatus');
-      document.getElementById('autoFillPreview').style.display = 'none';
-      document.getElementById('autoFillFoot').style.display = 'none';
-      document.getElementById('autoFillActions').style.display = 'none';
+      _autoFillStage(null);
       statusEl.style.display = '';
       statusEl.textContent = BB.t('journal.autofill.saving');
 
@@ -15150,12 +15399,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           `<div style="color:var(--text-muted-ink); font-size:0.9em; line-height:1.5;">${_esc(BB.t('journal.autofill.doneBody'))}</div>`;
         document.getElementById('autoFillDoneActions').style.display = '';
         _autoFillPlan = null;
+        _afAsk = null;
       } catch (error) {
         console.error('Auto-complete failed:', error);
         statusEl.textContent = BB.t('journal.autofill.fail');
         setTimeout(() => {
           if (!_autoFillPlan) return;
-          _renderAutoFillPreview();
+          statusEl.style.display = 'none';
+          showAutoFillAsk();
         }, 2500);
       } finally {
         _autoFillBusy = false;
@@ -15166,6 +15417,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
 
     /** Cancel: back to the missing-dates list the user came from. */
     function closeAutoFillModal() {
+      _afAsk = null;
       const modal = document.getElementById('autoFillModal');
       if (modal) modal.classList.remove('active');
       const list = document.getElementById('missingDatesModal');

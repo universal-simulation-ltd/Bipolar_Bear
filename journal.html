@@ -1451,9 +1451,18 @@
       <p id="autoFillIntro" style="font-size:0.88em; line-height:1.55; margin-bottom:16px;" data-i18n="journal.autofill.intro">Bipolar Bear will add an entry for each day below. Sleep and steps come from your phone's health app where it has them, and from your recent typical day where it doesn't. Mood and energy are suggested from that data — nothing else is filled in.</p>
       <div id="autoFillStatus" style="text-align:center; color:var(--text-muted-ink); font-size:0.9em; padding:18px 0;"></div>
       <div id="autoFillPreview" style="display:none; max-height:38vh; overflow-y:auto; margin-bottom:14px;"></div>
+      <div id="autoFillAsk" style="display:none; margin-bottom:14px;">
+        <div style="font-weight:700; color:#333; margin-bottom:6px;" data-i18n="journal.autofill.askTitle">Fill in the rest</div>
+        <p style="font-size:0.88em; line-height:1.55; margin-bottom:14px;" data-i18n="journal.autofill.askSubMany">Choose what goes in the rest of these days.</p>
+        <div id="afAskBody-bulk"></div>
+      </div>
       <p id="autoFillFoot" style="display:none; font-size:0.8em; color:var(--text-muted-ink); line-height:1.5; margin-bottom:18px;" data-i18n="journal.autofill.foot">These are estimates, not a record of how you actually felt. Every day added is marked AUTO in your journal — tap ✏️ to edit it or × to delete it.</p>
       <div class="confirm-buttons" id="autoFillActions" style="display:none;">
         <button class="confirm-btn confirm-btn-no" onclick="closeAutoFillModal()" data-i18n="common.cancel">Cancel</button>
+        <button class="confirm-btn" id="autoFillNextBtn" onclick="showAutoFillAsk()" style="background:var(--brand-btn); color:white; border:2px solid var(--brand-primary);" data-i18n="common.next">Next</button>
+      </div>
+      <div class="confirm-buttons" id="autoFillAskActions" style="display:none;">
+        <button class="confirm-btn confirm-btn-no" onclick="backToAutoFillList()" data-i18n="common.back">Back</button>
         <button class="confirm-btn" id="autoFillConfirmBtn" onclick="runAutoFill()" style="background:var(--brand-btn); color:white; border:2px solid var(--brand-primary);">Fill these in</button>
       </div>
       <div class="confirm-buttons" id="autoFillDoneActions" style="display:none;">

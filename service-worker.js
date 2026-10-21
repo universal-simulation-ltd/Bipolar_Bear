@@ -1824,7 +1824,10 @@
 //   bundles js/shared/bear-arcade.js).
 // v372: dark mode — the medication and sleep-quality wheels' spacer pills
 //   are transparent again instead of empty dark squares (css/dark.css).
-const CACHE_NAME = 'bipolarbear-v372';
+// v373: auto-fill from health asks "Fill in the rest" (mood, medication,
+//   trackers) before saving, one day or many (js/journal.js, journal.html,
+//   i18n); the review step puts the bear beside the mood and date.
+const CACHE_NAME = 'bipolarbear-v373';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
