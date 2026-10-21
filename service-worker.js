@@ -1830,7 +1830,9 @@
 // v374: board admin delete / pin / publish refresh the sign-in token first and
 //   say when the server refuses, instead of "Post deleted" with the post still
 //   there (js/anonymous.js, i18n).
-const CACHE_NAME = 'bipolarbear-v374';
+// v375: admin delete shows the post as deleted at once, and a refusal, an
+//   error or 12 s without an answer puts it back with a message and a code.
+const CACHE_NAME = 'bipolarbear-v375';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

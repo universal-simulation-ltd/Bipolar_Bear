@@ -6394,21 +6394,37 @@ function setupOverlayActions() {
 // ─────────────────────────────────────────────────────────────────
 // Admin: delete post
 // ─────────────────────────────────────────────────────────────────
-// Says "deleted" only once the server has taken it: a refused write used to
-// show the toast anyway and leave the post where it was.
+// The post turns into its "deleted" card at once, then the server has to take
+// it. A refusal, an error, or no answer in 12 s puts the post back and says
+// so, with a short code: James saw nothing at all happen on his iPhone
+// (2026-10-21), and every silent way out of here has to show now.
 async function adminDeletePost(id) {
-  if (!db || !id) return;
+  if (!id) return;
+  if (!db) { showHint(_wt('anon.toast.adminActionFailed') + ' (no-db)'); return; }
+  const rerender = () => renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
+  const p = localPosts.find(x => x.id === id);
+  const was = p ? { deleted: p.deleted, deletedAt: p.deletedAt } : null;
+  if (p) { p.deleted = true; p.deletedAt = new Date(); rerender(); }
+  let timer = null;
   try {
-    await _adminSession();
-    await db.collection(BB_BRAND.collections.posts).doc(id).update({
-      deleted: true,
-      deletedByAdmin: true,
-      deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    await Promise.race([
+      (async () => {
+        await _adminSession();
+        await db.collection(BB_BRAND.collections.posts).doc(id).update({
+          deleted: true,
+          deletedByAdmin: true,
+          deletedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      })(),
+      new Promise((_, reject) => { timer = setTimeout(() => reject(Object.assign(new Error('no answer'), { code: 'timeout' })), 12000); }),
+    ]);
     showHint(_wt('anon.toast.postDeleted'));
   } catch (err) {
     console.error('[Admin] delete failed', err);
-    showHint(_wt(_adminFailKey(err)));
+    if (p && was) { p.deleted = was.deleted; p.deletedAt = was.deletedAt; rerender(); }
+    showHint(_wt(_adminFailKey(err)) + ' (' + ((err && err.code) || 'error') + ')');
+  } finally {
+    clearTimeout(timer);
   }
 }
 
