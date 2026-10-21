@@ -559,7 +559,13 @@
         try { v.focus({ preventScroll: true }); v.scrollIntoView({ block: 'center' }); focused = true; } catch (_) {}
       }
     }
-    if (!focused) { try { m.querySelector('.meds-x').focus(); } catch (_) {} }
+    if (!focused) { try { m.querySelector('.meds-x').focus({ preventScroll: true }); } catch (_) {} }
+    // The sheet starts its slide-up below the screen, so focusing into it (or
+    // scrollIntoView above) scrolled the overflow:hidden modal ~460px to reach
+    // it; that offset then drained away as the sheet rose, which on iPhone
+    // read as the sheet overshooting and dropping back into place. The modal
+    // itself never scrolls, so put it back; the sheet's own scroll is kept.
+    m.scrollTop = 0;
     document.addEventListener('keydown', _onKey);
   }
   function close() {

@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 💊 **My medicines opens in one smooth slide.** It used to come up too far, with its top off the screen, and then drop back into place. (`CACHE_NAME` v376)
 - 🛡️ **Bipolar Anonymous: admin delete always answers.** Confirming a delete turns the post into "deleted" straight away. If the board refuses it, something goes wrong, or there's no answer within 12 seconds, the post comes back with a message and a short code saying why. (`CACHE_NAME` v375)
 - 🛡️ **Bipolar Anonymous: admin delete says what happened.** Deleting a post or an announcement used to say "Post deleted" even when the board had refused it, and the post stayed. Now the app refreshes your sign-in before an admin delete, pin or publish, waits for the board to accept it, and if it's refused says so: sign in again with the admin email. In every language. (`CACHE_NAME` v374)
 - ✨ **Auto-fill asks what goes in the rest.** After **✨ Auto-fill from health** (or **✨ Auto-complete** for missing days) reads your sleep and steps, a **Fill in the rest** step asks for the mood, your medication and each tracker you have switched on, before anything is saved. If **Bipolar Bear thinks you might be…** is on, Health's suggested mood is already picked and marked **Suggested** (for several days, **Each day's suggestion** keeps each day's own). Leave anything blank and it stays blank; tap an answer again to clear it. For several days, your answers go on every day you picked. In every language. (`CACHE_NAME` v373)

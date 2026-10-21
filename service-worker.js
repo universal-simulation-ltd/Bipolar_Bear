@@ -1832,7 +1832,10 @@
 //   there (js/anonymous.js, i18n).
 // v375: admin delete shows the post as deleted at once, and a refusal, an
 //   error or 12 s without an answer puts it back with a message and a code.
-const CACHE_NAME = 'bipolarbear-v375';
+// v376: My medicines no longer overshoots and drops back when it opens: the
+//   ✕'s focus scrolled the overflow:hidden modal while the sheet was still
+//   below the screen (js/journal-meds.js).
+const CACHE_NAME = 'bipolarbear-v376';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
