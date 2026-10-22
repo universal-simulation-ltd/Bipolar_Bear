@@ -13,34 +13,34 @@ function extract(name) {
     if (c === '{') depth++; else if (c === '}') { depth--; if (!depth) break; } }
   return src.slice(m.index, j + 1);
 }
-const names = ['_userEncrypt','_userDecrypt','_wrapDataKey','_unwrapDataKey','_keyModeOf','_rawKeyB64','_preferAccountKey','_checkDeviceKey','_keyOpensAccountEntries','_reencryptUnderAccountKey','_decodeFirestoreEntry','_encryptExistingEntries'];
+const names = ['_userDeriveKey','_rewrapJournalPassword','_userEncrypt','_userDecrypt','_wrapDataKey','_unwrapDataKey','_keyModeOf','_rawKeyB64','_preferAccountKey','_checkDeviceKey','_keyOpensAccountEntries','_reencryptUnderAccountKey','_decodeFirestoreEntry','_encryptExistingEntries'];
 const code = names.map(extract).join('\n\n');
 const subtle = crypto.subtle;
 const newKey = async () => subtle.importKey('raw', crypto.getRandomValues(new Uint8Array(32)), { name: 'AES-GCM' }, true, ['encrypt','decrypt']);
 
 async function scenario(label, setup) {
-  const writes = [];
+  const writes = [], logged = [];
   const store = { settings: {}, entries: {} };
   const mkDoc = (id) => ({ id, data: () => store.entries[id], ref: { set: async (v) => { store.entries[id] = v; writes.push(['entry', id]); } } });
   const db = {
     collection: (c) => ({
-      doc: (id) => ({ get: async () => ({ exists: !!store.settings, data: () => store.settings }), set: async (v) => { Object.assign(store.settings, v); writes.push(['settings', Object.keys(v)]); } }),
+      doc: (id) => ({ get: async () => { if (store.offline) throw Object.assign(new Error('unavailable'), { code: 'unavailable' }); return { exists: !!store.settings, data: () => ({ ...store.settings }) }; }, set: async (v) => { Object.assign(store.settings, v); writes.push(['settings', Object.keys(v)]); } }),
       where: () => { const q = { limit: () => q, get: async () => { const docs = Object.keys(store.entries).map(mkDoc); return { docs, size: docs.length }; } }; return q; },
     }),
     batch: () => { const ops = []; return { set: (ref, v) => ops.push([ref, v]), commit: async () => { for (const [r, v] of ops) await r.set(v); } }; },
-    runTransaction: async (fn) => fn({ get: async () => ({ exists: true, data: () => store.settings }), set: (ref, v) => { Object.assign(store.settings, v); writes.push(['tx', Object.keys(v)]); } }),
+    runTransaction: async (fn) => { if (store.beforeTx) store.beforeTx(); return fn({ get: async () => ({ exists: true, data: () => store.settings }), set: (ref, v) => { Object.assign(store.settings, v); writes.push(['tx', Object.keys(v)]); } }); },
   };
   const serverKey = await subtle.importKey('raw', crypto.getRandomValues(new Uint8Array(32)), { name: 'AES-GCM' }, false, ['encrypt','decrypt']);
-  const ctx = { crypto, btoa, atob, TextEncoder, TextDecoder, Uint8Array, JSON, Promise, setTimeout, console: { warn(){}, error(){}, log: console.log }, db,
+  const ctx = { crypto, btoa, atob, TextEncoder, TextDecoder, Uint8Array, JSON, Promise, setTimeout, console: { warn: (...a) => logged.push(a), error: (...a) => logged.push(a), log: console.log }, db,
     _serverWrapKey: async () => serverKey, _sessionKey: null };
   vm.createContext(ctx);
   vm.runInContext(`let _userCryptoKey = null, _userKeyMode = null, _staleUserKeys = [], _accountKeyChecked = false, _accountKeyVerified = false, _undecryptableCount = 0;
     async function _adoptUserKey(k) { _userCryptoKey = k; _sessionKey = k; }
     ${code}
     this.api = { set k(v) { _userCryptoKey = v; }, get k() { return _userCryptoKey; }, get stale() { return _staleUserKeys; }, get bad() { return _undecryptableCount; }, get verified() { return _accountKeyVerified; },
-      _checkDeviceKey, _decodeFirestoreEntry, _userEncrypt, _wrapDataKey, _rawKeyB64 };`, ctx);
+      _checkDeviceKey, _decodeFirestoreEntry, _userEncrypt, _wrapDataKey, _rawKeyB64, _userDeriveKey, _rewrapJournalPassword, _unwrapDataKey };`, ctx);
   const api = ctx.api;
-  await setup({ api, store, serverKey, writes, mkDoc });
+  await setup({ api, store, serverKey, writes, mkDoc, logged });
   console.log('PASS', label);
 }
 const enc = (api, key, e) => api._userEncrypt(key, e).then(x => ({ userId: 'u', timestamp: e.timestamp, ...x }));
@@ -198,4 +198,82 @@ await nativeScenario('several old keys: each is kept once, newest eight', async 
   const list = JSON.parse(kc.m.get('bb_user_key_stale'));
   assert.equal(list.length, 8); assert.equal(new Set(list).size, 8);
   assert.equal(list.at(-1), await b64(keys[8]));
+});
+
+// ── Change journal password (1.45): a re-wrap of the same key ──
+const pwWrap = async (api, key, password) => {
+  const wrapSalt = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+  return { wrapSalt, ...(await api._wrapDataKey(key, await api._userDeriveKey(password, wrapSalt))) };
+};
+const opens = async (api, d, password) => {
+  try { return await api._rawKeyB64(await api._unwrapDataKey(d.wrappedKey, d.wrappedKeyIv, await api._userDeriveKey(password, d.wrapSalt))); } catch (_) { return null; }
+};
+
+await scenario('change journal password: same key under the new password, old one no longer opens it, entries untouched', async ({ api, store, writes, logged }) => {
+  const K1 = await newKey();
+  Object.assign(store.settings, await pwWrap(api, K1, 'old-password'));
+  for (let t = 1; t <= 3; t++) store.entries['e' + t] = await enc(api, K1, { userId: 'u', timestamp: t, mood: 'stable' });
+  const before = JSON.stringify(store.entries);
+  assert.equal(await api._rewrapJournalPassword('u', 'old-password', 'new-password-1'), 'ok');
+  assert.equal(await opens(api, store.settings, 'new-password-1'), await api._rawKeyB64(K1));
+  assert.equal(await opens(api, store.settings, 'old-password'), null);
+  assert.equal(store.settings.journalPw, true);
+  assert.equal(JSON.stringify(store.entries), before, 'entries re-encrypted');
+  assert.ok(!writes.some(w => w[0] === 'entry'));
+  assert.equal(await api._rawKeyB64(api.k), await api._rawKeyB64(K1));
+  const all = JSON.stringify(store) + JSON.stringify(writes) + JSON.stringify(logged);
+  assert.ok(!all.includes('old-password') && !all.includes('new-password-1'), 'a password was stored or logged');
+});
+
+await scenario('change journal password on a Standard account keeps its Standard wrap', async ({ api, store, serverKey }) => {
+  const K1 = await newKey();
+  const sw = await api._wrapDataKey(K1, serverKey);
+  Object.assign(store.settings, { stdWrappedKey: sw.wrappedKey, stdWrappedKeyIv: sw.wrappedKeyIv }, await pwWrap(api, K1, 'old-password'));
+  store.entries.e = await enc(api, K1, { userId: 'u', timestamp: 1, mood: 'low' });
+  assert.equal(await api._rewrapJournalPassword('u', 'old-password', 'new-password-2'), 'ok');
+  assert.equal(store.settings.stdWrappedKey, sw.wrappedKey);
+  assert.equal(await opens(api, store.settings, 'new-password-2'), await api._rawKeyB64(K1));
+});
+
+await scenario('negative: a wrong current password changes nothing', async ({ api, store, writes, logged }) => {
+  const K1 = await newKey();
+  Object.assign(store.settings, await pwWrap(api, K1, 'old-password'));
+  const before = JSON.stringify(store.settings);
+  assert.equal(await api._rewrapJournalPassword('u', 'not-it', 'new-password-1'), 'wrong');
+  assert.equal(JSON.stringify(store.settings), before); assert.equal(writes.length, 0);
+  assert.ok(!JSON.stringify(logged).includes('not-it'));
+});
+
+await scenario('negative: the wrap changed on another device meanwhile: refused, the other device\'s wrap kept', async ({ api, store, writes }) => {
+  const K1 = await newKey();
+  Object.assign(store.settings, await pwWrap(api, K1, 'old-password'));
+  const other = await pwWrap(api, K1, 'other-device-pw');
+  store.beforeTx = () => Object.assign(store.settings, other);
+  assert.equal(await api._rewrapJournalPassword('u', 'old-password', 'new-password-1'), 'changed');
+  assert.equal(store.settings.wrappedKey, other.wrappedKey); assert.equal(writes.length, 0);
+  assert.equal(await opens(api, store.settings, 'other-device-pw'), await api._rawKeyB64(K1));
+});
+
+await scenario('negative: offline throws and writes nothing', async ({ api, store, writes }) => {
+  const K1 = await newKey();
+  Object.assign(store.settings, await pwWrap(api, K1, 'old-password'));
+  store.offline = true;
+  await assert.rejects(api._rewrapJournalPassword('u', 'old-password', 'new-password-1'));
+  assert.equal(writes.length, 0);
+});
+
+await scenario('negative: a wrap whose key does not open the entries is never re-wrapped', async ({ api, store, writes }) => {
+  const K1 = await newKey(), Kx = await newKey();
+  Object.assign(store.settings, await pwWrap(api, Kx, 'old-password'));
+  store.entries.e = await enc(api, K1, { userId: 'u', timestamp: 1, mood: 'stable' });
+  assert.equal(await api._rewrapJournalPassword('u', 'old-password', 'new-password-1'), 'mismatch');
+  assert.equal(writes.length, 0);
+});
+
+await scenario('negative: no password wrap (Standard only, or the oldest encSalt accounts): nothing to change', async ({ api, store, serverKey, writes }) => {
+  const K1 = await newKey();
+  const sw = await api._wrapDataKey(K1, serverKey);
+  Object.assign(store.settings, { stdWrappedKey: sw.wrappedKey, stdWrappedKeyIv: sw.wrappedKeyIv, encSalt: 'c2FsdA==' });
+  assert.equal(await api._rewrapJournalPassword('u', 'x', 'new-password-1'), 'nowrap');
+  assert.equal(writes.length, 0);
 });

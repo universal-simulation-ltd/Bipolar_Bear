@@ -1130,6 +1130,8 @@ function _tt(k, vars, fallback) {
       sessionStorage.removeItem('bbPinUnlocked');
       sessionStorage.removeItem('bb_user_key');
       try { if (window.BBMeds) BBMeds.clearDueReminder(); } catch (_) {}
+      // Medicine reminders are keyed by the medicines' names: they go with the list.
+      try { if (window.BB && BB.medsReminder) BB.medsReminder.clear().catch(() => {}); } catch (_) {}
       _userCryptoKey = null;
       _pendingAuthPassword = null;
       _userKeyMode = null;
@@ -4452,6 +4454,131 @@ function _tt(k, vars, fallback) {
       }
     }
     window._togglePrivateJournal = _togglePrivateJournal;
+
+    // ── Change journal password (Settings → Account, 1.45) ──
+    // The data key never changes (DOCS §2.18); a journal password only wraps
+    // it (wrapSalt + wrappedKey + wrappedKeyIv). So changing the password is a
+    // re-wrap: the current password must open the account's wrap as it is on
+    // the server now; that same key is wrapped with the new password, in a
+    // transaction that refuses if the wrap changed meanwhile (another device).
+    // Nothing is re-encrypted, other devices keep their key, and the Standard
+    // wrap (if any) is left alone. `journalPw: true`, because the journal
+    // password is now its own: a sign-in password never re-wraps over it.
+    // The passwords stay on this device (PBKDF2 here) and are never logged.
+    // Only offered when the account has a wrap: the oldest accounts (encSalt
+    // alone, key = PBKDF2(password)) get one on their next unlock first.
+
+    /** Whether this account has a journal password to change. → Promise<boolean> */
+    async function _journalPwAvailable() {
+      if (!currentUser || !db) return false;
+      try {
+        const doc = await db.collection('userSettings').doc(currentUser.uid).get();
+        const d = doc.exists ? doc.data() : null;
+        return !!(d && d.wrappedKey && d.wrapSalt && d.wrappedKeyIv);
+      } catch (e) { return false; }
+    }
+    window._bbJournalPwAvailable = _journalPwAvailable;
+
+    /**
+     * The re-wrap itself. → 'ok' | 'wrong' (the current password doesn't
+     * open the wrap) | 'changed' (another device changed the wrap meanwhile)
+     * | 'nowrap' | 'mismatch' (the key doesn't open this account's entries).
+     * Throws when the server can't be reached (nothing is changed then).
+     */
+    async function _rewrapJournalPassword(uid, current, next) {
+      const ref = db.collection('userSettings').doc(uid);
+      // The wrap as it is on the server now (offline: throws, nothing changes).
+      const snap = await ref.get({ source: 'server' });
+      const d = snap.exists ? snap.data() : {};
+      if (!(d.wrappedKey && d.wrapSalt && d.wrappedKeyIv)) return 'nowrap';
+      let key = null;
+      try { key = await _unwrapDataKey(d.wrappedKey, d.wrappedKeyIv, await _userDeriveKey(current, d.wrapSalt)); } catch (_) { key = null; }
+      if (!key) return 'wrong';
+      // Belt and braces: the key must open this account's entries.
+      if (!(await _keyOpensAccountEntries(uid, key))) return 'mismatch';
+      const wrapSalt = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+      const w = await _wrapDataKey(key, await _userDeriveKey(next, wrapSalt));
+      const ok = await db.runTransaction(async (tx) => {
+        const s2 = await tx.get(ref);
+        const c = s2.exists ? s2.data() : {};
+        if (c.wrappedKey !== d.wrappedKey || c.wrapSalt !== d.wrapSalt) return false;
+        tx.set(ref, { wrapSalt, wrappedKey: w.wrappedKey, wrappedKeyIv: w.wrappedKeyIv, journalPw: true }, { merge: true });
+        return true;
+      });
+      if (!ok) return 'changed';
+      await _preferAccountKey(key);
+      return 'ok';
+    }
+
+    function _changeJournalPassword() {
+      if (!currentUser || !db || document.getElementById('bbJournalPwChange')) return;
+      const user = currentUser;
+      const tj = (k) => BB.t('jpw145.' + k);
+      const ov = document.createElement('div');
+      ov.id = 'bbJournalPwChange';
+      ov.setAttribute('role', 'dialog');
+      ov.setAttribute('aria-modal', 'true');
+      ov.setAttribute('aria-labelledby', 'bbJpwTitle');
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:10010;display:flex;align-items:center;justify-content:center;padding:20px;';
+      const box = document.createElement('div');
+      box.className = 'bb-auth-box';
+      box.style.cssText = 'background:white;border-radius:20px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,0.25);max-height:calc(100dvh - 40px);overflow-y:auto;';
+      const el = (tag, css, text) => { const n = document.createElement(tag); if (css) n.style.cssText = css; if (text != null) n.textContent = text; return n; };
+      const inputCss = 'width:100%;padding:12px;border:2px solid #e9ecef;border-radius:10px;font-size:1em;box-sizing:border-box;margin-bottom:8px;outline:none;font-family:inherit;';
+      const title = el('h3', 'margin:0 0 10px;font-size:1.1em;color:#212529;text-align:center;', tj('title'));
+      title.id = 'bbJpwTitle';
+      const body = el('p', 'margin:0 0 10px;font-size:0.85em;line-height:1.45;color:#495057;', tj('body'));
+      const warn = el('p', 'margin:0 0 14px;font-size:0.8em;line-height:1.45;color:var(--text-muted-ink);', _userKeyMode === 'standard' ? tj('noteStandard') : BB.t('journalKey.createWarning'));
+      const mk = (ph, ac) => { const n = el('input', inputCss); n.type = 'password'; n.autocomplete = ac; n.placeholder = ph; n.setAttribute('aria-label', ph); return n; };
+      const cur = mk(tj('current'), 'current-password');
+      const pw1 = mk(BB.t('journalKey.newPasswordPlaceholder'), 'new-password');
+      const pw2 = mk(BB.t('journalKey.confirmPlaceholder'), 'new-password');
+      const err = el('div', 'display:none;color:#dc3545;font-size:0.85em;padding:8px 12px;background:rgba(220,53,69,0.08);border-radius:8px;margin-bottom:10px;');
+      err.setAttribute('role', 'alert');
+      const go = el('button', 'width:100%;padding:13px;background:var(--brand-btn);color:var(--brand-btn-text, white);box-shadow:var(--brand-btn-ring, none);border:none;border-radius:10px;font-weight:700;font-size:0.95em;cursor:pointer;margin:4px 0 8px;', tj('save'));
+      const cancel = el('button', 'width:100%;padding:11px;background:#f8f9fa;color:var(--text-muted-ink);border:2px solid #e9ecef;border-radius:10px;font-size:0.9em;font-weight:600;cursor:pointer;', BB.t('common.cancel'));
+      go.type = 'button'; cancel.type = 'button';
+      [title, body, warn, err, cur, pw1, pw2, go, cancel].forEach(n => box.appendChild(n));
+      ov.appendChild(box);
+      document.body.appendChild(ov);
+      setTimeout(() => cur.focus(), 50);
+
+      const showErr = (msg) => { err.textContent = msg; err.style.display = 'block'; };
+      const close = () => { cur.value = pw1.value = pw2.value = ''; ov.remove(); document.removeEventListener('keydown', onKey, true); };
+      const onKey = (e) => { if (e.key === 'Escape' && !go.disabled) { e.preventDefault(); close(); } };
+      document.addEventListener('keydown', onKey, true);
+      cancel.onclick = close;
+      ov.addEventListener('click', (e) => { if (e.target === ov && !go.disabled) close(); });
+
+      const submit = async () => {
+        err.style.display = 'none';
+        const p0 = cur.value, p1 = pw1.value;
+        if (!p0) { cur.focus(); return; }
+        if (p1.length < 8) { showErr(BB.t('journalKey.tooShort')); pw1.focus(); return; }
+        if (p1 !== pw2.value) { showErr(BB.t('journalKey.mismatch')); pw2.focus(); return; }
+        if (p1 === p0) { showErr(tj('same')); pw1.focus(); return; }
+        go.disabled = true; cancel.disabled = true;
+        let r;
+        try { r = await _rewrapJournalPassword(user.uid, p0, p1); }
+        catch (e) {
+          // The message only: never anything that could hold a password.
+          console.warn('Change journal password failed:', e && (e.code || e.message));
+          r = 'offline';
+        }
+        if (r === 'ok') {
+          close();
+          if (typeof window.closeAccountModal === 'function') window.closeAccountModal();
+          alert(tj('done'));
+          return;
+        }
+        showErr(r === 'wrong' ? BB.t('journalKey.wrong') : r === 'changed' ? tj('changedElsewhere') : r === 'offline' ? tj('offline') : BB.t('journalKey.failed'));
+        go.disabled = false; cancel.disabled = false;
+        if (r === 'wrong') cur.select();
+      };
+      go.onclick = submit;
+      [cur, pw1, pw2].forEach(n => n.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
+    }
+    window._bbChangeJournalPassword = _changeJournalPassword;
 
     // Decode a single Firestore QueryDocumentSnapshot, decrypting if needed.
     async function _decodeFirestoreEntry(doc) {
@@ -8194,14 +8321,15 @@ function _tt(k, vars, fallback) {
         }
 
         case 'medication': {
-          // 🔔 Medication reminder pill (native apps only — see
-          // js/shared/meds-reminder.js). One line, so the step still fits.
+          // 🔔 Medicine reminders pill (js/shared/meds-reminder.js; the
+          // settings are 💊 My medicines → 🔔 Reminders, one per medicine
+          // since 1.45). One line, so the step still fits.
           const _mrPill = (window.BB && BB.medsReminder && BB.medsReminder.isAvailable()) ? (() => {
             const _mr = BB.medsReminder.settings();
-            const _lbl = _mr.enabled
-              ? BB.t('medsReminder.pillOn', { time: _mr.time })
-              : BB.t('medsReminder.pillOff');
-            return `<div style="text-align:center;margin:4px 0 8px;"><button type="button" id="fmMedsReminderBtn" class="fm-meds-reminder${_mr.enabled ? ' on' : ''}" onclick="BB.medsReminder.openSettings(function(){ window._fmRerenderStep && window._fmRerenderStep(); })">${_lbl}</button></div>`;
+            const _on = _mr.enabled && _mr.times.length > 0;
+            const _ts = _mr.times.length > 3 ? _mr.times.slice(0, 3).join(', ') + '…' : _mr.times.join(', ');
+            const _lbl = _on ? BB.t('medsRem145.pillOn', { times: _ts }) : BB.t('medsReminder.pillOff');
+            return `<div style="text-align:center;margin:4px 0 8px;"><button type="button" id="fmMedsReminderBtn" class="fm-meds-reminder${_on ? ' on' : ''}" onclick="BB.medsReminder.openSettings()">${_esc(_lbl)}</button></div>`;
           })() : '';
           let medListHtml = '';
           try {
@@ -9268,6 +9396,10 @@ function _tt(k, vars, fallback) {
     window._fmAdvance = _fmAdvance;
     // Repaint the current step in place (the meds step's 🔔 pill after its sheet saves).
     window._fmRerenderStep = function () { try { _renderFocusedStep(); } catch (_) {} };
+    // The medication step's 🔔 pill follows the reminders (1.45: set in 💊 My medicines).
+    window.addEventListener('bb:medsreminder', () => {
+      try { if (_fmActive && _fmSteps[_fmStepIndex] && _fmSteps[_fmStepIndex].id === 'medication') _renderFocusedStep(); } catch (_) {}
+    });
     window._fmGoToDone = _fmGoToDone;
     window._fmGoTo    = _fmGoTo;
     window._fmRefreshSleep = _fmRefreshSleep;
@@ -14223,6 +14355,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     /** The list changed (here, a sync, another device): the button, the sheet, focus mode. */
     function loadMedicationList() {
       _updateMedBtn();
+      // The names (and so the reminder slots) may have come from another device.
+      try { if (window.BB && BB.medsReminder && BB.medsReminder.settings().enabled) BB.medsReminder.schedule(); } catch (_) {}
       if (window.BBMeds && BBMeds.refresh) BBMeds.refresh();
       // Rebuild focus mode's steps so the medication step matches the list.
       if (typeof _fmActive !== 'undefined' && _fmActive) {
@@ -14241,8 +14375,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
      * opts.rename: {from, to} when an edit changed a name.
      */
     function _saveMedList(next, opts) {
+      let _prevList = [];
+      try { _prevList = JSON.parse(localStorage.getItem('currentMedList') || '[]'); } catch (_) {}
       _recordMedChange(next, opts);
       localStorage.setItem('currentMedList', JSON.stringify(next));
+      // A renamed medicine keeps its reminder times; a removed one loses them (1.45).
+      try { if (window.BB && BB.medsReminder) BB.medsReminder.onListChange(_prevList, next, opts); } catch (_) {}
       syncMedListToFirestore(next);
       loadMedicationList();
     }
@@ -18206,7 +18344,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         // _fileReminderMoods() on the next open (BB.moodQueue, 1.44).
         const _moodActions = !!(window.BB && BB.moodQueue);
         if (_moodActions) {
-          await LocalNotifications.registerActionTypes(BB.moodQueue.actionTypes()).catch(e => console.warn('Reminder buttons:', e));
+          // With the medicine reminders' ✅ Taken: iOS replaces every
+          // category on each call, so both are registered together.
+          const _types = (window.BB && BB.medsReminder) ? BB.medsReminder.actionTypes() : BB.moodQueue.actionTypes();
+          await LocalNotifications.registerActionTypes(_types).catch(e => console.warn('Reminder buttons:', e));
         }
 
         await LocalNotifications.schedule({

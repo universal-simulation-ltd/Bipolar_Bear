@@ -444,6 +444,8 @@
     try { v = BB.t(full, vars); } catch (_) {}
     return v == null ? full : v;
   }
+  /** medsRem145.* (js/shared/i18n-medsrem.js): one reminder per medicine (1.45). */
+  function tr(key, vars) { return tt('medsRem145.' + key, vars); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
@@ -549,6 +551,7 @@
     _tab = TABS.indexOf(tab) >= 0 ? tab : (savedTab() || 'doses');
     _tabNote = ''; _showAllMissed = false; _editIdx = -1;
     _prefillTest = opts && opts.test ? String(opts.test) : null;
+    _remMsg = '';
     var m = ensureModal();
     render();
     m.classList.add('active');
@@ -560,6 +563,7 @@
       }
     }
     if (!focused) { try { m.querySelector('.meds-x').focus({ preventScroll: true }); } catch (_) {} }
+    if (opts && opts.reminders) _showRemCard(m);
     // The sheet starts its slide-up below the screen, so focusing into it (or
     // scrollIntoView above) scrolled the overflow:hidden modal ~460px to reach
     // it; that offset then drained away as the sheet rose, which on iPhone
@@ -671,6 +675,60 @@
     return true;
   }
 
+  // ── 🔔 Reminders: one per medicine (1.45, js/shared/meds-reminder.js) ──
+  // Under Your medicines: the master switch (unticked until turned on, the
+  // key the single reminder used), then each medicine's own times (none by
+  // default), and an unticked "Show the medicine names in reminders" (the
+  // text can be read on a locked phone). Device-only, like the reminder.
+  function remApi() { return BB.medsReminder && BB.medsReminder.isAvailable() ? BB.medsReminder : null; }
+  var _remMsg = '';
+  function remindersHtml() {
+    var R = remApi();
+    if (!R) return '';
+    var s = R.settings();
+    var L = currentList();
+    var head = '<div class="meds-card meds-rem" id="medsRemCard"><h4>' + esc(tr('cardTitle')) + '</h4>' +
+      '<div class="mrem-row"><label for="medsRemOn">' + esc(tr('master')) + '</label>' +
+      '<label class="bb-switch"><input type="checkbox" role="switch" id="medsRemOn"' + (s.enabled ? ' checked' : '') + ' onchange="BBMeds._remOn(this)"><span class="bb-slider"></span></label></div>' +
+      '<div class="mf-err mrem-msg" role="status" aria-live="polite">' + esc(_remMsg) + '</div>';
+    if (!s.enabled) return head + (R.isWeb() ? '<p class="mrem-hint">' + esc(tr('webNote')) + '</p>' : '') + '</div>';
+    var rows = L.map(function (m, i) { return _remMedHtml(m.name, i, R.timesFor(m.name)); });
+    var all = R.timesFor(R.ALL);
+    if (all.length) rows.push(_remMedHtml(tr('allMeds'), -1, all));
+    return head + '<p class="mrem-hint">' + esc(tr('intro')) + '</p>' +
+      (rows.join('') || '<div class="meds-empty">' + esc(tr('noMeds')) + '</div>') +
+      '<label class="mrem-names"><input type="checkbox" id="medsRemNames"' + (s.showNames ? ' checked' : '') + ' aria-describedby="medsRemNamesHint" onchange="BBMeds._remNames(this)"><span>' + esc(tr('names')) + '</span></label>' +
+      '<p class="mrem-hint" id="medsRemNamesHint">' + esc(tr('namesHint')) + '</p>' +
+      (R.isWeb() ? '<p class="mrem-hint">' + esc(tr('webNote')) + '</p>' : '') + '</div>';
+  }
+  function _remMedHtml(name, i, times) {
+    var chips = times.map(function (tm) {
+      return '<span class="mrem-chip">' + esc(tm) + '<button type="button" aria-label="' + esc(tr('removeTime', { time: tm, name: name })) + '" onclick="BBMeds._remDel(' + i + ',\'' + tm + '\')">×</button></span>';
+    }).join('');
+    var next = times.length ? times[times.length - 1] : '';
+    // The next box suggests 12 hours after the last time (a free hour if taken).
+    var dflt = '09:00';
+    if (next) {
+      for (var h = 12; h < 36; h++) {
+        dflt = pad((Number(next.slice(0, 2)) + h) % 24) + next.slice(2);
+        if (times.indexOf(dflt) < 0) break;
+      }
+    }
+    return '<div class="mrem-med"><div class="mrem-name">' + (i < 0 ? '' : '💊 ') + esc(name) + '</div>' +
+      '<div class="mrem-times">' + (chips || '<span class="mrem-off">' + esc(tr('noTime')) + '</span>') + '</div>' +
+      '<form class="mrem-add" onsubmit="event.preventDefault();BBMeds._remAdd(this,' + i + ')">' +
+      '<input type="time" name="t" value="' + dflt + '" aria-label="' + esc(tr('timeFor', { name: name })) + '">' +
+      '<button type="submit" class="meds-btn">' + esc(tr('addTime')) + '</button></form></div>';
+  }
+  /** Scroll the sheet's body (never the modal: see open()) to the 🔔 Reminders card. */
+  function _showRemCard(m) {
+    var rc = m && m.querySelector('#medsRemCard'), nb = m && m.querySelector('.meds-body');
+    if (!rc || !nb) return;
+    nb.scrollTop += rc.getBoundingClientRect().top - nb.getBoundingClientRect().top - 4;
+  }
+  /** The list index → the medicine's name (-1: all my medicines). */
+  function _remKey(i) { if (i < 0) return BB.medsReminder.ALL; var m = currentList()[i]; return m ? m.name : null; }
+
   // Doses: taken / missed per medicine, and the missed-dose history.
   function dosesHtml() {
     var to = todayKey(), from = addDays(to, -29);
@@ -688,7 +746,7 @@
       return '<div class="meds-row"><div class="mr-main">' + esc(x.names ? t('missedList', { names: x.names.join(', ') }) : t('missedAll')) + '</div>' +
         '<div class="mr-date">' + esc(fmtDate(x.day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</div></div>';
     }).join('');
-    return listHtml() + '<p class="meds-intro">' + esc(t('dosesIntro')) + '</p>' +
+    return listHtml() + remindersHtml() + '<p class="meds-intro">' + esc(t('dosesIntro')) + '</p>' +
       '<div class="meds-card">' + (rows || '<div class="meds-empty">' + esc(t('dosesNone')) + '</div>') +
       (a.pct != null ? '<div class="mr-sub" style="margin-top:8px;font-size:0.8em;color:var(--text-muted-ink);">' + esc(t('overall', { pct: a.pct })) + '</div>' : '') + '</div>' +
       '<div class="meds-card"><h4>' + esc(t('missedTitle')) + '</h4>' + (mrows || '<div class="meds-empty">' + esc(t('missedNone')) + '</div>') +
@@ -944,6 +1002,33 @@
       L.splice(i, 1);
       _editIdx = -1;
       if (_saveList(L)) render();
+    },
+    _remOn: function (el) {
+      var on = !!el.checked;
+      el.disabled = true;
+      _remMsg = '';
+      BB.medsReminder.setEnabled(on).then(function (r) {
+        _remMsg = typeof r === 'string' ? r : '';
+        render();
+        if (on && r === true) _showRemCard(document.getElementById('medsHubModal'));
+      });
+    },
+    _remNames: function (el) { _remMsg = ''; BB.medsReminder.setShowNames(!!el.checked).then(render); },
+    _remAdd: function (form, i) {
+      var k = _remKey(i), v = form.elements.t ? String(form.elements.t.value || '') : '';
+      if (!k || !v) return;
+      _remMsg = '';
+      BB.medsReminder.addTime(k, v).then(function () {
+        render();
+        var f = document.querySelectorAll('#medsRemCard .mrem-add')[i < 0 ? currentList().length : i];
+        if (f && f.elements.t) { try { f.elements.t.focus({ preventScroll: true }); } catch (_) {} }
+      });
+    },
+    _remDel: function (i, time) {
+      var k = _remKey(i);
+      if (!k) return;
+      _remMsg = '';
+      BB.medsReminder.removeTime(k, time).then(render);
     },
     _dockHide: function () { if (root._hideExtraFab) root._hideExtraFab('meds'); render(); },
     _more: function () { _showAllMissed = true; render(); },
@@ -1297,6 +1382,11 @@
   });
   function _boot() { try { renderDueCard(); scheduleDue(); } catch (_) {} }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _boot); else _boot();
+  // A reminder setting changed (here, ✅ Taken from a notification): redraw if open.
+  root.addEventListener('bb:medsreminder', function () {
+    var m = document.getElementById('medsHubModal');
+    if (m && m.classList.contains('active') && _tab === 'doses' && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('#medsRemCard'))) render();
+  });
   // Another device's lists arrived (secure-store sync): redraw if open.
   root.addEventListener('bb:secure-sync', function () {
     var m = document.getElementById('medsHubModal');

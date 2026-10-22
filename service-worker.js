@@ -1838,7 +1838,13 @@
 // v377: the phone never writes over a different journal key in the Keychain:
 //   it moves to bb_user_key_stale first and every load tries it, so entries
 //   an older build encrypted with it open again (js/journal.js).
-const CACHE_NAME = 'bipolarbear-v377';
+// v378 (for 1.45): one reminder per medicine (js/shared/meds-reminder.js
+//   rewritten, 🔔 Reminders in My medicines, new js/shared/i18n-medsrem.js;
+//   the single reminder moves in; on the web while a tab is open, with a
+//   notificationclick here), and Settings → Account → Change journal password
+//   (js/journal.js, fab.js, new js/shared/i18n-journalpw.js). The 1.45 New
+//   features entry (js/shared/whats-new.js, i18n-whatsnew.js).
+const CACHE_NAME = 'bipolarbear-v378';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1889,6 +1895,8 @@ const STATIC_ASSETS = [
   './js/shared/auth-splash.js',
   './js/shared/anon-push.js',
   './js/shared/meds-reminder.js',
+  './js/shared/i18n-medsrem.js',
+  './js/shared/i18n-journalpw.js',
   './js/shared/pin-guard.js',
   './js/shared/pin-reauth.js',
   './js/shared/mood-queue.js',
@@ -2058,4 +2066,21 @@ self.addEventListener('message', (event) => {
   // Lets a page force-activate a waiting service worker:
   //   navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// A medicine reminder on the web (js/shared/meds-reminder.js, 1.45) shown
+// through this worker (Android Chrome can't make one from the page): a tap
+// brings Bipolar Bear forward and asks "Have you taken …?" there.
+self.addEventListener('notificationclick', (event) => {
+  const d = event.notification && event.notification.data;
+  if (!d || !d.bbMeds) return;
+  event.notification.close();
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    const c = list.find((w) => /\/(index|journal)\.html|\/$/.test(new URL(w.url).pathname)) || list[0];
+    if (c) {
+      c.postMessage({ bbMedsAsk: 1, slot: d.slot || null });
+      return c.focus();
+    }
+    return self.clients.openWindow('journal.html');
+  }));
 });

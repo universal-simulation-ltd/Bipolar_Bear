@@ -128,6 +128,38 @@ html.theme-dark .med-dose-chip.missed { background: #3a2617; color: #ffc078; bor
 .meds-flag { font-size: 0.8em; color: #a94600; background: #fff4e6; border-radius: 8px; padding: 8px 10px; margin-top: 8px; line-height: 1.4; }
 .meds-details summary { cursor: pointer; font-weight: 700; color: var(--brand-ink); font-size: 0.88em; padding: 6px 0; }
 
+/* 🔔 Reminders (1.45): one per medicine, under Your medicines. */
+.mrem-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-weight: 700; font-size: 0.9em; color: #343a40; }
+.mrem-row > label:first-child { flex: 1; min-width: 0; cursor: pointer; }
+.meds-rem .mrem-msg { margin-top: 4px; }
+.meds-rem .mrem-msg:empty { display: none; }
+.mrem-hint { font-size: 0.78em; color: var(--text-muted-ink); line-height: 1.45; margin: 6px 0 8px !important; }
+.mrem-med { padding: 9px 0; border-top: 1px solid #f1f3f5; }
+.mrem-name { font-weight: 700; font-size: 0.88em; color: #343a40; overflow-wrap: anywhere; margin-bottom: 5px; }
+.mrem-times { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.mrem-chip {
+  display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 11px; border-radius: 16px;
+  border: 1.5px solid var(--brand-primary); background: var(--brand-tint, #fff4e6); color: var(--brand-ink);
+  font-weight: 700; font-size: 0.86em; font-variant-numeric: tabular-nums;
+}
+.mrem-chip button {
+  width: 32px; height: 32px; border: none; background: none; color: inherit; font-size: 1.1em; line-height: 1;
+  cursor: pointer; border-radius: 50%; -webkit-tap-highlight-color: transparent;
+}
+.mrem-off { font-size: 0.82em; color: var(--text-muted-ink); font-style: italic; padding: 4px 0; }
+.mrem-add { display: flex; gap: 8px; align-items: center; }
+.mrem-add input[type="time"] {
+  flex: 1; min-width: 0; max-width: 150px; margin: 0; padding: 8px 10px; border: 2px solid #e9ecef; border-radius: 8px;
+  font: inherit; font-size: 0.95em; background: white; color: #212529; min-height: 2.6em; box-sizing: border-box;
+}
+.mrem-add .meds-btn { padding: 8px 14px; white-space: nowrap; }
+.mrem-names { display: flex; gap: 10px; align-items: flex-start; margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f3f5; font-size: 0.86em; font-weight: 600; color: #343a40; cursor: pointer; }
+.mrem-names input { width: 20px; height: 20px; min-width: 20px; margin: 1px 0 0; }
+html.theme-dark .mrem-row, html.theme-dark .mrem-name, html.theme-dark .mrem-names { color: var(--dk-text); }
+html.theme-dark .mrem-med, html.theme-dark .mrem-names { border-color: var(--dk-line); }
+html.theme-dark .mrem-chip { color: var(--dk-text); }
+html.theme-dark .mrem-add input[type="time"] { background: var(--dk-surface); border-color: var(--dk-line); color: var(--dk-text); }
+
 html.theme-dark .meds-x { background: rgba(255,255,255,0.08); color: var(--dk-text); }
 html.theme-dark .meds-tab { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-muted); }
 html.theme-dark .meds-tab.on { background: var(--brand-tint); border-color: var(--brand-primary); color: var(--dk-text); }

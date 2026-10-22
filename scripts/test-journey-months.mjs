@@ -71,7 +71,7 @@ async function open(o = {}) {
     localStorage.setItem('bbJournalView', 'calendar');
     localStorage.setItem('bbJournalRange', '30');
     localStorage.setItem('bbGuestNoPin', '1');
-    localStorage.setItem('bbWhatsNewSeen', '1.44');
+    localStorage.setItem('bbWhatsNewSeen', '1.45');
     const now = new Date(); now.setHours(12, 0, 0, 0);
     const k = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
     for (let i = cfg.days; i >= 1; i--) {

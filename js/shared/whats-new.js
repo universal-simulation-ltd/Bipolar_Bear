@@ -41,7 +41,8 @@
  *                tries again.
  *   BB.whatsNew.screenBusy()  the generic "something is on top" check.
  *
- * Bipolar Bear's entries are in bearReleases() at the bottom; js/index.js and
+ * Bipolar Bear's entries are in bearReleases() at the bottom (1.44, 1.45:
+ * people who missed 1.44 see only the newest); js/index.js and
  * js/journal.js call BB.whatsNew.startBear().
  */
 (function () {
@@ -269,6 +270,29 @@
         // a note, on phones only.
         { id: 'moodButtons', icon: '🔔', titleKey: 'whatsnew.b144MoodTitle', bodyKey: 'whatsnew.b144MoodBody',
           setting: null, applies: function () { return !!ctx.isNative(); } },
+      ],
+      '1.45': [
+        // One reminder per medicine (js/shared/meds-reminder.js): the switch
+        // is the reminders' master switch in 💊 My medicines → 🔔 Reminders.
+        // Turned on here with no times yet, it says where to add them.
+        { id: 'medsReminders', icon: '💊', titleKey: 'whatsnew.b145MedsTitle', bodyKey: 'whatsnew.b145MedsBody',
+          setting: {
+            key: 'bbMedsReminder',
+            get: function () { return !!(BB.medsReminder && BB.medsReminder.settings().enabled); },
+            set: function (on) {
+              return BB.medsReminder.setEnabled(on).then(function (r) {
+                if (r !== true || !on) return r;
+                return BB.medsReminder.settings().slots.length ? true : BB.t('medsRem145.needTime');
+              });
+            },
+          },
+          applies: function () {
+            if (!BB.medsReminder || !BB.medsReminder.isAvailable()) return false;
+            // On already (the single reminder, moved in): shown on, so they
+            // learn each medicine can now have its own times.
+            if (BB.medsReminder.settings().enabled) return true;
+            try { return JSON.parse(localStorage.getItem('currentMedList') || '[]').length > 0; } catch (_) { return false; }
+          } },
       ],
     };
   }

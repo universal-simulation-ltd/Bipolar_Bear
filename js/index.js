@@ -1435,6 +1435,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       ];
       otherKeysToRemove.forEach(k => localStorage.removeItem(k));
       sessionStorage.removeItem('bbPinUnlocked');
+      // Medicine reminders are keyed by the medicines' names: they go with the list (1.45).
+      try { if (window.BB && BB.medsReminder) BB.medsReminder.clear().catch(() => {}); } catch (_) {}
 
       // Reset both ticks to inactive
       const jTick = document.getElementById('journalEntryTick');
@@ -1989,6 +1991,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           // 1 daily reminder, 2 weekly summary, 4000–4009 blood test due (v358).
           if (_notif) _notif.cancel({ notifications: [{ id: 1 }, { id: 2 }].concat(Array.from({ length: 10 }, (_, i) => ({ id: 4000 + i }))) }).catch(() => {});
         } catch (_) {}
+        // Medicine reminders (js/shared/meds-reminder.js): forget + cancel.
+        try { if (window.BB && BB.medsReminder) BB.medsReminder.clear().catch(() => {}); } catch (_) {}
 
         Object.keys(localStorage).filter(k =>
           k.startsWith('trackCustom_') || k.startsWith('_labelOverride_') ||

@@ -757,6 +757,9 @@
             </div>
             <button id="bbAccountPassToggleBtn" onclick="document.getElementById('bbAccountPassFields').style.display='';document.getElementById('bbAccountPassToggleBtn').style.display='none';document.getElementById('bbAccountCurrentPass').focus();" style="width:100%;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="account.changePassword">Change password</button>
           </div>
+          <!-- Change journal password (journal page only, js/journal.js
+               _changeJournalPassword): shown when the account has one. -->
+          <button id="bbAccountJournalPwBtn" onclick="window._bbChangeJournalPassword&&window._bbChangeJournalPassword()" style="display:none;width:100%;padding:12px;background:#f8f9fa;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-size:0.95em;font-weight:600;cursor:pointer;margin-bottom:10px;-webkit-tap-highlight-color:transparent;" data-i18n="jpw145.btn">🔑 Change journal password</button>
           <div id="bbAccountEmailSection" style="margin-bottom:10px;">
             <div id="bbAccountEmailFields" style="display:none;margin-bottom:8px;">
               <input type="email" id="bbAccountNewEmail" placeholder="New email address" data-i18n-placeholder="account.newEmail" style="width:100%;padding:10px 12px;border:2px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;margin-bottom:6px;outline:none;font-family:inherit;">
@@ -1974,6 +1977,15 @@
       const n = document.getElementById(id);
       if (n) n.style.display = (_uidOnly || _guest) ? 'none' : '';
     });
+    // Change journal password: only where the journal can do it (journal.html)
+    // and only for an account that has one (asked fresh each time).
+    const jpwBtn = document.getElementById('bbAccountJournalPwBtn');
+    if (jpwBtn) {
+      jpwBtn.style.display = 'none';
+      if (!_guest && typeof window._bbJournalPwAvailable === 'function') {
+        window._bbJournalPwAvailable().then(ok => { jpwBtn.style.display = ok ? '' : 'none'; }).catch(() => {});
+      }
+    }
     const uidLink = document.getElementById('bbAccountUidLink');
     if (uidLink) uidLink.style.display = (!_guest && (_uidOnly || (window.BB && window.BB.uid && window.BB.uid.hasSession()))) ? 'block' : 'none';
     if (emailEl && _guest) emailEl.textContent = _bbT('t143.j.guestMode', 'Guest mode');

@@ -41,7 +41,7 @@ const SEED = `<!doctype html><meta charset="utf-8"><script>
 function S(k, v){ localStorage.setItem(k, typeof v==='string'?v:JSON.stringify(v)); }
 localStorage.clear();
 ['bbWelcomeShown','bbFabFirstRunDone','bbWaFabHidden','bbSurvivalKitVisited','bbMoodDefHintDone','bbMedHintDone','bbPersonalHintDone','bbTutorialToastShown','bbGuestNoPin'].forEach(function(k){S(k,'1');});
-S('bbLanguage','en'); S('bbWhatsNewSeen','1.44'); S('bbNativeFeel','1'); S('bbOnboardingStep','12'); S('focusedModeEnabled','0');
+S('bbLanguage','en'); S('bbWhatsNewSeen','1.45'); S('bbNativeFeel','1'); S('bbOnboardingStep','12'); S('focusedModeEnabled','0');
 S('dailyGoals', ['Walk for 20 minutes','Message one friend today']);
 S('survivalGratitude', ['My morning coffee','A check-in text from mum']);
 S('currentMedList', [{name:'Lithium',dosage:'800mg'}]);

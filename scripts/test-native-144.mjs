@@ -197,8 +197,11 @@ console.log('Reminder mood buttons');
   const daily = (await LJ(page, '__scheduled')).find(n => n.id === 1);
   const types = await LJ(page, '__actionTypes');
   assert.equal(daily.actionTypeId, 'bb.mood');
-  assert.deepEqual(types.types[0].actions.map(a => a.id), ['bg.mood.manic', 'bg.mood.elevated', 'bg.mood.stable', 'bg.mood.low', 'bg.mood.depressed']);
-  assert.equal(types.types[0].actions[3].title, '😔 Low');
+  const mood = types.types.find(t => t.id === 'bb.mood');
+  assert.deepEqual(mood.actions.map(a => a.id), ['bg.mood.manic', 'bg.mood.elevated', 'bg.mood.stable', 'bg.mood.low', 'bg.mood.depressed']);
+  assert.equal(mood.actions[3].title, '😔 Low');
+  // iOS replaces every category on each call: the medicine reminders' ✅ Taken goes with them (1.45).
+  assert.deepEqual(types.types.find(t => t.id === 'BB_MEDS').actions.map(a => a.id), ['taken']);
   ok('the daily reminder is scheduled with the five mood buttons (bb.mood / bg.mood.*)');
   await ctx.close();
 }

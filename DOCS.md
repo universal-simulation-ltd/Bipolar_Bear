@@ -443,7 +443,12 @@ bbBloodOnCharts         "1"           — "Show blood results on my charts" (§2
 bbBloodChartsAsked      "1"           — the one-time "Show this on your mood charts?" was offered
 bbBloodChartTest        string        — the test the life chart's line shows (picker; §2.25)
 bbBloodDueReminder      "1"           — remind me on the day a blood test is due (phone app)
-bbWhatsNewSeen          "1.44"        — newest release whose New features sheet was shown or
+bbMedsReminder          "1"           — medicine reminders on (the master switch; §2.27)
+bbMedsReminders         JSON          — {"<medicine, lower case>": ["HH:MM", …], "*": […]}:
+                                        each medicine's reminder times, this device only (§2.27)
+bbMedsRemindNames       "1"           — name the medicines in the reminders (unticked = absent)
+bbMedsTaken             JSON          — {day, slots: ["HH:MM"]}: ✅ Taken today, per time
+bbWhatsNewSeen          "1.45"        — newest release whose New features sheet was shown or
                                         skipped (§2.25); Reset clears it, so it shows again
 bbJournalView           "calendar"|"life" — the Your Journey card's default view; set by a
                                         double tap on the Calendar / Life chart switch (the
@@ -1594,7 +1599,7 @@ fab.js sign-in sheet                     js/shared/universal-id.js (BB.uid)
   runtime service account
   to hold **Service Account Token Creator** (`roles/iam.serviceAccountTokenCreator`)
   on itself. Without it, `uidSignIn` answers `INTERNAL` at that step.
-- **Not yet:** a "Change journal password" setting.
+- **Change journal password** (1.45): Settings → Account; see §2.28.
 
 #### Apple, Google and passkeys (2026-10-19, v356; apps 1.44)
 
@@ -2258,7 +2263,7 @@ ones stay unknown, not missed).
 
 Cleared on logout and reset with the other medicine keys. The sheet's tabs
 take a double-tap to set the default tab (`bbMedsHubTab`, cleared by Reset).
-The daily medication reminder (`meds-reminder.js`) is still one reminder.
+Medicine reminders: one per medicine since 1.45 (§2.27).
 Test: `node scripts/test-med-tracking.mjs` (9 scenarios).
 
 ### 2.24 Mood buttons on the daily reminder (1.44, v353)
@@ -2438,8 +2443,9 @@ get a React copy, so the registry is plain data plus small functions:
     PIN lock on (`_idxBioMode` / `_bioLockMode`) and biometrics enrolled.
   - `moodButtons` — a note, no switch (the reminder's mood buttons are always
     on, §2.24). Phone app only.
-- For the next release, add `'1.45': [...]` to `bearReleases`; people who
-  missed 1.44 see only the newest entry.
+- **1.45**: `medsReminders` — A reminder for each medicine (§2.27; the switch
+  is `bbMedsReminder`, the reminders' master switch). For the next release, add
+  `'1.46': [...]` to `bearReleases`; people who missed a release see only the newest entry.
 
 Tests: `node scripts/test-med-tracking.mjs` (11 scenarios; the plan helpers
 and `medBloodPlans` encrypted, read back on another device, restored from a
@@ -2497,6 +2503,109 @@ file, so the page scripts barely change.
     (server data; it keeps its confirms).
 - Test: `scripts/test-native-feel.mjs` (headless Chrome over CDP with real
   touches, 36 checks; it serves and seeds the app itself).
+
+### 2.27 One reminder per medicine (2026-10-22, v378, for 1.45)
+
+Backlog: "one reminder per medicine (`meds-reminder.js` is still one
+reminder)". `js/shared/meds-reminder.js` (`BB.medsReminder`, index + journal),
+the 🔔 Reminders card in `js/journal-meds.js` (`remindersHtml`, under Your
+medicines on the Doses tab), strings `medsRem145.*` in
+`js/shared/i18n-medsrem.js` (10 languages, machine translated).
+
+- **Settings, this device only** (an alarm on this phone / browser; nothing
+  syncs): the master switch **Remind me to take my medicines** (`bbMedsReminder`,
+  unticked; the key the single reminder used), then each medicine's own times
+  (`bbMedsReminders`, keyed by the name in lower case; none by default = no
+  reminder), then **Show the medicine names in reminders** (`bbMedsRemindNames`,
+  unticked). Off keeps the times. The focus-mode medication step's 🔔 pill
+  ("🔔 Reminders · 08:00, 20:00") opens the sheet at the card
+  (`BBMeds.open('doses', {reminders: true})` scrolls the sheet's body, never the
+  modal).
+- **Slots.** Medicines with the same time share one notification; ✅ Taken
+  (the notification's button, or the in-app "Have you taken …?") covers that
+  time today (`bbMedsTaken`). Follow-ups every hour, up to 6, never past midnight.
+- **Privacy.** With names unticked a reminder says only "💊 Time for your
+  medication" / "Have you taken your medication?" (the single reminder's words).
+  Ticked: "💊 Time for Lithium, Quetiapine". The notification's `extra` holds
+  `{bbMeds, day, slot}`, never a name. The times are keyed by medicine name, so
+  `BB.medsReminder.clear()` runs on sign-out (journal and home) as well as reset
+  and delete-all: the single reminder used to survive sign-out.
+- **The list.** `BBMedList.save` (journal.js) calls `onListChange(prev, next,
+  opts)`: a renamed medicine keeps its times, a removed one loses them. A list
+  that arrives from another device re-plans (`loadMedicationList`). Times for a
+  medicine not on this device's list are kept but not scheduled.
+- **The move from the single reminder** (`migrate()`, once, while
+  `bbMedsReminders` doesn't exist): on → its time (`bbMedsReminderTime`, 21:00
+  if unset) goes on every medicine on the list, or on `"*"` ("All my
+  medicines", shown as its own row) when there is no list on this device; its
+  ✅ Taken day becomes that slot's. Off → nothing is moved, and turning the
+  switch on later gives no medicine a time.
+- **Phone app** (`@capacitor/local-notifications`, as before; the native
+  projects need only `cap:sync`). One-off notifications, planned 7 days ahead
+  and re-planned on each page open and each change: every slot's first reminder
+  for the 7 days first, then the follow-ups, soonest first, **at most 49**
+  (`plan()`, pure). IDs `3000 + i`; `3000–3099` is cancelled before each plan
+  (the single reminder used `3000 + day * 10 + n`). iOS replaces every
+  notification category on each `registerActionTypes`, so ✅ Taken (`BB_MEDS`)
+  and the daily reminder's mood buttons (`bb.mood`) are always registered
+  together (`BB.medsReminder.actionTypes()`, used by `scheduleReminder` too).
+  Icon `ic_stat_notify` + `#FF9500`, like the other reminders.
+- **Web.** A browser can't schedule a notification for later, so the reminders
+  come only while Bipolar Bear is open in a tab (the card says so): a timer per
+  reminder for the next 36 hours, re-planned every 12. Tab in front → the in-app
+  prompt; otherwise a notification (`new Notification`, or the service worker's
+  `showNotification` on Android Chrome). `service-worker.js`'s
+  `notificationclick` focuses the tab and posts `{bbMedsAsk, slot}`. Permission
+  is asked when the master switch is turned on; blocked → "Notifications are
+  blocked for this site…" and the switch stays off.
+- **New features (1.45):** `medsReminders`, its switch = the master switch.
+  Turned on there with no times yet, it says "Now give each medicine a reminder
+  time in 💊 My medicines". Shown when reminders are available and there's a
+  medicine list (or the moved single reminder is on, then shown on).
+- Test: `PLAYWRIGHT_MODULE=… node scripts/test-meds-reminders.mjs` (19 checks:
+  the move, the plan, the phone path against a fake plugin, the card at 390 px
+  in English and German, negative controls; `SHOTS=<dir>` saves screenshots).
+
+### 2.28 Change journal password (2026-10-22, v378, for 1.45)
+
+Settings → Advanced → 👤 Account (fab.js's account sheet, on the journal page)
+→ **🔑 Change journal password** (`#bbAccountJournalPwBtn`). Shown only when
+the account has a password wrap (`wrapSalt` + `wrappedKey` + `wrappedKeyIv`;
+`_journalPwAvailable`, read fresh each time the sheet opens): Private journals,
+and Standard ones that kept a password wrap. Strings `jpw145.*` in
+`js/shared/i18n-journalpw.js` (journal.html only).
+
+Why it is safe to build: the data key never changes (§2.18), the password only
+wraps it. So a change is a re-wrap, not a re-encryption (`_rewrapJournalPassword`
+in `js/journal.js`):
+1. Read `userSettings/{uid}` from the server (offline: nothing changes).
+2. Unwrap with the **current** journal password. Wrong → "That isn't the
+   journal password", nothing written.
+3. The key must open one of the account's encrypted entries
+   (`_keyOpensAccountEntries`), else refuse.
+4. Wrap the same key with the new password (new `wrapSalt`), in a transaction
+   that refuses if `wrappedKey` / `wrapSalt` changed since step 1 (another
+   device) → "changed on another device".
+5. Write `wrapSalt`, `wrappedKey`, `wrappedKeyIv`, `journalPw: true` (the
+   journal password is now its own: a password sign-in never re-wraps over it).
+   The Standard wrap, the entries and other devices' keys are untouched.
+- New password: 8+ characters, typed twice, not the current one. The passwords
+  are derived on the device (PBKDF2) and never sent, stored or logged (the
+  failure log has only the error's code).
+- **Not offered:** the oldest accounts with `encSalt` alone (key =
+  PBKDF2(password), no wrap): the next unlock gives them a wrap, then it's
+  offered. Standard accounts with no password wrap (nothing to change; the
+  Private journal switch sets one).
+- **Caveat:** app builds from before `journalPw` (2026-10-05) may, after a
+  password sign-in whose unwrap fails, re-wrap the key with the sign-in password
+  if the device holds the key. That replaces the new journal password with the
+  sign-in password; it never loses the journal.
+- The sign-in password ("Change password", Firebase) is separate and still
+  doesn't touch the wrap.
+- Test: `node scripts/test-journal-key.mjs` (the real `_rewrapJournalPassword`
+  against a mocked Firestore: the change, Standard kept, and negative controls
+  for a wrong password, a wrap changed meanwhile, offline, a key that doesn't
+  open the entries, no wrap; no password in the store, the writes or the log).
 
 ## 3. Algorithm Flowcharts
 

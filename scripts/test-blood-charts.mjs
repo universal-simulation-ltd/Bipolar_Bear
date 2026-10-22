@@ -61,6 +61,7 @@ const LEVELS = LITHIUM.map(([d, v], i) => ({ id: 'b' + i, date: ago(d), test: 'L
  */
 async function open(url, o = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block', acceptDownloads: true, colorScheme: o.theme === 'dark' ? 'dark' : 'light' });
+  if (o.grant) await ctx.grantPermissions(['notifications'], { origin: BASE });
   const page = await ctx.newPage();
   page.on('pageerror', e => { if (!/firebase|Firestore/i.test(e.message)) console.log('    pageerror:', e.message); });
   page.on('dialog', d => d.accept());
@@ -72,6 +73,10 @@ async function open(url, o = {}) {
     return route.abort();
   });
   await page.addInitScript(cfg => {
+    if (cfg.grant && window.Notification) { // headless Chromium answers "denied" whatever is granted
+      Object.defineProperty(Notification, 'permission', { get: () => 'granted', configurable: true });
+      Notification.requestPermission = async () => 'granted';
+    }
     if (sessionStorage.getItem('__seeded')) return;
     sessionStorage.setItem('__seeded', '1');
     localStorage.clear();
@@ -89,9 +94,10 @@ async function open(url, o = {}) {
       localStorage.setItem('entry:' + t, JSON.stringify({ date: k(t), timestamp: t, mood: moods[i % 6], sleep: 5 + (i % 5), energy: 4, medication: 'taken' }));
     }
     if (cfg.levels) localStorage.setItem('medBloodLevels', JSON.stringify(cfg.levels));
+    if (cfg.meds) localStorage.setItem('currentMedList', JSON.stringify(cfg.meds));
     if (cfg.plans) localStorage.setItem('medBloodPlans', JSON.stringify(cfg.plans));
     if (cfg.chartsOn) localStorage.setItem('bbBloodOnCharts', '1');
-    if (cfg.seen !== false) localStorage.setItem('bbWhatsNewSeen', '1.44');
+    if (cfg.seen !== false) localStorage.setItem('bbWhatsNewSeen', '1.45');
     Object.keys(cfg.extra || {}).forEach(x => localStorage.setItem(x, cfg.extra[x]));
   }, { days: o.days == null ? 400 : o.days, ...o });
   await page.goto(BASE + url);
@@ -303,17 +309,32 @@ console.log('Offer once after the first result');
 
 console.log('New features sheet');
 {
-  // An updating user (onboarding done), journal idle → shown once.
-  const { ctx, page } = await open('/journal.html', { seen: false, levels: LEVELS });
+  // An updating user (onboarding done, saw 1.44), journal idle → 1.45 shown once.
+  const MEDS = [{ name: 'Lithium', dosage: '400 mg' }];
+  const { ctx, page } = await open('/journal.html', { seen: false, levels: LEVELS, meds: MEDS, grant: true, extra: { bbWhatsNewSeen: '1.44' } });
   await page.waitForSelector('.bbwn-back', { timeout: 15000 });
   const rows = await page.evaluate(() => [...document.querySelectorAll('.bbwn-item')].map(li => ({ id: li.dataset.id, sw: !!li.querySelector('input'), on: !!li.querySelector('input:checked') })));
-  assert.deepEqual(rows, [{ id: 'bloodCharts', sw: true, on: false }], 'web: only the blood switch, unticked: ' + JSON.stringify(rows));
-  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.44[\s\S]*You can change these any time in Settings/);
-  assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), '1.44');
-  ok('an updating user sees "New features · New in 1.44" once the journal is idle; web shows only the blood switch, unticked');
+  assert.deepEqual(rows, [{ id: 'medsReminders', sw: true, on: false }], 'web: only the medicine reminders switch, unticked: ' + JSON.stringify(rows));
+  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.45[\s\S]*A reminder for each medicine[\s\S]*You can change these any time in Settings/);
+  assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), '1.45');
+  ok('an updating user sees "New features · New in 1.45" once the journal is idle: a reminder for each medicine, unticked');
   await shot(page, 'whatsnew-en-light');
-  // Its switch is the Settings setting.
+  // Its switch is the reminders' master switch; with no times yet it says where to add them.
   await page.click('.bbwn-sw');
+  await page.waitForFunction(() => document.querySelector('.bbwn-item[data-id="medsReminders"] .bbwn-msg')?.textContent);
+  assert.equal(await page.evaluate(() => localStorage.getItem('bbMedsReminder')), '1');
+  assert.equal(await page.isChecked('.bbwn-item[data-id="medsReminders"] input'), true);
+  assert.match(await page.textContent('.bbwn-item[data-id="medsReminders"] .bbwn-msg'), /give each medicine a reminder time/);
+  await page.click('.bbwn-done');
+  await page.evaluate(() => BBMeds.open('doses', { reminders: true }));
+  assert.equal(await page.isChecked('#medsRemOn'), true);
+  await page.click('#medsRemCard .mrem-row .bb-switch');
+  await page.waitForFunction(() => localStorage.getItem('bbMedsReminder') === null);
+  await page.evaluate(() => BBMeds.close());
+  ok('its switch and My medicines → 🔔 Reminders are one setting (bbMedsReminder) both ways');
+  // The 1.44 entry's blood switch is still the Settings one (people who missed 1.44 see only 1.45).
+  await page.evaluate(() => BB.whatsNew.create({ releases: { '1.44': BB.whatsNew.bearReleases({ bioMode: () => null, bioType: null, isNative: () => false })['1.44'] }, seenKey: '__b' }).show());
+  await page.click('.bbwn-item[data-id="bloodCharts"] .bbwn-sw');
   await page.waitForTimeout(100);
   assert.equal(await page.evaluate(() => localStorage.getItem('bbBloodOnCharts')), '1');
   await page.click('.bbwn-done');
@@ -323,7 +344,7 @@ console.log('New features sheet');
   await page.click('#bloodChartsRow .bb-switch');
   assert.equal(await page.evaluate(() => BB.bloodCharts.isOn()), false);
   await page.evaluate(() => closeSettingsModal());
-  ok('its switch and the Settings switch are one setting (bbBloodOnCharts) both ways');
+  ok('the 1.44 blood switch and the Settings switch are one setting (bbBloodOnCharts) both ways');
   await page.reload();
   await page.waitForTimeout(5000);
   assert.equal(await page.$('.bbwn-back'), null, 'shown twice');
@@ -331,6 +352,7 @@ console.log('New features sheet');
   // Reset settings brings it back.
   await page.evaluate(() => confirmResetSettings());
   assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), null);
+  await page.evaluate(() => localStorage.setItem('currentMedList', JSON.stringify([{ name: 'Lithium', dosage: '400 mg' }])));
   await page.reload();
   await page.waitForSelector('.bbwn-back', { timeout: 15000 });
   ok('Reset settings brings it back');
@@ -339,7 +361,7 @@ console.log('New features sheet');
 {
   // A fresh install (onboarding not done): marked seen, never shown.
   const { ctx, page } = await open('/journal.html', { seen: false, onboarded: false, days: 0 });
-  await page.waitForFunction(() => localStorage.getItem('bbWhatsNewSeen') === '1.44', null, { timeout: 15000 });
+  await page.waitForFunction(() => localStorage.getItem('bbWhatsNewSeen') === '1.45', null, { timeout: 15000 });
   await page.waitForTimeout(1500);
   assert.equal(await page.$('.bbwn-back'), null);
   ok('a fresh install marks it seen without showing it');
@@ -347,7 +369,7 @@ console.log('New features sheet');
 }
 {
   // Mid-entry (yesterday's steps on screen): waits.
-  const { ctx, page } = await open('/journal.html', { seen: false, skipYesterday: true });
+  const { ctx, page } = await open('/journal.html', { seen: false, skipYesterday: true, meds: [{ name: 'Lithium', dosage: '400 mg' }] });
   await page.waitForSelector('#focusedModeCard', { state: 'visible', timeout: 15000 });
   await page.waitForTimeout(6000);
   assert.equal(await page.$('.bbwn-back'), null);
@@ -357,7 +379,7 @@ console.log('New features sheet');
 }
 {
   // Over the home PIN lock: waits until it is unlocked.
-  const { ctx, page } = await open('/index.html', { seen: false, extra: { bbGuestPinSalt: 'c2FsdA==' } });
+  const { ctx, page } = await open('/index.html', { seen: false, meds: [{ name: 'Lithium', dosage: '400 mg' }], extra: { bbGuestPinSalt: 'c2FsdA==' } });
   await page.waitForFunction(() => document.getElementById('guestPinOverlay')?.style.display === 'flex', null, { timeout: 15000 });
   await page.waitForTimeout(6000);
   assert.equal(await page.$('.bbwn-back'), null, 'over the PIN lock');
@@ -372,7 +394,7 @@ console.log('New features sheet');
   // for a PIN-locked iPhone with Face ID).
   const { ctx, page } = await open('/journal.html', { seen: true, lang: 'en' });
   const r = await page.evaluate(() => {
-    const ids = ctx => BB.whatsNew.create({ releases: BB.whatsNew.bearReleases(ctx), seenKey: '__t' }).items().map(i => i.id + (i.setting ? ':switch' : ':note'));
+    const ids = ctx => BB.whatsNew.create({ releases: { '1.44': BB.whatsNew.bearReleases(ctx)['1.44'] }, seenKey: '__t' }).items().map(i => i.id + (i.setting ? ':switch' : ':note'));
     return {
       phone: ids({ bioMode: () => 'native', bioType: 'face', isNative: () => true }),
       phoneNoPin: ids({ bioMode: () => null, bioType: 'face', isNative: () => true }),
@@ -387,7 +409,7 @@ console.log('New features sheet');
   // The Face ID row: its label, and a failed scan leaves it off with a message.
   await page.evaluate(() => {
     BB.bioUnlock.turnOn = () => Promise.resolve('failed');
-    BB.whatsNew.create({ releases: BB.whatsNew.bearReleases({ bioMode: () => 'native', bioType: 'face', isNative: () => true }), seenKey: '__t2' }).show();
+    BB.whatsNew.create({ releases: { '1.44': BB.whatsNew.bearReleases({ bioMode: () => 'native', bioType: 'face', isNative: () => true })['1.44'] }, seenKey: '__t2' }).show();
   });
   assert.match(await page.textContent('.bbwn-item[data-id="bioUnlock"]'), /Unlock with Face ID/);
   assert.match(await page.textContent('.bbwn-item[data-id="moodButtons"]'), /Tap a mood on the daily reminder/);
