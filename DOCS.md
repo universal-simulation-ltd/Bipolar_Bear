@@ -1745,6 +1745,32 @@ Now (`js/journal.js`):
 - Test: `node scripts/test-journal-key.mjs` runs the real functions against a
   mocked Firestore.
 
+#### The Keychain slot is never written over (2026-10-22, v377, 1.44 build 64)
+
+Second support case, the same user (2026-10-22): 32 entries, all encrypted in
+one batch by 1.42 on 2026-10-15 and never rewritten since. The account's
+Standard key didn't open them on the web or on TestFlight 1.44 (63).
+- **Cause:** the set-aside key above lived only in memory. Adopting the
+  account's key (`_adoptUserKey` → `_userExportKeyToSession`) wrote it into
+  `bb_user_key`, over the device key. That included a load whose 3 s Keychain
+  read had timed out, where the device key was never read at all. Once the
+  slot was overwritten, the only key for those entries was gone.
+- **Now:** `_userExportKeyToSession` reads the slot first. A different key
+  goes to **`bb_user_key_stale`** (a JSON list of base64 keys, newest 8)
+  through `_setAsideDeviceKey`, which reads the list back to confirm the save.
+  If the slot can't be read, or the set-aside doesn't save, `bb_user_key` is
+  left as it is.
+- `_loadStaleKeys()` runs once per page in `loadEntries`, before decoding,
+  and adds those keys to `_staleUserKeys`. `_decodeFirestoreEntry` then opens
+  what they encrypted and re-encrypts it under the account's key, so the web
+  and other devices can read it after that.
+- Sign-out still removes `bb_user_key` but keeps `bb_user_key_stale`: a key
+  opens nothing without the account that can read the entries.
+- Test: the native scenarios at the end of `scripts/test-journal-key.mjs`
+  (a mock Keychain shared across launches).
+- ⚠️ This can't bring back a key that an older build has already written
+  over. An account whose entries no key opens stays locked.
+
 ### 2.19 The Friendly neighbourhood Bipolar Bear (crisis auto-reply)
 
 **Why:** on 2026-10-10 a member posted "I need to talk to someone asap" and the

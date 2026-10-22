@@ -2888,6 +2888,7 @@ function _tt(k, vars, fallback) {
         if (currentUser) {
           // Restore session key if not in memory (e.g. after page refresh)
           if (!_userCryptoKey) _userCryptoKey = await _userImportKeyFromSession();
+          await _loadStaleKeys(); // keys set aside on this phone open what they encrypted
 
           // Helper: decode a QuerySnapshot into the entries array (handles decryption)
           async function _pushDecoded(snap) {
@@ -3881,13 +3882,72 @@ function _tt(k, vars, fallback) {
         try {
           const _ss = window.BB?.secureStorage;
           if (_ss) {
-            await Promise.race([
-              _ss.setItem('bb_user_key', b64),
-              new Promise(r => setTimeout(() => r(), 3000)),
-            ]);
+            // Never write over a different key: it may be the only one that
+            // opens entries an older build encrypted with it. Set it aside
+            // first; if the slot can't be read, leave it alone this time.
+            const cur = await _ssRace(_ss.getItem('bb_user_key'));
+            if (cur === undefined) return;
+            if (cur && cur !== b64) await _setAsideDeviceKey(cur);
+            await _ssRace(_ss.setItem('bb_user_key', b64));
           }
         } catch (e) { console.warn('SecureStorage setItem failed:', e); }
       }
+    }
+
+    // ── Keys set aside on this device (2026-10-22) ──
+    // The Keychain slot bb_user_key holds one key. Adopting the account's key
+    // used to write over whatever was there, and that could be the only key
+    // for entries an older build had encrypted with it (support, 2026-10-22:
+    // 32 entries, unopened since 1.42). A different key now moves to
+    // bb_user_key_stale first, and every load tries those keys
+    // (_decodeFirestoreEntry), which re-encrypts what they open under the
+    // account's key. Kept through sign-out: a key opens nothing without the
+    // account that can read the entries.
+    const _STALE_KEYS_SLOT = 'bb_user_key_stale';
+    let _staleKeysLoaded = false;
+
+    // A Keychain call raced against 3 s; undefined means it didn't answer.
+    function _ssRace(p) {
+      return Promise.race([Promise.resolve(p), new Promise(r => setTimeout(() => r(undefined), 3000))]);
+    }
+
+    async function _readStaleKeysSlot(_ss) {
+      const v = await _ssRace(_ss.getItem(_STALE_KEYS_SLOT));
+      if (v === undefined) return undefined;
+      try { const a = JSON.parse(v || '[]'); return Array.isArray(a) ? a.filter(x => typeof x === 'string') : []; } catch (_) { return []; }
+    }
+
+    async function _setAsideDeviceKey(b64) {
+      const _ss = window.BB?.secureStorage;
+      if (!_ss || !b64) return;
+      const list = await _readStaleKeysSlot(_ss);
+      if (list === undefined) throw new Error('stale-slot-unreadable');
+      if (list.includes(b64)) return;
+      list.push(b64);
+      await _ssRace(_ss.setItem(_STALE_KEYS_SLOT, JSON.stringify(list.slice(-8))));
+      const back = await _readStaleKeysSlot(_ss);
+      if (!back || !back.includes(b64)) throw new Error('stale-slot-not-saved');
+    }
+
+    /** Once per page (native): put the keys set aside on this device in _staleUserKeys. */
+    async function _loadStaleKeys() {
+      if (_staleKeysLoaded || !isNative()) return;
+      const _ss = window.BB?.secureStorage;
+      if (!_ss) return;
+      try {
+        const list = await _readStaleKeysSlot(_ss);
+        if (list === undefined) return; // try again on the next load
+        _staleKeysLoaded = true;
+        const have = new Set(await Promise.all(_staleUserKeys.concat(_userCryptoKey ? [_userCryptoKey] : []).map(_rawKeyB64)));
+        for (const b64 of list) {
+          if (have.has(b64)) continue;
+          try {
+            const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+            _staleUserKeys.push(await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, true, ['encrypt', 'decrypt']));
+            have.add(b64);
+          } catch (_) { /* not a key */ }
+        }
+      } catch (e) { console.warn('Could not read the keys set aside:', e); }
     }
 
     async function _userImportKeyFromSession() {

@@ -1835,7 +1835,10 @@
 // v376: My medicines no longer overshoots and drops back when it opens: the
 //   ✕'s focus scrolled the overflow:hidden modal while the sheet was still
 //   below the screen (js/journal-meds.js).
-const CACHE_NAME = 'bipolarbear-v376';
+// v377: the phone never writes over a different journal key in the Keychain:
+//   it moves to bb_user_key_stale first and every load tries it, so entries
+//   an older build encrypted with it open again (js/journal.js).
+const CACHE_NAME = 'bipolarbear-v377';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

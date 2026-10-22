@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🔐 **Journal entries locked by an old key on the phone can open again.** When the app switched to your account's key, it wrote over the key your phone was keeping, and that old key could be the only one that opens entries an earlier version saved with it. Your journal then said they couldn't be opened, for good. The phone now keeps an old key separately and tries it every time, and any entry it opens is saved again under your account's key, so the website and your other devices can open it too. (`CACHE_NAME` v377; iPhone and Android 1.44 build 64)
 - 💊 **My medicines opens in one smooth slide.** It used to come up too far, with its top off the screen, and then drop back into place. (`CACHE_NAME` v376)
 - 🛡️ **Bipolar Anonymous: admin delete always answers.** Confirming a delete turns the post into "deleted" straight away. If the board refuses it, something goes wrong, or there's no answer within 12 seconds, the post comes back with a message and a short code saying why. (`CACHE_NAME` v375)
 - 🛡️ **Bipolar Anonymous: admin delete says what happened.** Deleting a post or an announcement used to say "Post deleted" even when the board had refused it, and the post stayed. Now the app refreshes your sign-in before an admin delete, pin or publish, waits for the board to accept it, and if it's refused says so: sign in again with the admin email. In every language. (`CACHE_NAME` v374)
