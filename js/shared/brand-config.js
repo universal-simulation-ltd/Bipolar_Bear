@@ -136,17 +136,37 @@ window.BB.storage = {
  * branch by treating a 0 return the same as an absent streak.
  */
 /**
- * True when the home page shows the Bipolar Anonymous button: the home buttons
- * are unlocked and Profile → Customise has it on — the same rule as
- * _applyOnboardingGating in js/index.js. The Anonymous streak (💬) on the home
- * card and the home-screen widget only shows while this is true.
+ * The home page's 🆘 Survival Kit and 💬 Bipolar Anonymous buttons (James,
+ * 2026-10-23, reversing 2026-10-12's "off by default"): both are ON by
+ * default and show from the moment the first journal entry is saved
+ * (onboarding step ≥ 1, or entries already on this device). Profile →
+ * Customise can turn either off: bbSurvivalBtnEnabled / bbAnonBtnEnabled
+ * '0' = off, unset or '1' = on. The single source of the rule for
+ * _applyOnboardingGating in js/index.js and BB.anonButtonShown below.
  */
-window.BB.anonButtonShown = function () {
+window.BB.homeButtonsUnlocked = function () {
   try {
-    return window.BB.storage.get('FabsUnlocked') === '1' && window.BB.storage.get('AnonBtnEnabled') === '1';
+    var s = window.BB.storage;
+    return (parseInt(s.get('OnboardingStep') || '0', 10) || 0) >= 1 || s.get('HasEntries') === '1';
   } catch (_) {
     return false;
   }
+};
+/** 'survival' | 'anon': on unless Profile → Customise turned it off. */
+window.BB.homeButtonOn = function (which) {
+  try {
+    return window.BB.storage.get(which === 'anon' ? 'AnonBtnEnabled' : 'SurvivalBtnEnabled') !== '0';
+  } catch (_) {
+    return true;
+  }
+};
+/**
+ * True when the home page shows the Bipolar Anonymous button — the same rule
+ * as _applyOnboardingGating in js/index.js. The Anonymous streak (💬) on the
+ * home card and the home-screen widget only shows while this is true.
+ */
+window.BB.anonButtonShown = function () {
+  return window.BB.homeButtonsUnlocked() && window.BB.homeButtonOn('anon');
 };
 
 /**

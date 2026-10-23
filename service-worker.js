@@ -1844,7 +1844,15 @@
 //   notificationclick here), and Settings → Account → Change journal password
 //   (js/journal.js, fab.js, new js/shared/i18n-journalpw.js). The 1.45 New
 //   features entry (js/shared/whats-new.js, i18n-whatsnew.js).
-const CACHE_NAME = 'bipolarbear-v378';
+// v379: the 🆘 Survival Kit and 💬 Bipolar Anonymous home buttons are on by
+//   default again and show from the first saved entry (James, 2026-10-23,
+//   reversing v70 / 2026-10-12); a one-time migration (bbHomeBtnsV 2 +
+//   userSettings.homeBtnsVersion 2) turns both on for everyone, and a later
+//   "off" in Profile → Customise is kept across devices. The NEW pill went;
+//   the journal's 🧰 shows from step 3; a 1.45 New features note says where
+//   they are. Touches js/index.js, js/journal.js, js/shared/brand-config.js,
+//   whats-new.js, i18n.js, i18n-whatsnew.js, css/index.css.
+const CACHE_NAME = 'bipolarbear-v379';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -108,31 +108,6 @@
     }
     @keyframes bbHintNudge { 0%,100%{transform:scale(1)} 25%{transform:scale(1.18) rotate(-4deg)} 75%{transform:scale(1.12) rotate(3deg)} }
 
-    /* Post-sign-up soft hint on the profile popup's Survival / Anonymous
-       customise toggles: gentle ring pulse + a small NEW pill. Applied by
-       _renderHomeBtnToggles() while bbCustomiseNewPending is set. */
-    @keyframes bbNewPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255,149,0,0.45); }
-      50%      { box-shadow: 0 0 0 7px rgba(255,149,0,0); }
-    }
-    .bb-new-toggle {
-      animation: bbNewPulse 1.8s ease-in-out infinite;
-      border-color: var(--brand-primary) !important;
-    }
-    .bb-new-pill {
-      position: absolute;
-      top: -8px;
-      right: -7px;
-      background: var(--brand-btn);
-      color: white;
-      font-size: 0.58em;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      padding: 2px 6px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-      pointer-events: none;
-    }
 
     @keyframes fabHintSlide {
       0%, 100% { transform: translateX(0); opacity: 0.85; }

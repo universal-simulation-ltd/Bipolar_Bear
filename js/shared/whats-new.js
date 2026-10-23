@@ -293,6 +293,13 @@
             if (BB.medsReminder.settings().enabled) return true;
             try { return JSON.parse(localStorage.getItem('currentMedList') || '[]').length > 0; } catch (_) { return false; }
           } },
+        // 🆘 Survival Kit and 💬 Bipolar Anonymous are on the home page by
+        // default again (js/index.js _migrateHomeBtnsLocal, 2026-10-23). They
+        // are already on, so a note, not a switch: where to hide them. Only
+        // for someone the change brought a button back for (bbHomeBtnsRestored).
+        { id: 'homeButtons', icon: '🏠', titleKey: 'whatsnew.b145HomeTitle', bodyKey: 'whatsnew.b145HomeBody',
+          setting: null,
+          applies: function () { try { return BB.storage.get('HomeBtnsRestored') === '1'; } catch (_) { return false; } } },
       ],
     };
   }

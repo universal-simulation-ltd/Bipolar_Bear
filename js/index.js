@@ -573,10 +573,26 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               }
             }
             // Restore Profile → Customise preferences (home-button + stats visibility).
-            // Survival / Anonymous are opt-in: hidden until the user enables them, so the
-            // stored flag means "enabled" ('1'), not "hidden". Stats default to visible.
-            if (typeof d.homeSurvivalEnabled === 'boolean') BB.storage.set('SurvivalBtnEnabled', d.homeSurvivalEnabled ? '1' : '0');
-            if (typeof d.homeAnonEnabled     === 'boolean') BB.storage.set('AnonBtnEnabled',     d.homeAnonEnabled     ? '1' : '0');
+            // Survival / Anonymous are on by default; their stored flag means
+            // "enabled" ('1') and '0' is a choice to hide. Stats default to visible.
+            // The account's two home-button values only count once the account
+            // is on homeBtnsVersion 2 (see _migrateHomeBtnsLocal): before that
+            // a false there is the old default, not a choice. Then this
+            // device's values — already migrated, so on unless turned off here
+            // since — go up with the version, once, and every device reads
+            // them from then on.
+            _migrateHomeBtnsLocal();
+            if ((Number(d.homeBtnsVersion) || 0) >= 2) {
+              if (typeof d.homeSurvivalEnabled === 'boolean') BB.storage.set('SurvivalBtnEnabled', d.homeSurvivalEnabled ? '1' : '0');
+              if (typeof d.homeAnonEnabled     === 'boolean') BB.storage.set('AnonBtnEnabled',     d.homeAnonEnabled     ? '1' : '0');
+            } else {
+              if (_finalStep >= 4 && (d.homeSurvivalEnabled !== true || d.homeAnonEnabled !== true)) BB.storage.set('HomeBtnsRestored', '1');
+              db.collection('userSettings').doc(user.uid).set({
+                homeSurvivalEnabled: BB.storage.get('SurvivalBtnEnabled') !== '0',
+                homeAnonEnabled:     BB.storage.get('AnonBtnEnabled') !== '0',
+                homeBtnsVersion: 2,
+              }, { merge: true }).catch(() => {});
+            }
             if (typeof d.homeStatsEnabled    === 'boolean') BB.storage.set('HomeStatsEnabled',   d.homeStatsEnabled    ? '1' : '0');
             if (typeof d.homeQuickCheckinEnabled === 'boolean') BB.storage.set('HomeQuickCheckin', d.homeQuickCheckinEnabled ? '1' : '0');
             // Accounts from before the card became the default (2026-10-12)
@@ -744,6 +760,31 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         BB.storage.set('HomeDefaults20261012', '1');
       }
     } catch (_) {}
+    // 🆘 Survival Kit and 💬 Bipolar Anonymous are ON by default since
+    // 2026-10-23 (James, reversing 2026-10-12: Daniele asked where they went).
+    // Under the old default a stored '0' (or nothing) can't be told from a
+    // deliberate "off" — Customise wrote false for a switch nobody touched —
+    // so this turns both on for everyone, ONCE, behind a versioned flag:
+    // bbHomeBtnsV '2' here, userSettings.homeBtnsVersion 2 on the account
+    // (written by the login read-back below and by every Customise change).
+    // A later "off" is then a real choice and is kept. Runs synchronously,
+    // before the login read-back, which only lets the account's values win
+    // when the account is already on version 2. bbHomeBtnsRestored '1' = this
+    // brought back a button an existing user didn't have: the 1.45 New
+    // features sheet then says where they went (js/shared/whats-new.js).
+    function _migrateHomeBtnsLocal() {
+      try {
+        if (BB.storage.get('HomeBtnsV') === '2') return;
+        const _existing = _getOnboardingStep() >= 4 || BB.storage.get('HasEntries') === '1';
+        if (_existing && (BB.storage.get('SurvivalBtnEnabled') !== '1' || BB.storage.get('AnonBtnEnabled') !== '1')) {
+          BB.storage.set('HomeBtnsRestored', '1');
+        }
+        BB.storage.set('SurvivalBtnEnabled', '1');
+        BB.storage.set('AnonBtnEnabled', '1');
+        BB.storage.set('HomeBtnsV', '2');
+      } catch (_) {}
+    }
+    _migrateHomeBtnsLocal();
     /**
      * Advance the user's onboarding step. No-op if `to` is not strictly
      * greater than the current step. Persists to localStorage and to
@@ -890,19 +931,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       BB.storage.set('AccountHintShown', '1');
       window._bbAccountHintActive = true;
 
-      // The finale points the user at the profile button (Customise panel).
-      // Pre-enable the Survival Kit home button so it shows up already
-      // selected in that panel and is visible on the home screen the moment
-      // they close it. Bipolar Anonymous starts off (James, 2026-10-12) and
-      // keeps its NEW pill there. Only flip it the first time (when it has
-      // never been set), so a user who deliberately turned it off later isn't
-      // overridden on a repeat finale.
-      let _btnsPreEnabled = false;
-      if (BB.storage.get('SurvivalBtnEnabled') == null) {
-        BB.storage.set('SurvivalBtnEnabled', '1');
-        _btnsPreEnabled = true;
-      }
-      if (_btnsPreEnabled && typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
+      // (The 🆘 Survival Kit and 💬 Bipolar Anonymous home buttons are on by
+      // default and already showing by now — since the first entry — so the
+      // finale no longer switches anything on.)
 
       // If the What's New popup beat the hint onto the screen, put it away
       // and un-mark it so it re-shows on the next visit instead.
@@ -998,40 +1029,40 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           !document.getElementById('tutorialCompleteModal')) {
         BB.storage.set('FabsUnlocked', '1');
       }
-      const _fabsUnlocked = BB.storage.get('FabsUnlocked') === '1';
 
       // Before the dock unlocks, fab.js hides every dock button, 🆘 included
       // (James, 2026-10-13).
 
-      // Step 4 was the "save your progress" sign-in blocking step. Auth FAB and
-      // Anonymous button are now hidden until tutorial completes, so step 4 is
-      // skipped automatically — advance straight to 5 (logo hint).
+      // Step 4 was the "save your progress" sign-in blocking step. Signing in
+      // now lives on the profile button, so step 4 is skipped automatically —
+      // advance straight to 5 (logo hint).
       if (step === 4) {
         _advanceOnboardingStep(5);
         return;
       }
 
-      // Profile → Customise toggles: the home screen shows only the Mood Journal
-      // by default. Survival Kit / Bipolar Anonymous are opt-in — the user turns
-      // them on from the profile. Folded in here so this function stays the single
-      // source of truth for home-button visibility.
-      const _showSurvival = BB.storage.get('SurvivalBtnEnabled') === '1';
-      const _showAnon     = BB.storage.get('AnonBtnEnabled') === '1';
+      // 🆘 Survival Kit and 💬 Bipolar Anonymous: on by default, shown from the
+      // first saved entry; Profile → Customise can turn either off (James,
+      // 2026-10-23). The rule is BB.homeButtonsUnlocked() / BB.homeButtonOn()
+      // in js/shared/brand-config.js, shared with BB.anonButtonShown (the 💬
+      // streak on the widget). This function stays the single place that
+      // applies home-button visibility.
+      const _btnsUnlocked = BB.homeButtonsUnlocked();
+      const _showSurvival = _btnsUnlocked && BB.homeButtonOn('survival');
+      const _showAnon     = _btnsUnlocked && BB.homeButtonOn('anon');
       const _btnsWrap = document.querySelector('.buttons');
       if (_btnsWrap) _btnsWrap.classList.toggle('bb-hide-stats', BB.storage.get('HomeStatsEnabled') === '0');
 
-      // Anonymous button: hidden until tutorial complete. (The auth FAB is the
-      // dock's #bbAuthFab, owned entirely by fab.js — it stays visible in every
-      // phase, so it is intentionally not touched here.)
+      // (The auth FAB is the dock's #bbAuthFab, owned entirely by fab.js — it
+      // stays visible in every phase, so it is intentionally not touched here.)
       const _anonContainer = document.getElementById('anonymousContainer');
-      if (_anonContainer) _anonContainer.style.display = (_fabsUnlocked && _showAnon) ? '' : 'none';
+      if (_anonContainer) _anonContainer.style.display = _showAnon ? '' : 'none';
       // The 💬 streak on the widget follows the button: refresh it whenever
       // its visibility is (re)applied.
       try { BB.platform.syncWidgetMoods(); } catch (_) {}
 
-      // Survival kit: opt-in — shown only once enabled (and after step 6 onboarding gate)
       const _survival = document.getElementById('survivalContainer');
-      if (_survival) _survival.style.display = (step < 6 || !_showSurvival) ? 'none' : '';
+      if (_survival) _survival.style.display = _showSurvival ? '' : 'none';
 
       // Footer (community count): visible from step 12
       const _footer = document.getElementById('homeFooter');
@@ -1533,41 +1564,28 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     // the signed-in 👤 button and the centre auth FAB (window._fabOpenAuth).
 
     /** Home-button toggle definitions for the Customise panel. */
-    // Survival / Anonymous are opt-in: their flag stores the *enabled* state
-    // ('1' = on). Unset/'0' = off, so the home screen shows only the Journal
-    // until the user activates them here. Journal is always on (locked).
+    // Survival / Anonymous are on by default (James, 2026-10-23): their flag
+    // stores the *enabled* state, and only '0' is off (BB.homeButtonOn).
+    // Journal is always on (locked).
     const _HOME_BTN_TOGGLES = [
       { id: 'journal',  icon: '📔', label: 'Journal', labelKey: 'home.toggleJournal', locked: true,  flag: null },
       { id: 'survival', icon: '🆘', label: 'Survival', labelKey: 'home.toggleSurvival', locked: false, flag: 'SurvivalBtnEnabled' },
       { id: 'anon',     icon: '💬', label: 'Anonymous', labelKey: 'home.toggleAnonymous', locked: false, flag: 'AnonBtnEnabled' },
     ];
 
-    /**
-     * Post-sign-up "NEW" hint state for the Survival / Anonymous toggles.
-     * bbCustomiseNewPending is set when a brand-new account is created
-     * (_fabOnSignUp) and cleared once both buttons are enabled or after the
-     * Customise panel has been seen 3 times — so the badge can't nag forever.
-     */
-    function _customiseNewActive() {
-      return BB.storage.get('CustomiseNewPending') === '1';
-    }
-
     /** Render the active/inactive icon+text toggle buttons (journal style). */
     function _renderHomeBtnToggles() {
       const row = document.getElementById('idxHomeBtnToggles');
       if (!row) return;
-      const _newHintOn = _customiseNewActive();
       row.innerHTML = _HOME_BTN_TOGGLES.map(t => {
-        const on = t.locked || BB.storage.get(t.flag) === '1';
+        const on = t.locked || BB.homeButtonOn(t.id);
         const _border = on ? 'var(--brand-primary)' : '#dee2e6';
         const _bg     = on ? 'rgba(255,149,0,0.1)' : 'white';
         const _color  = on ? 'var(--brand-ink)' : 'var(--text-muted-ink)';
         const _click  = t.locked ? '' : ` onclick="_toggleHomeBtn('${t.id}')"`;
         const _cursor = t.locked ? 'default' : 'pointer';
         const _lock   = t.locked ? '<span style="position:absolute;top:4px;right:6px;font-size:0.7em;">🔒</span>' : '';
-        const _isNew  = _newHintOn && !t.locked && !on;
-        const _pill   = _isNew ? `<span class="bb-new-pill">${_tr('home.newPill', 'NEW')}</span>` : '';
-        return `<button type="button"${_click}${_isNew ? ' class="bb-new-toggle"' : ''} aria-pressed="${on}"${t.locked ? ' aria-disabled="true"' : ''} style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:12px;border:1.5px solid ${_border};background:${_bg};color:${_color};cursor:${_cursor};font-size:0.82em;font-weight:600;min-width:64px;-webkit-tap-highlight-color:transparent;">${_lock}${_pill}<span style="font-size:1.3em;">${t.icon}</span><span>${_tr(t.labelKey, t.label)}</span></button>`;
+        return `<button type="button"${_click} aria-pressed="${on}"${t.locked ? ' aria-disabled="true"' : ''} style="position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 14px;border-radius:12px;border:1.5px solid ${_border};background:${_bg};color:${_color};cursor:${_cursor};font-size:0.82em;font-weight:600;min-width:64px;-webkit-tap-highlight-color:transparent;">${_lock}<span style="font-size:1.3em;">${t.icon}</span><span>${_tr(t.labelKey, t.label)}</span></button>`;
       }).join('');
     }
 
@@ -1575,8 +1593,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     function _syncHomeCustomise() {
       if (!db || !currentUser) return;
       db.collection('userSettings').doc(currentUser.uid).set({
-        homeSurvivalEnabled: BB.storage.get('SurvivalBtnEnabled') === '1',
-        homeAnonEnabled:     BB.storage.get('AnonBtnEnabled') === '1',
+        homeSurvivalEnabled: BB.homeButtonOn('survival'),
+        homeAnonEnabled:     BB.homeButtonOn('anon'),
+        homeBtnsVersion: 2,
         homeStatsEnabled:    BB.storage.get('HomeStatsEnabled') !== '0',
         homeQuickCheckinEnabled: BB.storage.get('HomeQuickCheckin') !== '0',
       }, { merge: true }).catch(() => {});
@@ -1586,14 +1605,8 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     function _toggleHomeBtn(which) {
       const t = _HOME_BTN_TOGGLES.find(x => x.id === which);
       if (!t || t.locked || !t.flag) return;
-      const nowEnabled = BB.storage.get(t.flag) !== '1';
+      const nowEnabled = !BB.homeButtonOn(t.id);
       BB.storage.set(t.flag, nowEnabled ? '1' : '0');
-      // Both opt-in buttons enabled → the NEW hint has done its job
-      if (_customiseNewActive() &&
-          BB.storage.get('SurvivalBtnEnabled') === '1' &&
-          BB.storage.get('AnonBtnEnabled') === '1') {
-        BB.storage.remove('CustomiseNewPending');
-      }
       _renderHomeBtnToggles();
       if (typeof window._applyOnboardingGating === 'function') window._applyOnboardingGating();
       _syncHomeCustomise();
@@ -1689,13 +1702,6 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
     /** Open the profile modal (always starts on the Customise panel). */
     window.showProfileModal = function () {
-      // NEW-hint wear-out: after the Customise panel has been seen 3 times
-      // the badge stops showing, even if the buttons were never enabled.
-      if (_customiseNewActive()) {
-        const _seen = parseInt(BB.storage.get('CustomiseNewSeen') || '0', 10) + 1;
-        if (_seen > 3) BB.storage.remove('CustomiseNewPending');
-        else BB.storage.set('CustomiseNewSeen', String(_seen));
-      }
       _renderHomeBtnToggles();
       _paintShowStatsToggle();
       _paintQuickCheckinToggle();
@@ -1734,15 +1740,17 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     };
 
     /**
-     * fab.js hook: a brand-new account was just created on this page. Arm the
-     * NEW hint on the Survival / Anonymous customise toggles and auto-open
-     * the profile popup — but only once the moment is quiet: currentUser
+     * fab.js hook: a brand-new account was just created on this page. Auto-open
+     * the profile popup (its Customise panel and the new account's email) —
+     * but only once the moment is quiet: currentUser
      * mirrored (so the email shows), and the tutorial-finale "Tutorial
      * Complete!" toast (if this sign-up came from the account hint) shown
      * and dismissed. Gives up silently after ~2 minutes (user wandered off).
      */
     window._fabOnSignUp = function () {
-      BB.storage.set('CustomiseNewPending', '1');
+      // The NEW pill on the Survival / Anonymous switches went with their
+      // off-by-default (2026-10-23); clear what older builds left behind.
+      BB.storage.remove('CustomiseNewPending');
       BB.storage.remove('CustomiseNewSeen');
       let waited = 0;
       const _poll = setInterval(() => {
@@ -1953,7 +1961,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
          'bbSurvivalBtnEnabled','bbAnonBtnEnabled','bbHomeStatsEnabled','bbHomeQuickCheckin',
-         'bbCustomiseNewPending','bbCustomiseNewSeen','bbSkVisited',
+         'bbCustomiseNewPending','bbCustomiseNewSeen','bbSkVisited','bbHomeBtnsV','bbHomeBtnsRestored',
          'personalName','personalDOB','personalMedicalNum','personalDiagnosis',
          'personalDiagnosisDate','personalAddress','personalMobile','personalEmail',
          'personalEmergencyContact','personalNotes',
@@ -2046,7 +2054,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,
               personalHintDone: false,
-              homeSurvivalEnabled: false, homeAnonEnabled: false, homeStatsEnabled: true,
+              homeSurvivalEnabled: true, homeAnonEnabled: true, homeBtnsVersion: 2, homeStatsEnabled: true,
             }, { merge: true }).catch(() => {});
             db.collection('personalDetails').doc(currentUser.uid).delete().catch(() => {});
           }
@@ -2142,7 +2150,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
 
       if (clickCount === 5) {
         clickCount = 0;
-        // Advance to step 6 (survival kit revealed) then trigger easter egg
+        // Advance to step 6 (logo easter egg found) then trigger it
         _advanceOnboardingStep(6);
         _doLogoCycle();
       } else {

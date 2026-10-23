@@ -233,9 +233,10 @@ function _tt(k, vars, fallback) {
       // Home button: visible from step 3
       const _home = document.getElementById('homeLink');
       if (_home) _home.style.display = step < 3 ? 'none' : '';
-      // Survival kit nav button: visible from step 6 (survival kit unlocked)
+      // Survival kit nav button: with the home link, from step 3 (the first
+      // entry is saved by then, and the home page shows its 🆘 button too).
       const _skit = document.getElementById('survivalNavBtn');
-      if (_skit) _skit.style.display = step < 6 ? 'none' : '';
+      if (_skit) _skit.style.display = step < 3 ? 'none' : '';
       // Hint 2 (open journal): step 1 only
       const _h2 = document.getElementById('journalHint2');
       if (_h2) _h2.style.display = step === 1 ? 'flex' : 'none';

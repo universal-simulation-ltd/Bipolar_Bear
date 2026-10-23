@@ -186,6 +186,9 @@ userSettings/
     logoVariant         number          — 0|1|2 (easter egg logo index)
     onboardingStep      number          — highest tutorial step reached (0–12)
     tutorialToastShown  bool            — "tutorial complete" popup has been shown
+    homeSurvivalEnabled bool            — home 🆘 button on (§2.10); only read once homeBtnsVersion ≥ 2
+    homeAnonEnabled     bool            — home 💬 button on (§2.10); same rule
+    homeBtnsVersion     number          — 2 = the 2026-10-23 home-buttons migration reached this account
     personalHintDone    bool            — personal info hint dismissed
     survivalKitVisited  bool            — user has visited the survival kit (deprecated — now localStorage only)
     firstName           string?         — deprecated; name now from personalDetails
@@ -486,7 +489,11 @@ unlockedAchievements    JSON array    — list of unlocked achievement IDs
 ── Onboarding / Tutorial ────────────────────────────────────────────────────
 bbOnboardingStep        string        — highest tutorial step (0–12); synced to Firestore
 bbTutorialToastShown    "1"           — "tutorial complete" popup shown; synced to Firestore
-bbFabsUnlocked          "1"           — FAB dock fully unlocked (set at step 12)
+bbFabsUnlocked          "1"           — FAB dock unlocked (set from step 1, the first entry)
+bbSurvivalBtnEnabled    "0"|"1"       — home 🆘 Survival Kit button; on unless "0" (Profile → Home buttons; synced)
+bbAnonBtnEnabled        "0"|"1"       — home 💬 Bipolar Anonymous button; on unless "0" (synced)
+bbHomeBtnsV             "2"           — the 2026-10-23 home-buttons migration has run here (§2.10)
+bbHomeBtnsRestored      "1"           — that migration brought a button back: the 1.45 New features note
 bbWelcomeShown          "1"           — first-ever welcome popup shown
 bbSurvivalKitVisited    "1"           — user has opened the survival kit
 bbSkVisited             JSON array    — info-only kit sections opened on this device (mood-scale,
@@ -860,21 +867,60 @@ Change detection: _editOriginalState snapshot + _hasEditChanges() comparison
 
 A 12-step guided onboarding for new users. Step progress is synced to Firestore (`userSettings/{uid}.onboardingStep`) so it resumes on any device.
 
+How it reads now (walked end to end by `scripts/test-tutorial.mjs`, 2026-10-23):
+
 ```
-Step  0   — First launch; welcome popup shown
-Step  1   — "Click here to get started" hint on journal button
-Step  2   — First journal entry opened
-Step  3   — First entry saved; home button revealed
-Step  4   — Sign-in hint (auth FAB revealed)
-Step  5   — Logo hint shown
-Step  6   — Survival kit button revealed (5-click logo easter egg)
-Step  7   — (reserved)
-Step  8   — Journal navigated from home
-Step  9   — (removed; WhatsApp hint; skipped automatically → step 10)
-Step 10   — WhatsApp / WA modal shown
-Step 11   — (reserved)
-Step 12   — Tutorial complete; FABs unlocked; "Tutorial Complete 🎓" popup shown
+Step  0   — Home: welcome popup, then "🐻 Click here to get started!" over the
+            Mood Journal button; only the journal on the home page. The
+            journal opens in focus mode; a guest's first Save asks about a PIN.
+Step  1   — First entry saved (journal.js). The dock unlocks (bbFabsUnlocked),
+            and 🆘 Survival Kit + 💬 Bipolar Anonymous now show on the home page.
+            Journal hint: "open your past entries" → Open Journal (blocking).
+Step  2   — Journal list opened. Hint: close it (blocking).
+Step  3   — Journal closed. Hint points at ← Home, which shows now, with the
+            journal's 🧰 Survival Kit button beside it (step 6 before 2026-10-23).
+Step  4   — Back home (← Home, Android back or the edge swipe). Skipped at
+            once → 5 (the old sign-in step).
+Step  5   — Logo hint "psst… click me!" (web / iPhone; Android → 6).
+Step  6   — Logo tapped 5 times: easter egg (logo + icon change, confetti).
+            It used to reveal the Survival Kit button; it no longer reveals anything.
+Step  8   — Journal opened from home (_handleIndexJournalNav)
+Step 9/10 — (removed; WhatsApp hint) → 12
+Step 12   — Tutorial complete.
 ```
+
+In practice steps 4–11 pass in one go: a home page load at 4–11 with
+entries on the device (`bbHasEntries`) completes the tutorial, so a new user
+goes 3 → 12 on returning home and sees the **finale**: guests get the
+blocking "🐻 Sign in to back up your data (optional)" over the profile button
+(which opens 👤 Profile — Customise, with all three home buttons already on),
+then "Tutorial Complete 🎓", then the support hint over 📣. The logo hint
+(5) only shows at steps 4–5 without entries on the device (e.g. signed out
+part-way); tapping 🆘 Survival Kit also finishes the tutorial (→ 12).
+
+**Home buttons** (James, 2026-10-23, reversing 2026-10-12): 🆘 Survival Kit
+and 💬 Bipolar Anonymous are **on by default** and show from the first saved
+entry (`BB.homeButtonsUnlocked()`: step ≥ 1 or entries on the device;
+`BB.homeButtonOn('survival'|'anon')`: on unless `bbSurvivalBtnEnabled` /
+`bbAnonBtnEnabled` is `'0'`; both in `js/shared/brand-config.js`, also behind
+`BB.anonButtonShown()`, the widget's 💬 streak). 👤 Profile → 🏠 Home buttons
+turns either off, synced as `homeSurvivalEnabled` / `homeAnonEnabled` with
+`homeBtnsVersion: 2`. The NEW pill went with the old default.
+
+**One-time migration** (`_migrateHomeBtnsLocal()` in `js/index.js`): the old
+default was off and Customise wrote `false` for switches nobody touched, so a
+stored "off" can't be trusted. On the first load of v379+ each device sets
+both to `'1'` and `bbHomeBtnsV = '2'` (synchronously, before the login
+read-back). The login read-back then uses the account's two values ONLY when
+the account has `homeBtnsVersion >= 2`; otherwise it writes this device's
+(migrated) values up with `homeBtnsVersion: 2`. Every Customise change also
+writes the version. So the migration happens once per account; an "off"
+chosen after it is kept, on that device and on any device that signs in
+later, and an old un-migrated device can't write the old state back. When
+it brings a button back for an existing user it sets `bbHomeBtnsRestored`,
+and the 1.45 New features sheet has a note: "Survival Kit and Bipolar
+Anonymous are back … To hide either, go to 👤 Profile → 🏠 Home buttons."
+A full reset writes both `true` with the version.
 
 **Completion flags set at step 12** (silently on login if already completed):
 `bbTutorialToastShown`, `bbFabsUnlocked`, `bbSurvivalCelebDone`, and all hint keys.
@@ -885,7 +931,7 @@ _getOnboardingStep()          — reads bbOnboardingStep from localStorage
 _advanceOnboardingStep(n)     — advances to step n if n > current; syncs to Firestore;
                                  shows "Tutorial Complete" popup on first reach of 12
 _applyOnboardingGating()      — shows/hides elements based on current step
-                                 (auth FAB, survival kit button, hints, footer)
+                                 (home buttons, hints, footer, quick check-in)
 ```
 
 **On login** (`onAuthStateChanged`): the server step is compared with the local step; the maximum is used. If the combined step is ≥ 12, all completion flags are silently set in localStorage before `_applyOnboardingGating()` runs — this prevents the tutorial popup from appearing on every login and ensures the FAB dock is always accessible for existing users.
@@ -897,7 +943,13 @@ where help is (📣 → Support, or bipolar@unisim.co.uk). Dismissing it shows
 clears it. Support feedback asks a guest for an email, and the
 `onFeedbackSubmitted` email to inbox@unisim.co.uk carries it as `reply_to`.
 
-**Tutorial skip**: available via the logo easter egg (5 taps). Instantly sets step to 12 and marks all flags, with a "✅ Tutorial skipped" toast.
+**Tutorial skip**: hold the logo for 5 seconds before step 12. Instantly sets step to 12 and marks all flags, with a "✅ Tutorial skipped" toast (no finale). At step 12 the same hold offers "Reset Dock?".
+
+Test: `PLAYWRIGHT_MODULE=… node scripts/test-tutorial.mjs` — the walkthrough on
+the web, an iPhone-like and an Android-like shell and in Spanish; reloads at
+steps 1–3; the logo-hint path; the skip; Customise; the migration (local +
+account, a later "off" kept across a reload and a fresh-device sign-in, an old
+device signing in); the New features note; every language.
 
 ### 2.11 Bipolar Anonymous Board
 
@@ -2444,7 +2496,10 @@ get a React copy, so the registry is plain data plus small functions:
   - `moodButtons` — a note, no switch (the reminder's mood buttons are always
     on, §2.24). Phone app only.
 - **1.45**: `medsReminders` — A reminder for each medicine (§2.27; the switch
-  is `bbMedsReminder`, the reminders' master switch). For the next release, add
+  is `bbMedsReminder`, the reminders' master switch), and `homeButtons` — a
+  note (no switch: they are already on) that 🆘 Survival Kit and 💬 Bipolar
+  Anonymous are back on the home page, only where the 2026-10-23 migration
+  brought one back (`bbHomeBtnsRestored`, §2.10). For the next release, add
   `'1.46': [...]` to `bearReleases`; people who missed a release see only the newest entry.
 
 Tests: `node scripts/test-med-tracking.mjs` (11 scenarios; the plan helpers
