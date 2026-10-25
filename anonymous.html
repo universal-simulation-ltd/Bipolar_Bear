@@ -45,6 +45,7 @@
   <script src="js/shared/crisis.js"></script>
   <script src="js/shared/translate.js"></script>
   <script src="js/shared/medications.js"></script>
+  <script src="js/shared/med-links.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/user-count.js"></script>
   <script src="js/shared/secure-store.js"></script>
@@ -632,6 +633,9 @@
       <input id="med-ov-dose" type="text" class="bb-input" placeholder="Dosage (optional)" autocomplete="off" data-i18n-placeholder="anon.medOv.dosePlaceholder">
     </div>
     <button id="med-ov-add" class="btn-outline" style="width:100%;margin-bottom:18px;" data-i18n="anon.medOv.add">+ Add</button>
+
+    <!-- "Don't link medicine names" (js/shared/med-links.js) — openMedSettings() -->
+    <div id="med-ov-links" class="notif-rows"></div>
 
     <div id="med-ov-bb-note" style="display:none;font-size:0.75rem;color:var(--muted);background:var(--yellow-bg);border-radius:8px;padding:8px 10px;margin-bottom:14px;line-height:1.5;" data-i18n="anon.medOv.bbNote">
       💡 You're signed in to BipolarBear — saving will also update your medication in the main app.

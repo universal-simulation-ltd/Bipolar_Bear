@@ -1009,7 +1009,7 @@ function openSaved() {
           <div class="saved-name">[${esc(s.name)}]</div>
           <div class="saved-when">${esc(timeAgo(new Date(num(s.ts, Date.now()))))}</div>
         </div>
-        <div class="saved-text" data-tt>${esc(s.text)}</div>
+        <div class="saved-text" data-tt${_savedMedLinkable(s) ? ' data-medlink' : ''}>${esc(s.text)}</div>
         <div class="saved-actions">
           ${live ? `<button class="sugg-btn sugg-yes" data-saved-open="${esc(s.id)}">${esc(_wt('anon.ux.openThread'))}</button>`
                  : `<span class="saved-gone">${esc(_wt('anon.ux.expired'))}</span>`}
@@ -1018,7 +1018,7 @@ function openSaved() {
         </div>
       </div>`;
     }).join('');
-    if (window.BB && BB.translate) BB.translate.scan(listEl);
+    _scanMemberText(listEl);
   }
   openOv('ov-saved');
 }
@@ -2317,6 +2317,11 @@ function openMedSettings() {
   renderList();
   updateToggle();
 
+  // "Don't link medicine names" — unticked = links on (the default).
+  let linksOff = !!(window.BB && BB.medLinks && BB.medLinks.isOff());
+  renderNotifRows('med-ov-links', { off: linksOff }, p => { linksOff = p.off; },
+    [{ key: 'off', icon: '🔗', name: 'medlink.offLabel', sub: 'medlink.offSub' }]);
+
   document.getElementById('med-ov-show').onclick = () => { showMeds = true;  updateToggle(); };
   document.getElementById('med-ov-hide').onclick = () => { showMeds = false; updateToggle(); };
 
@@ -2336,6 +2341,7 @@ function openMedSettings() {
   document.getElementById('med-ov-cancel').onclick = () => closeOv('ov-med');
   document.getElementById('med-ov-save').onclick = async () => {
     BB.storage.set('Anon_showMeds', showMeds ? 'true' : 'false');
+    if (window.BB && BB.medLinks && BB.medLinks.isOff() !== linksOff) BB.medLinks.setOff(linksOff);
     await _anonSaveMedList(medList);
     _anonSaveProfile(); _bbSaveProfile();
     closeOv('ov-med');
@@ -3161,6 +3167,95 @@ function openWikiSection(section) {
   if (wiki) wiki.scrollTop = 0;
 }
 
+// ─────────────────────────────────────────────────────────────────
+// Medicine names in posts → their wiki page (js/shared/med-links.js)
+// ─────────────────────────────────────────────────────────────────
+// James, 2026-10-25. The renderers mark member-written text with
+// data-medlink; BB.medLinks lays the links on (and again after every
+// translation swap). A tap lands here: the Meds section of the wiki, that
+// medicine's card open, with a one-line "information, not advice — talk to
+// your doctor or pharmacist" note and a way back to the post.
+
+/** Member-written text: medicine links first, then translation. */
+function _scanMemberText(root) {
+  if (!root) return;
+  if (window.BB && BB.medLinks) BB.medLinks.scan(root);
+  if (window.BB && BB.translate) BB.translate.scan(root);
+}
+/** Members' own posts only — never admin notices, announcements, topics or the bear. */
+function _medLinkable(p) {
+  return !!p && !p.isAdmin && !p.isBot && !p.isAnnouncement && !p.isSuggestion
+    && !p.isTopic && !p.wasTopic && !p.isSystem && p.tab !== 'announcements';
+}
+function _savedMedLinkable(s) {
+  const live = _findPost(s.id);
+  return live ? _medLinkable(live) : s.name !== ADMIN_DISPLAY_NAME;
+}
+function _looksLikeCrisis(text) {
+  return !!(window.BB && BB.medLinks && BB.medLinks.looksLikeCrisis(text));
+}
+/** No medicine links anywhere in the open thread while `skip` holds. */
+function _setThreadMedLinkSkip(skip) {
+  const ov = document.getElementById('ov-thread');
+  if (!ov) return;
+  if (skip) ov.setAttribute('data-medlink-skip', '');
+  else ov.removeAttribute('data-medlink-skip');
+}
+
+let _medBack = null;   // where "← Back to the post" returns to
+function openWikiMedFromPost(page, linkEl) {
+  const info = window.BB && BB.medLinks && BB.medLinks.pages()[page];
+  if (!info) return;
+  const inThread = !!(linkEl && linkEl.closest('#ov-thread'));
+  const inSaved  = !!(linkEl && linkEl.closest('#ov-saved'));
+  const card     = linkEl && linkEl.closest('[data-pid]');
+  _medBack = {
+    tab: currentTab === 'wiki' ? 'general' : currentTab,
+    threadId: inThread ? commentTargetId : '',
+    pid: card ? card.dataset.pid : '',
+    saved: inSaved,
+  };
+  if (inThread) closeThread();
+  if (inSaved) closeOv('ov-saved');
+  closeWikiSearch();
+  openWikiSection('meds');
+  const det = document.querySelector(`#wiki-body .wiki-card[data-wiki-slug="${CSS.escape(info.slug)}"]`);
+  if (!det) return;
+  det.open = true;
+  const body = det.querySelector('.wiki-card-body');
+  if (body) {
+    const note = document.createElement('div');
+    note.className = 'wiki-from-post';
+    const txt = document.createElement('p');
+    txt.textContent = _wt('medlink.note');
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.className = 'wiki-from-post-back';
+    back.textContent = _wt('medlink.back');
+    back.addEventListener('click', _medLinkBack);
+    note.append(txt, back);
+    body.insertBefore(note, body.firstChild);
+  }
+  requestAnimationFrame(() => {
+    det.scrollIntoView({ block: 'start' });
+    const sum = det.querySelector('summary');
+    if (sum) sum.focus({ preventScroll: true });
+  });
+}
+function _medLinkBack() {
+  const b = _medBack;
+  _medBack = null;
+  setTab(b ? b.tab : 'general');
+  if (!b) return;
+  if (b.saved) { openSaved(); return; }
+  if (b.threadId) { openThread(b.threadId); return; }
+  if (b.pid) {
+    const el = document.querySelector(`#post-list [data-pid="${CSS.escape(b.pid)}"]`);
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'center' }));
+  }
+}
+if (window.BB && BB.medLinks) BB.medLinks.onOpen = openWikiMedFromPost;
+
 // Slide the tapped pill so it aligns with the left edge of its scrollable
 // row, revealing more pills to the right. No-op when the row isn't
 // overflowing (e.g. desktop where the rows render as `display: contents`
@@ -3858,7 +3953,7 @@ function _wikiCardHtml(obj, search, inner) {
   const slug = _wikiSlug(obj.title);
   const t = _wikiField(obj, 'title'), b = _wikiField(obj, 'body');
   return `
-        <details class="wiki-card" data-wiki-search="${esc(search)}">
+        <details class="wiki-card" data-wiki-search="${esc(search)}" data-wiki-slug="${esc(slug)}">
           <summary>${_wikiTextEl('span', '', t, slug)}<span class="wiki-chev">▼</span></summary>
           <div class="wiki-card-body">
             ${_wikiMtBar([t, b], slug)}
@@ -4896,7 +4991,10 @@ async function openThread(postId) {
   markOlderThreadsSeen(post); // their dots go when this thread closes (syncUnreadFlags)
 
   document.getElementById('thread-original-post').innerHTML = renderThreadHeader(post);
-  if (window.BB && BB.translate) BB.translate.scan(document.getElementById('thread-original-post'));
+  // No medicine links anywhere in a thread that reads like someone in crisis
+  // (the post itself here; the crisis bear's reply in the listener below).
+  _setThreadMedLinkSkip(_looksLikeCrisis(post.text));
+  _scanMemberText(document.getElementById('thread-original-post'));
   document.getElementById('thread-comments-list').innerHTML =
     '<div class="empty-state" style="padding:24px 0;">' + esc(_wt('anon.ui.loadingComments')) + '</div>';
 
@@ -4945,7 +5043,12 @@ async function openThread(postId) {
         return;
       }
       el.innerHTML = comments.map(renderComment).join('');
-      if (window.BB && BB.translate) BB.translate.scan(el);
+      if (comments.some(c => c.isBot && c.botKind === 'crisis')) {
+        // The crisis bear answered this thread: take the links off the post too.
+        _setThreadMedLinkSkip(true);
+        if (window.BB && BB.medLinks) BB.medLinks.scan(document.getElementById('thread-original-post'));
+      }
+      _scanMemberText(el);
       if (stick) _scrollThreadToEnd();
     }, err => {
       console.warn('[Thread] comments listener error', err);
@@ -5083,7 +5186,7 @@ function renderThreadHeader(p) {
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
-    <div class="post-text" data-tt>${esc(p.text)}</div>
+    <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(p.text)}</div>
     ${pollHtml(p, true)}
   </div>`;
 }
@@ -5152,7 +5255,7 @@ function renderComment(c) {
         <span style="font-size:0.6875rem;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
       </div>
     </div>
-    ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt>${esc(c.text)}</div>`}
+    ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt${isBot || c.isAdmin ? '' : ' data-medlink'}>${esc(c.text)}</div>`}
     <div class="comment-actions">
       <div style="flex:1"></div>
       ${(selfDeleteBtn || adminDeleteBtn || banBtn || sosBtn) ? moreMenuHtml(`${selfDeleteBtn}${adminDeleteBtn}${banBtn}${sosBtn}${reportBtn}${muteBtn}`) : ''}
@@ -5519,7 +5622,7 @@ function renderPosts(posts) {
   });
   // Member-written text into the reader's language. Cached texts swap in
   // synchronously, so a re-render doesn't flash back to the original.
-  if (window.BB && BB.translate) BB.translate.scan(list);
+  _scanMemberText(list);
 }
 
 // The daily greeting breaks after its first sentence so it reads cleaner:
@@ -5693,7 +5796,7 @@ function renderPost(p) {
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
-    <div class="post-text" data-tt>${esc(p.text)}</div>
+    <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(p.text)}</div>
     ${pollHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}"${p.name === profile.monika ? ` data-self="true" aria-disabled="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>

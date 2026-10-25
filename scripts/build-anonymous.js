@@ -109,6 +109,7 @@ const SHARED_MODULES = [
   'js/shared/crisis.js',
   'js/shared/translate.js',
   'js/shared/medications.js',
+  'js/shared/med-links.js',
   'js/shared/version-check.js',
   'js/shared/user-count.js',
   'js/shared/anon-push.js',

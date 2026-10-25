@@ -183,10 +183,20 @@
       : _t('anon.xlate.showOriginal');
   }
 
+  /**
+   * Replace a post's text. Anything laid over it (the medicine links of
+   * js/shared/med-links.js) goes with the old text, so say so — they listen
+   * for bb:ttchange and lay themselves on again.
+   */
+  function _setText(el, text) {
+    el.textContent = text;
+    try { el.dispatchEvent(new CustomEvent('bb:ttchange', { bubbles: true })); } catch (_) {}
+  }
+
   /** Put the element back to the text as written, and drop its control line. */
   function _restore(el) {
     var orig = el.getAttribute('data-tt-orig');
-    if (orig != null && el.textContent !== orig) el.textContent = orig;
+    if (orig != null && el.textContent !== orig) _setText(el, orig);
     var bar = el.nextElementSibling;
     if (bar && bar.classList && bar.classList.contains('tt-bar')) bar.remove();
   }
@@ -199,7 +209,7 @@
     if (orig == null) return;
     var showingOriginal = _showOrig.has(el.getAttribute('data-tt-key'));
     var want = showingOriginal ? orig : hit.t;
-    if (el.textContent !== want) el.textContent = want;
+    if (el.textContent !== want) _setText(el, want);
     _bar(el, hit, showingOriginal);
   }
 

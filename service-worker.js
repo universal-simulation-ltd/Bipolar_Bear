@@ -1852,7 +1852,15 @@
 //   the journal's 🧰 shows from step 3; a 1.45 New features note says where
 //   they are. Touches js/index.js, js/journal.js, js/shared/brand-config.js,
 //   whats-new.js, i18n.js, i18n-whatsnew.js, css/index.css.
-const CACHE_NAME = 'bipolarbear-v379';
+// v380: Bipolar Anonymous — the first mention of each medicine in a member's
+//   post or reply links to its wiki card (new js/shared/med-links.js, precached:
+//   dictionary of generic / brand / local / misspelt names → the 8 medicine
+//   pages, render-time DOM links, crisis + admin + announcement exclusions,
+//   "Don't link medicine names" in the Medication sheet). translate.js fires
+//   bb:ttchange when it swaps a post's text so the links are laid on again.
+//   Touches anonymous.html, js/anonymous.js, css/anonymous.css,
+//   scripts/build-anonymous.js.
+const CACHE_NAME = 'bipolarbear-v380';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1885,6 +1893,7 @@ const STATIC_ASSETS = [
   './js/shared/firebase-config.js',
   './js/shared/onboarding.js',
   './js/shared/medications.js',
+  './js/shared/med-links.js',
   './js/shared/version-check.js',
   './js/shared/i18n.js',
   './js/shared/i18n-meds.js',
@@ -1904,6 +1913,7 @@ const STATIC_ASSETS = [
   './js/shared/anon-push.js',
   './js/shared/meds-reminder.js',
   './js/shared/i18n-medsrem.js',
+  './js/shared/i18n-medsome.js',
   './js/shared/i18n-journalpw.js',
   './js/shared/pin-guard.js',
   './js/shared/pin-reauth.js',

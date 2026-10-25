@@ -2662,6 +2662,64 @@ in `js/journal.js`):
   for a wrong password, a wrap changed meanwhile, offline, a key that doesn't
   open the entries, no wrap; no password in the store, the writes or the log).
 
+### 2.29 Medicine names in board posts link to the wiki (2026-10-25, v380)
+
+**Ask (James, 2026-10-25):** "Bipolar Anonymous — if someone mentions a
+medication then provide a link to the wiki to learn more about that medication."
+
+**Where:** `js/shared/med-links.js` (`BB.medLinks`, loaded by anonymous.html, so
+it covers the Bipolar Anonymous app and the board inside Bipolar Bear alike),
+wired up in `js/anonymous.js` (`_scanMemberText`, `_medLinkable`,
+`openWikiMedFromPost`, `_medLinkBack`), styles in `css/anonymous.css`
+(`a.med-link`, `.wiki-from-post`).
+
+- **Dictionary:** `DICT` maps every name to a page, the first key of a
+  `js/shared/medications.js` entry: `lithium`, `lamotrigine`, `quetiapine`,
+  `valproate`, `olanzapine`, `aripiprazole`, `risperidone`, `antidepressant`.
+  Generic names, UK and other markets' brands (Priadel, Camcolit, Seroquel,
+  Lamictal, Depakote, Epilim, Depakine, Zyprexa, Abilify, Risperdal, Zoloft,
+  Prozac, Cipralex, Efexor, Cymbalta, Remeron, Seroxat…), local spellings
+  (Quétiapine, Lithiumcarbonat, litio, kwetiapina…), common misspellings and
+  the Chinese names. A name whose page is missing from medications.js is never
+  linked. Add a page there first, then its names here.
+- **Matching:** case-insensitive, whole words only (no letter or digit either
+  side, with an optional plural "s"/"es"); Chinese characters don't count as
+  part of a Latin word, and the Chinese names are specific (碳酸锂, never a bare
+  锂). Only the **first mention of each page** in a post links.
+- **Render-time only:** the renderers mark member text with `data-medlink`
+  (posts, replies, saved posts). `BB.medLinks.scan(root)` splits the text
+  nodes and wraps the match in an `<a class="med-link">` built with DOM calls,
+  never innerHTML. The 💊 is a CSS `::after`, so it isn't in `textContent`:
+  translation requests, `data-tt-orig`, the ⋯ preview and reports see the post
+  exactly as written.
+- **Translation:** `js/shared/translate.js` now fires `bb:ttchange` on the
+  element whenever it swaps a post's text (translation in, original back), and
+  med-links lays the links on again.
+- **Never linked:** announcements (published, built-in and suggested), daily
+  topics, admin / moderator posts and replies, the crisis bear, text that
+  `looksLikeCrisis()` (a copy of `functions/crisis-bot.js`'s patterns, checked
+  for agreement by the test), and any thread the crisis bear has answered
+  (`#ov-thread[data-medlink-skip]`).
+- **The tap:** a capture-phase click listener stops the card's own handlers,
+  then `openWikiMedFromPost` closes a thread / Saved sheet, opens Wiki → Meds,
+  opens that card (`data-wiki-slug`), and puts a note at its top: "You opened
+  this from a post. It's information, not advice: talk to your doctor or
+  pharmacist before you change or stop any medicine." plus **← Back to the
+  post** (back to the tab, the thread or Saved). No navigation, so the native
+  apps never leave the app. The wiki's own Meds disclaimer said "talk to your
+  prescriber about your medications" but nothing about changing them, hence the
+  note.
+- **Switch:** "Don't link medicine names" in the Your Medication sheet,
+  unticked by default, saved with **Save ✓**. `localStorage.bbAnonMedLinksOff`
+  = `'true'`, per device and outside the `bbAnon_*` prefix so signing out keeps
+  it.
+- **Strings:** `medlink.*` (title, note, back, offLabel, offSub) in all ten
+  languages, added with `BB.i18n.extend` from med-links.js.
+- **Test:** `PLAYWRIGHT_MODULE=… node scripts/test-med-links.mjs` (28 checks
+  at 390 px: matcher, no HTML injection, exclusions, the right card opens, back
+  from feed and thread, translation swap, the switch, ten languages, crisis
+  parity).
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow
