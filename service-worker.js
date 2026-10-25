@@ -1867,7 +1867,9 @@
 //   note. New js/shared/i18n-medsome.js (pushed first: v380 already listed it).
 //   Touches journal.html, index.html, js/journal.js, js/journal-insights.js,
 //   js/shared/whats-new.js, css/journal-meds.css.
-const CACHE_NAME = 'bipolarbear-v381';
+// v382: version 1.45 (_APP_VERSION in js/shared/brand-config.js), for the
+//   1.45 TestFlight builds: Bear 1.45 (65), Anonymous 1.43 (50).
+const CACHE_NAME = 'bipolarbear-v382';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
