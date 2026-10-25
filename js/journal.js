@@ -1175,6 +1175,10 @@ function _tt(k, vars, fallback) {
     // Taken / missed per medicine for this entry: {name: 'taken'|'missed'} or
     // null (js/journal-meds.js; 1.44). `medication` stays the day's answer.
     let selectedMedDoses = null;
+    // 🤏 Some (2026-10-25): the dose taken per medicine, {name: {amount, unit,
+    // usual}}, from the "Which did you take?" sheet; selectedMedication is
+    // 'some' while it is the answer (js/journal-meds.js openSome).
+    let selectedMedAmounts = null;
     let selectedAlcohol = null;
     let selectedExercise = null;
     let selectedAnxiety = null;
@@ -1425,7 +1429,7 @@ function _tt(k, vars, fallback) {
         });
       }
 
-      wireToggleGroup('data-medication',   v => { _medSetAnswer(v); _renderMedDosesRow(); scheduleDraftSave(); });
+      wireToggleGroup('data-medication',   v => { _medSetAnswer(v); _renderMedDosesRow(); scheduleDraftSave(); if (v === 'some') _medOpenSome('form'); });
       wireToggleGroup('data-alcohol',      v => { selectedAlcohol      = v; scheduleDraftSave(); });
       wireToggleGroup('data-exercise',     v => { selectedExercise     = v; scheduleDraftSave(); });
       wireToggleGroup('data-anxiety',      v => { selectedAnxiety      = v; scheduleDraftSave(); });
@@ -1769,6 +1773,7 @@ function _tt(k, vars, fallback) {
         sleepQuality: selectedSleepQuality || null,
         medication: selectedMedication,
         medDoses: selectedMedDoses,
+        medAmounts: selectedMedAmounts,
         goals: selectedGoals,
         anxiety: selectedAnxiety,
         stress: selectedStress,
@@ -1860,6 +1865,7 @@ function _tt(k, vars, fallback) {
       // Medication
       selectedMedication = draft.medication || null;
       selectedMedDoses = draft.medDoses && typeof draft.medDoses === 'object' ? { ...draft.medDoses } : null;
+      selectedMedAmounts = draft.medication === 'some' && draft.medAmounts && typeof draft.medAmounts === 'object' ? { ...draft.medAmounts } : null;
       document.querySelectorAll('[data-medication]').forEach(b => {
         b.classList.toggle('selected', b.dataset.medication === draft.medication);
       });
@@ -2490,10 +2496,10 @@ function _tt(k, vars, fallback) {
         energy: selectedEnergy,
         sleep: selectedSleep,
         sleepQuality: selectedSleepQuality || null,
-        medication: selectedMedication,
-        // Per medicine (1.44). Null when there's no list or no clear answer;
-        // an edit of an older day keeps what it had unless the answer changed.
-        medDoses: _medDosesForSave(),
+        // medication + per medicine (1.44): medDoses is null when there's no
+        // list or no clear answer; an edit of an older day keeps what it had
+        // unless the answer changed. 🤏 Some adds medSome + medAmounts.
+        ..._medFieldsForSave(),
         goals: selectedGoals,
         alcohol: selectedAlcohol,
         exercise: selectedExercise,
@@ -3112,8 +3118,9 @@ function _tt(k, vars, fallback) {
                 const _G='var(--ok-ink)',_R='var(--bad-ink)',_N='var(--text-muted-ink)';
                 const _chips = [];
                 const _Y = BB.t('journal.value.yes'), _No = BB.t('journal.value.no'), _Mo = BB.t('journal.chip.more'), _Nm = BB.t('journal.chip.normal'), _Le = BB.t('journal.chip.less');
-                if (entry.medication) _chips.push([entry.medication==='taken'?BB.t('t143.j.chipTaken'):entry.medication==='unsure'?BB.t('t143.j.chipUnsure'):BB.t('t143.j.chipNotTaken'), entry.medication==='taken'?_G:entry.medication==='unsure'?_N:_R]);
-                { const _mn = window.BBMeds ? BBMeds.entryNote(entry) : ''; if (_mn) _chips.push([_esc(_mn), _R]); }
+                if (entry.medSome) _chips.push([BB.t('medSome.chip'), _N]);
+                else if (entry.medication) _chips.push([entry.medication==='taken'?BB.t('t143.j.chipTaken'):entry.medication==='unsure'?BB.t('t143.j.chipUnsure'):BB.t('t143.j.chipNotTaken'), entry.medication==='taken'?_G:entry.medication==='unsure'?_N:_R]);
+                { const _mn = window.BBMeds ? BBMeds.entryNote(entry) : ''; if (_mn) _chips.push([_esc(_mn), entry.medSome ? _N : _R]); }
                 if (entry.goals)      _chips.push([`🏅 ${entry.goals==='some'?_Y:_No}`, entry.goals==='some'?_G:_R]);
                 if (entry.budget)     _chips.push([`💰 ${entry.budget==='yes'?_Y:_No}`, entry.budget==='yes'?_G:_R]);
                 if (entry.exercise)   _chips.push([`🏋️ ${entry.exercise==='yes'?_Y:_No}`, entry.exercise==='yes'?_G:_R]);
@@ -3709,7 +3716,7 @@ function _tt(k, vars, fallback) {
         rows.push(`<div style="margin-bottom:6px;"><b>${_lb('energy')}</b> ${_energyStr(entry.energy)}${_stepsStr}</div>`);
       }
       if (entry.sleep  != null) rows.push(`<div style="margin-bottom:6px;"><b>${_lb('sleep')}</b> ${entry.sleep}h</div>`);
-      rows.push(`<div style="margin-bottom:6px;"><b>${_lb('medication')}</b> ${entry.medication === 'not-taken' ? BB.t('journal.med.notTaken') : entry.medication === 'unsure' ? BB.t('journal.med.unsure') : BB.t('journal.med.taken')}</div>`);
+      rows.push(`<div style="margin-bottom:6px;"><b>${_lb('medication')}</b> ${entry.medSome ? BB.t('medSome.some') + (window.BBMeds ? ' · ' + _esc(BBMeds.entryNote(entry)) : '') : entry.medication === 'not-taken' ? BB.t('journal.med.notTaken') : entry.medication === 'unsure' ? BB.t('journal.med.unsure') : BB.t('journal.med.taken')}</div>`);
       if (entry.goals)  rows.push(`<div style="margin-bottom:6px;"><b>${_lb('goals')}</b> ${cap(entry.goals)}</div>`);
       if (entry.budget) rows.push(`<div style="margin-bottom:6px;"><b>${_lb('budget')}</b> ${entry.budget === 'yes' ? BB.t('t143.j.keptBudget') : BB.t('t143.j.notKeptBudget')}</div>`);
       if (entry.anxiety && entry.anxiety !== 'none')           rows.push(`<div style="margin-bottom:6px;"><b>${_lb('anxiety')}</b> ${cap(entry.anxiety)}</div>`);
@@ -6839,8 +6846,9 @@ function _tt(k, vars, fallback) {
       selectedLinkedMoods  = _linkedMoodsOf(entry).slice();
       selectedEnergy       = entry.energy;
       selectedSleep        = entry.sleep;
-      selectedMedication   = entry.medication || null;
+      selectedMedication   = _medAnswerOf(entry);
       selectedMedDoses     = (window.BBMeds && BBMeds.dosesOf(entry).perMed) || null;
+      selectedMedAmounts   = entry.medSome && entry.medAmounts && typeof entry.medAmounts === 'object' ? { ...entry.medAmounts } : null;
       selectedGoals        = entry.goals === 'not-100' ? 'none' : (entry.goals || null);
       selectedAnxiety      = entry.anxiety      || null;
       selectedStress       = entry.stress       || null;
@@ -8344,6 +8352,8 @@ function _tt(k, vars, fallback) {
           // becomes tappable chips, taken or missed per medicine (1.44).
           const _medChips = _medChipsHtml(true);
           if (_medChips) medListHtml = _medChips;
+          // 🤏 Some: what it recorded, and "Which ones?" to change it.
+          if (selectedMedication === 'some') medListHtml += _medSomeSumHtml('fm');
           const _medHintDone = BB.storage.get('MedHintDone') === '1';
           // Plain mode (wheel BETA off) — the original pre-wheel layout: the
           // user's med list + a "Manage medications" link above the answer
@@ -8357,6 +8367,7 @@ function _tt(k, vars, fallback) {
             const _mdOpts = [
               { val:'not-taken', label:BB.t('journal.med.notTaken'), hover:'fm-hover-orange', color:'var(--brand-primary)' },
               { val:'unsure',    label:BB.t('journal.med.unsure'),   hover:'fm-hover-grey',   color:'#adb5bd' },
+              { val:'some',      label:BB.t('medSome.some'),         hover:'fm-hover-orange', color:'#e67700' },
               { val:'taken',     label:BB.t('journal.med.taken'),    hover:'fm-hover-green',  color:'#51cf66' },
             ].map((o,i) => `<button class="fm-opt ${o.hover} ${selectedMedication===o.val?'sel':''}"
               onclick="_fmMedAnswer('${o.val}');"
@@ -8372,8 +8383,8 @@ function _tt(k, vars, fallback) {
               ${_medHintDone ? '' : `<div id="medHintEl" style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:4px;pointer-events:none;animation:hintFade 2.4s ease-in-out infinite;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="8" y1="13" x2="8" y2="2" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round"/><polyline points="3,7 8,2 13,7" stroke="var(--brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span style="font-size:0.72em;font-weight:700;font-style:italic;color:var(--brand-ink);font-family:'Georgia',serif;letter-spacing:0.01em;">${BB.t('journal.hint.logMed')}</span></div>`}
               ${_mrPill}
             </div>`;
-          // Built as a real 5-pill wheel — Not taken, Not taken, Unsure,
-          // Taken, Taken — so it runs the EXACT same native-scroll + CSS-snap
+          // Built as a real wheel — Not taken, Not taken, Unsure, Some (since
+          // 2026-10-25), Taken, Taken — so it runs the EXACT same native-scroll + CSS-snap
           // path as the working 5-pill mood/energy wheels (a genuine 5-slot row,
           // not a 2-slot one faked wide with padding, which never worked
           // on-device). The two outer copies are marked spacer:true — kept as
@@ -8390,6 +8401,7 @@ function _tt(k, vars, fallback) {
           const _mdNot = _mdSplit(BB.t('journal.med.notTaken'));
           const _mdTk  = _mdSplit(BB.t('journal.med.taken'));
           const _mdUn  = _mdSplit(BB.t('journal.med.unsure'));
+          const _mdSo  = _mdSplit(BB.t('medSome.some'));
           const _mdP = (val, sp, color, extra) => Object.assign({
             val, emoji: sp.emoji, label: sp.label, color,
             cls: selectedMedication === val ? 'sel' : '',
@@ -8399,6 +8411,8 @@ function _tt(k, vars, fallback) {
             _mdP('not-taken', _mdNot, 'var(--brand-primary)', { spacer: true }),
             _mdP('not-taken', _mdNot, 'var(--brand-primary)'),
             _mdP('unsure', _mdUn, '#adb5bd'),
+            // 🤏 Some (2026-10-25), before Taken: opens "Which did you take?".
+            _mdP('some', _mdSo, '#e67700'),
             _mdP('taken', _mdTk, '#51cf66', { init: !selectedMedication }),
             _mdP('taken', _mdTk, '#51cf66', { spacer: true }),
           ]);
@@ -8691,7 +8705,7 @@ function _tt(k, vars, fallback) {
               ? { text:`<span style="color:var(--text-muted-ink);">${BB.t('journal.ui.energyLabel')} —</span>`, step:'energy' }
               : { text:`${BB.t('journal.ui.energyLabel')} ${eLabel}${_doneStepsStr}`, step:'energy', note:_sn('energy') },
             selectedMedication
-              ? { text:selectedMedication==='taken'?BB.t('journal.ui.medTaken'):selectedMedication==='unsure'?BB.t('journal.ui.medUnsure'):BB.t('journal.ui.medNotTaken'), step:'medication', note:_sn('medication') }
+              ? { text:selectedMedication==='some'?BB.t('medSome.review') + (window.BBMeds ? ' · ' + _esc(BBMeds.entryNote(_medSomeNow())) : ''):selectedMedication==='taken'?BB.t('journal.ui.medTaken'):selectedMedication==='unsure'?BB.t('journal.ui.medUnsure'):BB.t('journal.ui.medNotTaken'), step:'medication', note:_sn('medication') }
               : { text:`<span style="color:var(--text-muted-ink);">${BB.t('journal.ui.medicationLabel')} —</span>`, step:'medication' },
             (()=>{
               const _G='var(--ok-ink)',_R='var(--bad-ink)',_N='var(--text-muted-ink)';
@@ -8882,8 +8896,8 @@ function _tt(k, vars, fallback) {
           // Absorbed into the sleep chip — skip showing a separate chip
           continue;
         } else if (s.id === 'medication' && selectedMedication) {
-          html = selectedMedication === 'taken' ? '💊 ✅' : selectedMedication === 'unsure' ? '💊 🤷' : '💊 ❌';
-          borderColor = selectedMedication === 'taken' ? '#2ECC40' : selectedMedication === 'unsure' ? '#adb5bd' : '#dc3545';
+          html = selectedMedication === 'taken' ? '💊 ✅' : selectedMedication === 'unsure' ? '💊 🤷' : selectedMedication === 'some' ? '💊 🤏' : '💊 ❌';
+          borderColor = selectedMedication === 'taken' ? '#2ECC40' : selectedMedication === 'unsure' ? '#adb5bd' : selectedMedication === 'some' ? '#e67700' : '#dc3545';
         } else if (s.id === 'more_data') {
           html = '➕'; borderColor = '#adb5bd';
         } else if (s.id === 'notes') {
@@ -8898,7 +8912,7 @@ function _tt(k, vars, fallback) {
           const _lv = _FM_ENERGY_LEVELS.find(l => l.val === selectedEnergy);
           _chipSpeak = _lv ? _lv.label.replace(/^\S+\s*/, '') : (selectedEnergy != null ? _fmEnergyMeta(selectedEnergy).label || _chipSpeak : _chipSpeak);
         } else if (s.id === 'medication' && selectedMedication) {
-          _chipSpeak = BB.t(selectedMedication === 'taken' ? 'journal.ui.medTaken' : selectedMedication === 'unsure' ? 'journal.ui.medUnsure' : 'journal.ui.medNotTaken').replace(/^\W+/, '');
+          _chipSpeak = BB.t(selectedMedication === 'taken' ? 'journal.ui.medTaken' : selectedMedication === 'unsure' ? 'journal.ui.medUnsure' : selectedMedication === 'some' ? 'medSome.review' : 'journal.ui.medNotTaken').replace(/^\W+/, '');
         } else if (s.id === 'more_data' || (s.id === 'notes' && !/\d/.test(_chipSpeak))) {
           _chipSpeak = s.id === 'more_data' ? BB.t('a11y.additional') : '';
         }
@@ -9274,7 +9288,7 @@ function _tt(k, vars, fallback) {
         const s = e.sleep;
         _f(s <= 5 ? 20 : s < 7 ? 5 : s <= 9 ? 0 : s <= 10 ? -8 : -15, -15, 20);
       }
-      if (e.medication === 'not-taken') _f(8, 0, 8); // not taking meds → manic/hypomanic signal; taken is neutral
+      if (e.medication === 'not-taken' && !e.medSome) _f(8, 0, 8); // not taking meds → manic/hypomanic signal; taken is neutral (a 🤏 Some day can be a prescribed lower dose: neutral)
       if (e.irritability != null) _f(e.irritability === 'yes' ? 8 : e.irritability === 'medium' ? 0 : -4, -4, 8);
       if (e.anxiety != null)     _f(e.anxiety === 'high' ? -10 : e.anxiety === 'medium' ? 0 : 5, -10, 5);
       if (e.stress != null)      _f(e.stress === 'high' ? -8 : e.stress === 'medium' ? 0 : 4, -8, 4);
@@ -10450,8 +10464,9 @@ function _tt(k, vars, fallback) {
         sleep:        entry.sleep,
         sleepQuality: entry.sleepQuality || null,
         intention:    entry.intention || '',
-        medication:   entry.medication || null,
+        medication:   _medAnswerOf(entry),
         medDoses:     JSON.stringify((window.BBMeds && BBMeds.dosesOf(entry).perMed) || null),
+        medAmounts:   JSON.stringify((entry.medSome && entry.medAmounts) || null),
         goals:        entry.goals === 'not-100' ? 'none' : (entry.goals || null),
         budget:       entry.budget || null,
         exercise:     entry.exercise || null,
@@ -10480,6 +10495,7 @@ function _tt(k, vars, fallback) {
         intention:    (document.getElementById('fmIntentionInput') || {}).value ?? selectedIntention,
         medication:   selectedMedication,
         medDoses:     JSON.stringify(selectedMedDoses || null),
+        medAmounts:   JSON.stringify((selectedMedication === 'some' && selectedMedAmounts) || null),
         goals:        selectedGoals,
         budget:       selectedBudget,
         exercise:     selectedExercise,
@@ -10880,7 +10896,7 @@ function _tt(k, vars, fallback) {
         if (_map[m] && window.BB && BB.t) return BB.t(_map[m]);
         return m.charAt(0).toUpperCase() + m.slice(1);
       };
-      const medLabels = { taken: _t('journal.med.taken'), missed: _t('journal.med.missed'), skipped: _t('journal.med.skipped'), unsure: _t('journal.med.unsure'), 'not-taken': _t('journal.med.notTaken') };
+      const medLabels = { taken: _t('journal.med.taken'), missed: _t('journal.med.missed'), skipped: _t('journal.med.skipped'), unsure: _t('journal.med.unsure'), 'not-taken': _t('journal.med.notTaken'), some: _t('medSome.some') };
       const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 
       let html = `<div style="font-weight:700;color:#495057;margin-bottom:14px;font-size:0.95em;">🗓️ ${dateStr}</div>`;
@@ -10905,7 +10921,7 @@ function _tt(k, vars, fallback) {
         if (entry.sleepQuality) html += _calRow(entry.sleepQuality === 'good' ? '😊' : entry.sleepQuality === 'bad' ? '😴' : '😐', _t('journal.label.sleepQuality'), _tVal(entry.sleepQuality));
         if (entry.medication) {
           const _mn = window.BBMeds ? BBMeds.entryNote(entry) : '';
-          html += _calRow('💊', _t('journal.label.medication'), (medLabels[entry.medication] || cap(entry.medication)) + (_mn ? ' · ' + _esc(_mn) : ''));
+          html += _calRow('💊', _t('journal.label.medication'), (medLabels[_medAnswerOf(entry)] || cap(entry.medication)) + (_mn ? ' · ' + _esc(_mn) : ''));
         }
         if (entry.anxiety)     html += _calRow('😰', _t('journal.label.anxiety'),     _tVal(entry.anxiety));
         if (entry.stress)      html += _calRow('😓', _t('journal.label.stress'),      _tVal(entry.stress));
@@ -11071,6 +11087,7 @@ function _tt(k, vars, fallback) {
 
       document.querySelectorAll('.medication-btn').forEach(b => b.classList.remove('selected'));
       selectedMedication = null;
+      selectedMedAmounts = null;
       selectedMedDoses = null;
       _renderMedDosesRow();
       selectedGoals = null;
@@ -11180,7 +11197,7 @@ function _tt(k, vars, fallback) {
                  title="${BB.t('t143.j.labelColon', { label: BB.t('journal.label.mood') })} ${_moodLabelNum(entry.mood)}
 ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.energy') })} ${_energyStr(entry.energy)}
 ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.sleep') })} ${entry.sleep}h${entry.steps != null ? `\n${BB.t('t143.j.labelColon', { label: BB.t('t143.pdfx.steps') })} ${_bbNum(entry.steps)}` : ''}
-${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken')}"></div>
+${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc(_medPdfText(entry))}"></div>
             <div class="chart-label">${date.getDate()}/${date.getMonth() + 1}</div>
           </div>
         `;
@@ -11476,7 +11493,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
         const rows = entries.map(e => [
           _esc(_importDayKey(new Date(e.date))), _esc(e.mood), _esc(_linkedMoodsOf(e).join(' / ')),
           _esc(e.energy), _esc(e.sleep), _esc(e.sleepQuality || ''),
-          _esc(e.medication || ''), _esc(window.BBMeds ? BBMeds.csvCell(e) : ''), _esc(e.goals || ''), _esc(e.budget || ''),
+          _esc(_medAnswerOf(e) || ''), _esc(window.BBMeds ? BBMeds.csvCell(e) : ''), _esc(e.goals || ''), _esc(e.budget || ''),
           _esc(e.anxiety || ''), _esc(e.stress || ''), _esc(e.irritability || ''),
           _esc(e.exercise || ''), _esc(e.outside || ''), _esc(e.alcohol || ''),
           _esc(e.smoking || ''), _esc(e.drugs || ''), _esc(e.steps != null ? e.steps : ''),
@@ -12941,7 +12958,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
               return cf ? `  ·  ${_pdfCustomLabel(cf)}: ${val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
             }).filter(Boolean).join('');
           const _moodLabel = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
-          const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${_energyStr(entry.energy)}  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', (entry.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : entry.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken')) + (window.BBMeds && BBMeds.entryNote(entry) ? ' (' + BBMeds.entryNote(entry) + ')' : ''))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
+          const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${_energyStr(entry.energy)}  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', _medPdfText(entry) + (window.BBMeds && BBMeds.entryNote(entry) ? ' (' + BBMeds.entryNote(entry) + ')' : ''))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
           const detailLines = doc.splitTextToSize(detail, pageW - margin - (dotX + 35));
           doc.text(detailLines, dotX + 35, y);
           y += (detailLines.length - 1) * 4;
@@ -14413,8 +14430,88 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
     /** The day's answer changed (wheel, buttons, a draft): rebuild the per-medicine record. */
     function _medSetAnswer(v) {
+      const was = selectedMedication;
       selectedMedication = v || null;
-      selectedMedDoses = window.BBMeds ? BBMeds.dosesForAnswer(selectedMedication, _medNamesNow(), selectedMedDoses) : null;
+      if (selectedMedication === 'some') {
+        // A new Some starts with no detail until the sheet's Done.
+        if (was !== 'some') { selectedMedDoses = null; selectedMedAmounts = null; }
+        return;
+      }
+      selectedMedAmounts = null;
+      selectedMedDoses = window.BBMeds ? BBMeds.dosesForAnswer(selectedMedication, _medNamesNow(), was === 'some' ? null : selectedMedDoses) : null;
+    }
+
+    // ── 🤏 Some (2026-10-25; the sheet is js/journal-meds.js openSome) ──
+    // James: "a way to log if you only took some of your medication without
+    // interrupting normal journaling". Taken / Not taken / Unsure are one tap
+    // as before; Some asks which medicines and the dose. The entry keeps
+    // `medication` for older builds (_medFieldsForSave) and adds medSome +
+    // medAmounts, all inside the encrypted entry.
+    /** The answer an entry shows: 'some' for a Some day, else its `medication`. */
+    function _medAnswerOf(e) { return e && e.medSome ? 'some' : ((e && e.medication) || null); }
+    /** The entry's medication fields from the answer being written. */
+    function _medFieldsForSave() {
+      if (selectedMedication === 'some') {
+        const doses = selectedMedDoses && Object.keys(selectedMedDoses).length ? { ...selectedMedDoses } : null;
+        const amounts = doses && selectedMedAmounts && Object.keys(selectedMedAmounts).length ? { ...selectedMedAmounts } : null;
+        // For older builds: all taken (some at another dose) → taken; any
+        // skipped, or no detail (not all of it was taken) → not taken.
+        const agg = doses && window.BBMeds ? BBMeds.aggregate(doses) : null;
+        return { medication: agg || 'not-taken', medDoses: doses, medSome: true, medAmounts: amounts };
+      }
+      const out = { medication: selectedMedication, medDoses: _medDosesForSave() };
+      // An edit merges over the old entry: clear an earlier Some.
+      if (editingEntry && editingEntry.medSome) { out.medSome = null; out.medAmounts = null; }
+      return out;
+    }
+    /** The answer being written, shaped like an entry (for BBMeds.entryNote). */
+    function _medSomeNow() { return { medSome: true, medication: 'not-taken', medDoses: selectedMedDoses, medAmounts: selectedMedAmounts }; }
+    /** "Taken" / "No / Forgot" / "Unsure" / "Some" for the PDF and the chart's tooltip. */
+    function _medPdfText(e) {
+      if (e && e.medSome) return BB.t('medSome.pdf');
+      return e.medication === 'not-taken' ? BB.t('journal.pdf.noForgot') : e.medication === 'unsure' ? BB.t('journal.pdf.unsure') : BB.t('t143.pdf.taken');
+    }
+    /**
+     * Ask which medicines were taken and the dose. where: 'fm' (focus mode:
+     * Done or close moves on, as the other answers do; Some is kept either
+     * way) or 'form' (the classic form: a line under the buttons says what
+     * was taken, with "Which ones?" to change it).
+     */
+    function _medOpenSome(where) {
+      if (!window.BBMeds || !BBMeds.openSome) { if (where === 'fm') _fmAdvance(); return; }
+      const had = selectedMedication === 'some' && !!selectedMedDoses;
+      BBMeds.openSome({
+        day: _medDayKey(),
+        names: _medNamesNow(),
+        doses: had ? selectedMedDoses : null,
+        amounts: had ? selectedMedAmounts : null,
+        onDone: r => {
+          if (selectedMedication !== 'some') return;
+          selectedMedDoses = r.medDoses && Object.keys(r.medDoses).length ? r.medDoses : null;
+          selectedMedAmounts = r.medAmounts && Object.keys(r.medAmounts).length ? r.medAmounts : null;
+          _medSomeAfter(where);
+        },
+        onClose: () => _medSomeAfter(where),
+        // No medicines yet: My medicines opens; the answer stays Some.
+        onAddMeds: () => {
+          scheduleDraftSave();
+          if (where === 'form') _renderMedDosesRow();
+          else if (typeof window._fmRerenderStep === 'function') window._fmRerenderStep();
+          showMedicationList();
+        },
+      });
+    }
+    function _medSomeAfter(where) {
+      scheduleDraftSave();
+      if (where === 'form') { _renderMedDosesRow(); return; }
+      if (where === 'edit') return;
+      _fmAdvance();
+    }
+    /** Under the classic form's buttons: what Some recorded, and "Which ones?". */
+    function _medSomeSumHtml(where) {
+      if (selectedMedication !== 'some' || !window.BBMeds) return '';
+      const note = selectedMedDoses ? BBMeds.entryNote(_medSomeNow()) : '';
+      return `<div class="med-some-sum">${note ? _esc(note) : ''}<button type="button" onclick="_medOpenSome('${where === 'fm' ? 'fm' : 'form'}')">${_esc(BB.t('medSome.whichOnes'))}</button></div>`;
     }
     /** Flip one medicine between taken and missed; the day's answer follows. */
     function _medToggleAt(i) {
@@ -14446,16 +14543,22 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       const doses = selectedMedDoses || BBMeds.dosesForAnswer(selectedMedication, names);
       return BBMeds.chipsHtml(names, doses, fm ? '_fmMedToggle' : '_medToggle', fm && selectedMedication === 'not-taken' ? { ask: true, nextFn: '_fmMedNext' } : { ask: selectedMedication === 'not-taken' });
     }
-    /** Classic form: the chips under the three buttons. */
+    /** Classic form: the chips under the buttons (or what 🤏 Some recorded). */
     function _renderMedDosesRow() {
       const el = document.getElementById('medDosesRow');
-      if (el) el.innerHTML = _medChipsHtml(false);
+      if (el) el.innerHTML = selectedMedication === 'some' ? _medSomeSumHtml() : _medChipsHtml(false);
     }
     function _medToggle(i) { _medToggleAt(i); _renderMedDosesRow(); }
     // Focus mode: "Not taken" with two or more medicines asks which, and
     // waits for Next; every other answer moves on as before.
     function _fmMedAnswer(v) {
       _medSetAnswer(v);
+      if (v === 'some') {
+        // Show Some as the answer behind the sheet; the sheet moves on.
+        if (typeof window._fmRerenderStep === 'function') window._fmRerenderStep();
+        _medOpenSome('fm');
+        return;
+      }
       if (v === 'not-taken' && _medNamesNow().length >= 2) {
         scheduleDraftSave();
         if (typeof window._fmRerenderStep === 'function') window._fmRerenderStep();
@@ -14469,6 +14572,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
     }
     function _fmMedNext() { _fmAdvance(); }
     window._fmMedAnswer = _fmMedAnswer; window._fmMedToggle = _fmMedToggle; window._fmMedNext = _fmMedNext; window._medToggle = _medToggle;
+    window._medOpenSome = _medOpenSome;
 
     // Every change to the medication list goes in the dated medHistory first
     // (js/shared/secure-store.js, v343); call it before the new list is stored.
@@ -14552,7 +14656,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       }
       document.getElementById('editEntryEnergy').value = entry.energy;
       document.getElementById('editEntrySleep').value = entry.sleep != null ? entry.sleep : '';
-      document.getElementById('editEntryMedication').value = entry.medication || 'taken';
+      document.getElementById('editEntryMedication').value = _medAnswerOf(entry) || 'taken';
       document.getElementById('editEntryNotes').value = entry.notes || '';
       document.getElementById('editEntryAnxiety').value = entry.anxiety || '';
       document.getElementById('editEntryIrritability').value = entry.irritability || '';
@@ -14732,10 +14836,11 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
       });
 
       // Select medication
-      selectedMedication = entry.medication || null;
+      selectedMedication = _medAnswerOf(entry);
       selectedMedDoses = (window.BBMeds && BBMeds.dosesOf(entry).perMed) || null;
+      selectedMedAmounts = entry.medSome && entry.medAmounts && typeof entry.medAmounts === 'object' ? { ...entry.medAmounts } : null;
       document.querySelectorAll('[data-medication]').forEach(b => {
-        b.classList.toggle('selected', b.dataset.medication === entry.medication);
+        b.classList.toggle('selected', b.dataset.medication === selectedMedication);
       });
       _renderMedDosesRow();
 
@@ -14869,8 +14974,11 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${entr
           : document.getElementById('editEntryMood').value,
         energy: parseFloat(document.getElementById('editEntryEnergy').value),
         sleep: (() => { const _v = parseFloat(document.getElementById('editEntrySleep').value); return isNaN(_v) ? null : _v; })(),
-        medication: document.getElementById('editEntryMedication').value,
-        medDoses: document.getElementById('editEntryMedication').value === editingEntry.medication ? (editingEntry.medDoses || null) : null,
+        // 🤏 Some here keeps an earlier Some's detail; a new Some has none.
+        medication: document.getElementById('editEntryMedication').value === 'some' ? (editingEntry.medSome ? editingEntry.medication : 'not-taken') : document.getElementById('editEntryMedication').value,
+        medDoses: document.getElementById('editEntryMedication').value === _medAnswerOf(editingEntry) ? (editingEntry.medDoses || null) : null,
+        medSome: document.getElementById('editEntryMedication').value === 'some' ? true : null,
+        medAmounts: document.getElementById('editEntryMedication').value === 'some' && editingEntry.medSome ? (editingEntry.medAmounts || null) : null,
         notes: document.getElementById('editEntryNotes').value,
         anxiety: document.getElementById('editEntryAnxiety').value || null,
         irritability: document.getElementById('editEntryIrritability').value || null,

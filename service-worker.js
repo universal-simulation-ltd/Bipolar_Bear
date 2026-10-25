@@ -1860,7 +1860,14 @@
 //   bb:ttchange when it swaps a post's text so the links are laid on again.
 //   Touches anonymous.html, js/anonymous.js, css/anonymous.css,
 //   scripts/build-anonymous.js.
-const CACHE_NAME = 'bipolarbear-v380';
+// v381 (for 1.45): 🤏 Some on the medication question — "Which did you take?"
+//   with each medicine's dose (js/journal-meds.js openSome; entries gain medSome
+//   + medAmounts, encrypted with the entry), the life chart's 💊 Dose markers,
+//   Different doses in My medicines, Compare and the PDF, a 1.45 New features
+//   note. New js/shared/i18n-medsome.js (pushed first: v380 already listed it).
+//   Touches journal.html, index.html, js/journal.js, js/journal-insights.js,
+//   js/shared/whats-new.js, css/journal-meds.css.
+const CACHE_NAME = 'bipolarbear-v381';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

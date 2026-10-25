@@ -202,9 +202,13 @@
       var ts = e.recordedAt ? Date.parse(e.recordedAt) || e.timestamp || 0 : (e.timestamp || 0);
       if (prev && prev._ts > ts) return;
       var sleep = e.sleep != null && e.sleep !== '' && isFinite(Number(e.sleep)) ? Number(e.sleep) : null;
+      // 🤏 Some (2026-10-25): `some` marks the day in the medication strip;
+      // `dose` is "Quetiapine 100 mg (usual 200 mg)" when a dose changed.
+      var dose = null;
+      if (e.medSome && root.BBMeds && typeof root.BBMeds.someMarker === 'function') { try { dose = root.BBMeds.someMarker(e); } catch (_) {} }
       byKey[k] = {
         _ts: ts, cat: moodCat(e.mood), score: moodScore(e.mood), sleep: sleep,
-        med: e.medication || null, auto: !!e.autoFilled
+        med: e.medication || null, auto: !!e.autoFilled, some: !!e.medSome, dose: dose
       };
       var ds = dayStart(d);
       if (!first || ds < first) first = ds;
@@ -219,7 +223,8 @@
       days.push({
         t: cur.getTime(), key: k2,
         cat: r ? r.cat : null, score: r ? r.score : null, sleep: r ? r.sleep : null,
-        med: r ? r.med : null, auto: r ? r.auto : false
+        med: r ? r.med : null, auto: r ? r.auto : false,
+        some: r ? r.some : false, dose: r ? r.dose : null
       });
       cur.setDate(cur.getDate() + 1);
     }
@@ -377,17 +382,21 @@
   var _days = [];
   var _px = 3;
   var LABEL_W = 60, RIGHT_W = 36, BLOOD_H = 22;
+  var SOME_COLOR = '#e67700'; // 🤏 Some in the medication strip
   var LINE_KEY = 'bbBloodChartTest';
   var LINE_MIN_DAYS = 180; // 6M, 1Y and All
   var TOP = 6, MOOD_H = 120, MID = TOP + MOOD_H / 2, UNIT = (MOOD_H / 2) / 2.2;
 
   function yForDev(dev) { return MID - dev * UNIT; }
 
-  function buildSvg(days, px, hasMeds, blood) {
+  function buildSvg(days, px, hasMeds, blood, doses) {
     var medsY = TOP + MOOD_H + 8, medsH = 6;
     var sleepTop = hasMeds ? medsY + medsH + 8 : TOP + MOOD_H + 10;
-    var sleepH = 36, bloodY = sleepTop + sleepH + 4 + BLOOD_H / 2;
-    var axisY = sleepTop + sleepH + 14 + (blood ? BLOOD_H : 0), H = axisY + 4;
+    // 🤏 A changed dose: a 💊 on its day in a row under the sleep bars, above
+    // the blood results' row.
+    var sleepH = 36, doseY = sleepTop + sleepH + 4 + BLOOD_H / 2;
+    var bloodY = sleepTop + sleepH + 4 + (doses ? BLOOD_H : 0) + BLOOD_H / 2;
+    var axisY = sleepTop + sleepH + 14 + (blood ? BLOOD_H : 0) + (doses ? BLOOD_H : 0), H = axisY + 4;
     var W = Math.max(1, Math.round(days.length * px));
     var gap = px > 5 ? 1 : 0;
     var bw = Math.max(px - gap, 0.8);
@@ -439,7 +448,9 @@
           p.push('<rect x="' + x + '" y="' + top.toFixed(1) + '" width="' + bw + '" height="' + h.toFixed(1) + '" fill="' + col + '"' + op + '/>');
         }
       }
-      if (hasMeds && (d.med === 'not-taken' || d.med === 'unsure')) {
+      if (hasMeds && d.some) {
+        p.push('<rect class="lc-some" x="' + x + '" y="' + medsY + '" width="' + Math.max(bw, 1.5) + '" height="' + medsH + '" fill="' + SOME_COLOR + '"/>');
+      } else if (hasMeds && (d.med === 'not-taken' || d.med === 'unsure')) {
         p.push('<rect x="' + x + '" y="' + medsY + '" width="' + Math.max(bw, 1.5) + '" height="' + medsH + '" fill="' + (d.med === 'unsure' ? '#adb5bd' : '#ff6b6b') + '"/>');
       }
       if (d.sleep != null) {
@@ -463,7 +474,7 @@
     p.push('<rect id="lcHl" x="-10" y="' + TOP + '" width="' + Math.max(px, 2) + '" height="' + (sleepTop + sleepH - TOP) + '" class="lc-hl"/>');
     return {
       svg: '<svg class="lc-svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="' + esc(tr('lifeChart.title')) + '">' + p.join('') + '</svg>',
-      H: H, W: W, medsY: medsY, sleepTop: sleepTop, sleepH: sleepH, bloodY: bloodY
+      H: H, W: W, medsY: medsY, sleepTop: sleepTop, sleepH: sleepH, bloodY: bloodY, doseY: doseY
     };
   }
 
@@ -477,6 +488,7 @@
     lab(yForDev(-2), moodName('depressed'), 'lc-c-depressed');
     if (hasMeds) lab(g.medsY + 3, tr('lifeChart.meds'), 'lc-c-meds');
     lab(g.sleepTop + g.sleepH / 2, tr('lifeChart.sleep'), 'lc-c-sleep');
+    if (g.doses) lab(g.doseY, sm('chartLabel'), 'lc-c-dose');
     if (g.blood) lab(g.bloodY, bt('chartLabel'), 'lc-c-blood');
     return '<div class="lc-ylabels" style="height:' + g.H + 'px">' + L.join('') + '</div>';
   }
@@ -520,6 +532,28 @@
       L.push('<div class="lc-rlab" style="top:' + (y - 6).toFixed(1) + 'px">' + esc(M ? M.fmtNum(v, 2) : String(v)) + '</div>');
     });
     return '<div class="lc-yright" style="height:' + g.H + 'px" aria-hidden="true">' + L.join('') + '</div>';
+  }
+  /** 🤏 The changed-dose markers: one 💊 per day, its text on tap / focus. */
+  function sm(k, vars) {
+    var full = 'medSome.' + k, v = null;
+    try { if (root.BB && root.BB.t) v = root.BB.t(full, vars); } catch (_) {}
+    return v == null ? full : v;
+  }
+  function doseMarks(days) {
+    var out = [];
+    days.forEach(function (d, i) { if (d.dose) out.push({ idx: i, key: d.key, text: d.dose }); });
+    return out.length ? out : null;
+  }
+  function doseMarkersHtml(g, marks, px) {
+    var lg = lang(), yr = new Date().getFullYear();
+    return marks.map(function (m) {
+      var dt = new Date(m.key + 'T12:00:00');
+      var o = { day: 'numeric', month: 'short' };
+      if (dt.getFullYear() !== yr) o.year = 'numeric';
+      var label = sm('markerLabel', { text: m.text, date: dt.toLocaleDateString(lg, o) });
+      var x = m.idx * px + px / 2;
+      return '<button type="button" class="lc-blood lc-dose" data-date="' + m.key + '" style="left:' + (x - 11).toFixed(1) + 'px;top:' + (g.doseY - 11).toFixed(1) + 'px" aria-label="' + esc(label) + '" data-label="' + esc(label) + '">💊</button>';
+    }).join('');
   }
   function markersHtml(g, blood, px) {
     var M = meds();
@@ -583,18 +617,23 @@
     var hasMeds = _days.some(function (d) { return d.med != null; });
     var blood = null;
     try { blood = bloodLayer(_days, _range); } catch (e) { try { console.warn('life chart blood', e); } catch (_) {} }
+    var doses = doseMarks(_days);
+    var hasSome = _days.some(function (d) { return d.some; });
 
     // Width available to the plot: card width minus the fixed label column(s).
     var avail = Math.max(160, (host.clientWidth || 320) - LABEL_W - (blood && blood.line ? RIGHT_W : 0));
     _px = avail / _range;
-    var g = buildSvg(_days, _px, hasMeds, blood);
+    var g = buildSvg(_days, _px, hasMeds, blood, doses);
     g.blood = !!blood;
+    g.doses = !!doses;
 
     var legend =
       '<span class="lc-key"><i style="background:' + MOOD_COLORS.elevated + '"></i><i style="background:' + MOOD_COLORS.manic + '"></i>' + esc(moodName('elevated')) + ' / ' + esc(moodName('manic')) + '</span>' +
       '<span class="lc-key"><i style="background:' + MOOD_COLORS.low + '"></i><i style="background:' + MOOD_COLORS.depressed + '"></i>' + esc(moodName('low')) + ' / ' + esc(moodName('depressed')) + '</span>' +
       '<span class="lc-key"><i style="background:' + SLEEP_COLOR + '"></i>' + esc(tr('lifeChart.legendSleep')) + '</span>' +
       (hasMeds ? '<span class="lc-key"><i style="background:#ff6b6b"></i>' + esc(tr('lifeChart.legendMeds')) + '</span>' : '') +
+      (hasMeds && hasSome ? '<span class="lc-key"><i style="background:' + SOME_COLOR + '"></i>' + esc(sm('legend')) + '</span>' : '') +
+      (doses ? '<span class="lc-key"><span aria-hidden="true">💊</span>' + esc(sm('legendDose')) + '</span>' : '') +
       (blood && blood.marks.length ? '<span class="lc-key"><span aria-hidden="true">🩸</span>' + esc(bt('legendMarker')) + '</span>' : '') +
       (blood && blood.line ? '<span class="lc-key"><i class="lc-key-line"></i>' + esc(bt('legendLine', { test: blood.line.test, unit: blood.line.unit || '' }).replace(' ()', '')) + '</span>' : '') +
       (blood && blood.line && blood.line.band ? '<span class="lc-key"><i class="lc-key-band"></i>' + esc(bt('legendRange')) + '</span>' : '') +
@@ -604,7 +643,8 @@
       '<label class="lc-bpick"><span>' + esc(bt('lineLabel')) + '</span><select id="lcBloodPick">' + blood.tests.map(function (x) {
         return '<option value="' + esc(x) + '"' + (M.norm(x) === M.norm(blood.line.test) ? ' selected' : '') + '>' + esc(x) + '</option>';
       }).join('') + '</select></label>' : '';
-    var plotInner = blood && blood.marks.length ? markersHtml(g, blood, _px) : '';
+    var plotInner = (doses ? doseMarkersHtml(g, doses, _px) : '') + (blood && blood.marks.length ? markersHtml(g, blood, _px) : '');
+    if (doses && !(blood && blood.marks.length)) plotInner += '<div class="lc-tip" role="tooltip" id="lcBloodTip" hidden></div>';
 
     host.innerHTML =
       '<div class="lc-head">' +
@@ -632,7 +672,7 @@
       scroller.scrollLeft = scroller.scrollWidth; // newest at the right edge
     }
     wireChart(host, scroller);
-    if (blood && blood.marks.length) wireMarkers(host);
+    if ((blood && blood.marks.length) || doses) wireMarkers(host);
     var pk = host.querySelector('#lcBloodPick');
     if (pk) pk.addEventListener('change', function () { lsSet(LINE_KEY, pk.value); renderLifeChart(true); });
 
@@ -759,7 +799,8 @@
     var bits = [];
     if (d.cat) bits.push(moodName(d.cat));
     if (d.sleep != null) bits.push(tr('lifeChart.sleepHours', { h: fmtNum(d.sleep) }));
-    if (d.med === 'not-taken') bits.push(tr('lifeChart.medsMissed'));
+    if (d.some) bits.push(d.dose ? sm('detailLabel', { list: d.dose }) : sm('legendShort'));
+    else if (d.med === 'not-taken') bits.push(tr('lifeChart.medsMissed'));
     if (d.med === 'unsure') bits.push(tr('lifeChart.medsUnsure'));
     if (d.auto) bits.push(tr('lifeChart.autoFilled'));
     det.textContent = date + ': ' + bits.join(' · ');
@@ -956,7 +997,11 @@
           if (Math.abs(dev) < 0.2) doc.rect(x, mid - 0.6, bw, 1.2, 'F');
           else { var yy = mid - dev * unit; doc.rect(x, Math.min(yy, mid), bw, Math.abs(mid - yy), 'F'); }
         }
-        if (hasMeds && (d.med === 'not-taken' || d.med === 'unsure')) {
+        if (hasMeds && d.some) {
+          doc.setFillColor(230, 119, 0);
+          if (d.dose) doc.rect(x, medsY - 1, Math.max(bw, 0.6), medsH + 1, 'F');
+          else doc.rect(x, medsY, Math.max(bw, 0.5), medsH, 'F');
+        } else if (hasMeds && (d.med === 'not-taken' || d.med === 'unsure')) {
           if (d.med === 'unsure') doc.setFillColor(173, 181, 189); else doc.setFillColor(255, 107, 107);
           doc.rect(x, medsY, Math.max(bw, 0.5), medsH, 'F');
         }
@@ -967,7 +1012,8 @@
         }
       });
       doc.setFontSize(5.5); doc.setTextColor(120, 120, 120); doc.setFont(undefined, 'normal');
-      var note = doc.splitTextToSize(tr('lifeChart.pdfNote'), pageW - margin * 2 - 8);
+      var someDays = days.some(function (d) { return d.some; });
+      var note = doc.splitTextToSize(tr('lifeChart.pdfNote') + (someDays ? ' ' + sm('pdfNote') : ''), pageW - margin * 2 - 8);
       doc.text(note, margin + 4, sTop + sH + 9);
       return y + boxH + 4;
     } catch (e) {

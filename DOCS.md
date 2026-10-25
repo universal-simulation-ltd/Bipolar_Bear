@@ -2315,7 +2315,8 @@ ones stay unknown, not missed).
 
 Cleared on logout and reset with the other medicine keys. The sheet's tabs
 take a double-tap to set the default tab (`bbMedsHubTab`, cleared by Reset).
-Medicine reminders: one per medicine since 1.45 (§2.27).
+Medicine reminders: one per medicine since 1.45 (§2.27). **🤏 Some** (part of
+the medication, with the dose taken: `medSome` + `medAmounts`) is §2.30.
 Test: `node scripts/test-med-tracking.mjs` (9 scenarios).
 
 ### 2.24 Mood buttons on the daily reminder (1.44, v353)
@@ -2499,7 +2500,8 @@ get a React copy, so the registry is plain data plus small functions:
   is `bbMedsReminder`, the reminders' master switch), and `homeButtons` — a
   note (no switch: they are already on) that 🆘 Survival Kit and 💬 Bipolar
   Anonymous are back on the home page, only where the 2026-10-23 migration
-  brought one back (`bbHomeBtnsRestored`, §2.10). For the next release, add
+  brought one back (`bbHomeBtnsRestored`, §2.10), and `medSome` — a note about
+  🤏 Some on the medication question (§2.30). For the next release, add
   `'1.46': [...]` to `bearReleases`; people who missed a release see only the newest entry.
 
 Tests: `node scripts/test-med-tracking.mjs` (11 scenarios; the plan helpers
@@ -2719,6 +2721,84 @@ wired up in `js/anonymous.js` (`_scanMemberText`, `_medLinkable`,
   at 390 px: matcher, no HTML injection, exclusions, the right card opens, back
   from feed and thread, translation swap, the switch, ten languages, crisis
   parity).
+
+### 2.30 🤏 Some: only part of the medication taken (2026-10-25, v381, for 1.45)
+
+James (2026-10-25): "A way to log if you only took some of your medication
+without interrupting normal journaling … last night I took less Quetiapine (on
+psychiatrist advice) and would like to see if there's an impact."
+
+- **The answer.** The medication question has **🤏 Some** between 🤷 Unsure
+  and ✅ Taken everywhere it is answered: the focus-mode wheel (No · Unsure ·
+  Some · Taken, the outer runway copies as before), focus mode's plain list,
+  the classic form (`.medication-selector.med4`, four across at 390 px) and the
+  unused edit dialog's select. Taken, No and Unsure are exactly as before (one
+  tap; No with two or more medicines still asks "Which did you miss?"). The
+  auto-fill "Fill in the rest" step keeps its three answers (it can fill
+  several days at once).
+- **The sheet** (`BBMeds.openSome(opts)` in `js/journal-meds.js`,
+  `#medsSomeModal`, a `.confirm-modal` so native feel makes it a bottom sheet
+  that rides the keyboard and closes on a swipe down; z-index 1003). "Which did
+  you take?": each medicine on the list *that day* (`BBMeds.listForDay`, the
+  history replayed for a past day; an edited entry's own medicines) with its
+  usual dose, **Took it / Skipped**, and **Dose taken** (`inputmode="decimal"`,
+  prefilled with the number from the usual dose, the unit beside it;
+  `parseDose("200 mg")` → 200 / mg, a decimal comma is read). Skipped greys the
+  dose. **Done** saves; a dose that isn't a number is refused ("Type the dose as
+  a number…"); a blank dose is "taken, dose not given". ✕ / the backdrop /
+  Escape / a swipe down close without Done: the answer is still Some, with no
+  detail. No medicines on the list: it says so and offers **💊 Add them in My
+  medicines** (opens the hub; the answer stays Some).
+- **Focus mode** (`_fmMedAnswer('some')` → `_medOpenSome('fm')`): Done or a
+  close moves on like any answer; "Add them in My medicines" stays on the step.
+  Back on the step, a line under the list says what was recorded with
+  **✏️ Which ones?** to change it. The classic form shows the same line in
+  `#medDosesRow`.
+- **The entry** (`_medFieldsForSave` in `js/journal.js`). Every older build
+  reads `medication`, so it stays the day's single answer: all taken (even at a
+  different dose) → `taken`; any skipped, or Some with no detail → `not-taken`.
+  Added:
+  `medSome: true`, `medDoses: {name: 'taken'|'missed'}` (as §2.23),
+  `medAmounts: {name: {amount: Number, unit, usual}}` for the taken ones
+  (`usual` = the list's dose that day, kept so later list changes don't
+  rewrite history). All inside the entry, so it is encrypted exactly like the
+  rest (journal key for an account, the PIN key for a guest with a PIN). An
+  edit that changes the answer away from Some writes `medSome: null,
+  medAmounts: null` over the old entry. Old entries have none of it and read
+  as before. Drafts carry `medAmounts`. Older builds show a Some day as Taken /
+  No and drop the detail if they re-save it.
+- **Reading it** (`BBMeds.someOf(e)` → `{detail, meds: [{name, status, amount,
+  unit, usual, changed}]}`; `changed` = skipped, or a dose that differs from the
+  usual). `entryNote(e)` gives "Quetiapine 100 mg (usual 200 mg) · Lithium
+  skipped" (or "usual doses" / "no details"), so the entry list chip
+  ("💊 Some"), the day view, the calendar, the focus review step, the 14-day
+  chart's tooltip and the PDF's entries all say what was taken. The CSV's
+  medication column says `some`; Medicines says "Quetiapine: taken 100 mg
+  (usual 200 mg); Lithium: missed". Adherence (Doses tab, stats, Compare) uses
+  `medDoses` as before: a lower dose counts as taken, a skipped one as missed.
+  The mood suggestion ignores a Some day's `not-taken` (it may be a prescribed
+  lower dose). The reminders' ✅ Taken (§2.27) is a per-time "noted" flag on
+  the phone, not an entry, so nothing changes there.
+- **Seeing the impact.** Life chart (`js/journal-insights.js`): a Some day is
+  orange in the medication strip ("Took some" in the key); a day with a changed
+  dose gets a 💊 in a **Dose** row under the sleep bars (`.lc-blood.lc-dose`,
+  the 🩸 markers' button, bubble and live line): "Quetiapine 100 mg (usual 200
+  mg) · 24 Oct". Tapping the day says "Took some: …". The PDF life chart marks
+  Some days orange (taller for a changed dose) with a line in its note. The
+  Doses tab has **🤏 Different doses** (every Some day, newest first); Compare
+  names the changed-dose days inside either window ("Days with a different
+  dose: 2 before, 1 after (…)"), on screen and in the PDF; the PDF's Medicines
+  box adds "Different doses (last 30 days)".
+- **New features (1.45):** `medSome`, a note (no switch), only with a medicine
+  list and the medication step not switched off. Web users who already saw
+  "New in 1.45" before v381 won't see it (the sheet shows a release once).
+- Strings `medSome.*` in `js/shared/i18n-medsome.js` (10 languages, machine
+  translated; journal.html and index.html). CSS in `css/journal-meds.css`.
+- Test: `PLAYWRIGHT_MODULE=… node scripts/test-med-some.mjs` (18 checks at
+  390 px: Taken / No one tap, Some → sheet → 100 mg saved, reload, the 19 old
+  entries, the chart's 💊, the Doses tab, close without Done, a refused dose,
+  no medicines, the classic form, encrypted under a guest PIN and decrypted,
+  the PDF's text, German, the bottom sheet and a swipe down; `SHOTS=<dir>`).
 
 ## 3. Algorithm Flowcharts
 

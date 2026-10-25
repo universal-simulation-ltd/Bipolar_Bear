@@ -36,6 +36,7 @@
   <script src="js/shared/i18n-blood.js"></script>
   <script src="js/shared/i18n-whatsnew.js"></script>
   <script src="js/shared/i18n-medsrem.js"></script>
+  <script src="js/shared/i18n-medsome.js"></script>
   <script src="js/shared/i18n-journalpw.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
@@ -357,9 +358,11 @@
 
       <div class="form-group hidden-until-mood" id="medicationSection">
         <span id="medLabelBtn" class="label-btn" onclick="showMedicationList()">💊 My Meds</span>
-        <div class="medication-selector">
+        <div class="medication-selector med4">
           <button type="button" class="medication-btn" data-medication="not-taken" data-i18n="journal.editMood.notTaken">No / Forgot</button>
           <button type="button" class="medication-btn" data-medication="unsure" data-i18n="journal.med.unsure">🤷 Unsure</button>
+          <!-- 🤏 Some (2026-10-25): opens the "Which did you take?" sheet (js/journal-meds.js openSome). -->
+          <button type="button" class="medication-btn" data-medication="some" data-i18n="medSome.some">🤏 Some</button>
           <button type="button" class="medication-btn medication-taken" data-medication="taken" data-i18n="journal.med.taken">Taken</button>
         </div>
         <!-- Taken / missed per medicine (js/journal-meds.js chips; 1.44). -->
@@ -1340,6 +1343,7 @@
         <label style="font-weight:600; color:#495057;" data-i18n="journal.label.medication">Medication</label>
         <select id="editEntryMedication" style="width:100%; padding:8px; border:2px solid #e9ecef; border-radius:8px; margin-top:6px; font-size:1em; box-sizing:border-box;">
           <option value="taken" data-i18n="journal.med.taken">✅ Taken</option>
+          <option value="some" data-i18n="medSome.some">🤏 Some</option>
           <option value="unsure" data-i18n="journal.med.unsure">🤷 Unsure</option>
           <option value="not-taken" data-i18n="journal.editMood.notTaken">❌ No / Forgot</option>
         </select>

@@ -300,6 +300,17 @@
         { id: 'homeButtons', icon: '🏠', titleKey: 'whatsnew.b145HomeTitle', bodyKey: 'whatsnew.b145HomeBody',
           setting: null,
           applies: function () { try { return BB.storage.get('HomeBtnsRestored') === '1'; } catch (_) { return false; } } },
+        // 🤏 Some on the medication question (2026-10-25): always there, so a
+        // note, not a switch. Only for someone who answers it (medication
+        // isn't switched off) and has medicines on their list.
+        { id: 'medSome', icon: '🤏', titleKey: 'medSome.wnTitle', bodyKey: 'medSome.wnBody',
+          setting: null,
+          applies: function () {
+            try {
+              if ((JSON.parse(localStorage.getItem('disabledSteps') || '[]') || []).indexOf('medication') >= 0) return false;
+              return JSON.parse(localStorage.getItem('currentMedList') || '[]').length > 0;
+            } catch (_) { return false; }
+          } },
       ],
     };
   }

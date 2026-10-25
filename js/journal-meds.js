@@ -125,6 +125,63 @@
   }
   function namesWith(per, v) { return Object.keys(per || {}).filter(function (n) { return per[n] === v; }); }
 
+  // ── "Some": part of the medication taken (2026-10-25) ──────────────────────
+  // James: "a way to log if you only took some of your medication without
+  // interrupting normal journaling". The answer 🤏 Some (between Unsure and
+  // Taken) opens a sheet: each medicine Took it / Skipped, with the dose
+  // taken. The entry keeps `medication` as the day's single answer for every
+  // older build (all taken → 'taken', any skipped → 'not-taken'; Some with no
+  // detail → 'not-taken', not all of it was taken), plus:
+  //   medSome: true
+  //   medDoses: {name: 'taken'|'missed'}            (as for Taken / Not taken)
+  //   medAmounts: {name: {amount, unit, usual}}     (the taken ones; usual =
+  //                                                  the list's dose that day)
+  // All inside the entry, so encrypted with it. Old entries have none of it.
+  /** "200 mg" → {amount: 200, unit: 'mg'}; "1,5 tablets" → {1.5, 'tablets'}; no number → {null, text}. */
+  function parseDose(s) {
+    s = String(s == null ? '' : s).trim();
+    var m = /^(\d+(?:[.,]\d+)?|[.,]\d+)\s*(.*)$/.exec(s);
+    if (!m) return { amount: null, unit: s };
+    return { amount: Number(m[1].replace(',', '.')), unit: m[2].trim() };
+  }
+  /** A typed dose: a number (a decimal comma is read) → Number; blank → null; anything else → NaN. */
+  function readAmount(v) {
+    v = String(v == null ? '' : v).trim().replace(',', '.');
+    if (!v) return null;
+    return /^(\d+(\.\d*)?|\.\d+)$/.test(v) ? Number(v) : NaN;
+  }
+  /**
+   * The Some record of an entry, or null when the answer wasn't Some.
+   * → {detail: boolean, meds: [{name, status: 'taken'|'missed', amount, unit, usual, changed}]}
+   * `changed`: skipped, or a dose that differs from the usual one.
+   */
+  function someOf(e) {
+    if (!e || !e.medSome) return null;
+    var per = dosesOf(e).perMed || {};
+    var am = e.medAmounts && typeof e.medAmounts === 'object' && !Array.isArray(e.medAmounts) ? e.medAmounts : {};
+    var meds = Object.keys(per).map(function (n) {
+      var a = am[n] && typeof am[n] === 'object' ? am[n] : null;
+      var usual = a && a.usual != null ? String(a.usual) : '';
+      var u = parseDose(usual);
+      var amount = a && isNum(a.amount) ? Number(a.amount) : null;
+      var unit = a && a.unit != null ? String(a.unit).trim() : u.unit;
+      var changed = per[n] === 'missed' ||
+        (per[n] === 'taken' && amount != null && u.amount != null && (Math.abs(amount - u.amount) > 1e-9 || norm(unit) !== norm(u.unit)));
+      return { name: n, status: per[n], amount: per[n] === 'taken' ? amount : null, unit: unit, usual: usual, changed: changed };
+    });
+    return { detail: meds.length > 0, meds: meds };
+  }
+  /** Days answered Some, newest first: [{day, some}] (latest entry per day). */
+  function doseLog(entries, fromK, toK) {
+    var by = _latestByDay(entries, false);
+    return Object.keys(by).filter(function (k) { return (!fromK || k >= fromK) && (!toK || k <= toK); }).sort().reverse()
+      .map(function (k) { var s = someOf(by[k].e); return s ? { day: k, some: s } : null; }).filter(Boolean);
+  }
+  /** The Some days with a changed dose (or a skipped medicine) in [a, b]. */
+  function doseChangeDays(entries, a, b) {
+    return doseLog(entries, a, b).filter(function (x) { return x.some.meds.some(function (m) { return m.changed; }); });
+  }
+
   // ── the medicine list on a past day ─────────────────────────────────────────
   /** medHistory + typed-in past changes as one list of dated events. */
   function allEvents(history, past) {
@@ -212,6 +269,8 @@
     return Object.keys(by).filter(function (k) { return !fromK || k >= fromK; }).sort().reverse().map(function (k) {
       var d = dosesOf(by[k].e);
       if (d.perMed) { var m = namesWith(d.perMed, 'missed'); return m.length ? { day: k, names: m } : null; }
+      // Some with no detail: part of it wasn't taken, but not "missed".
+      if (by[k].e.medSome) return d.status === 'not-taken' ? { day: k, names: null, some: true } : null;
       return d.status === 'not-taken' ? { day: k, names: null } : null;
     }).filter(Boolean);
   }
@@ -419,6 +478,7 @@
     MIN_DAYS: MIN_DAYS, MAX_WINDOW: MAX_WINDOW,
     norm: norm, dayKey: dayKey, fromKey: fromKey, addDays: addDays, diffDays: diffDays, entryDay: entryDay, moodCat: moodCat,
     aggregate: aggregate, dosesOf: dosesOf, dosesForAnswer: dosesForAnswer, namesWith: namesWith,
+    parseDose: parseDose, readAmount: readAmount, someOf: someOf, doseLog: doseLog, doseChangeDays: doseChangeDays,
     allEvents: allEvents, listOnDay: listOnDay, changeEvents: changeEvents,
     adherence: adherence, missedLog: missedLog, bloodSeries: bloodSeries,
     planId: planId, planOf: planOf, hasRange: hasRange, dueNow: dueNow, isLithium: isLithium,
@@ -513,18 +573,187 @@
       (opts.nextFn ? '<div class="med-doses-next"><button type="button" onclick="' + opts.nextFn + '()">' + esc(tt('common.next')) + ' →</button></div>' : '') +
       '</div>';
   }
-  /** "Missed: Lithium" style text for an entry, or '' (lists, calendar, PDF). */
+  /** "Missed: Lithium" style text for an entry, or '' (lists, calendar, PDF). A Some day: its doses. */
   function entryNote(e) {
+    if (e && e.medSome) return someText(e);
     var d = dosesOf(e);
     if (!d.perMed) return '';
     var m = namesWith(d.perMed, 'missed');
     return m.length ? t('missedList', { names: m.join(', ') }) : '';
   }
-  /** "Lithium: taken; Quetiapine: missed" for the CSV. */
+  /** "Lithium: taken; Quetiapine: missed" for the CSV ("taken 100 mg (usual 200 mg)" on a Some day). */
   function csvCell(e) {
     var d = dosesOf(e);
-    if (!d.perMed) return '';
-    return Object.keys(d.perMed).map(function (n) { return n + ': ' + d.perMed[n]; }).join('; ');
+    if (!d.perMed) return e && e.medSome ? 'some' : '';
+    var s = someOf(e), by = {};
+    if (s) s.meds.forEach(function (m) { by[m.name] = m; });
+    return Object.keys(d.perMed).map(function (n) {
+      var m = by[n], v = d.perMed[n];
+      if (m && v === 'taken' && m.amount != null) v += ' ' + String(m.amount) + (m.unit ? ' ' + m.unit : '') + (m.usual ? ' (usual ' + m.usual + ')' : '');
+      return n + ': ' + v;
+    }).join('; ');
+  }
+
+  // ── 🤏 Some: the words, and the sheet (2026-10-25) ───────────────────────────
+  /** medSome.* (js/shared/i18n-medsome.js). */
+  function ts(key, vars) { return tt('medSome.' + key, vars); }
+  function fmtDose(amount, unit) { return fmtNum(amount, 3) + (unit ? ' ' + unit : ''); }
+  /** One medicine on a Some day: "Quetiapine 100 mg (usual 200 mg)", "Lithium skipped", "Lithium 800 mg". */
+  function someItemText(m) {
+    if (m.status === 'missed') return ts('skippedOne', { name: m.name });
+    if (m.changed) return ts('changed', { name: m.name, dose: fmtDose(m.amount, m.unit), usual: m.usual });
+    return m.amount != null ? m.name + ' ' + fmtDose(m.amount, m.unit) : (m.usual ? m.name + ' ' + m.usual : m.name);
+  }
+  /** What changed on a Some day ("Quetiapine 100 mg (usual 200 mg) · Lithium skipped"), "usual doses", or "no details". */
+  function someText(e) {
+    var s = someOf(e);
+    if (!s) return '';
+    if (!s.detail) return ts('noDetail');
+    var ch = s.meds.filter(function (m) { return m.changed; });
+    return ch.length ? ch.map(someItemText).join(' · ') : ts('usualDoses');
+  }
+  /** The life chart's marker text for a Some day with a changed dose, else null. */
+  function someMarker(e) {
+    var s = someOf(e);
+    if (!s || !s.meds.some(function (m) { return m.changed; })) return null;
+    return someText(e);
+  }
+  /** The medicines (with the usual dose) for a day: the list that day. */
+  function listForDay(k) {
+    var cur = currentList();
+    if (!k || k >= todayKey()) return cur;
+    return listOnDay(events(), cur, k);
+  }
+
+  /**
+   * The Some sheet: each medicine Took it / Skipped, with the dose taken
+   * (the usual dose filled in, number keyboard). opts: {day, names?: the
+   * medicines the entry already records, doses?, amounts? (to change an
+   * earlier answer), onDone({medDoses, medAmounts}), onClose()}. Done saves;
+   * ✕, the backdrop, Escape or a swipe down closes without (onClose). With no
+   * medicines on the list it offers My medicines and the answer stays Some.
+   */
+  var _some = null;
+  function openSome(opts) {
+    opts = opts || {};
+    closeSome(true);
+    var day = opts.day || todayKey();
+    var list = listForDay(day), usualOf = {};
+    list.forEach(function (m) { usualOf[norm(m.name)] = m.dosage; });
+    var names = (opts.names && opts.names.length ? opts.names : list.map(function (m) { return m.name; })).filter(function (n) { return String(n).trim(); });
+    var doses = opts.doses || {}, amounts = opts.amounts || {};
+    var rows = names.map(function (n) {
+      var a = amounts[n] && typeof amounts[n] === 'object' ? amounts[n] : null;
+      var usual = a && a.usual != null ? String(a.usual) : (usualOf[norm(n)] || '');
+      var u = parseDose(usual);
+      return {
+        name: n, usual: usual, unit: a && a.unit != null ? String(a.unit) : u.unit,
+        status: doses[n] === 'missed' ? 'missed' : 'taken',
+        amount: a && isNum(a.amount) ? String(a.amount) : (u.amount != null ? String(u.amount) : ''),
+      };
+    });
+    _some = { opts: opts, rows: rows, done: false };
+    var m = document.createElement('div');
+    m.id = 'medsSomeModal';
+    m.className = 'confirm-modal active';
+    m.setAttribute('role', 'dialog');
+    m.setAttribute('aria-modal', 'true');
+    m.setAttribute('aria-labelledby', 'medsSomeTitle');
+    m.addEventListener('click', function (ev) { if (ev.target === m) closeSome(); });
+    var body;
+    if (!rows.length) {
+      body = '<p class="meds-intro">' + esc(ts('noMeds')) + '</p>' +
+        '<button type="button" class="meds-btn primary msome-add">' + esc(ts('addMeds')) + '</button>';
+    } else {
+      body = '<p class="meds-intro">' + esc(ts('intro')) + '</p><div class="msome-list">' + rows.map(function (r, i) {
+        return '<div class="msome-row' + (r.status === 'missed' ? ' skipped' : '') + '" data-i="' + i + '">' +
+          '<div class="msome-name"><strong>💊 ' + esc(r.name) + '</strong>' + (r.usual ? '<span class="msome-usual">' + esc(ts('usual', { dose: r.usual })) + '</span>' : '') + '</div>' +
+          '<div class="msome-seg" role="group" aria-label="' + esc(r.name) + '">' +
+            '<button type="button" data-v="taken" aria-pressed="' + (r.status === 'taken') + '"' + (r.status === 'taken' ? ' class="on"' : '') + '>' + esc(ts('took')) + '</button>' +
+            '<button type="button" data-v="missed" aria-pressed="' + (r.status === 'missed') + '"' + (r.status === 'missed' ? ' class="on"' : '') + '>' + esc(ts('skipped')) + '</button>' +
+          '</div>' +
+          '<label class="msome-dose"><span>' + esc(ts('dose')) + '</span><input type="text" inputmode="decimal" autocomplete="off" enterkeyhint="done" maxlength="12" value="' + esc(r.amount) + '" aria-label="' + esc(ts('doseFor', { name: r.name })) + '"' + (r.status === 'missed' ? ' disabled' : '') + '>' +
+          (r.unit ? '<span class="msome-unit">' + esc(r.unit) + '</span>' : '') + '</label>' +
+          '</div>';
+      }).join('') + '</div><div class="mf-err msome-err" role="alert"></div>' +
+      '<button type="button" class="meds-btn primary msome-done">' + esc(ts('done')) + '</button>';
+    }
+    m.innerHTML = '<div class="confirm-content meds-sheet msome-sheet">' +
+      '<div class="meds-head"><h3 id="medsSomeTitle">' + esc(ts('title')) + '</h3><button type="button" class="meds-x" data-nf-close aria-label="' + esc(tt('a11y.close')) + '">✕</button></div>' +
+      body + '</div>';
+    m._nfClose = function () { closeSome(); };
+    document.body.appendChild(m);
+    m.querySelector('.meds-x').addEventListener('click', function () { closeSome(); });
+    Array.prototype.forEach.call(m.querySelectorAll('.msome-row'), function (rowEl) {
+      var i = Number(rowEl.getAttribute('data-i'));
+      Array.prototype.forEach.call(rowEl.querySelectorAll('.msome-seg button'), function (b) {
+        b.addEventListener('click', function () {
+          var v = b.getAttribute('data-v');
+          _some.rows[i].status = v;
+          rowEl.classList.toggle('skipped', v === 'missed');
+          Array.prototype.forEach.call(rowEl.querySelectorAll('.msome-seg button'), function (x) {
+            var on = x.getAttribute('data-v') === v;
+            x.classList.toggle('on', on); x.setAttribute('aria-pressed', String(on));
+          });
+          var inp = rowEl.querySelector('input');
+          if (inp) inp.disabled = v === 'missed';
+        });
+      });
+      var inp = rowEl.querySelector('input');
+      if (inp) {
+        inp.addEventListener('input', function () {
+          _some.rows[i].amount = inp.value;
+          var err = m.querySelector('.msome-err');
+          if (err) err.textContent = '';
+        });
+        inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); inp.blur(); } });
+      }
+    });
+    var done = m.querySelector('.msome-done');
+    if (done) done.addEventListener('click', someDone);
+    var add = m.querySelector('.msome-add');
+    if (add) add.addEventListener('click', function () {
+      var cb = _some && _some.opts;
+      closeSome(true); // not a close: the answer stays Some, and My medicines opens
+      if (cb && typeof cb.onAddMeds === 'function') cb.onAddMeds(); else open('doses');
+    });
+    document.addEventListener('keydown', _someKey);
+    m.scrollTop = 0;
+    try { m.querySelector(rows.length ? '.msome-seg button.on' : '.msome-add').focus({ preventScroll: true }); } catch (_) {}
+    m.scrollTop = 0;
+    return m;
+  }
+  function _someKey(e) { if (e.key === 'Escape') closeSome(); }
+  /** silent: replacing the sheet (no onClose). */
+  function closeSome(silent) {
+    var m = document.getElementById('medsSomeModal');
+    document.removeEventListener('keydown', _someKey);
+    var s = _some;
+    _some = null;
+    if (m && m.parentNode) m.parentNode.removeChild(m);
+    if (!silent && s && !s.done && typeof s.opts.onClose === 'function') s.opts.onClose();
+  }
+  function someDone() {
+    var s = _some;
+    if (!s) return;
+    var m = document.getElementById('medsSomeModal');
+    var medDoses = {}, medAmounts = {}, bad = null;
+    s.rows.forEach(function (r, i) {
+      medDoses[r.name] = r.status;
+      if (r.status !== 'taken') return;
+      var a = readAmount(r.amount);
+      if (a !== a) { if (bad == null) bad = i; return; } // NaN
+      medAmounts[r.name] = { amount: a, unit: r.unit || '', usual: r.usual || '' };
+    });
+    if (bad != null) {
+      var err = m && m.querySelector('.msome-err');
+      if (err) err.textContent = ts('badDose');
+      try { m.querySelectorAll('.msome-row')[bad].querySelector('input').focus(); } catch (_) {}
+      return;
+    }
+    s.done = true;
+    closeSome(true);
+    if (typeof s.opts.onDone === 'function') s.opts.onDone({ medDoses: medDoses, medAmounts: medAmounts });
   }
 
   // ── 💊 My medicines sheet ──────────────────────────────────────────────────
@@ -743,14 +972,28 @@
     var missed = missedLog(_entries);
     var shown = _showAllMissed ? missed : missed.slice(0, 15);
     var mrows = shown.map(function (x) {
-      return '<div class="meds-row"><div class="mr-main">' + esc(x.names ? t('missedList', { names: x.names.join(', ') }) : t('missedAll')) + '</div>' +
+      return '<div class="meds-row"><div class="mr-main">' + esc(x.names ? t('missedList', { names: x.names.join(', ') }) : x.some ? ts('detailLabel', { list: ts('noDetail') }) : t('missedAll')) + '</div>' +
         '<div class="mr-date">' + esc(fmtDate(x.day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</div></div>';
     }).join('');
     return listHtml() + remindersHtml() + '<p class="meds-intro">' + esc(t('dosesIntro')) + '</p>' +
       '<div class="meds-card">' + (rows || '<div class="meds-empty">' + esc(t('dosesNone')) + '</div>') +
       (a.pct != null ? '<div class="mr-sub" style="margin-top:8px;font-size:0.8em;color:var(--text-muted-ink);">' + esc(t('overall', { pct: a.pct })) + '</div>' : '') + '</div>' +
       '<div class="meds-card"><h4>' + esc(t('missedTitle')) + '</h4>' + (mrows || '<div class="meds-empty">' + esc(t('missedNone')) + '</div>') +
-      (missed.length > shown.length ? '<button type="button" class="meds-btn link" onclick="BBMeds._more()">' + esc(t('showMore')) + '</button>' : '') + '</div>';
+      (missed.length > shown.length ? '<button type="button" class="meds-btn link" onclick="BBMeds._more()">' + esc(t('showMore')) + '</button>' : '') + '</div>' +
+      someCardHtml();
+  }
+  /** 🤏 Different doses: the days answered Some, with what was taken (newest first). */
+  function someCardHtml() {
+    var log = doseLog(_entries);
+    var shown = _showAllMissed ? log : log.slice(0, 15);
+    var rows = shown.map(function (x) {
+      var items = x.some.detail ? x.some.meds.filter(function (m) { return m.changed; }) : [];
+      var main = x.some.detail ? (items.length ? items.map(someItemText).join(' · ') : ts('usualDoses')) : ts('noDetail');
+      return '<div class="meds-row meds-some-row"><div class="mr-main">' + esc(main) + '</div>' +
+        '<div class="mr-date">' + esc(fmtDate(x.day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })) + '</div></div>';
+    }).join('');
+    return '<div class="meds-card" id="medsSomeCard"><h4>' + esc(ts('dosesTitle')) + '</h4>' + (rows || '<div class="meds-empty">' + esc(ts('dosesNone')) + '</div>') +
+      (log.length > shown.length ? '<button type="button" class="meds-btn link" onclick="BBMeds._more()">' + esc(t('showMore')) + '</button>' : '') + '</div>';
   }
 
   function medOptions(sel) {
@@ -918,12 +1161,23 @@
     var head = '<thead><tr><th></th><th>' + esc(t('before')) + '<div class="mr-sub" style="font-weight:400">' + esc(t('rangeLine', { from: fmtDate(r.before.from, { day: 'numeric', month: 'short' }), to: fmtDate(r.before.to, { day: 'numeric', month: 'short' }) })) + '</div></th>' +
       '<th>' + esc(t('after')) + '<div class="mr-sub" style="font-weight:400">' + esc(t('rangeLine', { from: fmtDate(r.after.from, { day: 'numeric', month: 'short' }), to: fmtDate(r.after.to, { day: 'numeric', month: 'short' }) })) + '</div></th></tr></thead>';
     var others = r.others.length ? '<div class="meds-flag">⚠️ ' + esc(t('others', { list: r.others.map(function (e) { return describe(e) + ' (' + fmtDate(e.day, { day: 'numeric', month: 'short' }) + ')'; }).join('; ') })) + '</div>' : '';
+    var sd = someInWindows(_entries, r);
+    if (sd) others += '<div class="meds-flag meds-some-flag">🤏 ' + esc(sd) + '</div>';
     return '<div class="mr-sub" style="margin-bottom:6px;font-size:0.8em;color:var(--text-muted-ink);">' + esc(t('window', { count: r.window })) + '</div>' +
       '<table class="meds-cmp">' + head + '<tbody>' + rr.rows.join('') +
       (rr.custom.length ? '<tr><th colspan="3" style="text-align:left;padding-top:12px;color:#343a40;">' + esc(t('trackers')) + '</th></tr>' + rr.custom.join('') : '') + '</tbody></table>' +
       '<div style="display:grid;gap:8px;margin-top:10px;"><div><div class="mr-sub" style="font-weight:700;font-size:0.8em;">' + esc(t('moodMix')) + ' · ' + esc(t('before')) + '</div>' + mixHtml(r.before) + '</div>' +
       '<div><div class="mr-sub" style="font-weight:700;font-size:0.8em;">' + esc(t('moodMix')) + ' · ' + esc(t('after')) + '</div>' + mixHtml(r.after) + '</div></div>' +
       others;
+  }
+  /** "Days with a different dose: 2 before, 1 after (12 Oct: Quetiapine 100 mg (usual 200 mg); …)", or ''. */
+  function someInWindows(entries, r) {
+    var b = doseChangeDays(entries, r.before.from, r.before.to), a = doseChangeDays(entries, r.after.from, r.after.to);
+    if (!b.length && !a.length) return '';
+    var list = b.concat(a).slice().sort(function (x, y) { return x.day < y.day ? -1 : 1; }).slice(0, 6).map(function (x) {
+      return fmtDate(x.day, { day: 'numeric', month: 'short' }) + ': ' + x.some.meds.filter(function (m) { return m.changed; }).map(someItemText).join(', ');
+    }).join('; ');
+    return ts('cmpDoses', { before: b.length, after: a.length }) + ' ' + list + (b.length + a.length > 6 ? '; …' : '');
   }
   function compareHtml() {
     var evs = events(), list = changeEvents(evs);
@@ -1225,9 +1479,13 @@
       if (a.meds.length || missed.length) {
         doc.setFontSize(7);
         var missedLines = missed.length ? doc.splitTextToSize(missed.slice(0, 20).map(function (m) {
-          return fmtDate(m.day, { day: 'numeric', month: 'short' }) + ': ' + (m.names ? m.names.join(', ') : t('missedAll'));
+          return fmtDate(m.day, { day: 'numeric', month: 'short' }) + ': ' + (m.names ? m.names.join(', ') : m.some ? ts('detailLabel', { list: ts('noDetail') }) : t('missedAll'));
         }).join(' · '), inner) : [t('pdfNoneMissed')];
-        var h = 12 + a.meds.length * 5 + 6 + missedLines.length * 3.4 + 4;
+        var someDays = doseChangeDays(entries, addDays(to, -29), to);
+        var someLines = someDays.length ? doc.splitTextToSize(someDays.slice(0, 20).map(function (x) {
+          return fmtDate(x.day, { day: 'numeric', month: 'short' }) + ': ' + x.some.meds.filter(function (m) { return m.changed; }).map(someItemText).join(', ');
+        }).join(' · '), inner) : [];
+        var h = 12 + a.meds.length * 5 + 6 + missedLines.length * 3.4 + 4 + (someLines.length ? 5.3 + someLines.length * 3.4 : 0);
         y = _box(doc, o, y, h, t('pdfMedsTitle'));
         var ty = y + 12;
         doc.setFontSize(7); doc.setFont(undefined, 'bold'); doc.setTextColor(60, 60, 60);
@@ -1247,6 +1505,13 @@
         doc.text(t('pdfMissed'), x0, ty); ty += 3.8;
         doc.setFont(undefined, 'normal'); doc.setTextColor(40, 40, 40);
         doc.text(missedLines, x0, ty);
+        if (someLines.length) {
+          ty += missedLines.length * 3.4 + 1.5;
+          doc.setFont(undefined, 'bold'); doc.setTextColor(60, 60, 60);
+          doc.text(ts('pdfDoses'), x0, ty); ty += 3.8;
+          doc.setFont(undefined, 'normal'); doc.setTextColor(40, 40, 40);
+          doc.text(someLines, x0, ty);
+        }
         y += h + 4;
       }
       if (side.length) {
@@ -1312,6 +1577,8 @@
       doc.setFontSize(6.8);
       var framing = doc.splitTextToSize(t('cmpFraming'), inner);
       var others = r.others.length ? doc.splitTextToSize(t('others', { list: r.others.map(function (e) { return describe(e) + ' (' + fmtDate(e.day, { day: 'numeric', month: 'short' }) + ')'; }).join('; ') }), inner) : [];
+      var sd = someInWindows(entries, r);
+      if (sd) others = others.concat(doc.splitTextToSize(sd, inner));
       var rowsN = 6 + rr.custom.length;
       var h = 14 + 6 + rowsN * 5 + 2 + 2 * 9 + others.length * 3.2 + framing.length * 3.2 + 8;
       _box(doc, o, y, h, t('pdfTitle'));
@@ -1375,6 +1642,7 @@
     /** The medicine list changed elsewhere (another device, a sync): redraw if open. */
     refresh: function () { var m = document.getElementById('medsHubModal'); if (m && m.classList.contains('active')) render(); },
     namesForDay: namesForDay, chipsHtml: chipsHtml, entryNote: entryNote, csvCell: csvCell, describe: describe,
+    openSome: openSome, closeSome: closeSome, someText: someText, someMarker: someMarker, someItemText: someItemText, listForDay: listForDay,
     events: events, reportComparison: reportComparison, drawPdf: drawPdf, drawComparePdf: drawComparePdf,
     chartsOn: chartsOn, chartData: chartData, markerText: markerText, tb: tb, fmtNum: fmtNum,
     renderDueCard: renderDueCard, scheduleDue: scheduleDue, setReminder: setReminder, clearDueReminder: clearDueReminder,

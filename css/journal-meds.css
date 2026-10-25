@@ -178,3 +178,45 @@ html.theme-dark .meds-card .bl-plan-line { color: var(--dk-muted); }
 html.theme-dark .meds-framing { background: #3a3317; color: #f5e9b8; }
 html.theme-dark .meds-flag { background: #3a2617; color: #ffc078; }
 html.theme-dark .meds-form .mf-err { color: #ff8787; }
+
+/* ── 🤏 Some: which medicines were taken, and the dose (2026-10-25) ── */
+#medsSomeModal { z-index: 1003; }
+#medsSomeModal .msome-sheet { max-width: 460px; width: 100%; text-align: left; padding: 18px 16px 20px; max-height: 90dvh; overflow-y: auto; }
+.msome-list { display: grid; gap: 10px; margin-bottom: 8px; }
+.msome-row { border: 1px solid #e9ecef; border-radius: 12px; padding: 10px 12px; display: grid; gap: 8px; background: white; }
+.msome-name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 0.92em; color: #343a40; overflow-wrap: anywhere; }
+.msome-usual { font-size: 0.82em; color: var(--text-muted-ink); }
+.msome-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.msome-seg button {
+  padding: 9px 6px; min-height: 40px; border-radius: 10px; border: 1.5px solid #dee2e6; background: white; font: inherit;
+  font-size: 0.86em; font-weight: 600; color: #495057; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.msome-seg button[data-v="taken"].on { border-color: #2f9e44; background: #ebfbee; color: #1f7a33; }
+.msome-seg button[data-v="missed"].on { border-color: #e8590c; background: #fff4e6; color: #a94600; }
+.msome-dose { display: flex; align-items: center; gap: 8px; font-size: 0.82em; font-weight: 600; color: #495057; }
+.msome-dose input {
+  width: 6.5em; padding: 8px 10px; border: 2px solid #e9ecef; border-radius: 8px; font: inherit; font-size: 1.05em;
+  background: white; color: #212529; box-sizing: border-box;
+}
+.msome-dose input:disabled { opacity: 0.45; }
+.msome-row.skipped .msome-dose { opacity: 0.55; }
+.msome-unit { font-weight: 600; }
+.msome-err { min-height: 1.1em; margin: 2px 0 6px; color: #c92a2a; font-size: 0.8em; }
+.msome-err:empty { min-height: 0; margin: 0 0 6px; }
+.msome-done, .msome-add { width: 100%; min-height: 46px; box-shadow: var(--brand-btn-ring, none); }
+html.theme-dark .msome-err { color: #ff8787; }
+.med-some-sum { margin: 6px auto 10px; max-width: 340px; text-align: center; font-size: 0.84em; color: #6b4e00; }
+.med-some-sum button { margin-left: 4px; background: none; border: none; color: var(--brand-ink); font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; padding: 4px 2px; }
+html.theme-dark .msome-row { background: var(--dk-surface-2); border-color: var(--dk-line); }
+html.theme-dark .msome-name, html.theme-dark .msome-dose { color: var(--dk-text); }
+html.theme-dark .msome-seg button { background: transparent; border-color: var(--dk-line); color: var(--dk-text-2); }
+html.theme-dark .msome-seg button[data-v="taken"].on { background: #1f3324; color: #8ce99a; border-color: #2f9e44; }
+html.theme-dark .msome-seg button[data-v="missed"].on { background: #3a2617; color: #ffc078; border-color: #e8590c; }
+html.theme-dark .msome-dose input { background: var(--dk-surface); border-color: var(--dk-line); color: var(--dk-text); }
+html.theme-dark .med-some-sum { color: #ffd43b; }
+/* The classic form's medication row has four answers since 🤏 Some. */
+.medication-selector.med4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.medication-selector.med4 .medication-btn { white-space: normal; line-height: 1.2; padding: 12px 3px; font-size: 0.86em; overflow-wrap: anywhere; }
+.medication-btn[data-medication="some"].selected { background: #e67700; border-color: #e67700; }
+#lifeChart .lc-c-dose { color: #a35400; }
+html.theme-dark #lifeChart .lc-c-dose { color: #ffa94d; }

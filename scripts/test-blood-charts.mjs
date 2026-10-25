@@ -314,8 +314,9 @@ console.log('New features sheet');
   const { ctx, page } = await open('/journal.html', { seen: false, levels: LEVELS, meds: MEDS, grant: true, extra: { bbWhatsNewSeen: '1.44' } });
   await page.waitForSelector('.bbwn-back', { timeout: 15000 });
   const rows = await page.evaluate(() => [...document.querySelectorAll('.bbwn-item')].map(li => ({ id: li.dataset.id, sw: !!li.querySelector('input'), on: !!li.querySelector('input:checked') })));
-  assert.deepEqual(rows, [{ id: 'medsReminders', sw: true, on: false }], 'web: only the medicine reminders switch, unticked: ' + JSON.stringify(rows));
-  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.45[\s\S]*A reminder for each medicine[\s\S]*You can change these any time in Settings/);
+  // + the 🤏 Some note (2026-10-25): a line, no switch.
+  assert.deepEqual(rows, [{ id: 'medsReminders', sw: true, on: false }, { id: 'medSome', sw: false, on: false }], 'web: only the medicine reminders switch, unticked, and the Some note: ' + JSON.stringify(rows));
+  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.45[\s\S]*A reminder for each medicine[\s\S]*Took only some of your medicine\?[\s\S]*You can change these any time in Settings/);
   assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), '1.45');
   ok('an updating user sees "New features · New in 1.45" once the journal is idle: a reminder for each medicine, unticked');
   await shot(page, 'whatsnew-en-light');
