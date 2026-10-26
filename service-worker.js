@@ -1880,7 +1880,16 @@
 //   js/shared/native-feel.js, css/survival-kit.css, css/journal.css, css/dark.css.
 // v384: version 1.46 (_APP_VERSION in js/shared/brand-config.js), for the
 //   1.46 TestFlight build: Bear 1.46 (66) (internal only; Anonymous unchanged).
-const CACHE_NAME = 'bipolarbear-v384';
+// v385: Bipolar Anonymous auto-translate no longer leaves a post in the
+//   language it was written in (James, 2026-10-26 — a Portuguese post in
+//   General on his iPhone). js/shared/translate.js: an answer is applied to
+//   every copy of that text on screen, so a re-render while the call is out
+//   (the cached then the server snapshot, on every open and resume) no longer
+//   strands the fresh card; a failed call is retried (3 s / 10 s / 30 s / 90 s,
+//   and when the network or the app comes back) instead of only on the next
+//   re-render; "unavailable" / the daily budget are asked about again after
+//   10 minutes instead of never this session. Test: scripts/test-translate.mjs.
+const CACHE_NAME = 'bipolarbear-v385';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

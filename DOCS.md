@@ -1369,7 +1369,17 @@ ceiling that actually holds.
   (`bbAnonTranslateUsage/{uid}`, keyed by UTC day so it resets without a
   sweep). Only cache **misses** are charged, so a reader scrolling a board
   everyone else has read spends nothing. Over budget → the client is told, and
-  stops asking for the rest of the session.
+  stops asking for ten minutes (it used to be the rest of the session, which on
+  a phone is days).
+- A failed call (offline, a phone that has just woken, a cold function) is
+  retried by the client after 3 s, 10 s, 30 s and 90 s, and again when the
+  network or the app comes back — not only on the board's next re-render. An
+  answer is applied to every element on screen showing that text
+  (`[data-tt-key]`), not just the ones that asked, because the board re-renders
+  while a call is out (the listener's cached snapshot, then the server's) and
+  the fresh card is skipped as already asked for. Before 2026-10-26 that left
+  a Portuguese post untranslated on James's iPhone until something else on the
+  board changed. Test: `scripts/test-translate.mjs`.
 - Auth is required (anonymous Firebase auth counts — every board reader has a
   session by the time they can read a post).
 
@@ -1413,7 +1423,7 @@ looks like the right place and is not — it only does roles.
    deploy Cloud Functions.
 
 Until that is done the function returns `unavailable: true`, the client stops
-asking, and **every post reads exactly as it was written** — the board works as
+asking (for ten minutes at a time), and **every post reads exactly as it was written** — the board works as
 it did before, and the settings sheet says translation is unavailable rather
 than pretending.
 

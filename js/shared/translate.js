@@ -48,6 +48,19 @@
   var _inflight   = new Set();   // keys already sent, not yet answered
   var _saveTimer  = null;
   var _waitTries  = 0;    // flushes spent waiting for init() to wire the backend
+  var _downAt     = 0;    // when the backend last said it can't translate
+  var _retryTimer = null;
+  var _retries    = 0;    // failed calls in a row, for the back-off below
+
+  // A failed call is tried again on its own — waiting for the next re-render
+  // left a post untranslated for good on a quiet board (James, 2026-10-26).
+  // After the last step it waits for the network, the app coming back to the
+  // foreground, or the next render.
+  var RETRY_MS     = [3000, 10000, 30000, 90000];
+  // "Unavailable" (the API off, billing, a bad moment at Google) and the daily
+  // budget are asked about again after this long, not never again this
+  // session — a phone keeps one session open for days.
+  var DOWN_RETRY_MS = 10 * 60 * 1000;
 
   function _log() {
     if (window.BB && window.BB.log) window.BB.log.apply(null, arguments);
@@ -103,7 +116,15 @@
     }
   }
 
-  function isAvailable() { return _available; }
+  function isAvailable() {
+    if (!_available && Date.now() - _downAt > DOWN_RETRY_MS) _available = true;
+    return _available;
+  }
+
+  function _down() {
+    _available = false;
+    _downAt = Date.now();
+  }
 
   /** Hash used for local cache keys — FNV-1a, enough to key a few hundred texts. */
   function _hash(str) {
@@ -220,7 +241,7 @@
     var batch = _pending;
     _pending = [];
     if (!batch.length) return;
-    if (!_available || !isOn()) return;
+    if (!isAvailable() || !isOn()) return;
     if (!_callable) {
       // Rendered before init() wired the backend up (a slow Firebase SDK, say).
       // Hold what we have rather than dropping it on the floor — but give up
@@ -271,34 +292,59 @@
       .then(function (res) {
         var data = (res && res.data) || {};
         if (data.unavailable) {
-          // The Cloud Translation API isn't enabled (or billing is off). Stop
-          // asking for the rest of the session; the board reads untranslated.
-          _available = false;
+          // The Cloud Translation API isn't enabled (or billing is off, or it
+          // failed just now). Stop asking for a while; the board reads
+          // untranslated meanwhile.
+          _down();
           _log('[translate] backend unavailable — leaving posts as written');
           done();
           return;
         }
-        if (data.budgetReached) { _available = false; done(); return; }
+        if (data.budgetReached) { _down(); done(); return; }
         var results = data.results || [];
+        _retries = 0;
         items.forEach(function (it, i) {
           var r = results[i];
           if (!r || typeof r.text !== 'string') return;
           var hit = { t: r.text, s: r.src || '', same: !!r.same };
           _mem.set(it.key, hit);
-          // Only elements still in the document and still on this language.
-          it.els.forEach(function (el) {
-            if (el.isConnected && el.getAttribute('data-tt-key') === it.key) _apply(el, hit);
-          });
+          // Every element on screen showing this text in this language — not
+          // just the ones that asked. The board re-renders while a call is out
+          // (the listener's cached snapshot, then the server's, on every open
+          // and resume); the fresh card is skipped as "already asked for", so
+          // applying only to it.els left it in the language it was written in.
+          var all = document.querySelectorAll('[data-tt-key="' + it.key + '"]');
+          for (var j = 0; j < all.length; j++) _apply(all[j], hit);
         });
         _saveCache();
         done();
       })
       .catch(function (e) {
-        // Offline, rules, a cold function — leave the originals up and try
-        // again on the next render rather than showing the reader an error.
+        // Offline, rules, a cold function, a phone that has only just woken —
+        // leave the originals up, never show the reader an error, and try
+        // again shortly (_retryLater).
         _log('[translate] call failed', e);
         done();
+        _retryLater();
       });
+  }
+
+  /** Look again for untranslated text after a failed call, backing off. */
+  function _retryLater() {
+    if (_retryTimer || _retries >= RETRY_MS.length) return;
+    var wait = RETRY_MS[_retries++];
+    _retryTimer = setTimeout(function () {
+      _retryTimer = null;
+      scan(document);
+    }, wait);
+  }
+
+  /** The network is back, or the app is in front again: try what's still untranslated. */
+  function _wake() {
+    if (document.visibilityState === 'hidden') return;
+    _retries = 0;
+    if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null; }
+    if (_callable) scan(document);
   }
 
   // ── Public entry point ────────────────────────────────────────────────────
@@ -314,6 +360,7 @@
     if (!els.length) return;
     var target = _target();
     var on     = isOn();
+    var avail  = isAvailable();
 
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
@@ -328,7 +375,7 @@
       var key = _key(target, orig);
       el.setAttribute('data-tt-key', key);
 
-      if (!on || !_available) { _restore(el); continue; }
+      if (!on || !avail)      { _restore(el); continue; }
       if (_mem.has(key))      { _apply(el, _mem.get(key)); continue; }
       if (_inflight.has(key)) continue;   // already asked for, answer pending
       _pending.push({ el: el, text: orig, key: key, lang: target });
@@ -378,6 +425,9 @@
     reset();
     scan(document);
   });
+
+  window.addEventListener('online', _wake);
+  document.addEventListener('visibilitychange', _wake);
 
   window.BB = window.BB || {};
   window.BB.translate = {
