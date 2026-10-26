@@ -31,11 +31,22 @@ const mood = f => url(path.join(REPO, 'images/moods', f));
 const BEAR = mood('stable.png');
 const ANON_ICON = url(path.join(REPO, 'icons/AppIcon_anonymous.png'));
 
-const render = (src, out, w, h, dsf = 1) => spawnSync(CHROME,
-  ['--headless', '--disable-gpu', '--hide-scrollbars', '--no-sandbox',
-   '--allow-file-access-from-files', `--force-device-scale-factor=${dsf}`,
-   '--virtual-time-budget=9000', `--window-size=${w},${h}`,
-   `--screenshot=${path.resolve(out)}`, url(src)], { stdio: 'ignore' });
+// Headless Chrome leaves the bottom ~20px of a short window unpainted (the
+// 191px cover came out with a white strip), so render into a taller window and
+// crop back to the exact size with ffmpeg.
+const PAD = 200;
+const render = (src, out, w, h, dsf = 1) => {
+  const tall = `${out}.tall.png`;
+  spawnSync(CHROME,
+    ['--headless', '--disable-gpu', '--hide-scrollbars', '--no-sandbox',
+     '--allow-file-access-from-files', `--force-device-scale-factor=${dsf}`,
+     '--virtual-time-budget=9000', `--window-size=${w},${h + PAD}`,
+     `--screenshot=${path.resolve(tall)}`, url(src)], { stdio: 'ignore' });
+  const r = spawnSync('ffmpeg', ['-v', 'error', '-y', '-i', tall,
+    '-vf', `crop=${w * dsf}:${h * dsf}:0:0`, out], { stdio: 'inherit' });
+  if (r.status !== 0) throw new Error(`ffmpeg crop failed for ${out} (is ffmpeg on PATH?)`);
+  rmSync(tall, { force: true });
+};
 
 // Same gradients as the og cards / store heroes.
 const ORANGE = `radial-gradient(120% 90% at 30% -20%, #ffc266 0%, rgba(255,194,102,0) 60%),
@@ -55,7 +66,6 @@ const page = (w, h, css, body) => `<!doctype html>
     -webkit-font-smoothing:antialiased; text-rendering:geometricPrecision; }
   .orange{ background:${ORANGE}; }
   .yellow{ background:${YELLOW}; }
-  .face img, img.face{ display:block; filter:drop-shadow(0 10px 16px rgba(110,45,0,.32)); }
 
   /* iPhone frame, as on the og cards */
   .phone{ position:absolute; padding:9px; border-radius:38px; background:#0b0b0d;
@@ -65,12 +75,6 @@ const page = (w, h, css, body) => `<!doctype html>
   .phone .scr img{ width:calc(100% + 10px); margin:-5px; display:block; }
   .phone .isl{ position:absolute; top:7px; left:50%; transform:translateX(-50%);
     width:47px; height:13px; border-radius:8px; background:#08080a; z-index:5; }
-
-  /* anonymous community avatar — initials in a coloured disc */
-  .cav{ position:absolute; border-radius:50%; display:flex; align-items:center;
-    justify-content:center; color:#fff; font-weight:800;
-    font-family:'Segoe UI',system-ui,sans-serif; border:3px solid rgba(255,255,255,.92);
-    box-shadow:0 12px 20px -8px rgba(90,60,0,.45); }
   ${css}
 </style></head>
 <body><div class="card">${body}</div></body></html>`;
@@ -79,19 +83,6 @@ const phone = (img, w, style, island) => `
   <div class="phone" style="width:${w}px;${style}">
     <div class="scr"><img src="${img}" alt="">${island ? '<div class="isl"></div>' : ''}</div>
   </div>`;
-
-// gradients match the avatars on the anon store screens (build-anon-hero.mjs)
-const AVATARS = {
-  QO: 'linear-gradient(135deg,#ffb340,#e07800)',
-  SS: 'linear-gradient(135deg,#81c784,#2e7d32)',
-  BB: 'linear-gradient(135deg,#64b5f6,#1565c0)',
-  JR: 'linear-gradient(135deg,#f48fb1,#c2185b)',
-  NW: 'linear-gradient(135deg,#ce93d8,#7b1fa2)',
-};
-const avatar = (txt, size, style) =>
-  `<div class="cav" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .4)}px;background:${AVATARS[txt]};${style}">${txt}</div>`;
-const face = (file, size, style) =>
-  `<img class="face" src="${mood(file)}" style="position:absolute;width:${size}px;${style}">`;
 
 // ── Logo — 400×400 ────────────────────────────────────────────────────
 //
@@ -112,15 +103,16 @@ const logo = page(LOGO, LOGO, `
 
 // ── Cover — 1128×191 ──────────────────────────────────────────────────
 //
-// LinkedIn lays the logo over the bottom-left of the cover (and crops the
-// sides on phones), so both lockups sit in from the edges and the bottom-left
-// ~200×80 stays plain gradient.
+// LinkedIn lays the logo over the bottom-left of the cover, so the bottom-left
+// ~200×80 stays plain gradient. Its Page info editor also previews the cover
+// as a ~10.7:1 strip across the middle (top and bottom cropped), so everything
+// sits in the central ~100px band and nothing rides the top or bottom edge.
 const CW = 1128, CH = 191;
 const cover = page(CW, CH, `
   .l{ position:absolute; inset:0; clip-path:polygon(0 0, 600px 0, 540px 100%, 0 100%); }
   .r{ position:absolute; inset:0; clip-path:polygon(600px 0, 100% 0, 100% 100%, 540px 100%); }
-  .lock{ position:absolute; top:30px; display:flex; align-items:center; gap:16px; }
-  .lock img{ width:92px; height:92px; display:block; }
+  .lock{ position:absolute; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:16px; }
+  .lock img{ width:88px; height:88px; display:block; }
   .name{ font-weight:900; font-size:34px; letter-spacing:-.015em; line-height:1; }
   .line{ font-weight:800; font-size:19px; line-height:1.25; margin-top:8px; }
   .bearside{ color:#fff; text-shadow:0 2px 10px rgba(140,55,0,.28); }
@@ -136,22 +128,12 @@ const cover = page(CW, CH, `
     <div><div class="name">Bipolar Bear</div>
       <div class="line">Every high. Every low.<br>A private mood journal.</div></div>
   </div>
-  ${face('depressed.png', 40, 'left:240px;top:136px;transform:rotate(-8deg);')}
-  ${face('low.png',       42, 'left:300px;top:132px;transform:rotate(6deg);')}
-  ${face('good.png',      44, 'left:362px;top:128px;transform:rotate(-5deg);')}
-  ${face('elevated.png',  46, 'left:426px;top:124px;transform:rotate(7deg);')}
-  ${face('manic.png',     48, 'left:492px;top:120px;transform:rotate(-6deg);')}
 
-  <div class="lock anonside" style="left:644px;">
+  <div class="lock anonside" style="left:640px;">
     <img src="${ANON_ICON}" alt="" style="box-shadow:0 8px 16px -4px rgba(90,60,0,.35);">
     <div><div class="name">Bipolar Anonymous</div>
       <div class="line">You're not alone.<br>An anonymous peer community.</div></div>
   </div>
-  ${avatar('NW', 40, 'left:676px;top:136px;transform:rotate(7deg);')}
-  ${avatar('JR', 42, 'left:736px;top:132px;transform:rotate(-6deg);')}
-  ${avatar('BB', 44, 'left:798px;top:128px;transform:rotate(5deg);')}
-  ${avatar('SS', 46, 'left:862px;top:124px;transform:rotate(-4deg);')}
-  ${avatar('QO', 48, 'left:928px;top:120px;transform:rotate(6deg);')}
 `);
 
 // ── Posts — two halves, a phone each ──────────────────────────────────
