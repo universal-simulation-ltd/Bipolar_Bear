@@ -1878,7 +1878,9 @@
 //   Touches survival-kit.html, journal.html, index.html, js/journal.js,
 //   js/index.js, js/survival-kit.js, js/shared/whats-new.js,
 //   js/shared/native-feel.js, css/survival-kit.css, css/journal.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v383';
+// v384: version 1.46 (_APP_VERSION in js/shared/brand-config.js), for the
+//   1.46 TestFlight build: Bear 1.46 (66) (internal only; Anonymous unchanged).
+const CACHE_NAME = 'bipolarbear-v384';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
