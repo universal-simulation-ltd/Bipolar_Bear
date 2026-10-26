@@ -1869,7 +1869,16 @@
 //   js/shared/whats-new.js, css/journal-meds.css.
 // v382: version 1.45 (_APP_VERSION in js/shared/brand-config.js), for the
 //   1.45 TestFlight builds: Bear 1.45 (65), Anonymous 1.43 (50).
-const CACHE_NAME = 'bipolarbear-v382';
+// v383 (for 1.46): 🌬️ Breathing — five guided exercises with a circle, a
+//   breath sound and a favourite (new js/shared/breathing.js +
+//   i18n-breathe.js, precached), a Survival Kit section (#breathing), the
+//   journal's opt-in "A minute of slow breathing?" line after a mood other
+//   than Stable (5) with its Settings switch (userSettings.breathPromptsEnabled),
+//   and the 1.46 New features entry (a link to the kit + the switch).
+//   Touches survival-kit.html, journal.html, index.html, js/journal.js,
+//   js/index.js, js/survival-kit.js, js/shared/whats-new.js,
+//   js/shared/native-feel.js, css/survival-kit.css, css/journal.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v383';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1929,6 +1938,8 @@ const STATIC_ASSETS = [
   './js/shared/mood-queue.js',
   './js/shared/bio-unlock.js',
   './js/shared/whats-new.js',
+  './js/shared/breathing.js',
+  './js/shared/i18n-breathe.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',
 

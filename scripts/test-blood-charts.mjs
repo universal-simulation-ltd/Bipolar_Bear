@@ -97,7 +97,7 @@ async function open(url, o = {}) {
     if (cfg.meds) localStorage.setItem('currentMedList', JSON.stringify(cfg.meds));
     if (cfg.plans) localStorage.setItem('medBloodPlans', JSON.stringify(cfg.plans));
     if (cfg.chartsOn) localStorage.setItem('bbBloodOnCharts', '1');
-    if (cfg.seen !== false) localStorage.setItem('bbWhatsNewSeen', '1.45');
+    if (cfg.seen !== false) localStorage.setItem('bbWhatsNewSeen', '1.46');
     Object.keys(cfg.extra || {}).forEach(x => localStorage.setItem(x, cfg.extra[x]));
   }, { days: o.days == null ? 400 : o.days, ...o });
   await page.goto(BASE + url);
@@ -309,17 +309,26 @@ console.log('Offer once after the first result');
 
 console.log('New features sheet');
 {
-  // An updating user (onboarding done, saw 1.44), journal idle → 1.45 shown once.
+  // An updating user (onboarding done, saw 1.45), journal idle → 1.46 shown once
+  // (🌬️ Breathing, 2026-10-26; scripts/test-breathing.mjs has the rest).
   const MEDS = [{ name: 'Lithium', dosage: '400 mg' }];
-  const { ctx, page } = await open('/journal.html', { seen: false, levels: LEVELS, meds: MEDS, grant: true, extra: { bbWhatsNewSeen: '1.44' } });
+  const { ctx, page } = await open('/journal.html', { seen: false, levels: LEVELS, meds: MEDS, grant: true, extra: { bbWhatsNewSeen: '1.45' } });
   await page.waitForSelector('.bbwn-back', { timeout: 15000 });
-  const rows = await page.evaluate(() => [...document.querySelectorAll('.bbwn-item')].map(li => ({ id: li.dataset.id, sw: !!li.querySelector('input'), on: !!li.querySelector('input:checked') })));
+  const rowsOf = () => page.evaluate(() => [...document.querySelectorAll('.bbwn-item')].map(li => ({ id: li.dataset.id, sw: !!li.querySelector('input'), on: !!li.querySelector('input:checked') })));
+  const rows46 = await rowsOf();
+  assert.deepEqual(rows46, [{ id: 'breathing', sw: false, on: false }, { id: 'breathPrompts', sw: true, on: false }], 'web 1.46: ' + JSON.stringify(rows46));
+  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.46[\s\S]*Breathing exercises[\s\S]*Breathing prompts in the journal[\s\S]*You can change these any time in Settings/);
+  assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), '1.46');
+  ok('an updating user sees "New features · New in 1.46" once the journal is idle: breathing, and the prompts switch unticked');
+  await shot(page, 'whatsnew-en-light');
+  await page.click('.bbwn-done');
+  // The 1.45 entries (people who missed 1.45 see only 1.46), through the registry.
+  await page.evaluate(() => BB.whatsNew.create({ releases: { '1.45': BB.whatsNew.bearReleases({ bioMode: () => null, bioType: null, isNative: () => false })['1.45'] }, seenKey: '__m' }).show());
+  const rows = await rowsOf();
   // + the 🤏 Some note (2026-10-25): a line, no switch.
   assert.deepEqual(rows, [{ id: 'medsReminders', sw: true, on: false }, { id: 'medSome', sw: false, on: false }], 'web: only the medicine reminders switch, unticked, and the Some note: ' + JSON.stringify(rows));
   assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.45[\s\S]*A reminder for each medicine[\s\S]*Took only some of your medicine\?[\s\S]*You can change these any time in Settings/);
-  assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), '1.45');
-  ok('an updating user sees "New features · New in 1.45" once the journal is idle: a reminder for each medicine, unticked');
-  await shot(page, 'whatsnew-en-light');
+  ok('1.45: a reminder for each medicine, unticked, and the Some note');
   // Its switch is the reminders' master switch; with no times yet it says where to add them.
   await page.click('.bbwn-sw');
   await page.waitForFunction(() => document.querySelector('.bbwn-item[data-id="medsReminders"] .bbwn-msg')?.textContent);
@@ -362,7 +371,7 @@ console.log('New features sheet');
 {
   // A fresh install (onboarding not done): marked seen, never shown.
   const { ctx, page } = await open('/journal.html', { seen: false, onboarded: false, days: 0 });
-  await page.waitForFunction(() => localStorage.getItem('bbWhatsNewSeen') === '1.45', null, { timeout: 15000 });
+  await page.waitForFunction(() => localStorage.getItem('bbWhatsNewSeen') === '1.46', null, { timeout: 15000 });
   await page.waitForTimeout(1500);
   assert.equal(await page.$('.bbwn-back'), null);
   ok('a fresh install marks it seen without showing it');

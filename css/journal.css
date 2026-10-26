@@ -2959,3 +2959,40 @@ html.theme-dark .jm-reset { color: var(--brand-primary); }
 .set-idx-d { font-size: 0.8em; color: var(--text-muted-ink); line-height: 1.35; }
 .set-idx-chev { font-size: 1.4em; line-height: 1; color: var(--text-muted-ink); }
 html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-text); background: var(--dk-surface-2); }
+
+/* 🌬️ Breathing prompt (js/journal.js _refreshBreathPrompt): a small line the
+   entry carries on past — never a dialog. */
+.bb-breath-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin: -6px auto 12px;
+  padding: 4px 4px 4px 12px;
+  max-width: 100%;
+  width: fit-content;
+  box-sizing: border-box;
+  border: 1.5px dashed rgba(11, 114, 133, 0.35);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #0b5563;
+  font-size: 0.82em;
+  animation: bbBreathIn 0.3s ease-out;
+}
+#breathPromptForm.bb-breath-prompt { margin: 0 auto 10px; }
+@keyframes bbBreathIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bb-breath-prompt { animation: none; } }
+.bb-breath-prompt .bbp-txt { font-weight: 600; }
+.bb-breath-prompt button {
+  min-height: 34px;
+  border: none;
+  border-radius: 17px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.bb-breath-prompt .bbp-go { padding: 4px 12px; background: #0b7285; color: #fff; }
+.bb-breath-prompt .bbp-no { min-width: 34px; padding: 4px 8px; background: none; color: #5c7378; }
+.bb-breath-prompt button:focus-visible { outline: 2px solid #0b7285; outline-offset: 2px; }

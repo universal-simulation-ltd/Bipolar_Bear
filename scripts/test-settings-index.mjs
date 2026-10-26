@@ -66,7 +66,7 @@ async function open(o = {}) {
     localStorage.setItem('bbOnboardingStep', '12'); localStorage.setItem('bbHasEntries', '1');
     ['SettingsHintDone', 'CustomiseFormHintDone', 'CustomiseAdditionalHintDone', 'CloseSettingsHintDone'].forEach(k => localStorage.setItem('bb' + k, '1'));
     localStorage.setItem('bbGuestNoPin', '1');
-    localStorage.setItem('bbWhatsNewSeen', '1.45');
+    localStorage.setItem('bbWhatsNewSeen', '1.46');
     const now = new Date(); now.setHours(12, 0, 0, 0);
     for (let i = 5; i >= 1; i--) {
       const t = now.getTime() - i * 86400000, d = new Date(t);

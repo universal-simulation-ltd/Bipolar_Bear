@@ -82,6 +82,9 @@
     ['.bb-account-overlay.active', '.bb-account-box'],
     ['.bb-fab-modal.open', 'div'],
     ['.overlay:not(.hidden)', '.sheet'],
+    // The breathing player (js/shared/breathing.js) places itself; this gives
+    // it the grabber and swipe down to close (a click on its backdrop).
+    ['.bbbr-back', '.bbbr-sheet'],
   ];
   var OPEN_SEL = SHEETS.map(function (s) { return s[0]; }).join(',');
   var BOTTOM = SHEETS.slice(0, 7); // the anonymous board's sheets already sit at the bottom

@@ -19,6 +19,8 @@
  *                 // set → true when it took, false / a message when it didn't
  *                 // (the switch then shows what get() says, and the message).
  *                 // setting: null → a one-line note with no switch.
+ *       link:     { href, labelKey },         // optional: a link under the
+ *                                             // sentence (where to find it)
  *       applies:  () => boolean,              // only items that apply are shown
  *   } ] }
  *
@@ -41,8 +43,8 @@
  *                tries again.
  *   BB.whatsNew.screenBusy()  the generic "something is on top" check.
  *
- * Bipolar Bear's entries are in bearReleases() at the bottom (1.44, 1.45:
- * people who missed 1.44 see only the newest); js/index.js and
+ * Bipolar Bear's entries are in bearReleases() at the bottom (1.44, 1.45,
+ * 1.46: people who missed one see only the newest); js/index.js and
  * js/journal.js call BB.whatsNew.startBear().
  */
 (function () {
@@ -68,7 +70,7 @@
   // splash, the crisis chat / safety plan, and any open dialog or modal.
   var BLOCKERS = ['#guestPinOverlay', '#pinOverlay', '#pinSleepOverlay', '#pinE2eeModal', '#bbPinReauth',
     '#bbAuthSplash', '#bbAuthModal', '#bbHintOverlay', '#bbWelcomeModal', '.bb-fab-modal.open', '.confirm-modal.active',
-    '.bbm-back', '.bbsp-sheet', '[aria-modal="true"]', '.bbwn-back'];
+    '.bbm-back', '.bbsp-sheet', '[aria-modal="true"]', '.bbwn-back', '.bbbr-back'];
   function visible(el) {
     if (!el || !el.getClientRects || !el.getClientRects().length) return false;
     try {
@@ -103,6 +105,7 @@
     '.bbwn-txt{flex:1 1 auto;min-width:0}.bbwn-t{display:block;font-weight:700;font-size:.92em;cursor:pointer}.bbwn-note .bbwn-t{cursor:default}' +
     '.bbwn-b{font-size:.8em;color:#5c534a;line-height:1.4;margin-top:2px}' +
     '.bbwn-msg{font-size:.78em;color:#c92a2a;margin-top:4px}.bbwn-msg:empty{display:none}' +
+    '.bbwn-link{display:inline-block;margin-top:4px;font-size:.8em;font-weight:700;color:var(--brand-ink,#b35c00);text-decoration:underline;text-underline-offset:2px}' +
     '.bbwn-sw{position:relative;flex:0 0 auto;width:50px;height:30px}' +
     '.bbwn-sw input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1}' +
     '.bbwn-sw span{position:absolute;inset:0;border-radius:15px;background:#ccc;transition:background .2s}' +
@@ -114,6 +117,7 @@
     '.bbwn-done{width:100%;padding:13px;min-height:48px;border:none;border-radius:12px;background:var(--brand-btn,#c2410c);color:var(--brand-btn-text,#fff);box-shadow:var(--brand-btn-ring,none);font:inherit;font-weight:700;font-size:1em;cursor:pointer}' +
     'html.theme-dark .bbwn-sheet{background:#2a221b;color:#f3e9dc}html.theme-dark .bbwn-item{border-color:#4a3d31}' +
     'html.theme-dark .bbwn-v,html.theme-dark .bbwn-later{color:#c9b8a5}html.theme-dark .bbwn-b{color:#d8c9b6}' +
+    'html.theme-dark .bbwn-link{color:var(--brand-primary,#ff9500)}' +
     'html.theme-dark .bbwn-sw span{background:#5a4a3a}html.theme-dark .bbwn-sw span:before{background:#f5ebdd}html.theme-dark .bbwn-msg{color:#ff8787}' +
     // ⚠️ After the dark track: `html.theme-dark .bbwn-sw span` has the same
     // specificity as `.bbwn-sw input:checked+span`, so without this an ON
@@ -167,7 +171,9 @@
         return '<li class="bbwn-item' + (it.setting ? '' : ' bbwn-note') + '" data-id="' + esc(it.id) + '">' +
           '<span class="bbwn-ico" aria-hidden="true">' + esc(it.icon) + '</span>' +
           '<div class="bbwn-txt">' + (it.setting ? '<label class="bbwn-t" for="' + id + '">' + esc(title) + '</label>' : '<span class="bbwn-t">' + esc(title) + '</span>') +
-          '<div class="bbwn-b" id="' + id + '_d">' + esc(body) + '</div><div class="bbwn-msg" role="status" aria-live="polite"></div></div>' +
+          '<div class="bbwn-b" id="' + id + '_d">' + esc(body) + '</div>' +
+          (it.link ? '<a class="bbwn-link" href="' + esc(it.link.href) + '">' + esc(t(it.link.labelKey)) + '</a>' : '') +
+          '<div class="bbwn-msg" role="status" aria-live="polite"></div></div>' +
           (it.setting ? '<span class="bbwn-sw"><input type="checkbox" role="switch" id="' + id + '" data-i="' + i + '" aria-describedby="' + id + '_d"' + (on ? ' checked' : '') + '><span></span></span>' : '') +
           '</li>';
       }).join('');
@@ -187,7 +193,7 @@
       function onKey(e) {
         if (e.key === 'Escape') { e.preventDefault(); close(); return; }
         if (e.key !== 'Tab') return;
-        var f = back.querySelectorAll('input,button');
+        var f = back.querySelectorAll('input,button,a[href]');
         if (!f.length) return;
         var first = f[0], last = f[f.length - 1];
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
@@ -223,6 +229,12 @@
       (function tick() {
         var v = latest();
         if (!v || isSeen(v) || Date.now() > giveUp) return;
+        // A new install has nothing to update from: mark it seen at once, not
+        // only once the screen is idle. Someone tapping straight through the
+        // tutorial was never idle, so after it the sheet showed them the
+        // newest release (2026-10-26: 1.46 applies to everyone; 1.45's
+        // items happened not to apply to a new user).
+        try { if (o.isFreshInstall && o.isFreshInstall()) { markSeen(); return; } } catch (_) {}
         var ready = document.visibilityState !== 'hidden' && Date.now() - _lastInput >= idleMs;
         if (ready && shouldShow(o)) { show(); return; }
         if (v && isSeen(v)) return; // marked seen (fresh install / nothing applies)
@@ -311,6 +323,21 @@
               return JSON.parse(localStorage.getItem('currentMedList') || '[]').length > 0;
             } catch (_) { return false; }
           } },
+      ],
+      '1.46': [
+        // 🌬️ Breathing (js/shared/breathing.js, 2026-10-26). The exercises are
+        // always there: a note with a link to them. The journal's prompts are
+        // off until turned on: the switch is Settings' 🌬️ Breathing prompts.
+        { id: 'breathing', icon: '🌬️', titleKey: 'breathe.wnTitle', bodyKey: 'breathe.wnBody',
+          setting: null, link: { href: 'survival-kit.html#breathing', labelKey: 'breathe.wnLink' },
+          applies: function () { return !!BB.breathing; } },
+        { id: 'breathPrompts', icon: '📓', titleKey: 'breathe.wnPromptTitle', bodyKey: 'breathe.wnPromptBody',
+          setting: {
+            key: 'breathPromptsEnabled',
+            get: function () { return !!(BB.breathing && BB.breathing.promptsOn()); },
+            set: function (on) { return BB.breathing.setPrompts(on); },
+          },
+          applies: function () { return !!BB.breathing; } },
       ],
     };
   }

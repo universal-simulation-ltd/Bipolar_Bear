@@ -1110,6 +1110,12 @@
     .sk-plan .sk-sos-sub { color: #4a5578; opacity: 1; }
     .sk-plan:active { box-shadow: 0 1px 4px rgba(92,124,250,0.2); }
 
+    /* "Breathing exercises" — under the safety plan; calm teal (js/shared/breathing.js) */
+    .sk-breathe { color: #0b5563; border-color: #99e9f2; box-shadow: 0 3px 12px rgba(16,152,173,0.14); }
+    .sk-breathe .sk-sos-ico { background: #e3fafc; }
+    .sk-breathe .sk-sos-sub { color: #2b5f66; }
+    .sk-breathe:active { box-shadow: 0 1px 4px rgba(16,152,173,0.2); }
+
     /* Progress — same count as the home screen badge */
     .sk-progress { margin: 0 2px 14px; }
     .sk-progress-label {
@@ -1165,6 +1171,7 @@
       .sk-tile:hover { box-shadow: 0 6px 18px rgba(255,136,51,0.18); border-color: var(--orange); }
       .sk-sos:hover { box-shadow: 0 6px 18px rgba(198,40,40,0.3); }
       .sk-plan:hover { box-shadow: 0 6px 18px rgba(92,124,250,0.22); }
+      .sk-breathe:hover { box-shadow: 0 6px 18px rgba(16,152,173,0.22); }
     }
     .sk-tile:focus-visible, .sk-sos:focus-visible, .sk-back-btn:focus-visible, .sk-tab:focus-visible {
       outline: 3px solid var(--orange);

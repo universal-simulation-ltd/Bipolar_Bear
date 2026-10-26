@@ -2800,6 +2800,86 @@ psychiatrist advice) and would like to see if there's an impact."
   no medicines, the classic form, encrypted under a guest PIN and decrypted,
   the PDF's text, German, the bottom sheet and a swipe down; `SHOTS=<dir>`).
 
+### 2.31 🌬️ Breathing exercises and the journal's breathing prompt (2026-10-26, v383, for 1.46)
+
+James, 2026-10-26: "a breathing section to the Survival Kit of different
+breathing techniques … X in and X out with an accompanying noise / animation
+… allow them to select their favourite. Then in the journal ask if they'd like
+to do a breathing exercise if they responded anything but stable (5) … visible
+but discrete enough that they can just continue … an option in settings to
+deactivate breathing prompts (switch off by default)".
+
+- **One module, `js/shared/breathing.js` (`BB.breathing`)**, loaded on
+  index.html, journal.html and survival-kit.html. Five exercises, each a list
+  of `[phase, seconds]` (`in`, `in2` = a short second breath in, `hold`, `out`):
+  Longer out-breath 4·6 (the default), Box 4·4·4·4, Even 5·5, 4-7-8, Double
+  sigh 2·1·6. `list()` puts the starred one first.
+- **The player** (`open({ id })`): a bottom sheet on phones, a centred card
+  from 700 px. A row of exercises (the ★ favourite first), the pattern and one
+  line on what it's for, a circle that grows over the in-breath and shrinks
+  over the out-breath (CSS transition lasting the phase), the step and a
+  countdown, the time left. **1 / 3 / 5 min** (`bbBreathMins`); the time is
+  checked at the start of each round, so a round is never cut short. Sound is
+  made with Web Audio on the Start tap, no files: looped brown noise through a
+  low-pass filter that swells and opens up on the in-breath and fades on the
+  out-breath, and a quiet sine bell at each step. **🔇 Mute** (`bbBreathMute`,
+  unticked = sound on). A light haptic at each step on phones (`BB.nf.haptic`).
+  It stops when the page is hidden (iOS suspends Web Audio anyway). Reduced
+  motion: the circle stays one size and fades instead. On iPhone the ring /
+  silent switch silences Web Audio, so with the phone on silent there is no
+  sound; the circle and the taps still lead. `aria-modal`, focus trap, Escape,
+  a tap outside, ✕, and swipe down (registered in `js/shared/native-feel.js`'s
+  SHEETS) all close it. The step text is a polite live region; the countdown
+  is not read out.
+- **Favourite** (`bbBreathFav`, device only): ☆ on each card in the kit or
+  **☆ Favourite** in the player; one at a time, tapping it again unstars. It
+  goes first in both lists, and the journal's prompt opens it.
+- **Survival Kit:** a 🌬️ **Breathing exercises** banner under My safety plan,
+  a **Breathe** tab after Coping, and a `#breathing` section
+  (`renderList(#skBreathList)`: a card per exercise with ▶ Start and ☆). It is
+  in `_SK_SECTION_IDS` (opens as a drawer on phones, `survival-kit.html#breathing`
+  deep-links to it) but **not** one of the 12 counted sections — it has nothing
+  to finish, and the "/ 12" strings in ten languages stay as they are. The tile
+  click handler now takes any `[data-sk-open]`, so the banner is a button with it.
+- **The journal's prompt** (`_refreshBreathPrompt` in `js/journal.js`): with
+  **⚙️ Settings → Advanced → 📓 Journal → 🌬️ Breathing prompts** on, a mood
+  other than Stable — category `stable`, or exactly 5 on the 0–10 spectrum (4
+  and 6 do ask) — or a held-on other mood that isn't Stable, shows a small
+  dashed line "🌬️ A minute of slow breathing? [Breathe] [✕]": under the
+  summary chips on every focus-mode step after the mood (`#fmBreathPrompt`),
+  under the mood buttons in the form (`#breathPromptForm`). Nothing waits on
+  it. ✕ hides it for that entry; **Breathe** opens the player over the entry
+  (the draft is untouched) and hides it too; the next entry asks again. Never
+  while editing an older entry.
+- **The switch** `breathPromptsEnabled` ('1' / '0'; unset = off): synced as
+  `userSettings.breathPromptsEnabled` (read in the journal's auth listener,
+  written by `BB.breathing.setPrompts`, which any page can call), cleared on
+  logout, on a new user and by Reset settings / Delete all (index.js and
+  journal.js); exported and imported with the journal's settings. Delete all
+  also clears `bbBreathFav`, `bbBreathMins`, `bbBreathMute`.
+- **New features (1.46):** `breathing` — a note with a link,
+  "Open them in the Survival Kit →" (`survival-kit.html#breathing`; items can
+  now carry `link: { href, labelKey }`), and `breathPrompts` — the switch,
+  starting off. Web users who saw 1.45 get it at once; someone who missed 1.45
+  sees only 1.46 (as the sheet always has).
+- **Engine fix (same change):** `start()` now marks a new install seen at
+  once. It used to wait for the screen to be idle first, so someone tapping
+  straight through the tutorial was shown the newest release afterwards. 1.45
+  hid that (none of its items applied to a new user); 1.46's apply to everyone.
+- Strings `breathe.*` in `js/shared/i18n-breathe.js` (10 languages, machine
+  translated). Player and card CSS is injected by the module (`.bbbr-*`); the
+  banner is in `css/survival-kit.css`, the prompt in `css/journal.css`, dark
+  in `css/dark.css`.
+- Test: `PLAYWRIGHT_MODULE=… node scripts/test-breathing.mjs` (22 checks at
+  390 px: the list and favourite order, the kit's banner / section / cards /
+  ☆, the player running in → hold → out with the circle and countdown, Stop,
+  3 min + Mute kept, Escape and a tap outside, still "/ 12", the deep link;
+  the journal: off by default, Low / Elevated / Stable / held-on Low /
+  spectrum 5 and 4, carrying on past it, ✕, Breathe opening the favourite,
+  the form, the Settings switch; the 1.46 sheet; German; `SHOTS=<dir>`). The
+  other tests now seed `bbWhatsNewSeen` '1.46'; test-blood-charts and
+  test-tutorial check the 1.45 entries through the registry.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

@@ -677,6 +677,7 @@ function _tt(k, vars, fallback) {
               try { BB.platform.syncWidgetMoods(); } catch (_) {}
               if (d.achievementToastsEnabled !== undefined) localStorage.setItem('achievementToastsEnabled', d.achievementToastsEnabled ? 'true' : 'false');
               if (d.earlyWarnEnabled !== undefined) localStorage.setItem('earlyWarnEnabled', d.earlyWarnEnabled ? 'true' : 'false');
+              if (d.breathPromptsEnabled !== undefined) localStorage.setItem('breathPromptsEnabled', d.breathPromptsEnabled ? '1' : '0');
               // Bipolar Anonymous: is this account on the board, and may the
               // journal answer its daily check-in? (_anonJournalCheckin)
               const _ap = (d.anonProfile && typeof d.anonProfile === 'object') ? d.anonProfile : {};
@@ -820,7 +821,7 @@ function _tt(k, vars, fallback) {
               ['PinEnabled','PinCode','FavAnniShown',
                'PrivateHintSeen','FavouriteHintSeen','_moodTipShown','_fmMoodTipShown','_draft']
                 .forEach(k => BB.storage.remove(k));
-              ['moreDataOpenByDefault','showMoodSuggestion','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled','earlyWarnEnabled','bbEarlyWarnSeen']
+              ['moreDataOpenByDefault','showMoodSuggestion','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled','earlyWarnEnabled','bbEarlyWarnSeen','breathPromptsEnabled']
                 .forEach(k => localStorage.removeItem(k));
               BB.storage.remove('OnboardingStep'); // new user starts at step 0
               localStorage.setItem('focusedModeEnabled', '1');
@@ -1121,7 +1122,7 @@ function _tt(k, vars, fallback) {
         'bbWelcomeShown',
         'focusedModeEnabled', 'moreDataOpenByDefault', 'showMoodSuggestion',
         'moodLinkingEnabled', 'bb_draft',
-        'earlyWarnEnabled', 'bbEarlyWarnSeen',
+        'earlyWarnEnabled', 'bbEarlyWarnSeen', 'breathPromptsEnabled',
         'bbBloodOnCharts', 'bbBloodChartsAsked',
         // "Already counted in counters/{userCount,anonUserCount}" mirrors.
         // Account-specific: leaving them behind would make the next account to
@@ -2166,6 +2167,63 @@ function _tt(k, vars, fallback) {
     // A mood is "chosen" when it's set — including the spectrum value 0 (which is falsy).
     function _hasMood() { return selectedMood != null && selectedMood !== ''; }
 
+    // ── 🌬️ Breathing prompt (js/shared/breathing.js, James 2026-10-26) ──
+    // With Settings' "Breathing prompts" on (off until turned on), any mood
+    // but Stable (5) — the main mood or one held on with it — brings a small
+    // "A minute of slow breathing?" line: under the summary chips on every
+    // focus-mode step after the mood, under the mood buttons in the form.
+    // Nothing waits on it: ✕ hides it for this entry, and so does starting
+    // one. Never while editing an older entry.
+    let _breathPromptHidden = false;
+    function _breathPromptWanted() {
+      try {
+        if (!(window.BB && BB.breathing && BB.breathing.promptsOn())) return false;
+        if (editingEntry || !_hasMood()) return false;
+        const _unstable = m => _isNumericMood(m) ? Number(m) !== 5 : _moodCat(m) !== 'stable';
+        return _unstable(selectedMood) || (selectedLinkedMoods || []).some(_unstable);
+      } catch (_) { return false; }
+    }
+    function _fillBreathPrompt(el, show) {
+      if (!el) return;
+      if (!show) { el.style.display = 'none'; el.textContent = ''; return; }
+      el.innerHTML = `<span class="bbp-txt">${_esc(BB.t('breathe.prompt'))}</span>`
+        + `<button type="button" class="bbp-go" onclick="_breathPromptGo()">${_esc(BB.t('breathe.promptGo'))}</button>`
+        + `<button type="button" class="bbp-no" onclick="_breathPromptNo()" aria-label="${_esc(BB.t('breathe.promptNo'))}" title="${_esc(BB.t('breathe.promptNo'))}">✕</button>`;
+      el.style.display = '';
+    }
+    function _refreshBreathPrompt() {
+      if (!_hasMood()) _breathPromptHidden = false; // a new entry asks again
+      const want = !_breathPromptHidden && _breathPromptWanted();
+      let fm = false, stepId = null;
+      try { fm = !!_fmActive; stepId = fm && _fmSteps[_fmStepIndex] ? _fmSteps[_fmStepIndex].id : null; } catch (_) {}
+      _fillBreathPrompt(document.getElementById('fmBreathPrompt'), want && fm && !!stepId && stepId !== 'mood');
+      _fillBreathPrompt(document.getElementById('breathPromptForm'), want && !fm);
+    }
+    function _breathPromptGo() {
+      _breathPromptHidden = true;
+      _refreshBreathPrompt();
+      if (window.BB && BB.breathing) BB.breathing.open();
+    }
+    function _breathPromptNo() {
+      _breathPromptHidden = true;
+      _refreshBreathPrompt();
+    }
+    function _toggleBreathPrompts() {
+      const chk = document.getElementById('breathPromptsToggle');
+      if (window.BB && BB.breathing) BB.breathing.setPrompts(!!(chk && chk.checked));
+      _refreshBreathPrompt();
+    }
+    window._breathPromptGo = _breathPromptGo;
+    window._breathPromptNo = _breathPromptNo;
+    window._toggleBreathPrompts = _toggleBreathPrompts;
+    // The New features sheet turns it on too (BB.breathing.setPrompts).
+    document.addEventListener('bb:breathprompts', () => {
+      const chk = document.getElementById('breathPromptsToggle');
+      if (chk && window.BB && BB.breathing) chk.checked = BB.breathing.promptsOn();
+      _refreshBreathPrompt();
+    });
+    document.addEventListener('bb:languagechange', () => _refreshBreathPrompt());
+
     // Mood selection
     document.querySelectorAll('.mood-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2179,6 +2237,7 @@ function _tt(k, vars, fallback) {
         selectedMood = mood;
         if (typeof _fmApplyMoodTheme === 'function') _fmApplyMoodTheme(mood);
         scheduleDraftSave();
+        _refreshBreathPrompt();
 
         // One-time tip: "tap the mood again to see more info"
         const _tipEl = document.getElementById('moodSelectorTip');
@@ -6285,6 +6344,7 @@ function _tt(k, vars, fallback) {
         if (typeof importSleepFromHealth === 'function') importSleepFromHealth(true);
       }
       scheduleDraftSave();
+      _refreshBreathPrompt();
     }
     window._onSpectrumChange = _onSpectrumChange;
 
@@ -7251,6 +7311,7 @@ function _tt(k, vars, fallback) {
       }
       // Elaborate Responses — per-step notes
       _fmAppendStepNotes(step);
+      _refreshBreathPrompt();
       // Re-evaluate overlay state (handles med hint and settings hint)
       _applyJournalOnboardingGating();
       // Mood step blocking hints: show overlay + elevate card
@@ -11046,6 +11107,7 @@ function _tt(k, vars, fallback) {
       document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
       selectedMood = null;
       selectedLinkedMoods = [];
+      _refreshBreathPrompt();
       if (typeof _fmApplyMoodTheme === 'function') _fmApplyMoodTheme(null);
       selectedEnergy = 5;
       selectedSleep = 7.5;
@@ -11403,7 +11465,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           'elaborateResponsesEnabled', 'intentionEnabled', 'incognitoMode', 'pdfHideByDefault',
           'showMoodSuggestion', 'moreDataOpenByDefault', 'achievementToastsEnabled',
           'statsStartDate', 'weeklySummaryEnabled', 'customiseFormEnabled', 'disabledSteps',
-          'earlyWarnEnabled',
+          'earlyWarnEnabled', 'breathPromptsEnabled',
           'moodLinkingEnabled', 'customTrackingFields', 'deletedDefaultCustomFields',
           'deletedBuiltinFields', 'trackGoals', 'trackBudget', 'trackExercise',
           'trackOutside', 'trackAnxiety', 'trackAlcohol', 'trackEmotions',
@@ -13276,6 +13338,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
              'earlyWarnEnabled'].forEach(k => {
               if (settings[k] !== undefined) fsSettings[k] = _boolKey(settings[k]);
             });
+            if (settings.breathPromptsEnabled !== undefined) fsSettings.breathPromptsEnabled = settings.breathPromptsEnabled === '1';
             if (settings.statsStartDate) fsSettings.statsStartDate = settings.statsStartDate;
             if (settings.disabledSteps) {
               try { fsSettings.disabledSteps = JSON.parse(settings.disabledSteps); } catch(e) {}
@@ -13756,6 +13819,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         // v358: blood results on the charts, and the New features sheet
         // (Reset brings the sheet back).
         'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbWhatsNewSeen',
+        'breathPromptsEnabled', // 🌬️ Breathing prompts (off again)
       ];
       _keys.forEach(k => localStorage.removeItem(k));
       // Clear custom field toggle keys, label overrides, and tracking prefs (trackCustom_*, _labelOverride_*, trackXxx)
@@ -13787,6 +13851,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
           customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
           earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
+          breathPromptsEnabled: false,
         }, { merge: true }).catch(() => {});
       }
       closeSettingsModal();
@@ -13977,6 +14042,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
           'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbBloodDueReminder', 'bbWhatsNewSeen',
+          'breathPromptsEnabled', 'bbBreathFav', 'bbBreathMins', 'bbBreathMute',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',
@@ -14072,6 +14138,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
               earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
+              breathPromptsEnabled: false,
               safetyPlanEnc: null,
               onboardingStep: 0,
               helpedVoted: false,
@@ -16108,6 +16175,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       const _wmToggle = document.getElementById('plainListToggle');
       if (_wmToggle) _wmToggle.checked = !_wheelMode();
       document.getElementById('moodSuggestionToggle').checked = localStorage.getItem('showMoodSuggestion') === '1';
+      const _bpToggle = document.getElementById('breathPromptsToggle');
+      if (_bpToggle) _bpToggle.checked = !!(window.BB && BB.breathing && BB.breathing.promptsOn());
       if (window.BBInsights) window.BBInsights.syncSettingUI();
       _syncBloodChartsToggle();
       document.getElementById('focusModeToggle').checked = _fmEnabled;

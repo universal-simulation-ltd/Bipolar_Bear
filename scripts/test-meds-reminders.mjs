@@ -93,7 +93,7 @@ async function open(url, o = {}) {
     localStorage.setItem('bbTheme', 'light');
     localStorage.setItem('bbOnboardingStep', '12'); localStorage.setItem('bbHasEntries', '1');
     localStorage.setItem('bbGuestNoPin', '1');
-    localStorage.setItem('bbWhatsNewSeen', '1.45');
+    localStorage.setItem('bbWhatsNewSeen', '1.46');
     localStorage.setItem('focusedModeEnabled', '0');
     if (cfg.meds) localStorage.setItem('currentMedList', JSON.stringify(cfg.meds));
     Object.keys(cfg.extra || {}).forEach(x => localStorage.setItem(x, cfg.extra[x]));

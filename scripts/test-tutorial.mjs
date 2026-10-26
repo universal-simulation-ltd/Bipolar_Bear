@@ -437,7 +437,7 @@ async function signedIn(uid, local, platform = 'web') {
   await settle(d.page, 3500); // the read-back waits up to 2.5 s for the settings key
   return d;
 }
-const OLD = { bbOnboardingStep: '12', bbHasEntries: '1', bbFabsUnlocked: '1', bbTutorialToastShown: '1', bbWhatsNewSeen: '1.45', bbWelcomeShown: '1' };
+const OLD = { bbOnboardingStep: '12', bbHasEntries: '1', bbFabsUnlocked: '1', bbTutorialToastShown: '1', bbWhatsNewSeen: '1.46', bbWelcomeShown: '1' };
 {
   SERVER.u1 = { onboardingStep: 12, tutorialToastShown: true, homeSurvivalEnabled: false, homeAnonEnabled: false };
   const { ctx, page } = await signedIn('u1', { ...OLD, bbSurvivalBtnEnabled: '0', bbAnonBtnEnabled: '0' });
@@ -512,10 +512,13 @@ for (const lang of ['en', 'es']) {
   assert.equal(st.step, 12);
   assert.ok(st.survival && st.anon);
   assert.ok(!st.welcome && !st.complete && !st.signinHint && !st.logoHint && !st.startHint, 'no tutorial popup');
-  assert.ok(st.whatsNewText.includes(await T(page, 'whatsnew.b145HomeTitle')), 'the note is on the New features sheet');
-  assert.ok(st.whatsNewText.includes(await T(page, 'whatsnew.b145HomeBody')));
-  if (lang !== 'en') assert.ok(!st.whatsNewText.includes('are back'), 'in Spanish');
-  ok(`${lang}: no tutorial popups; New features says Survival Kit and Bipolar Anonymous are back`);
+  // The sheet shows the newest release, 1.46 (🌬️ Breathing): people who
+  // missed 1.45 see only the newest. The 1.45 note still applies to them.
+  assert.ok(st.whatsNewText.includes(await T(page, 'breathe.wnTitle')), 'the 1.46 sheet');
+  if (lang !== 'en') assert.ok(!st.whatsNewText.includes('Breathing exercises'), 'in Spanish');
+  const ids45 = await page.evaluate(() => BB.whatsNew.create({ releases: { '1.45': BB.whatsNew.bearReleases({ bioMode: () => null, bioType: null, isNative: () => false })['1.45'] }, seenKey: '__h' }).items().map(i => i.id));
+  assert.ok(ids45.includes('homeButtons'), 'the 1.45 home buttons note applies');
+  ok(`${lang}: no tutorial popups; New features (1.46) shows, and the 1.45 "are back" note still applies`);
   await ctx.close();
 }
 {

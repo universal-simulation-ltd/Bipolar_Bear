@@ -82,7 +82,7 @@ async function open(o = {}) {
     localStorage.setItem('bbLanguage', cfg.lang || 'en');
     localStorage.setItem('bbTheme', 'light');
     localStorage.setItem('bbOnboardingStep', '12'); localStorage.setItem('bbHasEntries', '1');
-    localStorage.setItem('bbWhatsNewSeen', '1.45'); localStorage.setItem('bbWelcomeShown', '1');
+    localStorage.setItem('bbWhatsNewSeen', '1.46'); localStorage.setItem('bbWelcomeShown', '1');
     localStorage.setItem('bbJournalView', 'life');
     localStorage.setItem('bbJournalRange', '30');
     localStorage.setItem('focusedModeEnabled', cfg.fm === false ? '0' : '1');

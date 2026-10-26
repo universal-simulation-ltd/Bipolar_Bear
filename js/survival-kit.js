@@ -129,7 +129,9 @@ function _skLocale() {
     // e.g. fab.js's "survival-kit.html#goals") shows just that section with a
     // Back bar. The crisis box (#help) stays visible in both views. This is
     // presentation only: section markup, ids and data are unchanged.
-    const _SK_SECTION_IDS = ['mood-scale', 'coping-strategies', 'medications', 'gratitude',
+    // 'breathing' (js/shared/breathing.js) opens like the rest but isn't one
+    // of the 12 counted in _skUpdateTicks: it has nothing to finish.
+    const _SK_SECTION_IDS = ['mood-scale', 'coping-strategies', 'breathing', 'medications', 'gratitude',
       'goals', 'mind', 'books', 'media', 'memories', 'faq', 'steps', 'spiritual'];
     let _skOpenId = null;
     // The tab a closed drawer leaves lit (James, 2026-10-20: people work
@@ -230,7 +232,7 @@ function _skLocale() {
       updateActiveNav();
       if (opts.scroll === false) return;
       // Return to the tile the user came from so they don't lose their place.
-      const tile = wasOpen && document.querySelector('.sk-tile[data-sk-open="' + wasOpen + '"]');
+      const tile = wasOpen && document.querySelector('[data-sk-open="' + wasOpen + '"]');
       if (tile) {
         const r = tile.getBoundingClientRect();
         if (r.top < _skNavOffset() || r.bottom > window.innerHeight) {
@@ -308,7 +310,8 @@ function _skLocale() {
 
     // Tile taps (event delegation — tiles are static markup).
     document.addEventListener('click', e => {
-      const tile = e.target.closest && e.target.closest('.sk-tile[data-sk-open]');
+      // Tiles, and the 🌬️ Breathing banner (a button with data-sk-open too).
+      const tile = e.target.closest && e.target.closest('[data-sk-open]');
       if (tile) { skOpenSection(tile.getAttribute('data-sk-open')); return; }
       // In-page "#…" links: the nav tabs, the Help tab, and any other link on
       // this page that points at a section (e.g. fab.js's goals link).
@@ -324,6 +327,9 @@ function _skLocale() {
       }
     });
     window.addEventListener('hashchange', () => { _skRouteHash(location.hash); });
+
+    // 🌬️ Breathing: the exercises' cards (re-drawn on a language change or a new favourite).
+    if (window.BB && BB.breathing) BB.breathing.renderList(document.getElementById('skBreathList'));
 
     // Initial view: a deep link opens its section, otherwise the grid.
     if (!_skRouteHash(location.hash, true)) updateActiveNav();

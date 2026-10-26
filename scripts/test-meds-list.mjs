@@ -68,7 +68,7 @@ async function open(url, o = {}) {
     localStorage.setItem('bbTheme', 'light');
     localStorage.setItem('bbOnboardingStep', '12'); localStorage.setItem('bbHasEntries', '1');
     localStorage.setItem('bbGuestNoPin', '1');
-    localStorage.setItem('bbWhatsNewSeen', '1.45');
+    localStorage.setItem('bbWhatsNewSeen', '1.46');
     localStorage.setItem('focusedModeEnabled', '0');
     const now = new Date(); now.setHours(12, 0, 0, 0);
     const k = t => { const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
