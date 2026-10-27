@@ -1889,7 +1889,11 @@
 //   and when the network or the app comes back) instead of only on the next
 //   re-render; "unavailable" / the daily budget are asked about again after
 //   10 minutes instead of never this session. Test: scripts/test-translate.mjs.
-const CACHE_NAME = 'bipolarbear-v385';
+// v386: 🗓️ Your week — a few plain sentences about the last 7 days at the top
+//   of Personalised feedback, worked out on the device (new js/journal-week.js
+//   + js/shared/i18n-week.js, precached). Touches journal.html, js/journal.js,
+//   css/journal.css, css/dark.css. Tapping the Sunday summary opens it.
+const CACHE_NAME = 'bipolarbear-v386';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1911,6 +1915,7 @@ const STATIC_ASSETS = [
   './js/index.js',
   './js/journal.js',
   './js/journal-insights.js',
+  './js/journal-week.js',
   './js/journal-meds.js',
   './js/survival-kit.js',
   './js/anonymous.js',
@@ -1951,6 +1956,7 @@ const STATIC_ASSETS = [
   './js/shared/whats-new.js',
   './js/shared/breathing.js',
   './js/shared/i18n-breathe.js',
+  './js/shared/i18n-week.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',
 

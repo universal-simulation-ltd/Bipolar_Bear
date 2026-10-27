@@ -3132,6 +3132,8 @@ function _tt(k, vars, fallback) {
         if (window.BBInsights) { try { window.BBInsights.render(entries); } catch (e) { console.warn('insights', e); } }
         // Per-medicine doses + the before / after comparison (js/journal-meds.js)
         if (window.BBMeds) { try { window.BBMeds.setEntries(entries); } catch (e) { console.warn('meds', e); } }
+        // The Sunday summary was tapped before the entries were here (see the notification listener).
+        if (window._ywOpenPending) { window._ywOpenPending = false; try { showPersonalisedFeedback(); } catch (_) {} }
 
         // "Things have been hard lately" card: needs the decrypted moods and
         // their autoFilled flags, so the journal is where it gets worked out
@@ -9827,9 +9829,12 @@ function _tt(k, vars, fallback) {
         pool = source.filter(e => new Date(e.date) >= since);
       }
       const sorted = [...pool].sort((a, b) => new Date(a.date) - new Date(b.date));
+      // 🗓️ Your week: always the last 7 days, whatever range is picked (js/journal-week.js).
+      let _week = '';
+      try { if (window.BBWeek) _week = window.BBWeek.cardHtml(source); } catch (e) { console.warn('Your week failed', e); }
 
       if (sorted.length < 7) {
-        body.innerHTML = `<div style="text-align:center;padding:30px 0;color:var(--text-muted-ink);">
+        body.innerHTML = _week + `<div style="text-align:center;padding:30px 0;color:var(--text-muted-ink);">
           <div style="font-size:2em;margin-bottom:12px;">📊</div>
           <div>${BB.t('journal.ui.keepJournalling7')}</div>
         </div>`;
@@ -9838,7 +9843,7 @@ function _tt(k, vars, fallback) {
       }
 
       const insights = computeInsights(sorted);
-      const _basis = `<div style="font-size:0.8em;color:var(--text-muted-ink);text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">${_fbRange === 'all'
+      const _basis = _week + `<div style="font-size:0.8em;color:var(--text-muted-ink);text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">${_fbRange === 'all'
         ? BB.t('journal.feedback.basedAll', { n: sorted.length })
         : BB.t('journal.feedback.basedDays', { days: _fbRange, n: sorted.length })}</div>`;
 
@@ -18475,6 +18480,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         // must keep working regardless of the current grant state.
         LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
           const id = action.notification.id;
+          // The Sunday summary (ID 2) opens Personalised feedback, where 🗓️ Your week is.
+          // A tap that launches the app arrives before the entries have loaded,
+          // so it waits for loadEntries() (below displayChart) to open it.
+          if (id === 2) {
+            if (typeof _allEntries !== 'undefined' && _allEntries.length && window.showPersonalisedFeedback) {
+              try { window.showPersonalisedFeedback(); } catch (_) {}
+            } else window._ywOpenPending = true;
+          }
           if (id >= 10000) {
             const month = Math.floor((id - 10000) / 100);
             const day = (id - 10000) % 100;

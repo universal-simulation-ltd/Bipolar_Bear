@@ -2890,6 +2890,75 @@ deactivate breathing prompts (switch off by default)".
   other tests now seed `bbWhatsNewSeen` '1.46'; test-blood-charts and
   test-tutorial check the 1.45 entries through the registry.
 
+### 2.32 🗓️ Your week (2026-10-27, v386)
+
+James, 2026-10-27: a short story of the week, worked out on the device, after
+deciding against sending journal data to an AI service (the parked
+`claude/weekly-insight` branch). "Need to be careful it doesn't say things like
+'drinking made your mood improve', nothing that's telling off but equally
+nothing that could be seen as nudging someone to drink or drugs."
+
+- **Where:** the top of **Personalised feedback** (the AI Bear button on the
+  stats page), above the range's own insights, whatever range is picked. It is
+  always the last 7 days. Popup only: nothing new on the stats page. The
+  existing insights below it are unchanged (James: different people prefer
+  different ways).
+- **The Sunday summary notification (ID 2)** now opens the popup when tapped.
+  A tap that launches the app waits for `loadEntries()` (`_ywOpenPending`).
+  The notification's own text is unchanged: no mood details on a lock screen.
+  Like the anniversary taps, the listener lives in `js/journal.js`, so it only
+  works when the app opens on the journal. **Not tested on a phone yet.**
+- **Code:** `js/journal-week.js` (`BBWeek.summarise(entries, {now})` returns keys
+  and numbers only; `BBWeek.cardHtml(entries)` translates and escapes). It uses
+  `BBInsights._pure` (`moodCat`, `moodScore`, `isShortNight`, `median`), so it
+  loads after `js/journal-insights.js`. Strings are in `js/shared/i18n-week.js`
+  (`week.*`, 10 languages, machine translated). The care line and strategies
+  link reuse `journal.earlyWarn.*`. CSS: `.yw-*` in `css/journal.css` and
+  `css/dark.css`.
+- **No card when:** there is no logged day in the last 3 days, or fewer than 4
+  logged days this week. Auto-filled days (§2.13) never count.
+
+#### The rules (they're in the code's header comment too)
+
+- **"Better" means closer to stable, never higher.** Each day's `off` is
+  |moodScore − 3| (0-2). "Steadier" compares averages of that, so an elevated
+  day is never good news.
+- **Nothing that tells anyone off.** Missed medication, missed entries and
+  fewer steps are never mentioned. "Every day logged" and "medication taken on
+  every day you logged" appear only when they are true.
+- **Substances.** Smoking and drugs are never read. Alcohol gets one factual
+  sentence, and only when the days after drinking were less settled than the
+  days after not drinking. There's never a "no difference" or better version,
+  and never an idea line. A test fails if any idea string mentions a substance,
+  or if the alcohol string contains better / steadier / help / improve / lift.
+- **Getting outside / exercise** are mentioned only when those days were
+  steadier (by 0.5 or more). Less steady is never mentioned, so nothing
+  discourages them.
+- **Sentences** (top 3 by priority): short nights followed by elevated or low
+  days, 2 or more times (6; "Your journal shows this has happened before too"
+  when there were 3 or more such pairs in the year before); stable days compared
+  with last week, ±2 or more (5); average sleep compared with last week, ±45 min
+  or more, worded neutrally (4); outside / exercise (4); high-stress days less
+  settled (3); alcohol (3); every day logged, medication (1). Comparisons need
+  4 or more logged days in both weeks. A short night uses the early warnings'
+  `isShortNight` with a personal 30-night median.
+- **Headline:** steadier than last week (2 or more extra stable days and at
+  least half stable), else mostly stable (70%), ups and downs (2 or more each
+  way), lower (50% low), elevated (50% up), mixed.
+- **Idea line (James: keep it):** only from a sentence that is on the card:
+  protect sleep (short-night link), time outside, exercise "at whatever level
+  feels right", or keep the routine (sleep nearer usual and a steadier week).
+  Otherwise there's no idea line.
+- **Check-in:** 3 or more depressed or 2 or more manic logged days adds "If
+  you're worried, talk to your care team" and 🧠 Open my strategies.
+
+- Tests: `node scripts/test-your-week.js` (no browser: thresholds, headlines,
+  the steadier-not-higher rule, the alcohol and substance rules, no missed-meds
+  line, top 3, check-in, every key in all ten languages with matching
+  placeholders and no unused strings) and
+  `PLAYWRIGHT_MODULE=… node scripts/test-your-week.mjs` (7 checks: English
+  text, 390 px, dark mode, pl / de / zh / fr, no raw keys; `SHOTS=<dir>`).
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

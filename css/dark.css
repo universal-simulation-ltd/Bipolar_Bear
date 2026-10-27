@@ -348,6 +348,14 @@ html.theme-dark .ew-hist,
 html.theme-dark .ew-care,
 html.theme-dark .ew-device { color: var(--dk-muted); }
 html.theme-dark .ew-care a { color: #91a7ff; }
+html.theme-dark .yw-card { background: var(--dk-surface); border-color: rgba(255,149,0,0.35); border-left-color: var(--brand-primary); color: var(--dk-text-2); }
+html.theme-dark .yw-kicker { color: #ffc078; }
+html.theme-dark .yw-head { color: var(--dk-text); }
+html.theme-dark .yw-idea { background: var(--dk-surface-2); }
+html.theme-dark .yw-more,
+html.theme-dark .yw-care,
+html.theme-dark .yw-device { color: var(--dk-muted); }
+html.theme-dark .yw-care a { color: #91a7ff; }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Survival Kit (survival-kit.html)

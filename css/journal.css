@@ -2451,6 +2451,18 @@
 .ew-care a { color: #5c7cfa; font-weight: 600; }
 .ew-device { font-size: 0.72em; color: var(--text-muted-ink); margin-top: 4px; }
 
+/* 🗓️ Your week — top of Personalised feedback (js/journal-week.js) */
+.yw-card { background: #fff8ef; border: 1.5px solid #ffd6a0; border-left: 5px solid var(--brand-primary); border-radius: 14px; padding: 12px 14px 10px; margin-bottom: 14px; text-align: left; color: #495057; }
+.yw-kicker { font-size: 0.75em; font-weight: 700; color: var(--brand-ink); text-transform: uppercase; letter-spacing: 0.04em; }
+.yw-head { font-weight: 700; font-size: 1em; color: #343a40; margin: 2px 0 6px; }
+.yw-obs { margin: 0 0 8px; padding-left: 18px; font-size: 0.86em; line-height: 1.5; }
+.yw-obs li + li { margin-top: 5px; }
+.yw-more { color: var(--text-muted-ink); font-style: italic; }
+.yw-idea { font-size: 0.85em; line-height: 1.5; background: #fff; border-radius: 10px; padding: 7px 10px; margin-bottom: 6px; }
+.yw-care { font-size: 0.8em; color: var(--text-muted-ink); line-height: 1.5; margin: 4px 0; }
+.yw-care a { color: #5c7cfa; font-weight: 600; }
+.yw-device { font-size: 0.72em; color: var(--text-muted-ink); }
+
 /* ── The landing stack on the orange page: one family (James, 2026-09-30) ──
    "View yesterday's entry" and "Open Journal" are the same button: one width,
    one radius, one type size, in home's Bipolar Anonymous look — see-through
