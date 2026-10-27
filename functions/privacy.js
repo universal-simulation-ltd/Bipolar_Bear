@@ -622,6 +622,7 @@ async function deleteUserData(user, secret) {
     db.collection('personalDetails').doc(uid),
     db.collection(LINKS).doc(uid),
     db.collection('bbAnonTranslateUsage').doc(uid),
+    db.collection('bbWeeklyInsightUsage').doc(uid),
   ];
   if (user.email && secret) {
     // The board profile of a Bipolar Bear account, as its own delete does.

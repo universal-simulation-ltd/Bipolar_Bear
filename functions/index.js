@@ -19,6 +19,8 @@ const P = privacy._lib;
 Object.keys(privacy).forEach((k) => { if (k !== '_lib') exports[k] = privacy[k]; });
 // Opting out of service emails (scripts/send-service-email.mjs).
 exports.emailOptOut = require('./email-optout').emailOptOut;
+// The journal's weekly insight, written by Claude (DOCS.md §2.32).
+exports.weeklyInsight = require('./weekly-insight').weeklyInsight;
 
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 

@@ -2890,6 +2890,89 @@ deactivate breathing prompts (switch off by default)".
   other tests now seed `bbWhatsNewSeen` '1.46'; test-blood-charts and
   test-tutorial check the 1.45 entries through the registry.
 
+### 2.32 Weekly insight, written by Claude (2026-10-27, server side only — not shipped)
+
+James (2026-10-26): build the weekly summary on the Anthropic API credits —
+a few plain sentences about the user's own week ("on the two nights you slept
+under six hours, the next day was elevated"), which the Sunday notification
+(§ `scheduleWeeklySummary`, counts only) can't say.
+
+**Status: the Cloud Function and its tests exist on branch
+`claude/weekly-insight`. Nothing calls it yet. There's no client UI, no
+privacy-policy text and no consent sheet, so nothing is deployed.** Every
+item under "Before it ships" is still open.
+
+#### How it hangs together
+
+```
+journal (device)                         weeklyInsight (europe-west1)            Anthropic API
+────────────────                         ────────────────────────────            ─────────────
+decrypt last 14 days (already in memory)
+pick DAY_FIELDS only — no notes,  ──▶    signed-in, non-guest only
+  med names, custom fields               sanitiseDays: whitelist again
+                                         weekCounts: logged / depressed / manic
+                                         < 3 logged this week → notEnough (no call)
+                                         takeAllowance: 3 calls / rolling 7 days
+                                         writeInsight ─────────────────────────▶  claude-opus-5-5, effort medium,
+                                                                                   JSON schema output,
+                                         parseInsight (clip lengths)  ◀─────────   fallbacks: "default"
+render headline + observations   ◀──     { insight, checkIn, counts }
+checkIn → existing low-days card
+```
+
+- **Code:** `functions/weekly-insight.js` (exported from `functions/index.js`).
+  Pure helpers (`sanitiseDays`, `weekCounts`, `buildPrompt`, `parseInsight`,
+  `writeInsight`) are in `_lib`.
+- **Replies:** `{ insight: {headline, observations[1-3], suggestion}, checkIn,
+  counts }`, or `{notEnough}`, `{limitReached}`, `{unavailable}`. The client
+  shows nothing for the last three. It must never show an error for them.
+- **`checkIn`** is worked out in code (3+ depressed or 2+ manic logged days this
+  week, auto-filled days ignored), not by the model. The client should use it
+  to show the existing low-days card / safety plan (§2.16). The model only gets
+  to say "this week might be worth sharing with someone you trust or your care
+  team". It's told never to give phone numbers, diagnose, predict an episode or
+  comment on a dose.
+- **Stored:** nothing about the week. `bbWeeklyInsightUsage/{uid}` holds only
+  call timestamps (Admin SDK, so no rules change; no client reads it). It is in
+  `deleteUserData`'s list (`functions/privacy.js`).
+- **Logged:** only the kind of failure (`AuthenticationError`, a status code, the
+  stop reason). Never the request or the reply.
+
+#### Before it ships (owner decisions)
+
+1. **Consent and the privacy policy.** This sends decrypted health data off the
+   device to a third party (Anthropic, US). That's special-category data under
+   UK GDPR, so it needs an explicit, unticked opt-in that says what is sent (this
+   fortnight's moods, sleep, steps and ratings, never notes), plus a privacy-policy
+   §6 line in all ten languages. It also needs Anthropic's DPA in place and a
+   check of their current API retention terms (zero data retention is available
+   by agreement). **Private journals** promise "only you". Either don't offer it
+   there, or say so plainly in the opt-in.
+2. **The key.** `firebase functions:secrets:set ANTHROPIC_API_KEY`, using a key
+   from a dedicated Console workspace with a monthly spend limit. That limit is
+   the hard ceiling, the same lesson as the Translation quota (§2.15). **Set the
+   secret before the next `firebase deploy --only functions` after this merges.**
+   The CLI stops on a declared secret that doesn't exist.
+3. **The client.** A card on the journal's stats view, plus an opt-in in
+   Settings. It calls `httpsCallable('weeklyInsight')({ days, lang })` with
+   the days mapped from `_allEntries` to `DAY_FIELDS` (date as local
+   `YYYY-MM-DD`). Cache the result per week in memory only, never localStorage,
+   for the same reason as `bb_recentMoods`. Escape the strings (`_esc()`).
+4. **Wording review.** Run `ANTHROPIC_API_KEY=… node scripts/try-weekly-insight.js
+   en steady|short-sleep|low` (and other languages). Read the output as someone
+   having a bad week would. Tune `SYSTEM` until none of it reads as a verdict.
+
+#### What it costs
+
+About 1,500 input and up to 1,000 output tokens (thinking included) a call. At
+Claude Opus 5.5's $4 / $20 per million, that's **about 2-3p a call**. One per
+user per week at 1,000 weekly users is roughly £100/month. The allowance caps a
+single account at 3 a week, and the workspace spend limit caps the bill.
+
+- Test: `node scripts/test-weekly-insight.js` (whitelist drops notes and medicine
+  names, one day per date, newest 14 kept, week boundaries, auto-fill ignored,
+  checkIn thresholds, prompt fencing, reply parsing and clipping). No API call.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow
