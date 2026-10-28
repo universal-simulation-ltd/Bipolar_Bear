@@ -1898,7 +1898,11 @@
 //   a guest's Idea or Comment could ask to be kept informed with nowhere to
 //   reply. Tapping the switch's words now turns it on (it flipped straight
 //   back off). Touches fab.js.
-const CACHE_NAME = 'bipolarbear-v387';
+// v388: 🐻 My safety plan → "Show on my phone's lock screen" → new unticked
+//   "Include my last few moods": the 3 latest days of bb_recentMoods on the
+//   iOS widget / Android card, never with a PIN or Incognito on. Touches
+//   js/shared/safety-plan.js, js/shared/i18n.js (10 languages), js/journal.js.
+const CACHE_NAME = 'bipolarbear-v388';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

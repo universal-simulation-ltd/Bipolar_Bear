@@ -1533,7 +1533,18 @@ something to show (`showsSomething()`).
 lock screen" (`bbSafetyPlanPhoneLock`) makes `syncWidget()` also send
 `safetyLock: JSON` — `{on, title, meds, call, empty}`: the medications (only if
 included) and the support number (the widget contact, else the crisis line).
-Never the plan's sections, because anyone can read it there. iOS: the
+Never the plan's sections, because anyone can read it there.
+**The last few moods (opt-in, unticked, 2026-10-28, v388).** Under it, shown
+only while it's ticked: "🐻 Include my last few moods"
+(`bbSafetyPlanLockMoods`) adds `moods` to `safetyLock`, the 3 latest days of
+the journal's device-only `bb_recentMoods` map as "Tue 27 Stable · Mon 26 Low"
+(`lockMoods()`: localised day + date, never "Today", because the card is only
+redrawn when the app runs; mood words from `mood.*`). Empty with an app PIN, a
+guest PIN or Incognito Mode on (`_moodsBlocked()`, the journal's
+`_recentMoodsBlocked()` rule; the journal also removes the map then).
+`_writeRecentMoods()` in js/journal.js calls `syncWidget()` so a new entry
+reaches the lock screen. Native shows it as a 🐻 line between 💊 and 📞.
+iOS: the
 "Safety plan" lock-screen widget (`SafetyLockWidget.swift`, accessory
 rectangular / inline / circular, deliberately not `privacySensitive`); the
 user adds it to the lock screen. Android: an ongoing PUBLIC, silent

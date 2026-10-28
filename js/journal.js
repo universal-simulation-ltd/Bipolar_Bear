@@ -2146,8 +2146,10 @@ function _tt(k, vars, fallback) {
         else BB.storage.remove('_recentMoods');
       } catch (_) {
       } finally {
-        // Same dots on the native home-screen widget (cleared when blocked).
+        // Same dots on the native home-screen widget (cleared when blocked),
+        // and the last few moods on the phone's lock screen, if opted in.
         try { BB.platform.syncWidgetMoods(); } catch (_) {}
+        try { if (BB.safetyPlan) BB.safetyPlan.syncWidget(); } catch (_) {}
       }
     }
     // Re-evaluate after a privacy setting changes (incognito / PIN on or off).

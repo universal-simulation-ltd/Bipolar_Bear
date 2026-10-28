@@ -71,6 +71,7 @@
   var LOCK_KEY = 'bbSafetyPlanOnLock';
   var MEDS_KEY = 'bbSafetyPlanMeds';     // '1' → the plan lists My Medications (unticked by default)
   var PHONE_LOCK_KEY = 'bbSafetyPlanPhoneLock'; // '1' → the phone's own lock screen (native, unticked by default)
+  var LOCK_MOODS_KEY = 'bbSafetyPlanLockMoods'; // '1' → the last few moods on it too (unticked by default)
   var LOW_OFF_KEY = 'bbLowMoodSupportOff';
   var LOW_DUE_KEY = 'bbLowMoodDue';
   var LOW_SHOWN_KEY = 'bbLowMoodShown';
@@ -111,6 +112,8 @@
       phoneLockDescAndroid: 'Keeps a quiet card in your notifications that shows on the lock screen, with your medications, if you include them above, and your support number, so someone helping you can see them without unlocking your phone. Anyone can see it.',
       lockTitle: '🛟 Safety plan',
       lockEmpty: 'Turn on “Show on my phone\'s lock screen” in My safety plan',
+      lockMoods: '🐻 Include my last few moods',
+      lockMoodsDesc: 'Adds your mood on the last 3 days you logged. Anyone holding your phone can see it. Not shown while you have a PIN or Incognito Mode on.',
       onWidget: 'Call from the home-screen widget',
       widgetHelp: 'Add the “Call for support” widget to your home screen to call this person in one tap.',
       savedSignedIn: 'Saved on this phone and, encrypted, to your account.',
@@ -257,7 +260,7 @@
     return p;
   }
   function clearLocal() {
-    [PLAN_KEY, SYNCED_KEY, LOCK_KEY, MEDS_KEY, PHONE_LOCK_KEY].forEach(lsDel);
+    [PLAN_KEY, SYNCED_KEY, LOCK_KEY, MEDS_KEY, PHONE_LOCK_KEY, LOCK_MOODS_KEY].forEach(lsDel);
     refreshLockButtons();
     syncWidget();
     refreshBanner();
@@ -291,6 +294,42 @@
       } catch (_) {}
     }
     syncWidget();
+  }
+  function lockMoodsEnabled() { return lsGet(LOCK_MOODS_KEY) === '1'; }
+  function setLockMoodsEnabled(on) {
+    if (on) lsSet(LOCK_MOODS_KEY, '1'); else lsDel(LOCK_MOODS_KEY);
+    syncWidget();
+  }
+  // The journal's rule for its device-only mood map (_recentMoodsBlocked in
+  // js/journal.js): no moods outside the app with a PIN or Incognito Mode on.
+  function _moodsBlocked() {
+    var st = root.BB && root.BB.storage;
+    return lsGet('incognitoMode') === 'true' || !st
+      || st.get('NativePinEnabled') === '1' || !!st.get('GuestPinSalt');
+  }
+  /**
+   * The last few moods for the phone's lock screen (opt-in): the 3 latest days
+   * in the journal's bb_recentMoods map ({"YYYY-MM-DD": mood}, today and the 7
+   * days before), as "Tue 27 Stable · Mon 26 Low". Day and date, never "Today":
+   * the card is only redrawn when the app runs, so it must stay true when old.
+   * Empty with a PIN or Incognito on: the journal removes the map then, and
+   * this checks again in case the setting has only just changed.
+   */
+  function lockMoods() {
+    if (!lockMoodsEnabled() || _moodsBlocked()) return '';
+    var map = null;
+    try { map = JSON.parse(root.BB.storage.get('_recentMoods') || 'null'); } catch (_) {}
+    if (!map || typeof map !== 'object') return '';
+    var lang = 'en';
+    try { lang = (root.BB.i18n && BB.i18n.getLang && BB.i18n.getLang()) || 'en'; } catch (_) {}
+    var loc = lang === 'en' ? 'en-GB' : lang;
+    return Object.keys(map).filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k) && moodCat(map[k]); })
+      .sort().reverse().slice(0, 3).map(function (k) {
+        var p = k.split('-'), c = moodCat(map[k]), day;
+        try { day = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString(loc, { weekday: 'short', day: 'numeric' }); }
+        catch (_) { day = k.slice(5); }
+        return day + ' ' + tAny('mood.' + c, c.charAt(0).toUpperCase() + c.slice(1));
+      }).join(' · ');
   }
   function _isAndroid() {
     try { return !!(root.BB && BB.platform && BB.platform.isAndroid && BB.platform.isAndroid()); } catch (_) { return false; }
@@ -419,7 +458,8 @@
    * (LockSafetyWidget.swift) and, on Android, a quiet ongoing notification
    * shown on the lock screen (SafetyLockNotifier.java). Anyone can read it
    * there, so it carries only what someone helping needs: the medications (if
-   * those are included too) and the support number. Never the plan's sections.
+   * those are included too), the last few moods (if those are, and no PIN or
+   * Incognito is on) and the support number. Never the plan's sections.
    */
   function lockPayload() {
     var off = { on: false, title: tr('plan.lockTitle'), empty: tr('plan.lockEmpty') };
@@ -429,6 +469,7 @@
     return {
       on: true, title: tr('plan.lockTitle'), empty: tr('plan.lockEmpty'),
       meds: ml.map(function (m) { return m.name + (m.dosage ? ' ' + m.dosage : ''); }).join(' · '),
+      moods: lockMoods(),
       call: w.tel ? (w.name + (w.sub ? ' · ' + w.sub : '')) : '',
     };
   }
@@ -742,7 +783,19 @@
     // The phone's own lock screen (native only, unticked by default).
     var phoneCb = h('input', { type: 'checkbox', id: 'bbspPhoneLock', 'aria-describedby': 'bbspPhoneLockDesc' });
     phoneCb.checked = phoneLockEnabled();
-    phoneCb.addEventListener('change', function () { setPhoneLockEnabled(phoneCb.checked); });
+    // Under it, only while it's on: the last few moods (unticked by default).
+    var moodsCb = h('input', { type: 'checkbox', id: 'bbspLockMoods', 'aria-describedby': 'bbspLockMoodsDesc' });
+    moodsCb.checked = lockMoodsEnabled();
+    moodsCb.addEventListener('change', function () { setLockMoodsEnabled(moodsCb.checked); });
+    var moodsRow = h('div', { class: 'bbsp-opt', style: 'margin:4px 0 0 34px' }, [moodsCb, h('div', null, [
+      h('label', { for: 'bbspLockMoods', style: 'font-weight:700', text: tr('plan.lockMoods') }),
+      h('div', { class: 'bbsp-hint', id: 'bbspLockMoodsDesc', style: 'margin:2px 0 0', text: tr('plan.lockMoodsDesc') }),
+    ])]);
+    moodsRow.style.display = phoneLockEnabled() ? '' : 'none';
+    phoneCb.addEventListener('change', function () {
+      setPhoneLockEnabled(phoneCb.checked);
+      moodsRow.style.display = phoneCb.checked ? '' : 'none';
+    });
     // Medications opt-in (unticked by default).
     var medsCb = h('input', { type: 'checkbox', id: 'bbspMedsCb', 'aria-describedby': 'bbspMedsDesc' });
     medsCb.checked = medsEnabled();
@@ -760,6 +813,7 @@
         h('label', { for: 'bbspPhoneLock', style: 'font-weight:700', text: tr('plan.phoneLock') }),
         h('div', { class: 'bbsp-hint', id: 'bbspPhoneLockDesc', style: 'margin:2px 0 0', text: tr(_isAndroid() ? 'plan.phoneLockDescAndroid' : 'plan.phoneLockDescIos') }),
       ])]) : null,
+      isNative() ? moodsRow : null,
     ]));
     panel.appendChild(h('p', { class: 'bbsp-small', text: '🔒 ' + tr(_signedIn() ? 'plan.savedSignedIn' : 'plan.savedGuest') }));
     if (hasContent(p)) {
@@ -769,6 +823,7 @@
         setLockEnabled(false);
         setMedsEnabled(false);
         setPhoneLockEnabled(false);
+        setLockMoodsEnabled(false);
         _render();
       } }));
     }
@@ -997,7 +1052,7 @@
     SECTIONS: SECTIONS, get: get, save: save, hasContent: hasContent, contacts: contacts,
     clearLocal: clearLocal, lockEnabled: lockEnabled, setLockEnabled: setLockEnabled,
     open: open, openViewer: function (o) { open(Object.assign({}, o || {}, { edit: false })); },
-    close: _close, sync: sync, syncWidget: syncWidget, widgetPayload: widgetPayload,
+    close: _close, sync: sync, syncWidget: syncWidget, widgetPayload: widgetPayload, lockPayload: lockPayload,
     refreshLockButtons: refreshLockButtons, blankPlan: blankPlan, normalise: normalise,
   };
   var low = {
