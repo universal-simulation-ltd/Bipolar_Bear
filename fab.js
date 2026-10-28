@@ -574,9 +574,11 @@
           </div>
           <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-size:0.88em;color:#495057;margin-bottom:18px;user-select:none;">
             <span data-i18n="feedback.notifyLabel">Keep me informed about my submission</span>
-            <span data-a11y-skip style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;"
-              onclick="var cb=document.getElementById('bbFbNotify');cb.checked=!cb.checked;document.getElementById('bbFbNotifyTrack').style.background=cb.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=cb.checked?'translateX(20px)':'translateX(0)';">
-              <input type="checkbox" id="bbFbNotify" role="switch" onchange="document.getElementById('bbFbNotifyTrack').style.background=this.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=this.checked?'translateX(20px)':'translateX(0)';" style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
+            <!-- No onclick here: the label already flips the input, and the input's click
+                 bubbles through this span, so a handler here flipped it straight back when
+                 the words were tapped (before v387). -->
+            <span data-a11y-skip style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;">
+              <input type="checkbox" id="bbFbNotify" role="switch" onchange="document.getElementById('bbFbNotifyTrack').style.background=this.checked?'var(--brand-primary)':'#ccc';document.getElementById('bbFbNotifyThumb').style.transform=this.checked?'translateX(20px)':'translateX(0)';window._fbSyncEmailRow();" style="opacity:0;width:0;height:0;position:absolute;pointer-events:none;">
               <span id="bbFbNotifyTrack" style="position:absolute;inset:0;border-radius:24px;background:#ccc;transition:background 0.2s;"></span>
               <span id="bbFbNotifyThumb" style="position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:transform 0.2s;transform:translateX(0);"></span>
             </span>
@@ -1506,6 +1508,7 @@
     const _nameIn = document.getElementById('bbFbName');
     if (_nameIn) _nameIn.value = _fbKnownName();
     window._clearFbScreenshot();
+    window._fbSyncEmailRow();
     if (_modal) _modal.classList.add('open');
   };
   /**
@@ -1519,8 +1522,33 @@
   };
 
   /**
-   * Toggle which feedback-type chip is selected. Also reveals the optional
-   * email input for bug reports (so we can follow up).
+   * Feedback we have to answer: Support, or "Keep me informed" switched on.
+   * Either needs somewhere to reply to (an account's own email will do).
+   * @returns {boolean}
+   */
+  function _fbNeedsReply() {
+    const _notifyEl = document.getElementById('bbFbNotify');
+    return _fbType === 'support' || !!(_notifyEl && _notifyEl.checked);
+  }
+  /**
+   * Show the email input for bug reports (so we can follow up) and for
+   * feedback we have to answer, which also changes its placeholder. Run on
+   * open, on each type chip and on the "Keep me informed" switch: before
+   * v387 the switch never showed it, so an Idea or Comment from a guest
+   * could ask to be kept informed with no address to write to.
+   */
+  window._fbSyncEmailRow = function () {
+    const _reply = _fbNeedsReply();
+    const _emailRow = document.getElementById('bbFbEmailRow');
+    if (_emailRow) _emailRow.style.display = (_reply || _fbType === 'bug') ? '' : 'none';
+    const _emailEl = document.getElementById('bbFbEmail');
+    if (_emailEl) _emailEl.placeholder = _reply
+      ? _bbT('feedback.emailForReply', 'Your email, so we can reply')
+      : _bbT('feedback.emailPlaceholder', 'Your email (optional)');
+  };
+  /**
+   * Toggle which feedback-type chip is selected, then show or hide the
+   * email input to match (_fbSyncEmailRow).
    * @param {'support'|'bug'|'comment'|'idea'} type
    */
   window.selectFabFeedbackType = function (type) {
@@ -1529,13 +1557,7 @@
     const _map = { support: 'bbFbTypeSupport', bug: 'bbFbTypeBug', comment: 'bbFbTypeComment', idea: 'bbFbTypeIdea' };
     const _el = document.getElementById(_map[type]);
     if (_el) _el.classList.add('selected');
-    const _emailRow = document.getElementById('bbFbEmailRow');
-    if (_emailRow) _emailRow.style.display = (type === 'bug' || type === 'support') ? '' : 'none';
-    // Support needs somewhere to reply to (an account's own email will do).
-    const _emailEl = document.getElementById('bbFbEmail');
-    if (_emailEl) _emailEl.placeholder = type === 'support'
-      ? _bbT('feedback.emailForReply', 'Your email, so we can reply')
-      : _bbT('feedback.emailPlaceholder', 'Your email (optional)');
+    window._fbSyncEmailRow();
   };
   /**
    * Validate and submit feedback to Firestore (`feedback` collection). Signs
@@ -1551,7 +1573,7 @@
     if (!_msg)    { if (_errEl) { _errEl.textContent = _bbT('fab.fb.writeFirst', 'Please write something first.'); _errEl.style.display = ''; } return; }
     const _notifyEl = document.getElementById('bbFbNotify');
     const _emailEl  = document.getElementById('bbFbEmail');
-    if (_fbType === 'support' && !(_emailEl && _emailEl.value.trim()) && !(window.currentUser && window.currentUser.email)) {
+    if (_fbNeedsReply() && !(_emailEl && _emailEl.value.trim()) && !(window.currentUser && window.currentUser.email)) {
       if (_errEl) { _errEl.textContent = _bbT('fab.fb.needEmail', 'Add your email so we can reply.'); _errEl.style.display = ''; }
       return;
     }

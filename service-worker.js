@@ -1893,7 +1893,12 @@
 //   of Personalised feedback, worked out on the device (new js/journal-week.js
 //   + js/shared/i18n-week.js, precached). Touches journal.html, js/journal.js,
 //   css/journal.css, css/dark.css. Tapping the Sunday summary opens it.
-const CACHE_NAME = 'bipolarbear-v386';
+// v387: 📣 Send feedback — "Keep me informed about my submission" now shows
+//   the email box and needs an address (or an account email), like Support;
+//   a guest's Idea or Comment could ask to be kept informed with nowhere to
+//   reply. Tapping the switch's words now turns it on (it flipped straight
+//   back off). Touches fab.js.
+const CACHE_NAME = 'bipolarbear-v387';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
