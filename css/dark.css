@@ -519,3 +519,5 @@ html.theme-dark { --imp-daylio: #74c0fc; --imp-bpuk: #a5b4fc; --imp-sheet: #69db
 html.theme-dark .bb-breath-prompt { background: rgba(21, 53, 58, 0.6); border-color: rgba(102, 217, 232, 0.35); color: #99e9f2; }
 html.theme-dark .bb-breath-prompt .bbp-go { background: #0c8599; }
 html.theme-dark .bb-breath-prompt .bbp-no { color: #a5c9cd; }
+/* 🆘 sheet's 🛟 My safety plan row (fab.js): the plan's dark call-row colours (.bbsp-call). */
+html.theme-dark .bb-crisis-plan { background: #252b45 !important; border-color: #748ffc !important; color: var(--dk-text, #f5ebdd) !important; }

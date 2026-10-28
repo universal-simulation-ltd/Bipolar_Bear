@@ -1054,6 +1054,8 @@
     open: open, openViewer: function (o) { open(Object.assign({}, o || {}, { edit: false })); },
     close: _close, sync: sync, syncWidget: syncWidget, widgetPayload: widgetPayload, lockPayload: lockPayload,
     refreshLockButtons: refreshLockButtons, blankPlan: blankPlan, normalise: normalise,
+    /** Whether the plan may open from a PIN screen (opted in, and something to show). */
+    showsOnLock: function () { return lockEnabled() && showsSomething(); },
   };
   var low = {
     evaluateEntries: evaluateEntries, render: render, renderSettingRow: renderSettingRow,

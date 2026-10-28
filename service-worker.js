@@ -1902,7 +1902,11 @@
 //   "Include my last few moods": the 3 latest days of bb_recentMoods on the
 //   iOS widget / Android card, never with a PIN or Incognito on. Touches
 //   js/shared/safety-plan.js, js/shared/i18n.js (10 languages), js/journal.js.
-const CACHE_NAME = 'bipolarbear-v388';
+// v389: 🛟 My safety plan from any page: a row in the 🆘 Crisis Support sheet
+//   (from the PIN screen only when the plan shows there) and an optional
+//   🛟 dock button (fab.picker.safetyplan*, 10 languages). Touches fab.js,
+//   js/shared/safety-plan.js (showsOnLock), js/shared/i18n.js, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v389';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

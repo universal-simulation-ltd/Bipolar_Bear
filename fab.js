@@ -190,6 +190,8 @@
     // straight there, so there is no sheet with "Hide this button"; the
     // home page's Reset dock takes them off.
     { id: 'survival',  icon: '🧰', label: 'Survival Kit',      desc: 'Open your survival kit' },
+    // James, 2026-10-28: My safety plan in one tap (js/shared/safety-plan.js).
+    { id: 'safetyplan', icon: '🛟', label: 'My safety plan', desc: 'Warning signs, people to call, reasons to keep going' },
     { id: 'anon',      icon: '💬', label: 'Bipolar Anonymous', desc: 'Open the community board' },
   ];
 
@@ -227,7 +229,7 @@
     return (s && s !== key) ? s : c.field;
   }
   /** Map from extra FAB id → DOM id of the injected button. */
-  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab', survival: 'survivalExtraFab', anon: 'anonExtraFab' };
+  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab', survival: 'survivalExtraFab', safetyplan: 'safetyplanExtraFab', anon: 'anonExtraFab' };
 
   // ── Appearance (automatic / light / dark) ─────────────────────────────────
   // Stored in localStorage.bbTheme ('auto' | 'light' | 'dark', default auto =
@@ -491,6 +493,14 @@
             </div>
           </a>
           </div>
+          <!-- 🛟 My safety plan (James, 2026-10-28): labelled and shown by openChatModal -->
+          <button type="button" id="chatModalPlan" class="bb-crisis-plan" onclick="window._openPlanFromCrisis()" style="display:none;width:100%;align-items:center;gap:12px;padding:13px 14px;background:#eef3ff;border:1.5px solid #5c7cfa;border-radius:12px;color:#212529;margin:0 0 14px;text-align:left;font:inherit;cursor:pointer;">
+            <span style="font-size:1.6em;line-height:1;" aria-hidden="true">🛟</span>
+            <div>
+              <div id="chatModalPlanName" style="font-weight:700;font-size:0.95em;">My safety plan</div>
+              <div id="chatModalPlanSub" style="color:var(--text-muted-ink);font-size:0.82em;margin-top:1px;"></div>
+            </div>
+          </button>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <button onclick="closeChatModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
             <button id="chatModalHide" onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
@@ -638,6 +648,7 @@
       <button class="bb-extra-fab" id="quicknoteExtraFab" onclick="openQuickNoteModal()" title="Quick note" data-i18n-title="quickNote.title" style="display:none;">📝</button>
       <button class="bb-extra-fab" id="medsExtraFab" onclick="openMedsFromDock()" title="Medication" data-i18n-title="fab.picker.medsLabel" style="display:none;">💊</button>
       <button class="bb-extra-fab" id="survivalExtraFab" onclick="openSurvivalFromDock()" title="Survival Kit" data-i18n-title="fab.picker.survivalLabel" style="display:none;">🧰</button>
+      <button class="bb-extra-fab" id="safetyplanExtraFab" onclick="openSafetyPlanFromDock()" title="My safety plan" data-i18n-title="fab.picker.safetyplanLabel" style="display:none;">🛟</button>
       <button class="bb-extra-fab" id="anonExtraFab" onclick="openAnonFromDock()" title="Bipolar Anonymous" data-i18n-title="fab.picker.anonLabel" style="display:none;">💬</button>
 
       <!-- FAB picker sheet -->
@@ -1305,6 +1316,20 @@
         }
       }
     }
+    // 🛟 My safety plan, under the lines. From the PIN screen only when the
+    // user chose to show the plan there (the PIN screen's own 🛟 rule), so the
+    // sheet never opens a plan the PIN is meant to keep shut.
+    const planBtn = document.getElementById('chatModalPlan');
+    const SP = window.BB && BB.safetyPlan;
+    _chatFromLock = !!fromLock;
+    if (planBtn) {
+      const show = !!SP && (!fromLock || SP.showsOnLock());
+      planBtn.style.display = show ? 'flex' : 'none';
+      if (show) {
+        document.getElementById('chatModalPlanName').textContent = BB.t('safety.plan.title');
+        document.getElementById('chatModalPlanSub').textContent = BB.t(SP.hasContent() ? 'safety.plan.bannerSub' : 'safety.plan.bannerSubEmpty');
+      }
+    }
     const hide = document.getElementById('chatModalHide');
     const _locked = !(window.BB && BB.storage && BB.storage.get('FabsUnlocked') === '1');
     if (hide) hide.style.display = (fromLock || _locked) ? 'none' : '';
@@ -1313,6 +1338,25 @@
   };
   /** @returns {void} */
   window.closeChatModal = function () { document.getElementById('chatModal').classList.remove('open'); };
+  let _chatFromLock = false;
+  /** The 🆘 sheet's 🛟 row: the plan (read-only from the PIN screen), the sheet closed behind it. */
+  window._openPlanFromCrisis = function () {
+    const SP = window.BB && BB.safetyPlan;
+    window.closeChatModal();
+    if (!SP) return;
+    if (_chatFromLock) SP.openViewer({ fromLock: true });
+    else SP.open({ edit: !SP.hasContent() });
+  };
+  /**
+   * The dock's 🛟: My safety plan, opened over the page (write it first if
+   * it's empty). Every dock page loads js/shared/safety-plan.js; the
+   * Survival Kit deep link is only a fallback.
+   */
+  window.openSafetyPlanFromDock = function () {
+    const SP = window.BB && BB.safetyPlan;
+    if (SP) { SP.open({ edit: !SP.hasContent() }); return; }
+    window.location.href = 'survival-kit.html#safety-plan';
+  };
   /** @returns {void} */
   window.openSecurityModal = function () {
     // A guest who chose "Continue without a PIN" (pin143): their entries are

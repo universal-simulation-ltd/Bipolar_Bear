@@ -1560,6 +1560,18 @@ name, sub, tel, empty}`, already localised — on every page load and save. With
 no contact ticked the widget offers the country's first crisis line. The
 native "Call for support" widget is in `bipolarbear-native`.
 
+#### From any page (2026-10-28, v389)
+
+The 🆘 Crisis Support sheet (`openChatModal` in fab.js) has a 🛟 My safety
+plan row under the crisis lines (`#chatModalPlan`, label `safety.plan.title`,
+sub `bannerSub` / `bannerSubEmpty`). It opens the plan, ready to write when
+empty. Opened from a PIN screen ("Need help now?"), the row shows only when
+`showsOnLock()` (the plan is set to show there and has something to show), and
+it then opens read-only, like the PIN screen's own 🛟 button. The dock also
+offers 🛟 My safety plan as an extra (`safetyplan` → `#safetyplanExtraFab`,
+`openSafetyPlanFromDock()`, strings `fab.picker.safetyplanLabel/Desc`).
+`scripts/test-plan-shortcuts.mjs`.
+
 #### The low-days card
 
 The journal calls `BB.lowMoodSupport.evaluateEntries(entries)` after each
