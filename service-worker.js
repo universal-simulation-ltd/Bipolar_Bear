@@ -1906,7 +1906,11 @@
 //   (from the PIN screen only when the plan shows there) and an optional
 //   🛟 dock button (fab.picker.safetyplan*, 10 languages). Touches fab.js,
 //   js/shared/safety-plan.js (showsOnLock), js/shared/i18n.js, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v389';
+// v390: Bipolar Anonymous daily topic — one left unanswered for 24 hours now
+//   gives way to the next topic on the next UTC day (it used to stay until
+//   someone replied). The empty one is deleted, as before. Touches
+//   js/anonymous.js (decideDailyTopic, maybePostDailyTopic).
+const CACHE_NAME = 'bipolarbear-v390';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

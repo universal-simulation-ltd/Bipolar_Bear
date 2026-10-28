@@ -4322,10 +4322,11 @@ function dedupeTopics(posts) {
 // creating duplicates. No separate collection and no rules change: any
 // authenticated user can already write posts.
 //
-// Rotation rule: a NEW topic only appears when it is a new (UTC) day AND the
-// current topic has received at least one reply. A topic that sparked no
-// responses stays up until it does, so it always gets its chance to land.
-// When it does rotate, the outgoing topic is NOT deleted — it is demoted to an
+// Rotation rule: a NEW topic only appears on a new (UTC) day, and then only
+// once the current topic has received at least one reply OR has been up for
+// 24 hours without one. An unanswered topic gets a full day to land; after
+// that the next topic in the pool takes over as the focused one.
+// When it rotates, an answered topic is NOT deleted — it is demoted to an
 // ordinary member post so its reply thread lives on in the feed (an empty
 // topic with no replies is simply removed instead, as there's nothing to keep).
 // ─────────────────────────────────────────────────────────────────
@@ -4354,6 +4355,8 @@ function _postMs(p) {
 // Pure: decide what (if anything) to do about the daily topic given the
 // current general-tab posts. Returns { action:'noop' } or
 // { action:'post', dayStr, index, replacePostId }.
+const TOPIC_UNANSWERED_MS = 24 * 60 * 60 * 1000;
+
 function decideDailyTopic(posts, poolLen, nowMs) {
   if (!poolLen) return { action: 'noop' };
   const todayStr = new Date(nowMs).toISOString().slice(0, 10); // UTC day — same for every client
@@ -4372,11 +4375,13 @@ function decideDailyTopic(posts, poolLen, nowMs) {
   // Never post twice on the same UTC day.
   if (current.dayStr === todayStr) return { action: 'noop' };
 
-  // New day: only rotate once the current topic has actually sparked a reply.
-  // No responses yet → it stays put and gets another day. Once someone has
-  // replied, it rotates to the next question on the next UTC day.
+  // New day: rotate once the current topic has sparked a reply, or once it has
+  // been up for 24 hours with none — then the next question becomes the
+  // focused one. Unanswered and under 24 hours old → it stays put. A topic
+  // whose server timestamp hasn't resolved yet (ms 0) is never aged out.
   const gotReply = (Number(current.commentCount) || 0) > 0;
-  if (!gotReply) return { action: 'noop' };
+  const unansweredDay = currentMs > 0 && nowMs - currentMs >= TOPIC_UNANSWERED_MS;
+  if (!gotReply && !unansweredDay) return { action: 'noop' };
 
   const nextIndex = ((Number(current.topicIndex) || 0) + 1) % poolLen;
   return { action: 'post', dayStr: todayStr, index: nextIndex, replacePostId: current.id };
@@ -4576,13 +4581,14 @@ async function maybePostDailyTopic() {
       });
     }
 
-    // Retire the outgoing topic instead of deleting it: demote it to a
-    // BipolarBear post so its reply thread survives (rotation only fires once a
-    // topic got a reply, so this always archives rather than deletes). Prefer
-    // the authoritative doc (carries commentCount); synthesize one when the
-    // topic fetch failed — rotation implies a reply, so archive it.
+    // Retire the outgoing topic: an answered one is demoted to an ordinary
+    // member post so its reply thread survives; one left unanswered for 24
+    // hours is deleted. Prefer the authoritative doc (carries commentCount),
+    // then the snapshot copy; with neither, assume a reply and archive it —
+    // never delete a thread we can't see.
     if (decision.replacePostId && decision.replacePostId !== newId) {
       const prev = (topicDocs || []).find(t => t.id === decision.replacePostId)
+        || posts.find(p => p.id === decision.replacePostId)
         || { id: decision.replacePostId, commentCount: 1 };
       retireTopic(prev);
     }
