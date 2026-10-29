@@ -1519,8 +1519,9 @@ exports.createAnonPoll = onCall(
 );
 
 // ── Admin-label posts and replies ────────────────────────────────────────────
-// adminAnonPost({ kind: 'post', text, tab }) → { id }
+// adminAnonPost({ kind: 'post', text, tab, image?, imageAlt? }) → { id }
 // adminAnonPost({ kind: 'comment', postId, text }) → { id }
+// adminAnonPost({ kind: 'dropImage', postId }) → { ok }
 // What the board admin posts as "Bipolar Bear Admin" (James, 2026-10-12). It
 // used to be written from the device, so it carried the admin's owner stamp,
 // made from the same uid as the stamps on their moniker's posts ("Post as a
@@ -1529,6 +1530,29 @@ exports.createAnonPoll = onCall(
 // still deletes or moves it with their admin rights, like any post. A reply
 // also bumps its post, as the client does for a member's reply.
 const ADMIN_TEXT_CHARS = 10000;
+// Announcements (only) may carry one picture (James, 2026-10-29). The device
+// shrinks it to a JPEG (which also drops its location and camera data) and
+// sends it here as base64 `image: { data, w, h }`. It is kept beside the post
+// in bbAnonPostImages/{postId} as bytes, under Firestore's 1 MiB document
+// cap, and the post gets `image: { w, h }` (and `imageAlt`) so the card can
+// keep the picture's shape before it loads. No Cloud Storage bucket needed.
+const POST_IMAGES     = 'bbAnonPostImages';
+const ANN_IMAGE_BYTES = 900 * 1024;
+const ANN_IMAGE_EDGE  = 4096;
+function annImage(d) {
+  if (d.image == null) return null;
+  const img = d.image || {};
+  const buf = Buffer.from(String(img.data || ''), 'base64');
+  const w = Number(img.w), h = Number(img.h);
+  const jpeg = buf.length > 3 && buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF;
+  if (!jpeg || buf.length > ANN_IMAGE_BYTES
+      || !Number.isInteger(w) || !Number.isInteger(h)
+      || w < 1 || h < 1 || w > ANN_IMAGE_EDGE || h > ANN_IMAGE_EDGE) {
+    throw new HttpsError('invalid-argument', 'That picture can\'t be used.');
+  }
+  const alt = String(d.imageAlt == null ? '' : d.imageAlt).trim().slice(0, 300);
+  return { buf, meta: { w, h }, alt };
+}
 exports.adminAnonPost = onCall(
   { region: REGION, invoker: 'public' },
   async (request) => {
@@ -1537,6 +1561,16 @@ exports.adminAnonPost = onCall(
       throw new HttpsError('permission-denied', 'Only the board admin can post as Bipolar Bear Admin.');
     }
     const d = request.data || {};
+    // A deleted announcement's picture goes with it (the board only marks the
+    // post deleted, so the device asks for this afterwards).
+    if (d.kind === 'dropImage') {
+      const postId = String(d.postId || '');
+      if (!postId || postId.includes('/')) throw new HttpsError('invalid-argument', 'Which post?');
+      const snap = await db.collection(POSTS).doc(postId).get();
+      if (snap.exists && !snap.data().deleted) throw new HttpsError('failed-precondition', 'The post is still up.');
+      await db.collection(POST_IMAGES).doc(postId).delete();
+      return { ok: true };
+    }
     const text = String(d.text == null ? '' : d.text).trim();
     if (!text) throw new HttpsError('invalid-argument', 'Nothing to post.');
     if (text.length > ADMIN_TEXT_CHARS) throw new HttpsError('invalid-argument', 'Too long.');
@@ -1561,11 +1595,15 @@ exports.adminAnonPost = onCall(
     if (d.kind !== 'post') throw new HttpsError('invalid-argument', 'Post or comment?');
     const tab = String(d.tab || 'general');
     if (tab !== 'general' && tab !== 'announcements') throw new HttpsError('invalid-argument', 'No such tab.');
+    const image = annImage(d);
+    if (image && tab !== 'announcements') throw new HttpsError('invalid-argument', 'Only announcements carry a picture.');
     const ref = db.collection(POSTS).doc();
     const batch = db.batch();
     batch.set(ref, {
       ...P.adminLabel('post'), text, tab, isAdmin: true, likes: 0, isSystem: false, timestamp: now,
+      ...(image ? { image: image.meta, ...(image.alt ? { imageAlt: image.alt } : {}) } : {}),
     });
+    if (image) batch.set(db.collection(POST_IMAGES).doc(ref.id), { data: image.buf, createdAt: now });
     batch.set(P.adminAuthoredRef(ref.path), P.adminAuthoredDoc(ref.path, uid));
     await batch.commit();
     return { id: ref.id };

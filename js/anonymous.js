@@ -4997,6 +4997,7 @@ async function openThread(postId) {
   markOlderThreadsSeen(post); // their dots go when this thread closes (syncUnreadFlags)
 
   document.getElementById('thread-original-post').innerHTML = renderThreadHeader(post);
+  _wirePostImages(document.getElementById('thread-original-post'));
   // No medicine links anywhere in a thread that reads like someone in crisis
   // (the post itself here; the crisis bear's reply in the listener below).
   _setThreadMedLinkSkip(_looksLikeCrisis(post.text));
@@ -5193,6 +5194,7 @@ function renderThreadHeader(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(p.text)}</div>
+    ${_postImageHtml(p)}
     ${pollHtml(p, true)}
   </div>`;
 }
@@ -5536,6 +5538,7 @@ function renderPosts(posts) {
   // After the markup, never before — a thread first seen on this render is
   // baselined, so it isn't flagged as unread the moment it appears.
   baselineThreadSeen(posts);
+  _wirePostImages(list);
 
   // Like buttons
   list.querySelectorAll('.like-btn').forEach(btn => {
@@ -5803,6 +5806,7 @@ function renderPost(p) {
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
     <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(p.text)}</div>
+    ${_postImageHtml(p)}
     ${pollHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}"${p.name === profile.monika ? ` data-self="true" aria-disabled="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
@@ -5896,6 +5900,7 @@ function setupFAB() {
     }
     setComposeMode();
     resetComposePoll();
+    resetComposePhoto();
     document.getElementById('compose-ta').value = '';
     document.getElementById('compose-post').disabled = true;
     openOv('ov-compose');
@@ -5953,7 +5958,138 @@ function _composePollOptions() {
   return [...box.querySelectorAll('.poll-opt-input')].map(i => i.value.trim()).filter(Boolean);
 }
 
+// ── Compose: optional picture (James, 2026-10-29) ──
+// Announcements only, so only the admin ever sees the button. The picture is
+// redrawn on a canvas as a JPEG no bigger than PHOTO_MAX_EDGE / PHOTO_MAX_BYTES:
+// small enough for its Firestore document, and the redraw drops the photo's
+// location and camera data. adminAnonPost keeps it in bbAnonPostImages.
+const POST_IMAGES     = 'bbAnonPostImages';
+const PHOTO_MAX_EDGE  = 1600;
+const PHOTO_MAX_BYTES = 850 * 1024;
+let _composePhoto = null;   // { data: base64 JPEG, w, h, url } while one is attached
+function _photoAllowed() {
+  return composeMode() === 'post' && currentTab === 'announcements' && !!profile.isAdmin;
+}
+// `keepUrl`: the posted picture's object URL lives on as the card's image.
+function resetComposePhoto(keepUrl) {
+  if (_composePhoto && _composePhoto.url && !keepUrl) URL.revokeObjectURL(_composePhoto.url);
+  _composePhoto = null;
+  const box = document.getElementById('compose-photo');
+  const tog = document.getElementById('compose-photo-toggle');
+  if (!box || !tog) return;
+  box.style.display = 'none';
+  document.getElementById('compose-photo-img').removeAttribute('src');
+  document.getElementById('compose-photo-alt').value = '';
+  document.getElementById('compose-photo-file').value = '';
+  tog.textContent = _wt('anon.ux.photoAdd');
+  tog.style.display = _photoAllowed() ? '' : 'none';
+}
+function _loadImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload  = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('unreadable')); };
+    img.src = url;
+  });
+}
+async function _shrinkPhoto(file) {
+  const img = await _loadImage(file);
+  const W = img.naturalWidth, H = img.naturalHeight;
+  if (!W || !H) throw new Error('empty');
+  let edge = PHOTO_MAX_EDGE, q = 0.85;
+  for (let i = 0; i < 10; i++) {
+    const k = Math.min(1, edge / Math.max(W, H));
+    const w = Math.max(1, Math.round(W * k)), h = Math.max(1, Math.round(H * k));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';            // a transparent PNG would turn black as a JPEG
+    g.fillRect(0, 0, w, h);
+    g.drawImage(img, 0, 0, w, h);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+    if (blob && blob.size <= PHOTO_MAX_BYTES) return { blob, w, h };
+    if (q > 0.6) q -= 0.1; else edge = Math.round(edge * 0.8);
+  }
+  throw new Error('too big');
+}
+function _blobBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+
+// ── Announcement pictures on the board ──
+// The card knows the picture's shape from the post (`image: { w, h }`) and
+// fetches the bytes by the post's id once, on first sight.
+const _postImgUrls    = new Map();   // postId → object URL
+const _postImgLoading = new Set();
+function _postImageHtml(p) {
+  if (!p || p.deleted || p.tab !== 'announcements' || !p.image) return '';
+  const w = Math.max(1, num(p.image.w, 4)), h = Math.max(1, num(p.image.h, 3));
+  const src = _postImgUrls.get(p.id);
+  return `<button type="button" class="post-img" data-img="${esc(p.id)}" style="aspect-ratio:${w} / ${h};" aria-label="${esc(_wt('anon.ux.photoView'))}">`
+    + `<img alt="${esc(p.imageAlt || '')}"${src ? ` src="${esc(src)}"` : ''} draggable="false"></button>`;
+}
+function _wirePostImages(root) {
+  if (!root) return;
+  root.querySelectorAll('.post-img[data-img]').forEach(btn => {
+    const id = btn.dataset.img;
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const img = btn.querySelector('img');
+      if (img && img.getAttribute('src')) _openPhoto(img.getAttribute('src'), img.alt);
+    });
+    if (_postImgUrls.has(id) || _postImgLoading.has(id) || !db || id.startsWith('local-')) return;
+    _postImgLoading.add(id);
+    db.collection(POST_IMAGES).doc(id).get().then(doc => {
+      const bytes = doc.exists ? doc.data().data : null;
+      if (!bytes || typeof bytes.toUint8Array !== 'function') return;
+      const url = URL.createObjectURL(new Blob([bytes.toUint8Array()], { type: 'image/jpeg' }));
+      _postImgUrls.set(id, url);
+      document.querySelectorAll(`.post-img[data-img="${CSS.escape(id)}"] img`).forEach(i => { i.src = url; });
+    }).catch(() => {}).finally(() => _postImgLoading.delete(id));
+  });
+}
+function _openPhoto(src, alt) {
+  const img = document.getElementById('photo-ov-img');
+  if (!img) return;
+  img.src = src;
+  img.alt = alt || '';
+  openOv('ov-photo');
+}
+
 function setupCompose() {
+  // Picture: pick, preview, describe, remove.
+  const photoTog  = document.getElementById('compose-photo-toggle');
+  const photoFile = document.getElementById('compose-photo-file');
+  photoTog.addEventListener('click', () => {
+    if (_composePhoto) { resetComposePhoto(); return; }
+    photoFile.click();
+  });
+  photoFile.addEventListener('change', async () => {
+    const file = photoFile.files && photoFile.files[0];
+    if (!file) return;
+    try {
+      const { blob, w, h } = await _shrinkPhoto(file);
+      const data = await _blobBase64(blob);
+      resetComposePhoto();
+      _composePhoto = { data, w, h, url: URL.createObjectURL(blob) };
+      document.getElementById('compose-photo-img').src = _composePhoto.url;
+      document.getElementById('compose-photo').style.display = '';
+      photoTog.textContent = _wt('anon.ux.photoRemove');
+    } catch (e) {
+      console.warn('[Anonymous] picture refused', e);
+      showHint(_wt('anon.ux.photoFailed'));
+      photoFile.value = '';
+    }
+  });
+  document.getElementById('photo-ov-close').addEventListener('click', e => { e.stopPropagation(); closeOv('ov-photo'); });
+  document.getElementById('ov-photo').addEventListener('click', () => closeOv('ov-photo'));
+
   document.getElementById('compose-poll-toggle').addEventListener('click', () => {
     const box = document.getElementById('compose-poll');
     const tog = document.getElementById('compose-poll-toggle');
@@ -6016,6 +6152,8 @@ function setupCompose() {
     const now = new Date();
     const optimisticId = 'local-' + now.getTime();
     const asAdmin = _postingAsAdmin(currentTab);
+    const photo = _photoAllowed() ? _composePhoto : null;
+    const photoAlt = photo ? document.getElementById('compose-photo-alt').value.trim() : '';
     const entry = {
       name:     profile.monika,
       streak:   profile.streak,
@@ -6034,6 +6172,11 @@ function setupCompose() {
     };
     if (asAdmin) Object.assign(entry, _adminAuthorFields());
     if (pollOpts) entry.poll = { options: pollOpts, votes: pollOpts.map(() => 0) };
+    if (photo) {
+      entry.image = { w: photo.w, h: photo.h };
+      if (photoAlt) entry.imageAlt = photoAlt;
+      _postImgUrls.set(optimisticId, photo.url);
+    }
 
     // Show post immediately (optimistic update). Route through assembleGeneralPosts
     // on the general tab so the optimistic render keeps the system greeting, the
@@ -6059,8 +6202,12 @@ function setupCompose() {
           // as the stamps on the admin's moniker posts ("Post as a member"),
           // so it could tie the two together. The rules refuse a device-written
           // one once legacyAdminClients() is off.
-          const res = await _callFn('adminAnonPost', { kind: 'post', text, tab: currentTab });
+          const res = await _callFn('adminAnonPost', {
+            kind: 'post', text, tab: currentTab,
+            ...(photo ? { image: { data: photo.data, w: photo.w, h: photo.h }, imageAlt: photoAlt } : {}),
+          });
           docId = res.id || null;
+          if (photo && docId) { _postImgUrls.set(docId, photo.url); resetComposePhoto(true); }
         } else {
           await _ensureAuthSession(); // the post records its author's owner stamp
           const ref = db.collection(BB_BRAND.collections.posts).doc();
@@ -6086,6 +6233,7 @@ function setupCompose() {
         localPosts = localPosts.filter(p => p.id !== optimisticId);
         renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
         showHint(_wt(pollOpts ? 'anon.ux.pollFailed' : 'anon.net.postFailed'));
+        _postImgUrls.delete(optimisticId);   // the picture stays attached for another go
         ta.value = text;
         post.disabled = false;
         openOv('ov-compose');
@@ -6528,6 +6676,8 @@ async function adminDeletePost(id) {
       new Promise((_, reject) => { timer = setTimeout(() => reject(Object.assign(new Error('no answer'), { code: 'timeout' })), 12000); }),
     ]);
     showHint(_wt('anon.toast.postDeleted'));
+    // Its picture goes too (adminAnonPost refuses while the post is still up).
+    if (p && p.image) _callFn('adminAnonPost', { kind: 'dropImage', postId: id }).catch(() => {});
   } catch (err) {
     console.error('[Admin] delete failed', err);
     if (p && was) { p.deleted = was.deleted; p.deletedAt = was.deletedAt; rerender(); }

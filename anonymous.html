@@ -314,11 +314,25 @@
       <button type="button" id="compose-poll-more" class="poll-more" data-i18n="anon.ux.pollAddOption">+ Add option</button>
     </div>
     <button type="button" id="compose-poll-toggle" class="poll-toggle" data-i18n="anon.ux.pollAdd">📊 Add a poll</button>
+    <!-- Optional picture (announcements only, so the admin only). Shrunk on
+         the device and sent with the adminAnonPost callable. -->
+    <div id="compose-photo" class="compose-photo" style="display:none;">
+      <img id="compose-photo-img" alt="">
+      <input type="text" id="compose-photo-alt" class="bb-input" maxlength="300" placeholder="Describe the picture (read out by screen readers)" data-i18n-placeholder="anon.ux.photoAlt">
+    </div>
+    <input type="file" id="compose-photo-file" accept="image/*" hidden>
+    <button type="button" id="compose-photo-toggle" class="poll-toggle" style="display:none;" data-i18n="anon.ux.photoAdd">🖼️ Add a picture</button>
     <div class="btn-row">
       <button class="btn-secondary" id="compose-cancel" style="flex:1" data-i18n="anon.compose.cancel">Cancel</button>
       <button class="btn-primary"   id="compose-post"   style="flex:2" disabled data-i18n="anon.compose.post">Post 🐻</button>
     </div>
   </div>
+</div>
+
+<!-- An announcement's picture, full screen. Any tap closes it. -->
+<div id="ov-photo" class="overlay photo-ov hidden" aria-label="Open the picture" data-i18n-aria-label="anon.ux.photoView">
+  <img id="photo-ov-img" alt="">
+  <button type="button" id="photo-ov-close" class="photo-ov-close" aria-label="Close the picture" data-i18n-aria-label="anon.ux.photoClose">✕</button>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->

@@ -179,6 +179,7 @@ service cloud.firestore {
           && incoming().get('reported', false) == false
           && incoming().get('wasTopic', false) == false
           && !('poll' in incoming())               // polls: createAnonPoll callable
+          && !('image' in incoming())              // pictures: adminAnonPost, announcements only
           && incoming().get('timestamp', null) == request.time;
       }
 
@@ -323,6 +324,13 @@ service cloud.firestore {
       // A temporary ban that has run out may be taken down by anyone.
       allow delete: if resource.data.get('until', null) is timestamp
         && resource.data.until < request.time;
+    }
+
+    // An announcement's picture (written by adminAnonPost, announcements
+    // only). Opened by its post's id; never listed.
+    match /bbAnonPostImages/{postId} {
+      allow get: if true;
+      allow list, write: if false;
     }
 
     // Member-suggested announcements awaiting the admin.

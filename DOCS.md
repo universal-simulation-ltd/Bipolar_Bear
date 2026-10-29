@@ -1055,6 +1055,39 @@ once it has been refused. The admin is the BipolarBear account
 (`request.auth.token.email`) or a session that entered an email code for the
 admin address (`bbAnonLinks`, written by `verifyAnonCode`).
 
+#### Pictures on announcements (2026-10-29, v391)
+
+Announcements, and only announcements, may carry one picture (James: "allow
+announcements (only) to have pictures shown with the message"). Members can't
+add one anywhere, suggestions included.
+
+- **Compose** (`resetComposePhoto`, `_shrinkPhoto` in `js/anonymous.js`): the
+  admin, on the Announcements tab, gets **🖼️ Add a picture** under the text,
+  then a preview, an optional description (the image's alt text, 300
+  characters) and **✕ Remove the picture**. The picture is redrawn on a canvas
+  as a JPEG no bigger than 1600 px on its long edge and 850 KB (quality, then
+  size, step down until it fits). The redraw drops EXIF, so no location or
+  camera data leaves the phone.
+- **Sending:** `adminAnonPost({ kind: 'post', …, image: { data, w, h }, imageAlt })`.
+  `annImage()` refuses anything that isn't a JPEG, is over 900 KB or has an edge
+  over 4096 px, and refuses a picture on any tab but Announcements. One batch
+  writes the post (with `image: { w, h }` and `imageAlt`) and
+  `bbAnonPostImages/{postId}` = `{ data: bytes, createdAt }`. That's a Firestore
+  document under its 1 MiB cap, so no Cloud Storage bucket is needed.
+- **Showing** (`_postImageHtml`, `_wirePostImages`): an announcement post with
+  `image` gets a button under its text, shaped by `aspect-ratio: w / h` before
+  the bytes arrive. Those are fetched once per post id, kept as an object URL,
+  and shown on the card and the thread's original post. Tap → `#ov-photo`,
+  full screen; any tap or back closes it. A post on another tab never shows
+  one, even if it has `image`.
+- **Deleting:** the board only marks a post deleted, so after an admin delete
+  the device calls `adminAnonPost({ kind: 'dropImage', postId })`, which
+  deletes the picture once the post is down.
+- **Rules:** `bbAnonPostImages` is `get` for everyone, never `list`, never
+  written by a device. A device-written post may not carry `image`.
+- Test: `scripts/test-anon-ann-pictures.mjs` (16 checks, incl. `annImage()`),
+  plus the emulator suite (`scripts/firestore-rules`).
+
 #### Reports, SOS flags and bans (2026-10-16)
 
 - **Reports and SOS flags reach the team.** Both write to `bbAnonReports`

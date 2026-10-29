@@ -355,8 +355,19 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
         await assertFails(add({ deleted: true }));
         await assertFails(add({ reported: true }));
         await assertFails(add({ poll: { options: ['a', 'b'], votes: [100, 0] } }));
+        await assertFails(add({ image: { w: 10, h: 10 } }));   // pictures: adminAnonPost only
         await assertFails(add({ timestamp: TS.fromMillis(Date.now() + 30 * DAY) }));
         await assertFails(add({ timestamp: TS.fromMillis(Date.now() - 30 * DAY) }));
+      });
+
+      it("an announcement's picture is read by its id, never listed or written by a device", async () => {
+        await seed(env, { 'bbAnonPostImages/p1': { data: 'x', createdAt: TS.now() } });
+        await assertSucceeds(who.guest().doc('bbAnonPostImages/p1').get());
+        await assertFails(who.guest().collection('bbAnonPostImages').get());
+        await assertFails(who.admin().collection('bbAnonPostImages').get());
+        await assertFails(who.anon('a1').doc('bbAnonPostImages/p2').set({ data: 'x' }));
+        await assertFails(who.admin().doc('bbAnonPostImages/p2').set({ data: 'x' }));
+        await assertFails(who.admin().doc('bbAnonPostImages/p1').delete());
       });
 
       it("posts cannot be written under someone else's uid or stamp", async () => {

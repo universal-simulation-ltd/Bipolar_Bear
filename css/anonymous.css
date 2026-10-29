@@ -1146,6 +1146,26 @@
     .poll-more { border-style: solid; border-color: var(--line); color: var(--muted); }
     .compose-poll .poll-opt-input { margin-bottom: 8px; }
 
+    /* ── Announcement pictures (admin only, announcements tab) ── */
+    .compose-photo { margin-bottom: 10px; }
+    .compose-photo img { display: block; width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; background: var(--surface-2); margin-bottom: 8px; }
+    .post-img {
+      display: block; width: 100%; max-height: 420px; margin: 10px 0 4px; padding: 0; border: 0;
+      border-radius: 14px; overflow: hidden; background: var(--surface-2); cursor: zoom-in;
+    }
+    .post-img img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .post-img img:not([src]) { visibility: hidden; }
+    /* Over every sheet, the thread included (a picture opens from there too). */
+    .overlay.photo-ov, html.theme-dark .overlay.photo-ov, html.is-native .overlay.photo-ov {
+      background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 16px; cursor: zoom-out; z-index: 300;
+    }
+    .photo-ov img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+    .photo-ov-close {
+      position: absolute; top: calc(env(safe-area-inset-top, 0px) + 12px); right: 12px;
+      width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,0.16);
+      color: #fff; font-size: 1.125rem; cursor: pointer;
+    }
+
     /* ── Daily mood check-in (on the greeting card) ── */
     /* The check-in sits on its own light panel inside the greeting card, so
        the bears, counts and labels read against white rather than yellow. */

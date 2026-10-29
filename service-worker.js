@@ -1910,7 +1910,12 @@
 //   gives way to the next topic on the next UTC day (it used to stay until
 //   someone replied). The empty one is deleted, as before. Touches
 //   js/anonymous.js (decideDailyTopic, maybePostDailyTopic).
-const CACHE_NAME = 'bipolarbear-v390';
+// v391: Bipolar Anonymous announcements (only) may carry a picture: the admin
+//   attaches one in the compose sheet, it is shrunk to a JPEG on the device
+//   and kept in bbAnonPostImages by adminAnonPost; tap opens it full screen.
+//   Touches anonymous.html, css/anonymous.css, js/anonymous.js,
+//   js/shared/i18n.js (anon.ux.photo*, 10 languages).
+const CACHE_NAME = 'bipolarbear-v391';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
