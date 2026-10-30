@@ -1924,7 +1924,13 @@
 //   js/shared/i18n.js (journal.toast.savedOnPhone, 10 languages).
 // v393: version 1.47 (_APP_VERSION in js/shared/brand-config.js), for the
 //   App Store build Bear 1.47 (68): the v392 save fix (Anonymous unchanged).
-// v394: Bipolar Anonymous: the comment box grows as you type; a comment
+// v394: Board: press and hold a post, then Delete / Unpin / SOS / Report /
+//   Mute did nothing on an iPhone (James's video, 2026-10-30). The long press
+//   left its "swallow the next click" flag set (an iPhone sends no click
+//   after one), and it swallowed the sheet's click on the post's hidden
+//   button. Now only a real click within 600 ms of the lift is swallowed.
+//   Touches js/anonymous.js (bindLongPress); scripts/test-anon-longpress-sheet.mjs.
+// v395: Bipolar Anonymous: the comment box grows as you type; a comment
 //   being written comes back when its thread is reopened (cleared once a
 //   comment is sent anywhere); ❤️‍🩹 Support beside 💛 (posts' `supports`,
 //   firestore.rules supportOk, Anon_supported on the device, in orange); the
@@ -1932,7 +1938,7 @@
 //   css/anonymous.css, js/shared/i18n.js (a11y.supports,
 //   anon.toast.cantSupportOwn; annTwelveSteps removed), js/index.js and
 //   js/journal.js (Anon_supported on the clear lists).
-const CACHE_NAME = 'bipolarbear-v394';
+const CACHE_NAME = 'bipolarbear-v395';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
