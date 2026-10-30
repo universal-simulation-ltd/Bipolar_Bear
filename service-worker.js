@@ -1924,7 +1924,15 @@
 //   js/shared/i18n.js (journal.toast.savedOnPhone, 10 languages).
 // v393: version 1.47 (_APP_VERSION in js/shared/brand-config.js), for the
 //   App Store build Bear 1.47 (68): the v392 save fix (Anonymous unchanged).
-const CACHE_NAME = 'bipolarbear-v393';
+// v394: Bipolar Anonymous: the comment box grows as you type; a comment
+//   being written comes back when its thread is reopened (cleared once a
+//   comment is sent anywhere); ❤️‍🩹 Support beside 💛 (posts' `supports`,
+//   firestore.rules supportOk, Anon_supported on the device, in orange); the
+//   built-in 12 Steps announcement is gone. Touches js/anonymous.js,
+//   css/anonymous.css, js/shared/i18n.js (a11y.supports,
+//   anon.toast.cantSupportOwn; annTwelveSteps removed), js/index.js and
+//   js/journal.js (Anon_supported on the clear lists).
+const CACHE_NAME = 'bipolarbear-v394';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -14195,7 +14195,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         ['Anon_monika','Anon_email','Anon_verified','Anon_isAdmin','Anon_profileId',
          'Anon_streak','Anon_med','Anon_medList','Anon_showMeds',
          'Anon_showStable','Anon_stableSince','Anon_stableStreak',
-         'Anon_colorKey','Anon_initials','Anon_liked','Anon_hasPosted',
+         'Anon_colorKey','Anon_initials','Anon_liked','Anon_supported','Anon_hasPosted',
          'Anon_lastPostDate','Anon_allRead','Anon_postCount','Anon_postCountSeeded',
          'AnonLastVisit','AnonVisitDate'].forEach(k => BB.storage.remove(k));
         // Reset logo to default immediately

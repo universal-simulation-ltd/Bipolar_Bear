@@ -305,6 +305,7 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
           await assertFails(db.doc(`bbAnonPosts/${id}`).update({ deleted: true, deletedByAdmin: true }));
           await assertFails(db.doc(`bbAnonPosts/${id}`).update({ tab: 'announcements' }));
           await assertFails(db.doc(`bbAnonPosts/${id}`).update({ likes: 500 }));
+          await assertFails(db.doc(`bbAnonPosts/${id}`).update({ supports: 500 }));
           await assertFails(db.doc(`bbAnonPosts/${id}`).update({ uid: 'intruder' }));
           await assertFails(db.doc(`bbAnonPosts/${id}`).update({ owner: ownerStamp('intruder', `bbAnonPosts/${id}`) }));
           await assertFails(db.doc(`bbAnonPosts/${id}`).set(postDoc({ text: 'replaced' })));
@@ -350,6 +351,7 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
           { name: 'Robin', text: 'x', tab: 'general', isAdmin: false, likes: 0, timestamp: FV.serverTimestamp(), uid: 'a1' }, over));
         await assertSucceeds(board.createPost(db, base));
         await assertFails(add({ likes: 99 }));
+        await assertFails(add({ supports: 99 }));
         await assertFails(add({ commentCount: 50 }));
         await assertFails(add({ pinned: true }));
         await assertFails(add({ deleted: true }));
@@ -389,10 +391,13 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
       it('counters on a post move by one', async () => {
         const db = who.anon('a1');
         await assertFails(db.doc('bbAnonPosts/owned').update({ likes: FV.increment(5) }));
+        await assertFails(db.doc('bbAnonPosts/owned').update({ supports: FV.increment(5) }));
+        await assertFails(db.doc('bbAnonPosts/owned').update({ supports: FV.increment(1), likes: FV.increment(1) }));
         await assertFails(db.doc('bbAnonPosts/owned').update({ commentCount: FV.increment(10) }));
         await assertFails(db.doc('bbAnonPosts/owned').update({ lastActivity: TS.fromMillis(Date.now() + 30 * DAY) }));
         await assertFails(db.doc('bbAnonPosts/owned').update({ reported: false }));
         await assertSucceeds(db.doc('bbAnonPosts/owned').update({ likes: FV.increment(1) }));
+        await assertSucceeds(db.doc('bbAnonPosts/owned').update({ supports: FV.increment(1) }));
       });
 
       it('only week-old posts can be swept, and never pinned or reported ones', async () => {

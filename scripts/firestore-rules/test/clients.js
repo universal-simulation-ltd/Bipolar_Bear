@@ -153,6 +153,8 @@ const board = {
 
   // like toggle
   like: (db, id, delta) => db.collection(POSTS).doc(id).update({ likes: FV.increment(delta) }),
+  // ❤️‍🩹 support toggle (handleSupport)
+  support: (db, id, delta) => db.collection(POSTS).doc(id).update({ supports: FV.increment(delta) }),
 
   // pollCanPost()
   readPost: (db, id) => db.collection(POSTS).doc(id).get(),

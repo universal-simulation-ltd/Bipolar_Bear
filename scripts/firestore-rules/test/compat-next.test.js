@@ -67,6 +67,8 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
         for (const id of ['p1', 'legacy']) {
           await assertSucceeds(board.like(db, id, 1));
           await assertSucceeds(board.like(db, id, -1));
+          await assertSucceeds(board.support(db, id, 1));
+          await assertSucceeds(board.support(db, id, -1));
           await assertSucceeds(board.reportPost(db, id));
           const c = await assertSucceeds(board.comment(db, id, { flavour, uid }));
           await assertSucceeds(board.deleteComment(db, id, c.id));
@@ -172,6 +174,7 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
           });
           await assertSucceeds(board.listenTab(db, 'announcements'));
           await assertSucceeds(admin.pin(db, 'a2', 'announcements'));
+          await assertSucceeds(admin.deletePost(db, 'a2'));      // a pinned admin announcement
           await assertSucceeds(db.doc('bbAnonPosts/p3/comments/ac1').delete());
           await assertSucceeds(db.doc('bbAnonPosts/a1').delete());
           // "Post as a member": an ordinary owner-stamped post under the moniker.

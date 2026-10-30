@@ -141,6 +141,17 @@ const likedPosts = new Set(
 function saveLiked() {
   BB.storage.set('Anon_liked', JSON.stringify([...likedPosts]));
 }
+// ❤️‍🩹 Support: a second reaction beside 💛, kept the same way (James,
+// 2026-10-30). Counted in the post's `supports` field (firestore.rules supportOk).
+const supportedPosts = new Set(
+  JSON.parse(BB.storage.get('Anon_supported') || '[]')
+);
+function saveSupported() {
+  BB.storage.set('Anon_supported', JSON.stringify([...supportedPosts]));
+}
+// Has anyone reacted to this post (💛 or ❤️‍🩹)? Lifts the "wait for a
+// reaction" gates.
+function _reacted(p) { return (p.likes || 0) + (p.supports || 0) > 0; }
 
 // Muted users set (persisted, device-local). Posts and comments from these
 // monikas are hidden from the feed on this device only — nothing is written
@@ -849,7 +860,7 @@ function getLatestRealPost(tab) {
 }
 
 function isSelfDeleteEligible(post) {
-  if ((post.likes || 0) > 0) return true;
+  if (_reacted(post)) return true;
   const ts = post.timestamp?.toMillis?.() ?? 0;
   return !localPosts.some(p =>
     p.id !== post.id && p.tab === post.tab && !p.deleted &&
@@ -1177,6 +1188,28 @@ function bindLongPress(container, selector) {
   container.addEventListener('contextmenu', e => { if (e.target.closest(selector)) e.preventDefault(); });
 }
 
+// The comment box grows with what's typed, up to about a third of the screen,
+// then scrolls (James, 2026-10-30).
+function _fitThreadTa() {
+  const ta = document.getElementById('thread-ta');
+  if (!ta) return;
+  const max = Math.round(window.innerHeight * 0.35);
+  ta.style.height = 'auto';
+  ta.style.height = Math.min(ta.scrollHeight + 2, max) + 'px';
+  ta.style.overflowY = ta.scrollHeight + 2 > max ? 'auto' : 'hidden';
+}
+
+// A comment being written survives closing the thread: reopening that post
+// brings it back. Every draft goes once a comment is sent anywhere (James,
+// 2026-10-30). In memory only: nothing typed is stored on the device.
+const _commentDrafts = new Map();
+function _keepCommentDraft() {
+  const ta = document.getElementById('thread-ta');
+  if (!ta || !commentTargetId) return;
+  if (ta.value.trim()) _commentDrafts.set(commentTargetId, ta.value);
+  else _commentDrafts.delete(commentTargetId);
+}
+
 // Swipe a reply to the right to answer it: the composer gets "@Name " and focus.
 function _replyTo(author) {
   const ta = document.getElementById('thread-ta');
@@ -1184,6 +1217,8 @@ function _replyTo(author) {
   const tag = '@' + author + ' ';
   if (!ta.value.startsWith(tag)) ta.value = tag + ta.value.replace(/^@\S+\s/, '');
   document.getElementById('thread-send').disabled = !ta.value.trim();
+  _keepCommentDraft();
+  _fitThreadTa();
   ta.focus();
   try { ta.setSelectionRange(ta.value.length, ta.value.length); } catch (e) {}
 }
@@ -4730,25 +4765,7 @@ function demoData() {
 // through here so the faded cards can't be dropped by one code path.
 function announcementFeed() {
   const published = localPosts.length ? sortPosts(localPosts) : announcementPosts();
-  return [...visibleSuggestions(), ...builtInAnnouncements(), ...published];
-}
-
-// Announcements that ship with the app rather than being published to
-// Firestore by the admin. Unlike announcementPosts() (a demo fallback shown
-// only while the collection is empty) these always render, at the top of the
-// tab — they point at app features that exist in this build, so they can't go
-// stale the way a stored post can. `wikiLink` renders a button that opens the
-// named wiki section (see renderAnnouncement / openWikiSection).
-function builtInAnnouncements() {
-  return [
-    {
-      id: 'ann_twelve_steps',
-      isAnnouncement: true,
-      text: _wt('anon.feed.annTwelveSteps'),
-      wikiLink: 'twelveSteps',
-      timestamp: null,
-    },
-  ];
+  return [...visibleSuggestions(), ...published];
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -5006,10 +5023,11 @@ async function openThread(postId) {
     '<div class="empty-state" style="padding:24px 0;">' + esc(_wt('anon.ui.loadingComments')) + '</div>';
 
   const ta = document.getElementById('thread-ta');
-  ta.value = '';
-  document.getElementById('thread-send').disabled = true;
+  ta.value = _commentDrafts.get(postId) || '';
+  document.getElementById('thread-send').disabled = !ta.value.trim();
 
   openOv('ov-thread');
+  _fitThreadTa();
   setTimeout(() => ta.focus(), 220);
 
   if (currentThreadUnsub) { currentThreadUnsub(); currentThreadUnsub = null; }
@@ -5275,7 +5293,7 @@ function setupThread() {
   const ta      = document.getElementById('thread-ta');
   const sendBtn = document.getElementById('thread-send');
 
-  ta.addEventListener('input', () => { sendBtn.disabled = !ta.value.trim(); });
+  ta.addEventListener('input', () => { sendBtn.disabled = !ta.value.trim(); _keepCommentDraft(); _fitThreadTa(); });
   document.getElementById('thread-close').addEventListener('click', closeThread);
 
   // Comment moderation controls (delegated — the comments list re-renders on
@@ -5418,6 +5436,8 @@ function setupThread() {
     if (sent) {
       _haptic('success');
       ta.value = '';
+      _commentDrafts.clear();
+      _fitThreadTa();
       // A reply is posting too — often a member's first contribution — so
       // offer notifications here as well. No-op once the sheet has been
       // answered, or on a device that can't do push.
@@ -5543,6 +5563,9 @@ function renderPosts(posts) {
   // Like buttons
   list.querySelectorAll('.like-btn').forEach(btn => {
     btn.addEventListener('click', () => handleLike(btn));
+  });
+  list.querySelectorAll('.support-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleSupport(btn));
   });
   // SOS buttons
   list.querySelectorAll('[data-sos]').forEach(btn => {
@@ -5695,6 +5718,7 @@ function renderArchivedTopic(p) {
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(a.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}">
         💛 <span>${likes}</span>
       </button>
+      ${supportBtnHtml(p, a.name)}
       ${commentBtnHtml(p, commentCount)}
       <div style="flex:1"></div>
       ${moreMenuHtml(deleteBtn)}
@@ -5812,6 +5836,7 @@ function renderPost(p) {
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}"${p.name === profile.monika ? ` data-self="true" aria-disabled="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
         💛 <span>${likes}</span>
       </button>
+      ${supportBtnHtml(p, p.name)}
       ${commentBtn}
       <div style="flex:1"></div>
       ${moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
@@ -5858,6 +5883,36 @@ function handleLike(btn) {
   saveLiked();
 }
 
+// The ❤️‍🩹 button. Like 💛, not on your own post.
+function supportBtnHtml(p, author) {
+  const on = supportedPosts.has(p.id);
+  const n  = num(p.supports, 0);
+  const own = author === profile.monika;
+  return `<button class="support-btn${on ? ' supported' : ''}" data-id="${esc(p.id)}" data-supports="${n}" data-author="${esc(author)}" aria-pressed="${on}" aria-label="${esc(_wt('a11y.supports', { count: n }))}"`
+    + (own ? ` aria-disabled="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.toast.cantSupportOwn'))}"` : '')
+    + `><span class="support-ico" aria-hidden="true">❤️‍🩹</span> <span class="support-n">${n}</span></button>`;
+}
+function handleSupport(btn) {
+  const id    = btn.dataset.id;
+  const on    = supportedPosts.has(id);
+  const count = parseInt(btn.dataset.supports, 10) || 0;
+  if (!on && btn.dataset.author === profile.monika) {
+    showHint(_wt('anon.toast.cantSupportOwn'));
+    return;
+  }
+  const next = on ? count - 1 : count + 1;
+  if (on) supportedPosts.delete(id); else { _haptic(); supportedPosts.add(id); }
+  btn.classList.toggle('supported', !on);
+  btn.dataset.supports = next;
+  btn.querySelector('.support-n').textContent = next;
+  btn.setAttribute('aria-pressed', String(!on));
+  btn.setAttribute('aria-label', _wt('a11y.supports', { count: next }));
+  const p = _findPost(id);
+  if (p) p.supports = Math.max(0, next);
+  if (db) db.collection(BB_BRAND.collections.posts).doc(id).update({ supports: firebase.firestore.FieldValue.increment(on ? -1 : 1) }).catch(() => {});
+  saveSupported();
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Post gate — check if first post has a like yet
 // ─────────────────────────────────────────────────────────────────
@@ -5866,7 +5921,7 @@ function pollCanPost() {
   const firstId = BB.storage.get('Anon_firstPostId');
   if (!firstId || !db) return;
   db.collection(BB_BRAND.collections.posts).doc(firstId).get().then(doc => {
-    if (doc.exists && (doc.data().likes || 0) > 0) {
+    if (doc.exists && _reacted(doc.data())) {
       BB.storage.set('Anon_canPost', 'true');
     }
   }).catch(() => {});
@@ -5894,7 +5949,7 @@ function setupFAB() {
     // not the review queue — a suggestion isn't on the board yet.
     const latest = getLatestRealPost(currentTab);
     if (composeMode() === 'post' && !_postingAsAdmin(currentTab)
-        && latest && latest.name === profile.monika && (latest.likes || 0) === 0) {
+        && latest && latest.name === profile.monika && !_reacted(latest)) {
       showHint(_wt('anon.toast.reactWait'));
       return;
     }

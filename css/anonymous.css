@@ -488,13 +488,18 @@
     .comment-text + .tt-bar { padding-left: 36px; margin: 2px 0 0; }
     /* Topic cards put their call-to-action straight after the text. */
     .topic-text + .tt-bar { margin: -2px 0 8px; }
-    .like-btn {
+    .like-btn, .support-btn {
       display: flex; align-items: center; gap: 5px;
       background: var(--surface-2); border: 1px solid transparent; border-radius: 20px;
       padding: 6px 12px; cursor: pointer; font-size: 0.8125rem; color: var(--muted);
       font-family: inherit; transition: all 0.15s;
     }
     .like-btn.liked { background: var(--yellow-bg); border-color: var(--yellow); color: var(--dark); font-weight: 700; }
+    /* ❤️‍🩹 Support in Bipolar Bear's orange: there is no orange mending-heart
+       emoji, so the red one is turned orange. */
+    .support-ico { filter: hue-rotate(45deg) saturate(1.5) brightness(1.2); }
+    .support-btn.supported { background: #fff3e0; border-color: #ff9500; color: var(--dark); font-weight: 700; }
+    html.theme-dark .support-btn.supported { background: #3a2610; border-color: #ff9500; }
     .icon-btn { background: none; border: none; cursor: pointer; font-size: 1rem; opacity: 0.5; padding: 4px 2px; line-height: 1; flex-shrink: 0; }
 
     /* System message */
