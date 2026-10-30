@@ -1915,7 +1915,14 @@
 //   and kept in bbAnonPostImages by adminAnonPost; tap opens it full screen.
 //   Touches anonymous.html, css/anonymous.css, js/anonymous.js,
 //   js/shared/i18n.js (anon.ux.photo*, 10 languages).
-const CACHE_NAME = 'bipolarbear-v391';
+// v392: A signed-in journal save no longer waits for the server to confirm
+//   it. On a weak signal Save sat there looking frozen (support report, iOS
+//   1.41) while the entry was already queued in Firestore's offline cache;
+//   after 4 s it now carries on as saved with a "Saved on this device" note
+//   (_awaitEntryWrite), and the save buttons dim and pulse while a save is
+//   under way. Touches js/journal.js, css/journal.css,
+//   js/shared/i18n.js (journal.toast.savedOnPhone, 10 languages).
+const CACHE_NAME = 'bipolarbear-v392';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

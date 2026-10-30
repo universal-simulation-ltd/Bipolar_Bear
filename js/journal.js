@@ -500,7 +500,7 @@ function _tt(k, vars, fallback) {
         // synchronizeTabs: false = simple exclusive lock, acquired almost instantly.
         // (synchronizeTabs: true = multi-tab leader election taking 3-5s, unnecessary in
         // a Capacitor app with a single WebView and the root cause of loadEntries timeouts)
-        db.enablePersistence({ synchronizeTabs: false }).catch(err => {
+        db.enablePersistence({ synchronizeTabs: false }).then(() => { _fsPersistent = true; }).catch(err => {
           if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
             console.warn('Firestore persistence error:', err);
           }
@@ -2621,16 +2621,16 @@ function _tt(k, vars, fallback) {
             const enc = await _userEncrypt(_userCryptoKey, merged);
             const fsEntry = { userId: currentUser.uid, timestamp: entry.timestamp, ...enc };
             if (editingEntry && editingEntry.id) {
-              await db.collection('entries').doc(editingEntry.id).set(fsEntry);
+              await _awaitEntryWrite(db.collection('entries').doc(editingEntry.id).set(fsEntry));
             } else {
-              await db.collection('entries').add(fsEntry);
+              await _awaitEntryWrite(db.collection('entries').add(fsEntry));
             }
           } else {
             // No key yet (e.g. session-key missing) — save plaintext as fallback
             if (editingEntry && editingEntry.id) {
-              await db.collection('entries').doc(editingEntry.id).set({ ...editingEntry, ...entry });
+              await _awaitEntryWrite(db.collection('entries').doc(editingEntry.id).set({ ...editingEntry, ...entry }));
             } else {
-              await db.collection('entries').add(entry);
+              await _awaitEntryWrite(db.collection('entries').add(entry));
             }
           }
         } else {
@@ -2789,6 +2789,36 @@ function _tt(k, vars, fallback) {
       return false;
     }
 
+    // Set by initializeApp() once Firestore's offline cache is on. `var` with
+    // no initialiser, like _authReadyDone.
+    var _fsPersistent;
+    /**
+     * Wait for a signed-in entry's Firestore write, but only for a few
+     * seconds. The write's promise resolves when the SERVER confirms it, and
+     * on a weak signal that can take minutes: Save sat there looking frozen
+     * while the entry was already queued on the phone (support report,
+     * iOS 1.41, 2026-10-29). With the offline cache on, a queued write
+     * survives the app closing and uploads when there's signal, so after 4 s
+     * carry on as saved and say so. A rejection that comes later is still
+     * reported. Without the cache the queue is in memory only, so wait.
+     */
+    async function _awaitEntryWrite(write) {
+      if (!_fsPersistent) return write;
+      let timer, queued = false;
+      write.catch(err => {
+        if (!queued) return; // saveEntry's own catch reports it
+        console.error('❌ Queued entry write failed:', err);
+        alert(err && err.code === 'permission-denied'
+          ? BB.t('journal.dlg.savePermDenied')
+          : BB.t('journal.dlg.saveEntryFail') + (err && err.message || ''));
+      });
+      await Promise.race([write, new Promise(r => { timer = setTimeout(() => { queued = true; r(); }, 4000); })]);
+      clearTimeout(timer);
+      if (queued) {
+        try { if (window.BB && BB.moodQueue && BB.moodQueue.toast) BB.moodQueue.toast(BB.t('journal.toast.savedOnPhone')); } catch (_) {}
+      }
+    }
+
     let _savingEntry = false;
     async function saveAndOpenJournal() {
       if (_savingEntry) return;
@@ -2819,7 +2849,10 @@ function _tt(k, vars, fallback) {
         });
         return;
       }
-      try { await saveEntry(); } finally { _savingEntry = false; }
+      // Dim the save buttons while it works (getting the journal key can wait
+      // on the network), so a slow save doesn't look like a frozen one.
+      document.body.classList.add('bb-entry-saving');
+      try { await saveEntry(); } finally { _savingEntry = false; document.body.classList.remove('bb-entry-saving'); }
     }
 
     // ── Guest → Account migration ──

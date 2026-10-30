@@ -1474,6 +1474,7 @@
           selectMood: 'Please select your mood! 🌈',
           discardChanges: 'Discard changes and close?',
           stillSigningIn: "We're still reconnecting to your account, so this entry hasn't been saved yet. Check your connection and tap save again in a moment.",
+          savedOnPhone: "Saved on this device. It will back up to your account as soon as you're online.",
         },
         confirm: {
           removeFieldTitle: 'Remove {field}?',
@@ -3782,6 +3783,7 @@
           selectMood: '¡Selecciona tu estado de ánimo! 🌈',
           discardChanges: '¿Descartar los cambios y cerrar?',
           stillSigningIn: "Todavía estamos reconectando con tu cuenta, así que esta entrada aún no se ha guardado. Comprueba tu conexión y vuelve a tocar Guardar en un momento.",
+          savedOnPhone: "Guardado en este dispositivo. Se hará una copia en tu cuenta en cuanto tengas conexión.",
         },
         stats: {
           heading: 'Tu trayectoria',
@@ -5746,6 +5748,7 @@
           selectMood: 'Choisis ton humeur ! 🌈',
           discardChanges: 'Abandonner les modifications et fermer ?',
           stillSigningIn: "Nous nous reconnectons encore à ton compte, donc cette entrée n'est pas encore enregistrée. Vérifie ta connexion et touche Enregistrer à nouveau dans un instant.",
+          savedOnPhone: "Enregistré sur cet appareil. Il sera sauvegardé sur ton compte dès que tu seras en ligne.",
         },
         confirm: {
           removeFieldTitle: 'Supprimer {field} ?',
@@ -8000,6 +8003,7 @@
           selectMood: 'Bitte wähle deine Stimmung! 🌈',
           discardChanges: 'Änderungen verwerfen und schließen?',
           stillSigningIn: "Wir verbinden uns noch wieder mit deinem Konto, deshalb ist dieser Eintrag noch nicht gespeichert. Prüfe deine Verbindung und tippe gleich noch einmal auf Speichern.",
+          savedOnPhone: "Auf diesem Gerät gespeichert. Es wird in deinem Konto gesichert, sobald du online bist.",
         },
         stats: {
           heading: 'Deine Reise',
@@ -10101,6 +10105,7 @@
           selectMood: 'Seleziona il tuo umore! 🌈',
           discardChanges: 'Annullare le modifiche e chiudere?',
           stillSigningIn: "Ci stiamo ancora ricollegando al tuo account, quindi questa voce non è ancora stata salvata. Controlla la connessione e tocca di nuovo Salva tra un momento.",
+          savedOnPhone: "Salvato su questo dispositivo. Verrà salvato nel tuo account appena sarai online.",
         },
         stats: {
           heading: 'Il Tuo Percorso',
@@ -12202,6 +12207,7 @@
           selectMood: 'Seleciona o teu humor! 🌈',
           discardChanges: 'Descartar as alterações e fechar?',
           stillSigningIn: "Ainda estamos a voltar a ligar à tua conta, por isso este registo ainda não foi guardado. Verifica a tua ligação e toca em Guardar novamente daqui a pouco.",
+          savedOnPhone: "Guardado neste dispositivo. Será copiado para a tua conta assim que estiveres online.",
         },
         stats: {
           heading: 'O Teu Percurso',
@@ -14303,6 +14309,7 @@
           selectMood: 'Kies je stemming! 🌈',
           discardChanges: 'Wijzigingen verwerpen en sluiten?',
           stillSigningIn: "We maken nog opnieuw verbinding met je account, dus deze invoer is nog niet opgeslagen. Controleer je verbinding en tik zo meteen nog een keer op Opslaan.",
+          savedOnPhone: "Opgeslagen op dit apparaat. Het wordt in je account bewaard zodra je online bent.",
         },
         stats: {
           heading: 'Jouw Reis',
@@ -16412,6 +16419,7 @@
           selectMood: 'Wybierz swój nastrój! 🌈',
           discardChanges: 'Odrzucić zmiany i zamknąć?',
           stillSigningIn: "Wciąż łączymy się ponownie z Twoim kontem, więc ten wpis nie został jeszcze zapisany. Sprawdź połączenie i za chwilę ponownie dotknij Zapisz.",
+          savedOnPhone: "Zapisano na tym urządzeniu. Kopia trafi na Twoje konto, gdy tylko będziesz online.",
         },
         stats: {
           heading: 'Twoja podróż',
@@ -18513,6 +18521,7 @@
           selectMood: 'Välj ditt humör! 🌈',
           discardChanges: 'Kasta ändringarna och stänga?',
           stillSigningIn: "Vi återansluter fortfarande till ditt konto, så den här anteckningen har inte sparats än. Kontrollera din anslutning och tryck på Spara igen om en stund.",
+          savedOnPhone: "Sparat på den här enheten. Det säkerhetskopieras till ditt konto så snart du är online.",
         },
         stats: {
           heading: 'Din resa',
@@ -20610,6 +20619,7 @@
           selectMood: '请选择你的心情！🌈',
           discardChanges: '放弃更改并关闭？',
           stillSigningIn: "我们仍在重新连接你的账户，所以这条记录尚未保存。请检查网络连接，稍后再点按保存。",
+          savedOnPhone: "已保存在此设备上。联网后会自动备份到你的账户。",
         },
         stats: {
           heading: '你的历程',

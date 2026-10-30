@@ -663,6 +663,10 @@
     .fm-done-del  { border-color: #ffc9c9 !important; color: #c92a2a !important; background: #fff5f5 !important; } /* #e03131 was 4.2:1 */
     .fm-done-save { --wb-color: var(--fm-accent, var(--brand-primary)); background: var(--fm-accent-btn, var(--brand-btn)) !important; color: var(--fm-accent-btn-text, #fff) !important; border-color: transparent !important; box-shadow: var(--fm-accent-btn-ring, none); }
     .fm-done-save.grey { background: #adb5bd !important; color: #fff !important; box-shadow: none; }
+    /* A save under way (saveAndOpenJournal): dimmed and pulsing, so a slow one doesn't look frozen. */
+    body.bb-entry-saving .fm-done-save, body.bb-entry-saving #submitBtn { opacity: .6; pointer-events: none; animation: bbEntrySaving 1.2s ease-in-out infinite; }
+    @keyframes bbEntrySaving { 50% { opacity: .35; } }
+    @media (prefers-reduced-motion: reduce) { body.bb-entry-saving .fm-done-save, body.bb-entry-saving #submitBtn { animation: none; } }
     .fm-wheel-btn {
       scroll-snap-align: center;
       touch-action: pan-x;
