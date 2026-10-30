@@ -1922,7 +1922,9 @@
 //   (_awaitEntryWrite), and the save buttons dim and pulse while a save is
 //   under way. Touches js/journal.js, css/journal.css,
 //   js/shared/i18n.js (journal.toast.savedOnPhone, 10 languages).
-const CACHE_NAME = 'bipolarbear-v392';
+// v393: version 1.47 (_APP_VERSION in js/shared/brand-config.js), for the
+//   App Store build Bear 1.47 (68): the v392 save fix (Anonymous unchanged).
+const CACHE_NAME = 'bipolarbear-v393';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
