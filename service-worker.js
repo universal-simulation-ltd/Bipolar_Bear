@@ -1924,7 +1924,13 @@
 //   js/shared/i18n.js (journal.toast.savedOnPhone, 10 languages).
 // v393: version 1.47 (_APP_VERSION in js/shared/brand-config.js), for the
 //   App Store build Bear 1.47 (68): the v392 save fix (Anonymous unchanged).
-const CACHE_NAME = 'bipolarbear-v393';
+// v394: Board: press and hold a post, then Delete / Unpin / SOS / Report /
+//   Mute did nothing on an iPhone (James's video, 2026-10-30). The long press
+//   left its "swallow the next click" flag set (an iPhone sends no click
+//   after one), and it swallowed the sheet's click on the post's hidden
+//   button. Now only a real click within 600 ms of the lift is swallowed.
+//   Touches js/anonymous.js (bindLongPress); scripts/test-anon-longpress-sheet.mjs.
+const CACHE_NAME = 'bipolarbear-v394';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

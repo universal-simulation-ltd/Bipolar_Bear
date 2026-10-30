@@ -1145,9 +1145,12 @@ function moreMenuHtml(items) {
 // Press and hold a post or reply: same sheet as ⋯. Delegated on a container
 // that outlives its re-renders. A move of more than a few pixels is a scroll,
 // not a press; the click that follows a long press is swallowed so it doesn't
-// also open the thread or like the post.
+// also open the thread or like the post. Only a real click straight after the
+// finger lifts: an iPhone sends none after a long press, and a flag left set
+// swallowed the sheet's own click on the hidden Delete / Unpin / Report button
+// instead, so those did nothing at all (James's video, 2026-10-30).
 function bindLongPress(container, selector) {
-  let timer = null, startX = 0, startY = 0, card = null, fired = false;
+  let timer = null, startX = 0, startY = 0, card = null, fired = false, swallowUntil = 0;
   const cancel = () => { clearTimeout(timer); timer = null; if (card) card.classList.remove('pressing'); card = null; };
   container.addEventListener('touchstart', e => {
     if (e.touches.length !== 1) return cancel();
@@ -1169,10 +1172,16 @@ function bindLongPress(container, selector) {
     const t = e.touches[0];
     if (Math.abs(t.clientX - startX) > 8 || Math.abs(t.clientY - startY) > 8) cancel();
   }, { passive: true });
-  container.addEventListener('touchend', cancel, { passive: true });
-  container.addEventListener('touchcancel', cancel, { passive: true });
+  const lift = () => {
+    if (fired) { fired = false; swallowUntil = Date.now() + 600; }
+    cancel();
+  };
+  container.addEventListener('touchend', lift, { passive: true });
+  container.addEventListener('touchcancel', lift, { passive: true });
   container.addEventListener('click', e => {
-    if (fired) { fired = false; e.stopPropagation(); e.preventDefault(); }
+    if (!e.isTrusted || Date.now() > swallowUntil) return;
+    swallowUntil = 0;
+    e.stopPropagation(); e.preventDefault();
   }, true);
   container.addEventListener('contextmenu', e => { if (e.target.closest(selector)) e.preventDefault(); });
 }
