@@ -2,12 +2,15 @@
 #
 # bump-version.sh — bump the BipolarBear app version across BOTH repos at once.
 #
-# Unified scheme: build number N  ->  marketing version "1.N".
+# Scheme: build number N  ->  marketing version "1.N", unless you give the
+# version. Bear's builds have run ahead of its versions since 1.47 (build 68), so
+# give it: `bump-version.sh 69` once made 1.69 instead of 1.48 (2026-11-02).
 # Single command instead of hand-editing the web repo and the native repo
 # separately (which is how they drifted apart before).
 #
-# Usage:   scripts/bump-version.sh <buildNumber>
-#   e.g.   scripts/bump-version.sh 13      # -> version 1.13, build 13
+# Usage:   scripts/bump-version.sh <buildNumber> [marketingVersion]
+#   e.g.   scripts/bump-version.sh 70 1.49 # -> version 1.49, build 70
+#          scripts/bump-version.sh 13      # -> version 1.13, build 13
 #
 # Native repo path defaults to ~/Github/UNISIM/Bipolar_Bear_Mobile/bipolarbear-native
 # (see local notes). Override:
@@ -21,7 +24,8 @@ set -euo pipefail
 
 BUILD="${1:?Usage: bump-version.sh <buildNumber>   (e.g. 13 -> v1.13 build 13)}"
 [[ "$BUILD" =~ ^[0-9]+$ ]] || { echo "error: build number must be an integer, got '$BUILD'"; exit 1; }
-VER="1.$BUILD"
+VER="${2:-1.$BUILD}"
+[[ "$VER" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]] || { echo "error: version must look like 1.49, got '$VER'"; exit 1; }
 
 WEB="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
