@@ -1957,7 +1957,9 @@
 //   sheet for the phone's country) and Bipolar Anonymous (on the board:
 //   "Say hello here", a new post). Touches js/shared/awareness.js,
 //   js/shared/i18n-awareness.js.
-const CACHE_NAME = 'bipolarbear-v398';
+// v399: Release Bear 1.48 (69) + Bipolar Anonymous 1.44 (52)
+//   (scripts/bump-version.sh 69: _APP_VERSION 1.48). Same files as v398.
+const CACHE_NAME = 'bipolarbear-v399';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
