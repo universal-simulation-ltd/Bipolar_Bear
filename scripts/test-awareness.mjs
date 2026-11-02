@@ -34,7 +34,11 @@ check('hidden this year, back next year', () => {
 });
 check('Halloween: 3 days before', () => { const e = A.current(d('2027-10-28'), world); assert.equal(e.id, 'hal'); assert.equal(e.daysLeft, 3); });
 check('Christmas Eve: Christmas tomorrow', () => { const e = A.current(d('2027-12-24'), world); assert.equal(e.id, 'xmas'); assert.equal(e.daysLeft, 1); });
-check('Boxing Day: nothing (Christmas over, New Year 6 days off)', () => assert.equal(A.current(d('2027-12-26'), world), null));
+check('4 December: nothing yet', () => assert.equal(A.current(d('2026-12-04'), world), null));
+check('5 December: Christmas in 20 days, already in its colours', () => { const e = A.current(d('2026-12-05'), world); assert.equal(e.id, 'xmas'); assert.equal(e.daysLeft, 20); assert.ok(A.themed(e)); });
+check('Halloween countdown: no colours until the day', () => { assert.ok(!A.themed(A.current(d('2027-10-28'), world))); assert.ok(A.themed(A.current(d('2027-10-31'), world))); });
+check('only Christmas asks "Feeling lonely?"', () => assert.deepEqual(A.DAYS.filter(x => x.lonely).map(x => x.id), ['xmas']));
+check('Boxing Day: New Year in 6 days', () => { const e = A.current(d('2027-12-26'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 6); assert.ok(!A.themed(e)); });
 check('27 December: New Year in 5 days', () => { const e = A.current(d('2027-12-27'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 5); assert.equal(e.year, 2028); });
 check("New Year's Eve: tomorrow", () => { const e = A.current(d('2027-12-31'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 1); });
 check("New Year's Day: today", () => { const e = A.current(d('2028-01-01'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 0); });

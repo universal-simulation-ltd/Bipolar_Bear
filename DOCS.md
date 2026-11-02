@@ -3046,15 +3046,27 @@ for the day (from -5 days with a countdown)", World Bipolar Day and any others.
 - **Holidays (v397, James: "themes for Christmas, Halloween etc"):**
   **Halloween** 31 Oct (`hal`, 🎃, lavender to pumpkin), **Christmas Day** 25 Dec
   (`xmas`, 🎄, snowy blue with two layers of snow dots), **New Year's Day** 1 Jan
-  (`ny`, 🎉, champagne gold with sparkles; its countdown starts 27 Dec, the day
+  (`ny`, 🎉, champagne gold with sparkles; its countdown starts 27 Dec (26 Dec from v398), the day
   after Boxing Day, since only the nearest day shows). Everyone, and the words
   are gentle on purpose: holidays are hard for many people with bipolar
   ("Christmas can be a lot. Go gently, and reach out if you need to.").
+- **Christmas, a festive period (v398, James: "from 5 December"):** a day
+  can set its own `lead` (countdown days; default `LEAD` = 5) and
+  `themeEarly: true` (wear the colours for the whole countdown, not just the
+  day). `xmas` has `lead: 20, themeEarly: true`, so the card and the snowy
+  home run 5–25 Dec; `ny` has `lead: 6`, so it takes over on Boxing Day.
+  `themed(ev)` decides the colours. `xmas` also has `lonely: true`: its card
+  asks "Feeling lonely this Christmas?" with two `[data-aware-go]` buttons.
+  `help` taps `#board-help-btn` on the board (🛟 Help sheet) or calls
+  `openChatModal()` (fab.js, 🆘 sheet) on the home page, both with the crisis
+  lines for the phone's country. `anon` taps `#fab-compose` on the board
+  ("Say hello here") or `#anonymousBtn` on the home page (which handles the
+  signed-out lock), else goes to anonymous.html.
 - **Testing:** `localStorage.bbAwareToday = '2027-03-27'` or
   `?awareDate=2027-03-27` pretends it is that date.
-  `node scripts/test-awareness.mjs` (16 checks: the 5-day window, the day,
+  `node scripts/test-awareness.mjs` (20 checks: the 5-day window, the day,
   the day after, the first-Thursday rule for 2027 / 2028, UK only, hidden for
-  one year only, and the December hand-over from Christmas to New Year).
+  one year only, Christmas from 5 December in its colours, only Christmas asking "Feeling lonely?", and the December hand-over to New Year on Boxing Day).
 - **Add a day:** one `DAYS` entry (`month` + `day`, or `month` + `nth` +
   `weekday`; `region`; `theme`), `<id>Name` / `<id>About` in all ten languages,
   and a gradient in the module's CSS if `theme: true`.

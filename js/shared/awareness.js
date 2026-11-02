@@ -3,7 +3,7 @@
  * and the board (James, 2026-11-02: "a theme for the day (from -5 days with a
  * countdown)", World Bipolar Day and any others).
  *
- * From LEAD days before a day, a card counts down to it ("3 days to go",
+ * From LEAD days (or the day's own `lead`) before a day, a card counts down to it ("3 days to go",
  * "Tomorrow"); on the day itself the card says "Today" and, where the page
  * asks for it, <html> gets `bb-aware-day bb-aware-<id>` so the page wears the day's colours
  * (Bipolar Bear's home only; the board keeps its yellow). "Hide" hides the
@@ -19,9 +19,19 @@
  * And the holidays (James, 2026-11-02: "themes for Christmas, Halloween etc"),
  * with gentle words, since holidays are hard for many people with bipolar:
  *   hal   Halloween, 31 October (🎃, lavender to pumpkin).
- *   xmas  Christmas Day, 25 December (🎄, snowy blue).
+ *   xmas  Christmas Day, 25 December (🎄, snowy blue). A longer festive
+ *         period (James, 2026-11-02: "from 5 December"): the countdown and the
+ *         colours both run from 5 December.
+ *         Its card also asks "Feeling lonely this Christmas?" (James,
+ *         2026-11-02) with two buttons: someone to talk to (the 🆘 sheet on
+ *         the home page, the 🛟 Help sheet on the board, both with the lines
+ *         for the phone's country) and Bipolar Anonymous (on the board itself:
+ *         write a post).
  *   ny    New Year's Day, 1 January (🎉, champagne gold). Its countdown starts
- *         on 27 December, after Christmas Day.
+ *         on 26 December, the day after Christmas Day.
+ * A day can set its own `lead` (countdown days, default LEAD) and
+ * `themeEarly: true` (wear the colours for the whole countdown, not just on
+ * the day).
  * Left out on purpose: World Suicide Prevention Day (10 Sept), since a
  * countdown and party colours are wrong for it; and Mental Health Awareness
  * Week, whose dates move each year.
@@ -44,8 +54,8 @@
     { id: 'wmhd', emoji: '💚', month: 10, day: 10, theme: true },
     { id: 'ttt',  emoji: '💬', month: 2,  nth: 1, weekday: 4, region: 'GB', theme: false },
     { id: 'hal',  emoji: '🎃', month: 10, day: 31, theme: true },
-    { id: 'xmas', emoji: '🎄', month: 12, day: 25, theme: true },
-    { id: 'ny',   emoji: '🎉', month: 1,  day: 1,  theme: true },
+    { id: 'xmas', emoji: '🎄', month: 12, day: 25, theme: true, lead: 20, themeEarly: true, lonely: true },
+    { id: 'ny',   emoji: '🎉', month: 1,  day: 1,  theme: true, lead: 6 },
   ];
 
   /** Local midnight of the rule's date in `year`. */
@@ -72,7 +82,7 @@
       [today.getFullYear(), today.getFullYear() + 1].forEach(function (y) {
         var date = dateOf(d, y);
         var left = daysBetween(today, date);
-        if (left < 0 || left > LEAD) return;
+        if (left < 0 || left > (d.lead || LEAD)) return;
         if (hidden.indexOf(d.id + ':' + y) !== -1) return;
         if (!best || left < best.daysLeft) best = { id: d.id, day: d, date: date, daysLeft: left, year: y };
       });
@@ -80,8 +90,11 @@
     return best;
   }
 
+  /** Whether the page wears the day's colours today. */
+  function themed(ev) { return !!(ev && ev.day.theme && (ev.daysLeft === 0 || ev.day.themeEarly)); }
+
   if (typeof module === 'object' && module.exports) {
-    module.exports = { current: current, dateOf: dateOf, DAYS: DAYS, LEAD: LEAD };
+    module.exports = { current: current, dateOf: dateOf, DAYS: DAYS, LEAD: LEAD, themed: themed };
     return;
   }
 
@@ -112,14 +125,22 @@
   function currentHere() { return current(now(), { inRegion: inRegion, hidden: hiddenList() }); }
 
   var CSS =
-    '.bbaw-card{position:relative;display:flex;gap:12px;align-items:flex-start;text-align:left;margin:0 0 14px;padding:12px 40px 12px 14px;' +
+    '.bbaw-card{position:relative;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;text-align:left;margin:0 0 14px;padding:12px 40px 12px 14px;' +
       'border-radius:16px;background:rgba(255,255,255,.94);color:#3b2a1a;box-shadow:0 4px 14px rgba(0,0,0,.12);font-size:.88em;line-height:1.4}' +
     '.bbaw-emoji{font-size:1.9em;line-height:1;flex:none}' +
+    '.bbaw-emoji+div{flex:1;min-width:0}' +
     '.bbaw-when{display:inline-block;font-size:.78em;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px;background:#fff3bf;color:#7a4a00;margin-bottom:3px}' +
     '.bbaw-today .bbaw-when{background:#1f3c88;color:#fff}' +
     '.bbaw-name{font-weight:800;font-size:1.06em}' +
     '.bbaw-about{margin-top:2px;opacity:.85}' +
     '.bbaw-x{position:absolute;top:6px;right:6px;width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:inherit;opacity:.55;font-size:1.05em;cursor:pointer}' +
+    '.bbaw-lonely{flex-basis:100%;margin:-2px -26px 0 0;padding-top:9px;border-top:1px solid rgba(0,0,0,.08);text-align:center}' +
+    '.bbaw-lonely-q{font-weight:700}' +
+    '.bbaw-lonely-btns{display:flex;gap:8px;margin-top:7px}' +
+    '.bbaw-btn{flex:1 1 0;min-width:0;min-height:40px;padding:8px 8px;line-height:1.25;border-radius:999px;border:1px solid #d9c7b0;background:#fff8ef;color:#3b2a1a;font:inherit;font-weight:700;font-size:.92em;cursor:pointer}' +
+    '.bbaw-btn:focus-visible{outline:2px solid currentColor}' +
+    'html.theme-dark .bbaw-lonely{border-top-color:#4a3d31}' +
+    'html.theme-dark .bbaw-btn{background:#3a2e24;border-color:#5a4a3b;color:#f3e9dc}' +
     '.bbaw-x:focus-visible{outline:2px solid currentColor;opacity:1}' +
     'html.theme-dark .bbaw-card{background:#2a221b;color:#f3e9dc;box-shadow:none;border:1px solid #4a3d31}' +
     'html.theme-dark .bbaw-when{background:#3d2a12;color:#ffc078}' +
@@ -151,14 +172,25 @@
     document.head.appendChild(s);
   }
 
-  function cardHtml(ev) {
+  /** "Feeling lonely this Christmas?" and its two buttons. */
+  function lonelyHtml(page) {
+    return '<div class="bbaw-lonely"><div class="bbaw-lonely-q">' + esc(t('lonelyQ')) + '</div>' +
+      '<div class="bbaw-lonely-btns">' +
+        '<button type="button" class="bbaw-btn" data-aware-go="help">' + esc(t('lonelyHelp')) + '</button>' +
+        '<button type="button" class="bbaw-btn" data-aware-go="anon">' + esc(t(page === 'board' ? 'lonelyPost' : 'lonelyAnon')) + '</button>' +
+      '</div></div>';
+  }
+
+  function cardHtml(ev, opts) {
     if (!ev) return '';
+    var page = (opts && opts.page) || 'home';
     var when = ev.daysLeft === 0 ? t('today') : ev.daysLeft === 1 ? t('tomorrow') : t('daysToGo', { n: ev.daysLeft });
     return '<div class="bbaw-card' + (ev.daysLeft === 0 ? ' bbaw-today' : '') + '" data-aware="' + esc(ev.id + ':' + ev.year) + '">' +
       '<div class="bbaw-emoji" aria-hidden="true">' + ev.day.emoji + '</div>' +
       '<div><span class="bbaw-when">' + esc(when) + '</span>' +
       '<div class="bbaw-name">' + esc(t(ev.id + 'Name')) + '</div>' +
       '<div class="bbaw-about">' + esc(t(ev.id + 'About')) + '</div></div>' +
+      (ev.day.lonely ? lonelyHtml(page) : '') +
       '<button type="button" class="bbaw-x" data-aware-hide aria-label="' + esc(t('hideAria')) + '">✕</button>' +
     '</div>';
   }
@@ -175,7 +207,21 @@
     cl.remove('bb-aware-day');
     DAYS.forEach(function (d) { cl.remove('bb-aware-' + d.id); });
   }
+  /** The lonely buttons: help → the crisis sheet; anon → the board (or, on it, a new post). */
+  function go(where) {
+    function tap(id) { var el = document.getElementById(id); if (el) { el.click(); return true; } return false; }
+    if (where === 'help') {
+      if (tap('board-help-btn')) return;
+      if (typeof window.openChatModal === 'function') window.openChatModal();
+      return;
+    }
+    if (tap('fab-compose')) return;
+    if (tap('anonymousBtn')) return;
+    location.href = 'anonymous.html';
+  }
   document.addEventListener('click', function (e) {
+    var g = e.target && e.target.closest && e.target.closest('[data-aware-go]');
+    if (g) { go(g.getAttribute('data-aware-go')); return; }
     var b = e.target && e.target.closest && e.target.closest('[data-aware-hide]');
     if (!b) return;
     var card = b.closest('.bbaw-card');
@@ -190,7 +236,7 @@
     if (!ev) { slot.innerHTML = ''; return; }
     ensureCss();
     slot.innerHTML = cardHtml(ev);
-    if (ev.daysLeft === 0 && ev.day.theme) {
+    if (themed(ev)) {
       document.documentElement.classList.add('bb-aware-day', 'bb-aware-' + ev.id);
       var logo = document.querySelector('.logo-bounce-wrapper');
       if (logo) logo.setAttribute('data-aware-emoji', ev.day.emoji);
@@ -201,7 +247,7 @@
     var ev = currentHere();
     if (!ev) return '';
     ensureCss();
-    return cardHtml(ev);
+    return cardHtml(ev, { page: 'board' });
   }
 
   BB.awareness = { current: currentHere, cardHtml: cardHtml, mountHome: mountHome, boardHtml: boardHtml, DAYS: DAYS };

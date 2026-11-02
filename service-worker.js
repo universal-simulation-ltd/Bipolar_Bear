@@ -1950,7 +1950,14 @@
 //   (31 Oct, lavender to pumpkin), Christmas Day (25 Dec, snowy blue) and New
 //   Year's Day (1 Jan, champagne gold; its countdown starts 27 Dec), with
 //   gentle words. Touches js/shared/awareness.js, js/shared/i18n-awareness.js.
-const CACHE_NAME = 'bipolarbear-v397';
+// v398: Christmas is a longer festive period (James, 2026-11-02: "from 5
+//   December"): its countdown and snowy colours both run from 5 December;
+//   New Year's countdown starts on Boxing Day. The Christmas card also asks
+//   "Feeling lonely this Christmas?" with "Talk to someone" (the crisis
+//   sheet for the phone's country) and Bipolar Anonymous (on the board:
+//   "Say hello here", a new post). Touches js/shared/awareness.js,
+//   js/shared/i18n-awareness.js.
+const CACHE_NAME = 'bipolarbear-v398';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
