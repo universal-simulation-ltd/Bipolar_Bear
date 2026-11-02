@@ -1,0 +1,8 @@
+Bipolar Anonymous is a free peer-support board for people living with bipolar disorder. Members post under a moniker, never a real name, and get replies from people who know the highs and lows first-hand.
+
+What's new this autumn:
+• A safety net: when a post sounds like a crisis, the Friendly neighbourhood Bipolar Bear replies within seconds with crisis lines for the reader's own country and language, and a moderator is told so a person can check in.
+• Read the board in your language: posts and the community wiki are machine-translated across 11 languages, with the original one tap away.
+• More private: posts, replies and profiles no longer carry an account ID, and an email address is deleted as soon as its sign-in code is used.
+• "I needed this today" works without an account.
+• Medicine names in posts link to their wiki page.

@@ -1,0 +1,10 @@
+Bipolar Bear is a free mood journal for people living with bipolar disorder. Log mood, energy and sleep in under a minute with five mood bears, see the patterns on a life chart, and keep a survival kit for the hard days.
+
+What's new this autumn:
+• My medicines: every medicine in one place, a reminder for each, and Taken or a mood logged straight from the notification.
+• Blood results on the mood charts.
+• Five guided breathing exercises in the Survival Kit.
+• Your week: a few plain sentences about the last 7 days, worked out on the phone.
+• A Safety plan widget for the lock screen, with the person's support number.
+• Sign in with Apple, Google or a passkey, and unlock with Face ID. Personal details, medicines and the survival kit are encrypted on the device before they sync.
+• Feels like an iPhone app: sheets that swipe away, and swipe to delete with Undo.
