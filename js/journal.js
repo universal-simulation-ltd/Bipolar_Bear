@@ -7334,9 +7334,19 @@ function _tt(k, vars, fallback) {
       document.getElementById('focusedModeCard').classList.toggle('fm-plain-fit', !_isHeroStep);
       // Mood step: lets the CSS give the first card a bit more height/presence.
       document.getElementById('focusedModeCard').classList.toggle('fm-step-mood', step.id === 'mood');
-      // setTimeout(0), not rAF: rAF can starve in a backgrounded/hidden WebView
-      // and the wheel would never get its initial centring + hero paint.
-      if (_hasWheel) setTimeout(_fmInitWheel, 0);
+      // Centre the wheel + paint the hero BEFORE the browser's next paint.
+      // Deferring it (it used to be setTimeout(0) every time) let one frame
+      // through with the wheel at scrollLeft 0 — Manic under the dial and an
+      // empty hero — before it snapped to Stable: the "jump" on first opening
+      // the journal form (2026-11-02). The card is already display:flex here,
+      // so reading clientWidth forces layout and the maths is right. Only when
+      // the wheel has no layout yet (hidden container) fall back to
+      // setTimeout(0) — not rAF, which can starve in a backgrounded WebView.
+      if (_hasWheel) {
+        const _wh = document.getElementById('fmWheel');
+        if (_wh && _wh.clientWidth > 0) _fmInitWheel();
+        else setTimeout(_fmInitWheel, 0);
+      }
       if (step.id === 'notes') setTimeout(() => { const ta = document.getElementById('fmNotesInput'); if (ta) ta.focus(); }, 120);
       // Auto-sync health data if setting is ON
       if (BB.storage.get('HealthSyncEnabled') === '1') {
