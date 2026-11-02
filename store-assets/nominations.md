@@ -26,10 +26,14 @@ end-to-end encrypted; Bipolar Bear is not a medical device.
 
 - **Name:** World Bipolar Day: Bipolar Bear and Bipolar Anonymous
 - **Publish:** 23–31 March 2027 · **Supplemental material:** https://www.bipolarbear.app/
-- **Stronger with an In-App Event** (e.g. a World Bipolar Day board thread or a
-  week of journal prompts). None exists yet (`hasInAppEvents: false`); once
-  Apple approves one, attach it to this draft before submitting. Submit by early
-  January 2027 at the latest.
+- **In-App Events: DRAFTS in ASC (2026-11-02)**, "World Bipolar Day", badge
+  Special Event, all territories, shown from 11 March, running 25–31 March 2027
+  (the app's own countdown, DOCS §2.33, v396): **Bear `6829691851`**,
+  **Anonymous `6829691972`** (`asc-app-events.mjs`; en-GB only so far).
+  **Still needed before they can go to review:** an event card image (16:9,
+  1920×1080) and a details-page image (9:16, 1080×1920) for each, and a phone
+  build carrying v396 live before March. Once Apple approves an event, attach it
+  to this nomination (`hasInAppEvents`) and submit it, by early January 2027.
 
 ```
 30 March is World Bipolar Day. Bipolar Bear and Bipolar Anonymous are two free apps from the same small UK team, made for people living with bipolar disorder, and they work together.
