@@ -1964,7 +1964,14 @@
 //   previews each awareness day / holiday (first countdown day, Tomorrow, On
 //   the day) on this device for 24 h. Touches js/shared/awareness.js,
 //   index.html, js/index.js.
-const CACHE_NAME = 'bipolarbear-v400';
+// v401: The journal form opens without jumping, flashing or buzzing
+//   (2026-11-02). The mood wheel was centred in a setTimeout(0), so one frame
+//   painted Manic under the dial with an empty hero before it snapped to
+//   Stable: it is now centred before the first paint. The wheel's first colour
+//   wash skips the card's background fade (it flashed cream → tint on open and
+//   on every Health re-render), and the automatic Health imports on open no
+//   longer buzz the phone (only a tap on Sync does). Touches js/journal.js.
+const CACHE_NAME = 'bipolarbear-v401';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
