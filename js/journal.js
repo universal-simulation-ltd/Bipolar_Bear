@@ -7208,15 +7208,22 @@ function _tt(k, vars, fallback) {
      * tint the form to a pale version of that slot's colour. Falls back to the
      * mood-based default (_fmApplyMoodTheme) when the slot has no colour.
      */
-    function _fmApplyWheelBg(color) {
+    // `instant` skips the CSS background fade. The wheel's first paint on each
+    // render passes it: _fmApplyMoodTheme has just set the plain (cream / dark)
+    // card colour, so fading from there to the tint flashed the whole card
+    // every time the form opened, and again when a Health import re-rendered
+    // the step a moment later (2026-11-02). Spinning the wheel still fades.
+    function _fmApplyWheelBg(color, instant) {
       const bg = _fmPaleTint(color);
       if (!bg) return;
-      const card   = document.getElementById('focusedModeCard');
-      const sticky = document.getElementById('fmNextRow');
-      if (card)   card.style.background = bg;
-      if (sticky) sticky.style.background = bg;
-      const fullCard = document.getElementById('entryFormCard');
-      if (fullCard) fullCard.style.background = bg;
+      const els = ['focusedModeCard', 'fmNextRow', 'entryFormCard']
+        .map(id => document.getElementById(id)).filter(Boolean);
+      if (instant) els.forEach(el => { el.style.transition = 'none'; });
+      els.forEach(el => { el.style.background = bg; });
+      if (instant) {
+        void els[0].offsetWidth; // commit the colour with no transition running
+        els.forEach(el => { el.style.transition = ''; });
+      }
     }
 
     function _renderFocusedStep() {
@@ -7633,7 +7640,7 @@ function _tt(k, vars, fallback) {
           if (_arrow) _arrow.style.borderTopColor = best.dataset.color || '';
           // Wash the form background with a pale tint of the centred slot's
           // colour, so spinning the wheel previews the mood/energy/sleep hue.
-          _fmApplyWheelBg(best.dataset.color);
+          _fmApplyWheelBg(best.dataset.color, !_settled);
           // Dial tick as the spinner clicks onto a new slot (not on the
           // programmatic initial centring).
           if (_settled) nativeHaptic('light');
@@ -18971,7 +18978,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           stepsEl.textContent = '🏃 ' + BB.t('journal.sync.steps', { n: s >= 1000 ? Math.round(s / 1000) + 'k' : s });
           stepsEl.style.display = '';
         }
-        nativeHaptic('success');
+        // Only a tap on Sync earns the buzz. The automatic import runs the
+        // moment the check-in opens (_fmOpen…), so buzzing there made the phone
+        // vibrate as the form appeared, for nothing the user did (2026-11-02).
+        if (!isAuto) nativeHaptic('success');
         if (btnText) {
           const stepsLabel = s >= 1000 ? Math.round(s / 1000) + 'k' : s;
           btnText.textContent = BB.t('t143.j.energyWithSteps', { steps: stepsLabel });
@@ -19124,7 +19134,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         sleepBtns.forEach(b => { if (parseFloat(b.dataset.sleep) === _bucketVal) closestBtn = b; });
         if (!closestBtn) sleepBtns.forEach(b => { closestBtn = closestBtn || b; }); // fallback
         if (closestBtn) {
-          nativeHaptic('success');
+          if (!isAuto) nativeHaptic('success'); // see importStepsFromHealth
           const roundedH = Math.round(hours * 10) / 10;
           btn.textContent = BB.t('t143.j.sleepWithHours', { h: roundedH });
           btn.disabled = false;
