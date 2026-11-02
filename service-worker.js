@@ -1946,7 +1946,11 @@
 //   precached files js/shared/awareness.js, js/shared/i18n-awareness.js;
 //   touches index.html, anonymous.html, js/index.js, js/anonymous.js,
 //   css/index.css, scripts/build-anonymous.js.
-const CACHE_NAME = 'bipolarbear-v396';
+// v397: Holidays join the awareness days (James, 2026-11-02): Halloween
+//   (31 Oct, lavender to pumpkin), Christmas Day (25 Dec, snowy blue) and New
+//   Year's Day (1 Jan, champagne gold; its countdown starts 27 Dec), with
+//   gentle words. Touches js/shared/awareness.js, js/shared/i18n-awareness.js.
+const CACHE_NAME = 'bipolarbear-v397';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

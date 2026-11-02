@@ -30,9 +30,9 @@ end-to-end encrypted; Bipolar Bear is not a medical device.
   Special Event, all territories, shown from 11 March, running 25–31 March 2027
   (the app's own countdown, DOCS §2.33, v396): **Bear `6829691851`**,
   **Anonymous `6829691972`** (`asc-app-events.mjs`; en-GB only so far).
-  **Still needed before they can go to review:** an event card image (16:9,
-  1920×1080) and a details-page image (9:16, 1080×1920) for each, and a phone
-  build carrying v396 live before March. Once Apple approves an event, attach it
+  Images uploaded 2026-11-02 (`app-events/wbd-2027/`: card 1920×1080 and
+  details page 1080×1920 per app, made from the real v396 screens).
+  **Still needed before review:** a phone build carrying v396+ live before March. Once Apple approves an event, attach it
   to this nomination (`hasInAppEvents`) and submit it, by early January 2027.
 
 ```

@@ -16,6 +16,12 @@
  *   wmhd  World Mental Health Day, 10 October. Everywhere.
  *   ttt   Time to Talk Day, the first Thursday of February. UK only (a UK
  *         campaign): a device on Europe/London time or with an -GB language.
+ * And the holidays (James, 2026-11-02: "themes for Christmas, Halloween etc"),
+ * with gentle words, since holidays are hard for many people with bipolar:
+ *   hal   Halloween, 31 October (🎃, lavender to pumpkin).
+ *   xmas  Christmas Day, 25 December (🎄, snowy blue).
+ *   ny    New Year's Day, 1 January (🎉, champagne gold). Its countdown starts
+ *         on 27 December, after Christmas Day.
  * Left out on purpose: World Suicide Prevention Day (10 Sept), since a
  * countdown and party colours are wrong for it; and Mental Health Awareness
  * Week, whose dates move each year.
@@ -37,6 +43,9 @@
     { id: 'wbd',  emoji: '🌻', month: 3,  day: 30, theme: true },
     { id: 'wmhd', emoji: '💚', month: 10, day: 10, theme: true },
     { id: 'ttt',  emoji: '💬', month: 2,  nth: 1, weekday: 4, region: 'GB', theme: false },
+    { id: 'hal',  emoji: '🎃', month: 10, day: 31, theme: true },
+    { id: 'xmas', emoji: '🎄', month: 12, day: 25, theme: true },
+    { id: 'ny',   emoji: '🎉', month: 1,  day: 1,  theme: true },
   ];
 
   /** Local midnight of the rule's date in `year`. */
@@ -120,6 +129,16 @@
     // need a light background (a dark blue was tried and failed on both).
     'html.bb-aware-wbd:not(.theme-dark) body{background:linear-gradient(165deg,#ffe066 0%,#fcc419 40%,#f59f00 100%)}' +
     'html.bb-aware-wmhd:not(.theme-dark) body{background:linear-gradient(165deg,#d3f9d8 0%,#8ce99a 55%,#51cf66 100%)}' +
+    'html.bb-aware-hal:not(.theme-dark) body{background:linear-gradient(165deg,#eebefa 0%,#ffc078 55%,#ff922b 100%)}' +
+    // Snow and sparkle: two repeating layers of dots over the gradient.
+    'html.bb-aware-xmas:not(.theme-dark) body{background:' +
+      'radial-gradient(circle at 20% 30%,rgba(255,255,255,.95) 0 3px,transparent 4px) 0 0/120px 140px,' +
+      'radial-gradient(circle at 70% 70%,rgba(255,255,255,.85) 0 2px,transparent 3px) 0 0/90px 110px,' +
+      'linear-gradient(165deg,#e7f5ff 0%,#a5d8ff 60%,#74c0fc 100%)}' +
+    'html.bb-aware-ny:not(.theme-dark) body{background:' +
+      'radial-gradient(circle at 25% 20%,rgba(255,255,255,.95) 0 2.5px,transparent 3.5px) 0 0/130px 150px,' +
+      'radial-gradient(circle at 75% 65%,rgba(255,255,255,.8) 0 1.5px,transparent 2.5px) 0 0/85px 105px,' +
+      'linear-gradient(165deg,#fff9db 0%,#ffe066 55%,#fab005 100%)}' +
     // …and the day's emoji tucked on the logo's corner, light and dark.
     'html.bb-aware-day .logo-bounce-wrapper{position:relative}' +
     'html.bb-aware-day .logo-bounce-wrapper::after{content:attr(data-aware-emoji);position:absolute;right:-14px;top:-10px;font-size:40px;line-height:1;' +

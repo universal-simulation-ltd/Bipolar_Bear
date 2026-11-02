@@ -3,7 +3,8 @@
  * Date checks for the awareness-day card (js/shared/awareness.js, v396): the
  * countdown starts 5 days before, the day itself is "today", it is gone the
  * day after, Time to Talk Day (first Thursday of February) shows only in the
- * UK, and a hidden day stays hidden for that year only.
+ * UK, a hidden day stays hidden for that year only, and the holidays
+ * (Halloween, Christmas, New Year) hand over to each other across December.
  *
  *   node scripts/test-awareness.mjs
  */
@@ -27,9 +28,14 @@ check('World Mental Health Day, 10 Oct', () => { const e = A.current(d('2027-10-
 check('Time to Talk Day 2027 is Thu 4 Feb', () => assert.equal(A.dateOf(A.DAYS.find(x => x.id === 'ttt'), 2027).toDateString(), new Date(2027, 1, 4).toDateString()));
 check('Time to Talk Day 2028 is Thu 3 Feb', () => assert.equal(A.dateOf(A.DAYS.find(x => x.id === 'ttt'), 2028).toDateString(), new Date(2028, 1, 3).toDateString()));
 check('Time to Talk Day: UK only', () => { assert.equal(A.current(d('2027-02-02'), uk).id, 'ttt'); assert.equal(A.current(d('2027-02-02'), world), null); });
-check('a countdown across New Year never misfires (31 Dec)', () => assert.equal(A.current(d('2026-12-31'), uk), null));
 check('hidden this year, back next year', () => {
   assert.equal(A.current(d('2027-03-28'), { ...world, hidden: ['wbd:2027'] }), null);
   assert.equal(A.current(d('2028-03-28'), { ...world, hidden: ['wbd:2027'] }).id, 'wbd');
 });
+check('Halloween: 3 days before', () => { const e = A.current(d('2027-10-28'), world); assert.equal(e.id, 'hal'); assert.equal(e.daysLeft, 3); });
+check('Christmas Eve: Christmas tomorrow', () => { const e = A.current(d('2027-12-24'), world); assert.equal(e.id, 'xmas'); assert.equal(e.daysLeft, 1); });
+check('Boxing Day: nothing (Christmas over, New Year 6 days off)', () => assert.equal(A.current(d('2027-12-26'), world), null));
+check('27 December: New Year in 5 days', () => { const e = A.current(d('2027-12-27'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 5); assert.equal(e.year, 2028); });
+check("New Year's Eve: tomorrow", () => { const e = A.current(d('2027-12-31'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 1); });
+check("New Year's Day: today", () => { const e = A.current(d('2028-01-01'), world); assert.equal(e.id, 'ny'); assert.equal(e.daysLeft, 0); });
 console.log(`\n${n} checks passed`);

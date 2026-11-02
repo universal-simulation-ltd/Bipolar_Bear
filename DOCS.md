@@ -3043,16 +3043,24 @@ for the day (from -5 days with a countdown)", World Bipolar Day and any others.
 - **✕** hides the card and the colours for that day this year (`bbAwareHidden`,
   a device-only list of `<id>:<year>`, not synced, not cleared on logout: it is
   a display preference). Next year it comes back.
+- **Holidays (v397, James: "themes for Christmas, Halloween etc"):**
+  **Halloween** 31 Oct (`hal`, 🎃, lavender to pumpkin), **Christmas Day** 25 Dec
+  (`xmas`, 🎄, snowy blue with two layers of snow dots), **New Year's Day** 1 Jan
+  (`ny`, 🎉, champagne gold with sparkles; its countdown starts 27 Dec, the day
+  after Boxing Day, since only the nearest day shows). Everyone, and the words
+  are gentle on purpose: holidays are hard for many people with bipolar
+  ("Christmas can be a lot. Go gently, and reach out if you need to.").
 - **Testing:** `localStorage.bbAwareToday = '2027-03-27'` or
   `?awareDate=2027-03-27` pretends it is that date.
-  `node scripts/test-awareness.mjs` (11 checks: the 5-day window, the day,
+  `node scripts/test-awareness.mjs` (16 checks: the 5-day window, the day,
   the day after, the first-Thursday rule for 2027 / 2028, UK only, hidden for
-  one year only).
+  one year only, and the December hand-over from Christmas to New Year).
 - **Add a day:** one `DAYS` entry (`month` + `day`, or `month` + `nth` +
   `weekday`; `region`; `theme`), `<id>Name` / `<id>About` in all ten languages,
   and a gradient in the module's CSS if `theme: true`.
-- **App Store:** the World Bipolar Day featuring nomination (store-assets/
-  nominations.md) is stronger with an In-App Event pointing at this.
+- **App Store:** World Bipolar Day In-App Events for both apps (drafts, with
+  their images in `store-assets/app-events/wbd-2027/`) back the World Bipolar
+  Day featuring nomination (store-assets/nominations.md).
 
 ## 3. Algorithm Flowcharts
 
