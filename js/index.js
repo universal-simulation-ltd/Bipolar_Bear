@@ -1700,6 +1700,12 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
     }
     window._profileShowPanel = _profileShowPanel;
 
+    /** The admin's account (the same address as js/anonymous.js ADMIN_EMAIL). */
+    function _isAwareAdmin() {
+      return !!(currentUser && !currentUser.isAnonymous && currentUser.email
+        && currentUser.email.toLowerCase() === 'inbox@jamesmarkey.co.uk');
+    }
+
     /** Open the profile modal (always starts on the Customise panel). */
     window.showProfileModal = function () {
       _renderHomeBtnToggles();
@@ -1710,6 +1716,9 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       const _e2 = document.getElementById('idxProfileEmail');
       if (_e1) _e1.textContent = email;
       if (_e2) _e2.textContent = email;
+      // Admin only: preview the awareness-day / holiday themes (js/shared/awareness.js).
+      const _apBtn = document.getElementById('idxAwarePreviewBtn');
+      if (_apBtn) _apBtn.style.display = _isAwareAdmin() ? '' : 'none';
       // Guest-only sign up / in button on the Customise page
       const _siBtn = document.getElementById('idxCustomiseSignIn');
       if (_siBtn) _siBtn.style.display = currentUser ? 'none' : '';

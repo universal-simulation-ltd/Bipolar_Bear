@@ -1959,7 +1959,12 @@
 //   js/shared/i18n-awareness.js.
 // v399: Release Bear 1.48 (69) + Bipolar Anonymous 1.44 (52)
 //   (scripts/bump-version.sh 69: _APP_VERSION 1.48). Same files as v398.
-const CACHE_NAME = 'bipolarbear-v399';
+// v400: Admin-only "🎨 Preview event themes" (James, 2026-11-02): a sheet
+//   on the home's profile modal, shown only to inbox@jamesmarkey.co.uk, that
+//   previews each awareness day / holiday (first countdown day, Tomorrow, On
+//   the day) on this device for 24 h. Touches js/shared/awareness.js,
+//   index.html, js/index.js.
+const CACHE_NAME = 'bipolarbear-v400';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

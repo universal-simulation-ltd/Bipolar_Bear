@@ -43,11 +43,22 @@
  *
  * Testing: localStorage.bbAwareToday = '2027-03-27' (or ?awareDate=2027-03-27
  * on the page) pretends it is that date; `node scripts/test-awareness.mjs`.
+ *
+ * Admin preview (James, 2026-11-02: "an option (linked to my account only) to
+ * view the theme for each event"): BB.awareness.openPreview() shows a sheet
+ * with every day and three buttons each (first countdown day / Tomorrow /
+ * Today). It stores `bbAwarePreview` = {id, left, until}, which beats the
+ * real date, the region rule and the ✕ list, on the home page and the board,
+ * for 24 hours or until "Back to today". The card shows a "Preview" pill and
+ * its ✕ ends the preview (it never hides the real day). Only the admin's
+ * account sees the button (js/index.js, `_isAwareAdmin`).
  */
 (function (root) {
   'use strict';
   var LEAD = 5;
   var HIDE_KEY = 'bbAwareHidden'; // JSON array of '<id>:<year>'
+  var PREVIEW_KEY = 'bbAwarePreview'; // admin only: {id, left, until}
+  var PREVIEW_MS = 24 * 3600 * 1000;
 
   var DAYS = [
     { id: 'wbd',  emoji: '🌻', month: 3,  day: 30, theme: true },
@@ -122,7 +133,26 @@
     if (s && /^\d{4}-\d\d-\d\d$/.test(s)) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
     return new Date();
   }
-  function currentHere() { return current(now(), { inRegion: inRegion, hidden: hiddenList() }); }
+  /** The admin's preview, if one is set and not yet expired: { id, left }. */
+  function previewGet() {
+    try {
+      var p = JSON.parse(lsGet(PREVIEW_KEY) || 'null');
+      if (!p || !(p.until > Date.now())) return null;
+      for (var i = 0; i < DAYS.length; i++) if (DAYS[i].id === p.id) return { id: p.id, left: Math.max(0, +p.left || 0), day: DAYS[i] };
+    } catch (_) {}
+    return null;
+  }
+  function previewSet(id, left) { lsSet(PREVIEW_KEY, JSON.stringify({ id: id, left: left, until: Date.now() + PREVIEW_MS })); }
+  function previewClear() { try { localStorage.removeItem(PREVIEW_KEY); } catch (_) {} }
+  function currentHere() {
+    var p = previewGet();
+    if (p) {
+      var today = midnight(new Date());
+      var date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + p.left);
+      return { id: p.id, day: p.day, date: date, daysLeft: p.left, year: date.getFullYear(), preview: true };
+    }
+    return current(now(), { inRegion: inRegion, hidden: hiddenList() });
+  }
 
   var CSS =
     '.bbaw-card{position:relative;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;text-align:left;margin:0 0 14px;padding:12px 40px 12px 14px;' +
@@ -142,6 +172,20 @@
     'html.theme-dark .bbaw-lonely{border-top-color:#4a3d31}' +
     'html.theme-dark .bbaw-btn{background:#3a2e24;border-color:#5a4a3b;color:#f3e9dc}' +
     '.bbaw-x:focus-visible{outline:2px solid currentColor;opacity:1}' +
+    '.bbaw-prev{display:inline-block;margin-left:6px;font-size:.78em;font-weight:800;padding:2px 8px;border-radius:999px;background:#e03131;color:#fff}' +
+    // The admin's preview sheet.
+    '.bbaw-sheet-bg{position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}' +
+    '.bbaw-sheet{width:100%;max-width:480px;max-height:85vh;overflow:auto;box-sizing:border-box;padding:18px 16px calc(18px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;background:#fff;color:#3b2a1a;font-size:15px}' +
+    '.bbaw-sheet h3{margin:0 0 4px;text-align:center}' +
+    '.bbaw-sheet-note{margin:0 0 12px;text-align:center;font-size:.82em;opacity:.75}' +
+    '.bbaw-row{padding:10px 0;border-top:1px solid rgba(0,0,0,.08)}' +
+    '.bbaw-row-name{font-weight:700;margin-bottom:6px}' +
+    '.bbaw-row-btns{display:flex;gap:6px}' +
+    '.bbaw-row-btns .bbaw-btn{font-size:.82em;min-height:38px}' +
+    '.bbaw-row-btns .bbaw-btn.on{background:#1f3c88;border-color:#1f3c88;color:#fff}' +
+    '.bbaw-sheet-foot{display:flex;gap:8px;margin-top:12px}' +
+    'html.theme-dark .bbaw-sheet{background:#2a221b;color:#f3e9dc}' +
+    'html.theme-dark .bbaw-row{border-top-color:#4a3d31}' +
     'html.theme-dark .bbaw-card{background:#2a221b;color:#f3e9dc;box-shadow:none;border:1px solid #4a3d31}' +
     'html.theme-dark .bbaw-when{background:#3d2a12;color:#ffc078}' +
     'html.theme-dark .bbaw-today .bbaw-when{background:#364fc7;color:#fff}' +
@@ -188,6 +232,7 @@
     return '<div class="bbaw-card' + (ev.daysLeft === 0 ? ' bbaw-today' : '') + '" data-aware="' + esc(ev.id + ':' + ev.year) + '">' +
       '<div class="bbaw-emoji" aria-hidden="true">' + ev.day.emoji + '</div>' +
       '<div><span class="bbaw-when">' + esc(when) + '</span>' +
+      (ev.preview ? '<span class="bbaw-prev">Preview</span>' : '') +
       '<div class="bbaw-name">' + esc(t(ev.id + 'Name')) + '</div>' +
       '<div class="bbaw-about">' + esc(t(ev.id + 'About')) + '</div></div>' +
       (ev.day.lonely ? lonelyHtml(page) : '') +
@@ -225,7 +270,10 @@
     var b = e.target && e.target.closest && e.target.closest('[data-aware-hide]');
     if (!b) return;
     var card = b.closest('.bbaw-card');
-    if (card) hide(card.getAttribute('data-aware'));
+    if (!card) return;
+    // During the admin's preview ✕ ends the preview, never hides the real day.
+    if (previewGet()) { previewClear(); refresh(); return; }
+    hide(card.getAttribute('data-aware'));
   });
 
   /** Bipolar Bear's home: the card in `slot`, and the day's colours on the day. */
@@ -250,5 +298,67 @@
     return cardHtml(ev, { page: 'board' });
   }
 
-  BB.awareness = { current: currentHere, cardHtml: cardHtml, mountHome: mountHome, boardHtml: boardHtml, DAYS: DAYS };
+  /** Show the current state again: the home's slot, or (the board) a reload. */
+  function refresh() {
+    var slot = document.getElementById('awarenessSlot');
+    if (slot) { mountHome(slot); return; }
+    document.querySelectorAll('.bbaw-card').forEach(function (el) { el.remove(); });
+    if (document.getElementById('fab-compose')) location.reload();
+  }
+
+  /** The admin's sheet: every day, each as its first countdown day, Tomorrow and Today. */
+  function openPreview() {
+    ensureCss();
+    var old = document.getElementById('bbaw-sheet');
+    if (old) old.remove();
+    var p = previewGet();
+    var bg = document.createElement('div');
+    bg.id = 'bbaw-sheet';
+    bg.className = 'bbaw-sheet-bg';
+    function btn(id, left, label) {
+      var on = p && p.id === id && p.left === left;
+      return '<button type="button" class="bbaw-btn' + (on ? ' on' : '') + '" data-prev-id="' + esc(id) + '" data-prev-left="' + left + '">' + esc(label) + '</button>';
+    }
+    var rows = DAYS.map(function (d) {
+      var lead = d.lead || LEAD;
+      var date = dateOf(d, new Date().getFullYear());
+      var dateStr = '';
+      try { dateStr = date.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (_) {}
+      var tags = [];
+      if (d.region) tags.push(d.region + ' only');
+      if (!d.theme) tags.push('card only, no colours');
+      if (d.themeEarly) tags.push('colours all countdown');
+      return '<div class="bbaw-row"><div class="bbaw-row-name">' + d.emoji + ' ' + esc(t(d.id + 'Name')) +
+        ' <span style="font-weight:400;opacity:.7">· ' + esc(dateStr) + (tags.length ? ' · ' + esc(tags.join(', ')) : '') + '</span></div>' +
+        '<div class="bbaw-row-btns">' + btn(d.id, lead, lead + ' days before') + btn(d.id, 1, 'Tomorrow') + btn(d.id, 0, 'On the day') + '</div></div>';
+    }).join('');
+    var dark = document.documentElement.classList.contains('theme-dark');
+    bg.innerHTML = '<div class="bbaw-sheet" role="dialog" aria-modal="true" aria-label="Preview event themes">' +
+      '<h3>🎨 Preview event themes</h3>' +
+      '<p class="bbaw-sheet-note">Admin only. Shows on this phone for 24 hours (home and board), or until Back to today.' +
+        (dark ? ' <strong>Dark mode is on: the colours only show in light mode.</strong>' : '') + '</p>' +
+      rows +
+      '<div class="bbaw-sheet-foot">' +
+        '<button type="button" class="bbaw-btn" data-prev-clear>↩︎ Back to today</button>' +
+        '<button type="button" class="bbaw-btn" data-prev-close>Close</button>' +
+      '</div></div>';
+    bg.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('button');
+      if (e.target === bg || (b && b.hasAttribute('data-prev-close'))) { bg.remove(); return; }
+      if (!b) return;
+      if (b.hasAttribute('data-prev-clear')) { previewClear(); bg.remove(); refresh(); return; }
+      if (b.hasAttribute('data-prev-id')) {
+        previewSet(b.getAttribute('data-prev-id'), +b.getAttribute('data-prev-left'));
+        bg.remove();
+        refresh();
+        // Bring the card into view so the change is seen at once.
+        var c = document.querySelector('.bbaw-card');
+        if (c && c.scrollIntoView) c.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    });
+    document.body.appendChild(bg);
+  }
+
+  BB.awareness = { current: currentHere, cardHtml: cardHtml, mountHome: mountHome, boardHtml: boardHtml, DAYS: DAYS,
+    openPreview: openPreview, clearPreview: function () { previewClear(); refresh(); } };
 })(typeof window !== 'undefined' ? window : this);

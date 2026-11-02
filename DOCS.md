@@ -3067,6 +3067,16 @@ for the day (from -5 days with a countdown)", World Bipolar Day and any others.
   `node scripts/test-awareness.mjs` (20 checks: the 5-day window, the day,
   the day after, the first-Thursday rule for 2027 / 2028, UK only, hidden for
   one year only, Christmas from 5 December in its colours, only Christmas asking "Feeling lonely?", and the December hand-over to New Year on Boxing Day).
+- **Admin preview (v400, James: "an option (linked to my account only) to
+  view the theme for each event"):** the home's profile modal shows
+  **🎨 Preview event themes (admin)** only to `inbox@jamesmarkey.co.uk`
+  (`_isAwareAdmin` in js/index.js, the same address as `ADMIN_EMAIL`).
+  `BB.awareness.openPreview()` lists every day with three buttons: its first
+  countdown day (`lead`), Tomorrow, On the day. The choice is
+  `bbAwarePreview` = `{id, left, until}` (device only, 24 h), which beats the
+  real date, the region rule and the ✕ list on the home page and the board.
+  The card wears a red "Preview" pill, and its ✕ ends the preview (never hides
+  the real day). Colours show in light mode only, as for real.
 - **Add a day:** one `DAYS` entry (`month` + `day`, or `month` + `nth` +
   `weekday`; `region`; `theme`), `<id>Name` / `<id>About` in all ten languages,
   and a gradient in the module's CSS if `theme: true`.
