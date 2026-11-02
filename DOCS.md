@@ -3040,9 +3040,23 @@ for the day (from -5 days with a countdown)", World Bipolar Day and any others.
   bb-aware-<id>`: a light gradient (sunflower gold / mint green; a dark blue was
   tried and made the brown greeting unreadable) and the day's emoji on the
   logo's corner. Dark mode keeps its background. The board keeps its yellow.
-- **✕** hides the card and the colours for that day this year (`bbAwareHidden`,
-  a device-only list of `<id>:<year>`, not synced, not cleared on logout: it is
-  a display preference). Next year it comes back.
+- **✕ or a sideways swipe** hides the **card only** for that day this year
+  (`bbAwareHidden`, a device-only list of `<id>:<year>`, not synced, not
+  cleared on logout: it is a display preference). Next year it comes back.
+  Since v402 (James: "allow the user to swipe the notification away … so
+  you're reminded of the day even without the notification card") the
+  colours, the logo emoji and the burst stay when the card is gone (before,
+  ✕ hid the colours too).
+- **Reminders without the card (v402):** the day's emoji sits on the logo's
+  corner for the whole countdown (`html.bb-aware-near`), not just on the day.
+  On the day, and through a `themeEarly` period, `burst()` floats 18 of the
+  day's emoji up from the bottom bar (`.fab-footer`) when the home opens: at
+  most once per 5 minutes (`sessionStorage.bbAwareBurstAt`), never with
+  reduced motion. A preview always bursts.
+- **Halloween decorations (v402, James: "a bigger theme like xmas … maybe
+  some pumpkins or spider web"):** a spider web in each top corner (one with a
+  hanging 🕷️) and a loose scatter of 🎃 and 🦇, as generated SVG layers
+  (`webSvg`, `HAL_SCATTER`) over the lavender-to-pumpkin gradient.
 - **Holidays (v397, James: "themes for Christmas, Halloween etc"):**
   **Halloween** 31 Oct (`hal`, 🎃, lavender to pumpkin), **Christmas Day** 25 Dec
   (`xmas`, 🎄, snowy blue with two layers of snow dots), **New Year's Day** 1 Jan
@@ -3075,8 +3089,8 @@ for the day (from -5 days with a countdown)", World Bipolar Day and any others.
   countdown day (`lead`), Tomorrow, On the day. The choice is
   `bbAwarePreview` = `{id, left, until}` (device only, 24 h), which beats the
   real date, the region rule and the ✕ list on the home page and the board.
-  The card wears a red "Preview" pill, and its ✕ ends the preview (never hides
-  the real day). Colours show in light mode only, as for real.
+  The card wears a red "Preview" pill; ✕ / swipe hides the card for the
+  preview only (`cardHidden` in the preview), never the real day. Colours show in light mode only, as for real.
 - **Add a day:** one `DAYS` entry (`month` + `day`, or `month` + `nth` +
   `weekday`; `region`; `theme`), `<id>Name` / `<id>About` in all ten languages,
   and a gradient in the module's CSS if `theme: true`.

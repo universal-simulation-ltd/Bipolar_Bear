@@ -1971,7 +1971,12 @@
 //   wash skips the card's background fade (it flashed cream → tint on open and
 //   on every Health re-render), and the automatic Health imports on open no
 //   longer buzz the phone (only a tap on Sync does). Touches js/journal.js.
-const CACHE_NAME = 'bipolarbear-v401';
+// v402: Awareness days (James, 2026-11-02): the card swipes away (✕ or swipe
+//   hides the card only; the colours stay), the day's emoji sits on the logo
+//   for the whole countdown, a burst of the day's emoji floats up from the
+//   bottom bar on the day, and Halloween gets spider webs, pumpkins and bats.
+//   Touches js/shared/awareness.js.
+const CACHE_NAME = 'bipolarbear-v402';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
