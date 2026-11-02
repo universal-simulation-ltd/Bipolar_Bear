@@ -23,6 +23,7 @@
   <script src="js/shared/i18n.js"></script>
   <script src="js/shared/i18n-signin.js"></script>
   <script src="js/shared/i18n-whatsnew.js"></script>
+  <script src="js/shared/i18n-awareness.js"></script>
   <script src="js/shared/i18n-medsrem.js"></script>
   <script src="js/shared/i18n-medsome.js"></script>
   <script src="js/shared/i18n-breathe.js"></script>
@@ -41,6 +42,7 @@
   <script src="js/shared/mood-queue.js"></script>
   <script src="js/shared/bio-unlock.js"></script>
   <script src="js/shared/whats-new.js"></script>
+  <script src="js/shared/awareness.js"></script>
   <!-- Raises the loading splash before <body> parses, but only when a cached
        Firebase session is really coming back. Must stay synchronous and stay
        ahead of the stylesheet links, or the splash appears over a painted
@@ -155,6 +157,9 @@
       <!-- Time-of-day greeting, the same words as the top of Bipolar Anonymous
            (anon.feed.greet*) — filled by _renderHomeGreeting() in js/index.js. -->
       <div id="homeGreeting" class="home-greeting" aria-live="polite"></div>
+      <!-- Awareness days (World Bipolar Day …): a countdown card from 5 days
+           before, and the day's colours on the day — js/shared/awareness.js. -->
+      <div id="awarenessSlot"></div>
       <div class="btn-container" id="journalContainer">
         <a href="journal.html" onclick="event.preventDefault(); localStorage.setItem('bbPrivacyNoteDismissed','1'); const _pn=document.getElementById('privacyNote'); if(_pn)_pn.style.display='none'; location.replace('journal.html')" class="btn btn-journal" id="journalBtn" style="position:relative;">
           <span class="icon">📔</span>

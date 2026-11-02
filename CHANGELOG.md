@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🌻 **Awareness days: World Bipolar Day, World Mental Health Day and Time to Talk Day.** From 5 days before, a card on the home page and at the top of Bipolar Anonymous's General feed counts down ("3 days to go", "Tomorrow") to **World Bipolar Day** (30 March, Vincent van Gogh's birthday) and **World Mental Health Day** (10 October), and, in the UK, **Time to Talk Day** (the first Thursday of February). On the day itself the home page turns sunflower gold (or green for World Mental Health Day) with a 🌻 on the bear; dark mode keeps its colours. ✕ hides the card and the colours until next year. In every language. On the phone apps it needs the next update. (`CACHE_NAME` v396)
 - ❤️‍🩹 **Bipolar Anonymous: a Support reaction.** Beside 💛 there's now ❤️‍🩹 **Support**, for the posts where you want to say "I'm with you" rather than "I like this". You can't give it to your own post. Where the board asks you to wait for a reaction before posting again, a ❤️‍🩹 counts like a 💛. On the phone apps it needs the next update. (`CACHE_NAME` v395)
 - 💬 **Bipolar Anonymous: the comment box grows, and keeps what you wrote.** The comment box grows as you type, to about a third of the screen, then scrolls. A comment you started but didn't send is still there when you open that thread again; it clears once you send a comment. (`CACHE_NAME` v395)
 - 📌 **Bipolar Anonymous: the built-in 12 Steps announcement is gone.** It was part of the app itself, so it couldn't be deleted like other announcements. (`CACHE_NAME` v395)

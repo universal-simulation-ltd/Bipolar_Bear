@@ -3015,6 +3015,45 @@ nothing that could be seen as nudging someone to drink or drugs."
   `PLAYWRIGHT_MODULE=… node scripts/test-your-week.mjs` (7 checks: English
   text, 390 px, dark mode, pl / de / zh / fr, no raw keys; `SHOTS=<dir>`).
 
+### 2.33 🌻 Awareness days (2026-11-02, v396)
+
+James, 2026-11-02, after the World Bipolar Day featuring nomination: "a theme
+for the day (from -5 days with a countdown)", World Bipolar Day and any others.
+`js/shared/awareness.js` (`BB.awareness`) with strings in
+`js/shared/i18n-awareness.js` (`aware.*`, 10 languages), on `index.html` and
+`anonymous.html` (and so the Anonymous app's bundle).
+
+- **The days** (`DAYS` in the module): **World Bipolar Day** 30 March (`wbd`,
+  🌻); **World Mental Health Day** 10 October (`wmhd`, 💚); **Time to Talk Day**
+  the first Thursday of February (`ttt`, 💬), UK only: a device on
+  `Europe/London` time or with a `-GB` language. There is no separate UK bipolar
+  day: the UK marks World Bipolar Day. Left out on purpose: World Suicide
+  Prevention Day (a countdown and party colours are wrong for it) and Mental
+  Health Awareness Week (its dates move each year).
+- **Countdown:** from 5 days before (`LEAD`), a card: "5 days to go" … "Tomorrow"
+  … "Today", the day's name and one line about it. Home: `#awarenessSlot` under
+  the greeting, hidden during the first-run tutorial (`body.is-new-user`), mounted
+  by js/index.js on load, language change and when the app comes back.
+  Board: above the daily greeting card at the top of General
+  (`renderPosts` → `BB.awareness.boardHtml()`).
+- **On the day:** Bipolar Bear's home only gets `html.bb-aware-day
+  bb-aware-<id>`: a light gradient (sunflower gold / mint green; a dark blue was
+  tried and made the brown greeting unreadable) and the day's emoji on the
+  logo's corner. Dark mode keeps its background. The board keeps its yellow.
+- **✕** hides the card and the colours for that day this year (`bbAwareHidden`,
+  a device-only list of `<id>:<year>`, not synced, not cleared on logout: it is
+  a display preference). Next year it comes back.
+- **Testing:** `localStorage.bbAwareToday = '2027-03-27'` or
+  `?awareDate=2027-03-27` pretends it is that date.
+  `node scripts/test-awareness.mjs` (11 checks: the 5-day window, the day,
+  the day after, the first-Thursday rule for 2027 / 2028, UK only, hidden for
+  one year only).
+- **Add a day:** one `DAYS` entry (`month` + `day`, or `month` + `nth` +
+  `weekday`; `region`; `theme`), `<id>Name` / `<id>About` in all ten languages,
+  and a gradient in the module's CSS if `theme: true`.
+- **App Store:** the World Bipolar Day featuring nomination (store-assets/
+  nominations.md) is stronger with an In-App Event pointing at this.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

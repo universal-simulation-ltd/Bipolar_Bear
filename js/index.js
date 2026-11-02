@@ -3385,6 +3385,17 @@ function _handleIndexJournalNav() {
       document.addEventListener('visibilitychange', () => { if (!document.hidden) _render(); });
     })();
 
+    // Awareness days: World Bipolar Day and friends, counted down from 5 days
+    // before and in the day's colours on the day (js/shared/awareness.js).
+    (function () {
+      function _mount() {
+        if (window.BB && BB.awareness) BB.awareness.mountHome(document.getElementById('awarenessSlot'));
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _mount); else _mount();
+      document.addEventListener('bb:languagechange', _mount);
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) _mount(); });
+    })();
+
 // ── Offline: register the service worker from home too ──
 // It used to be registered only by the journal and Survival Kit, so someone
 // who only ever opened home (or the board) had no offline copy of the

@@ -1938,7 +1938,15 @@
 //   css/anonymous.css, js/shared/i18n.js (a11y.supports,
 //   anon.toast.cantSupportOwn; annTwelveSteps removed), js/index.js and
 //   js/journal.js (Anon_supported on the clear lists).
-const CACHE_NAME = 'bipolarbear-v395';
+// v396: Awareness days (James, 2026-11-02): World Bipolar Day (30 March),
+//   World Mental Health Day (10 Oct) and, in the UK, Time to Talk Day (first
+//   Thursday of February). A countdown card from 5 days before on the home
+//   page and at the top of the board's General feed; on the day Bipolar
+//   Bear's home wears the day's colours. ✕ hides it until next year. New
+//   precached files js/shared/awareness.js, js/shared/i18n-awareness.js;
+//   touches index.html, anonymous.html, js/index.js, js/anonymous.js,
+//   css/index.css, scripts/build-anonymous.js.
+const CACHE_NAME = 'bipolarbear-v396';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -1999,6 +2007,8 @@ const STATIC_ASSETS = [
   './js/shared/mood-queue.js',
   './js/shared/bio-unlock.js',
   './js/shared/whats-new.js',
+  './js/shared/awareness.js',
+  './js/shared/i18n-awareness.js',
   './js/shared/breathing.js',
   './js/shared/i18n-breathe.js',
   './js/shared/i18n-week.js',

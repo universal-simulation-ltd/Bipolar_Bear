@@ -5559,7 +5559,7 @@ function renderPosts(posts) {
     if (p.isSuggestion)   return renderSuggestion(p);
     if (p.isTopic)        return renderTopic(p);
     if (p.wasTopic)       return renderArchivedTopic(p);
-    if (p.isSystem)       return renderSystem(p);
+    if (p.isSystem)       return (p.id === 'sys_daily' && window.BB && BB.awareness ? BB.awareness.boardHtml() : '') + renderSystem(p);
     if (p.isAnnouncement) return renderAnnouncement(p);
     if (p.isFooter)       return renderFeedFooter();
     return renderPost(p);
