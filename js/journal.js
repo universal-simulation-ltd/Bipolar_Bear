@@ -2713,6 +2713,8 @@ function _tt(k, vars, fallback) {
         if (currentUser && !entry.autoFilled) _anonJournalCheckin(entry);
         loadEntries();
         nativeHaptic('success');
+        // Filling missed days by hand: offer the next one (_mmAfterSave).
+        if (_wasNewEntry) _mmAfterSave(`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`);
       } catch (error) {
         console.error('❌ Error saving:', error);
         console.error('Error type:', error.constructor.name);
@@ -10278,6 +10280,9 @@ function _tt(k, vars, fallback) {
           }
         }
       }
+      // Several days missing: offer to fill them (once per page load; it
+      // stands aside for a ?mood= deep link, so it is checked before that runs).
+      _mmMaybeAsk(entries, currentKey, currentDone);
       // ?mood= deep link: apply to the check-in that just opened, or drop it
       // when the day's entry is already complete.
       _fmDeepLinkResolve(!currentDone);
@@ -15441,6 +15446,184 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     }
 
     // ────────────────────────────────────────────
+    // SEVERAL DAYS MISSING (James, 2026-11-03)
+    // ────────────────────────────────────────────
+    /*
+     * Opening the journal with the current day (yesterday, or today in
+     * "log today" mode) unlogged AND at least one more day missing in the same
+     * 30-day window as the Missing entries list asks once: ✨ Auto-fill all
+     * (the existing auto-complete, with the current day included) or
+     * ✍️ Fill them in myself. Done by hand, the form is already open on the
+     * current day; after each new entry is saved it asks "Continue with
+     * <next day>?" or "Stop there", newest day first.
+     *
+     * Asked once per page load, and "Not now" holds it for the rest of the day
+     * (bbMultiMissingDay). It stands aside for a ?mood= deep link, an edit,
+     * or any other journal dialog already open.
+     */
+    let _mmAsked = false;     // this page load has decided
+    let _mmQueue = null;      // by hand: date keys still to fill, newest first
+    let _mmPending = null;    // the queue while "Continue?" is on screen
+    let _mmFromPrompt = false; // auto-fill was opened from here, so Cancel comes back
+
+    function _mmDayKey(d) {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+    function _mmKeyDate(k) { return new Date(k + 'T00:00:00'); }
+    function _mmLong(k) { return _bbDate(_mmKeyDate(k), { weekday: 'long', day: 'numeric', month: 'long' }); }
+
+    /**
+     * Missing day keys, newest first, from the current day back to the start
+     * of the Missing entries window (30 days, or the first entry if later).
+     */
+    function _mmMissingKeys(entries) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const useToday = localStorage.getItem('journalDefaultToday') === 'true';
+      const target = new Date(today);
+      if (!useToday) target.setDate(target.getDate() - 1);
+      const windowStart = new Date(today); windowStart.setDate(today.getDate() - 29);
+      let first = null;
+      const have = new Set();
+      entries.forEach(e => {
+        const d = new Date(e.date); d.setHours(0, 0, 0, 0);
+        if (!first || d < first) first = d;
+        have.add(_mmDayKey(d));
+      });
+      const start = first && first > windowStart ? first : windowStart;
+      const out = [];
+      for (const c = new Date(target); c >= start; c.setDate(c.getDate() - 1)) {
+        const k = _mmDayKey(c);
+        if (!have.has(k)) out.push(k);
+      }
+      return out;
+    }
+
+    /** Called by updateDatePickerStatus() on every load; decides once. */
+    function _mmMaybeAsk(entries, currentKey, currentDone) {
+      if (_mmAsked) return;
+      _mmAsked = true;
+      if (currentDone || _fmDeepLinkMood || editingEntry) return;
+      const todayKey = _mmDayKey(new Date());
+      if (BB.storage.get('MultiMissingDay') === todayKey) return;
+      const keys = _mmMissingKeys(entries);
+      if (keys.length < 2 || keys[0] !== currentKey) return;
+      _whenHintsDone(() => setTimeout(() => {
+        // Something else got there first (a tutorial step, the journal
+        // password, What's new): don't stack on it. It asks again next time.
+        if (document.querySelector('.confirm-modal.active')) return;
+        if (editingEntry) return;
+        _mmShowAsk(keys);
+      }, 600));
+    }
+
+    function _mmButton(label, sub, primary, onClick) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.style.cssText = primary
+        ? 'width:100%;padding:12px 16px;background:var(--brand-btn);color:var(--brand-btn-text,#fff);border:none;border-radius:12px;font:inherit;font-weight:700;font-size:0.95em;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent;'
+        : 'width:100%;padding:12px 16px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:12px;font:inherit;font-weight:600;font-size:0.95em;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent;';
+      const t = document.createElement('span');
+      t.style.display = 'block';
+      t.textContent = label;
+      b.appendChild(t);
+      if (sub) {
+        const s2 = document.createElement('span');
+        s2.style.cssText = 'display:block;font-weight:400;font-size:0.8em;line-height:1.4;margin-top:4px;opacity:0.9;';
+        s2.textContent = sub;
+        b.appendChild(s2);
+      }
+      b.onclick = onClick;
+      return b;
+    }
+
+    function _mmShow(title, body, buttons) {
+      const m = document.getElementById('multiMissingModal');
+      if (!m) return;
+      document.getElementById('multiMissingTitle').textContent = title;
+      document.getElementById('multiMissingBody').textContent = body;
+      const box = document.getElementById('multiMissingActions');
+      box.textContent = '';
+      buttons.forEach(b => box.appendChild(b));
+      m.classList.add('active');
+      // Keyboard users land on the first answer; on a phone that only drew a focus ring.
+      try { if (!matchMedia('(pointer: coarse)').matches) box.firstChild.focus({ preventScroll: true }); } catch (_) {}
+    }
+    function _mmClose() {
+      const m = document.getElementById('multiMissingModal');
+      if (m) m.classList.remove('active');
+    }
+    /** Tap outside / back: "Not now" on the first question, "Stop there" after a day. */
+    function _mmDismiss() {
+      _mmClose();
+      _mmPending = null;
+      BB.storage.set('MultiMissingDay', _mmDayKey(new Date()));
+    }
+    window._mmDismiss = _mmDismiss;
+
+    /** "N entries missing": auto-fill all, by hand, or not now. */
+    function _mmShowAsk(keys) {
+      const n = keys.length, latest = _mmLong(keys[0]);
+      _mmShow(
+        BB.t('missingDays.title', { count: n }),
+        BB.t('missingDays.body', { count: n, date: latest }),
+        [
+          _mmButton(BB.t('missingDays.auto'), BB.t('missingDays.autoSub'), true, () => {
+            _mmClose();
+            BB.storage.set('MultiMissingDay', _mmDayKey(new Date()));
+            // The auto-complete flow takes the days oldest first, like the list.
+            _missingDatesCache = keys.slice().reverse().map(_mmKeyDate);
+            _mmFromPrompt = keys;
+            showAutoFillModal();
+          }),
+          _mmButton(BB.t('missingDays.manual'), BB.t('missingDays.manualSub', { date: latest }), false, () => {
+            _mmClose();
+            BB.storage.set('MultiMissingDay', _mmDayKey(new Date()));
+            _mmQueue = keys.slice();
+            // The form is normally open on the current day already.
+            const open = document.getElementById('entryDate')?.value;
+            const formUp = document.getElementById('entryFormCard')?.style.display !== 'none' ||
+              (typeof _fmActive !== 'undefined' && _fmActive);
+            if (open !== keys[0] || !formUp) setDateAndClose(keys[0]);
+          }),
+          _mmButton(BB.t('missingDays.later'), '', false, _mmDismiss)
+        ]
+      );
+    }
+
+    /**
+     * After a NEW entry is saved: drop its day from the by-hand queue and, if
+     * any are left, ask whether to carry on with the next one.
+     */
+    function _mmAfterSave(savedKey) {
+      if (!_mmQueue) return;
+      _mmQueue = _mmQueue.filter(k => k !== savedKey);
+      if (!_mmQueue.length) { _mmQueue = null; return; }
+      // This is a run of days, not one win: no store-review prompt mid-way.
+      _reviewCandidateMood = null;
+      _mmPending = _mmQueue;
+      _mmQueue = null;
+      const left = _mmPending.length, next = _mmLong(_mmPending[0]);
+      _whenHintsDone(() => setTimeout(() => {
+        if (!_mmPending) return;
+        _mmShow(
+          left === 1 ? BB.t('missingDays.nextOne') : BB.t('missingDays.nextTitle', { count: left }),
+          BB.t('missingDays.nextBody', { date: next }),
+          [
+            _mmButton(BB.t('missingDays.next', { date: next }), '', true, () => {
+              const q = _mmPending;
+              _mmPending = null;
+              _mmClose();
+              if (!q) return;
+              _mmQueue = q;
+              setDateAndClose(q[0]);
+            }),
+            _mmButton(BB.t('missingDays.stop'), '', false, _mmDismiss)
+          ]
+        );
+      }, 700));
+    }
+
+    // ────────────────────────────────────────────
     // AUTO-COMPLETE MISSING ENTRIES
     // ────────────────────────────────────────────
     /*
@@ -15851,6 +16034,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       _afAsk = null;
       const modal = document.getElementById('autoFillModal');
       if (modal) modal.classList.remove('active');
+      // Opened from "N entries missing": Cancel goes back to that question.
+      if (_mmFromPrompt) { const k = _mmFromPrompt; _mmFromPrompt = false; _mmShowAsk(k); return; }
       const list = document.getElementById('missingDatesModal');
       if (list) list.classList.add('active');
     }
@@ -15858,6 +16043,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
 
     /** Close-out after a successful fill: drop both modals, reload the list. */
     function finishAutoFill() {
+      _mmFromPrompt = false;
       const modal = document.getElementById('autoFillModal');
       if (modal) modal.classList.remove('active');
       closeMissingDatesModal();

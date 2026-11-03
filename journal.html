@@ -40,6 +40,7 @@
   <script src="js/shared/i18n-breathe.js"></script>
   <script src="js/shared/i18n-week.js"></script>
   <script src="js/shared/i18n-journalpw.js"></script>
+  <script src="js/shared/i18n-missing.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
@@ -1457,6 +1458,18 @@
       <div class="confirm-buttons">
         <button class="confirm-btn confirm-btn-no" onclick="closeMissingDatesModal()" data-i18n="common.close">Close</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Several days missing (James, 2026-11-03): asked on opening the journal
+       when the current day and at least one more are not logged, and again
+       after each day filled in by hand. Filled by js/journal.js (_mmShow). -->
+  <div class="confirm-modal" id="multiMissingModal" role="dialog" aria-modal="true" aria-labelledby="multiMissingTitle" onclick="if(event.target===this)_mmDismiss()">
+    <div class="confirm-content" style="max-width: 420px;">
+      <div aria-hidden="true" style="font-size: 2em; margin-bottom: 6px;">🗓️</div>
+      <h3 id="multiMissingTitle"></h3>
+      <p id="multiMissingBody" style="margin-bottom: 18px; line-height: 1.5;"></p>
+      <div id="multiMissingActions" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
   </div>
 

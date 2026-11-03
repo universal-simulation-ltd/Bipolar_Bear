@@ -848,17 +848,10 @@
       '<div class="meds-head"><h3 id="medsHubTitle">' + esc(t('hubTitle')) + '</h3><button type="button" class="meds-x" aria-label="' + esc(tt('a11y.close')) + '" onclick="BBMeds.close()">✕</button></div>' +
       '<div class="meds-tabs" role="group" aria-label="' + esc(t('tabsLabel')) + '">' + tabs + '</div>' +
       '<div class="meds-tab-note" aria-live="polite">' + esc(_tabNote || (_tab !== (saved || 'doses') ? hint : '')) + '</div>' +
-      '<div class="meds-body" data-tab="' + _tab + '">' + body + '</div>' + _dockHideHtml();
+      '<div class="meds-body" data-tab="' + _tab + '">' + body + '</div>';
     var nb = m.querySelector('.meds-body');
     if (nb && st) nb.scrollTop = st;
     if (_tab === 'compare') _wireCompare(m);
-  }
-
-  /** On the dock (fab.js, 'meds'): "🙈 Hide this button", like the dock's other sheets. */
-  function _dockHideHtml() {
-    var docked = false;
-    try { for (var s = 1; s <= 4; s++) if (BB.storage.get('FabSlot_' + s) === 'meds') docked = true; } catch (_) {}
-    return docked ? '<button type="button" class="meds-btn link meds-dock-hide" onclick="BBMeds._dockHide()">' + esc(tt('common.hideButton')) + '</button>' : '';
   }
 
   // ── Your medicines ─────────────────────────────────────────────────────────
@@ -1284,7 +1277,6 @@
       _remMsg = '';
       BB.medsReminder.removeTime(k, time).then(render);
     },
-    _dockHide: function () { if (root._hideExtraFab) root._hideExtraFab('meds'); render(); },
     _more: function () { _showAllMissed = true; render(); },
     _del: function (kind, id) {
       if (!confirm(t('deleteConfirm'))) return;

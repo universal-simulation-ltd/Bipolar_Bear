@@ -32,7 +32,8 @@
  * list it in `GAMES`.
  *
  * Exposes `BB.arcade.open({ onHide })` and `BB.arcade.close()`. `onHide`
- * (fab.js) adds the "Hide this button" link, as on every other dock button.
+ * adds a "Hide this button" link; fab.js stopped passing it on 2026-11-03,
+ * when the dock's hide links went (hold 🕹️ on the dock to hide it instead).
  *
  * localStorage: `bbArcade` = `{"last":"snake","best":{"snake":12,…}}` —
  * device-only, never synced; cleared on the full reset lists.

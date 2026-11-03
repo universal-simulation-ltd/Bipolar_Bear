@@ -1976,7 +1976,17 @@
 //   for the whole countdown, a burst of the day's emoji floats up from the
 //   bottom bar on the day, and Halloween gets spider webs, pumpkins and bats.
 //   Touches js/shared/awareness.js.
-const CACHE_NAME = 'bipolarbear-v402';
+// v403: Popups scroll, several missing days, no "Hide this button" (James,
+//   2026-11-03). Dock popups taller than the phone scroll inside themselves,
+//   and "Add to dock" keeps its title and Cancel while the list scrolls
+//   (fab.js). Opening the journal with the current day and at least one more
+//   unlogged asks "N entries missing": ✨ Auto-fill all (the auto-complete,
+//   current day included) or ✍️ Fill them in myself, which asks "Continue
+//   with <next day>?" after each save (js/journal.js, journal.html, new
+//   js/shared/i18n-missing.js). The "🙈 Hide this button" links are gone from
+//   every dock sheet, the arcade, My medicines and the home's WhatsApp sheet:
+//   holding a dock button hides it (fab.js, index.html, js/journal-meds.js).
+const CACHE_NAME = 'bipolarbear-v403';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2032,6 +2042,7 @@ const STATIC_ASSETS = [
   './js/shared/i18n-medsrem.js',
   './js/shared/i18n-medsome.js',
   './js/shared/i18n-journalpw.js',
+  './js/shared/i18n-missing.js',
   './js/shared/pin-guard.js',
   './js/shared/pin-reauth.js',
   './js/shared/mood-queue.js',

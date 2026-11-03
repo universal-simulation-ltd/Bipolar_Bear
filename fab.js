@@ -350,6 +350,25 @@
       align-items: center; justify-content: center; padding: 20px;
     }
     .bb-fab-modal.open { display: flex; }
+    /* Popups taller than the phone scroll inside themselves (James, 2026-11-03):
+       the "Add to dock" list ran off the bottom of the screen with nothing to
+       scroll once enough buttons were on offer. Each card is capped at the
+       visible height (dvh, so the browser's bars are allowed for) and scrolls;
+       overscroll-behavior stops the page behind from scrolling instead. */
+    .bb-fab-modal > div, #bbQuickNoteModal > div, #bbCelebModal > div, #bbGoalsModal > div, #bbStatsModal > div {
+      max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px);
+      overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; box-sizing: border-box;
+    }
+    /* The picker is a bottom sheet: the title and Cancel stay put, the list scrolls. */
+    #bbFabPickerSheet {
+      display: flex; flex-direction: column; box-sizing: border-box;
+      max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px));
+    }
+    #bbFabPickerOptions > * { flex-shrink: 0; }
+    #bbFabPickerOptions {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch; padding: 2px; margin: -2px;
+    }
     /* Hold to hide (James, 2026-10-20): no iOS callout or text selection on a held dock button. */
     #chatFab, #quickNoteFab, #coffeeFab, .feedback-fab, #reviewFab, #gameFab, .bb-extra-fab {
       -webkit-touch-callout: none; -webkit-user-select: none; user-select: none;
@@ -503,7 +522,6 @@
           </button>
           <div style="display:flex;flex-direction:column;gap:8px;">
             <button onclick="closeChatModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.close">Close</button>
-            <button id="chatModalHide" onclick="closeChatModal();window._showHidePermanently('chat')" style="padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -522,7 +540,6 @@
           </div>
           <div style="display:flex;flex-direction:column;gap:10px;">
             <button onclick="closeSecurityModal()" style="padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.95em;cursor:pointer;" data-i18n="common.gotIt">Got it</button>
-            <button onclick="closeSecurityModal();window._showHidePermanently('quicknote')" style="padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -539,10 +556,6 @@
               style="display:block;padding:13px;background:var(--brand-btn);color:white;border-radius:12px;text-decoration:none;font-weight:700;font-size:0.95em;text-align:center;">
               <span data-i18n="fab.coffee.send">☕ Send me a coffee</span>
             </a>
-            <button onclick="window._showHidePermanently('coffee')"
-              style="padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
-              🙈 Hide this button
-            </button>
           </div>
         </div>
       </div>
@@ -598,10 +611,6 @@
             <button onclick="submitFabFeedback()" style="padding:11px 24px;background:var(--brand-btn);color:white;border:none;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.95em;" data-i18n="common.send">Send</button>
             <button onclick="closeFabFeedback()" style="padding:11px 24px;background:white;color:#495057;border:2px solid #e9ecef;border-radius:10px;font-weight:600;cursor:pointer;font-size:0.95em;" data-i18n="common.cancel">Cancel</button>
           </div>
-          <button onclick="window._showHidePermanently('feedback')"
-            style="display:block;width:100%;margin-top:12px;padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
-            🙈 Hide this button
-          </button>
         </div>
       </div>
 
@@ -621,10 +630,6 @@
               <span data-i18n="fab.review.googlePlay">▶️ Review on Google Play</span>
             </a>
             <button onclick="closeReviewModal()" style="padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-size:0.9em;cursor:pointer;" data-i18n="fab.review.later">Maybe later</button>
-            <button onclick="window._showHidePermanently('review')"
-              style="padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">
-              🙈 Hide this button
-            </button>
           </div>
         </div>
       </div>
@@ -653,10 +658,10 @@
 
       <!-- FAB picker sheet -->
       <div id="bbFabPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFabPicker();">
-        <div style="background:white;border-radius:20px 20px 0 0;padding:24px;max-width:420px;width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18);">
-          <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:16px;text-align:center;" data-i18n="fabPicker.addToDock">Add to dock</div>
+        <div id="bbFabPickerSheet" style="background:white;border-radius:20px 20px 0 0;padding:24px 24px calc(24px + env(safe-area-inset-bottom, 0px));max-width:420px;width:100%;box-shadow:0 -4px 32px rgba(0,0,0,0.18);">
+          <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:16px;text-align:center;flex:none;" data-i18n="fabPicker.addToDock">Add to dock</div>
           <div id="bbFabPickerOptions" style="display:flex;flex-direction:column;gap:10px;"></div>
-          <button onclick="closeFabPicker()" style="display:block;width:100%;margin-top:14px;padding:12px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-weight:600;font-size:0.95em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
+          <button onclick="closeFabPicker()" style="display:block;flex:none;width:100%;margin-top:14px;padding:12px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-weight:600;font-size:0.95em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
         </div>
       </div>
 
@@ -671,7 +676,6 @@
             <button onclick="closeQuickNoteModal()" style="flex:1;padding:11px;background:white;color:var(--text-muted-ink);border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
             <button onclick="saveQuickNote()" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9em;cursor:pointer;"><span data-i18n="common.save">Save</span> ✓</button>
           </div>
-          <button onclick="closeQuickNoteModal();window._hideExtraFab('quicknote')" style="display:block;margin:10px auto 0;padding:6px 10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
 
@@ -688,7 +692,6 @@
           </div>
           <div style="display:flex;gap:8px;">
             <button onclick="closeCelebModal()" style="flex:1;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-size:0.85em;cursor:pointer;" data-i18n="common.close">Close</button>
-            <button onclick="closeCelebModal();window._hideExtraFab('celeb')" style="flex:1;padding:10px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
           </div>
         </div>
       </div>
@@ -701,7 +704,6 @@
           <div id="bbGoalsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
           <a href="survival-kit.html#goals" style="display:block;text-align:center;color:var(--brand-ink);font-size:0.88em;text-decoration:none;margin-bottom:14px;padding:10px;border:1.5px solid #ffe0b2;border-radius:10px;" data-i18n="fab.goals.manage">Manage goals in Survival Kit ↗</a>
           <button onclick="closeGoalsModal()" style="display:block;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="common.close">Close</button>
-          <button onclick="closeGoalsModal();window._hideExtraFab('goals')" style="display:block;width:100%;padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
 
@@ -713,7 +715,6 @@
           <p style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:18px;" data-i18n="fab.stats.body">View your mood patterns, streaks, and trends in the journal.</p>
           <button onclick="document.getElementById('bbStatsModal').style.display='none';window.location.href='journal.html?openStats=1'" style="display:block;width:100%;padding:12px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;cursor:pointer;margin-bottom:8px;" data-i18n="fab.stats.open">Open Statistics ↗</button>
           <button onclick="document.getElementById('bbStatsModal').style.display='none'" style="display:block;width:100%;padding:10px;background:#f8f9fa;color:var(--text-muted-ink);border:none;border-radius:12px;font-size:0.9em;cursor:pointer;margin-bottom:8px;" data-i18n="common.cancel">Cancel</button>
-          <button onclick="document.getElementById('bbStatsModal').style.display='none';window._hideExtraFab('stats')" style="display:block;width:100%;padding:8px;background:none;border:none;color:var(--text-muted-ink);font-size:0.8em;cursor:pointer;" data-i18n="common.hideButton">🙈 Hide this button</button>
         </div>
       </div>
 
@@ -1097,7 +1098,7 @@
 
   /**
    * Remove an extra FAB from whichever slot it occupies. Called from the
-   * "🙈 Hide this button" links inside extra-FAB modals.
+   * "Hide … from the dock?" question you get by holding a dock button.
    * @param {string} extraId One of the `_FAB_EXTRAS[].id` values.
    */
   window._hideExtraFab = function (extraId) {
@@ -1330,9 +1331,6 @@
         document.getElementById('chatModalPlanSub').textContent = BB.t(SP.hasContent() ? 'safety.plan.bannerSub' : 'safety.plan.bannerSubEmpty');
       }
     }
-    const hide = document.getElementById('chatModalHide');
-    const _locked = !(window.BB && BB.storage && BB.storage.get('FabsUnlocked') === '1');
-    if (hide) hide.style.display = (fromLock || _locked) ? 'none' : '';
     modal.style.zIndex = fromLock ? '10003' : '';
     modal.classList.add('open');
   };
@@ -1682,7 +1680,8 @@
    * the pages that never open it don't pay for it.
    */
   window.openArcade = function () {
-    const _opts = { onHide: () => window._showHidePermanently('game') };
+    // No onHide: "Hide this button" went on 2026-11-03; hold 🕹️ on the dock instead.
+    const _opts = {};
     if (window.BB && BB.arcade) { BB.arcade.open(_opts); return; }
     if (document.getElementById('bbArcadeScript')) return;
     const _s = document.createElement('script');
