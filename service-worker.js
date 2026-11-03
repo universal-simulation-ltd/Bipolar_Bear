@@ -1986,7 +1986,17 @@
 //   js/shared/i18n-missing.js). The "🙈 Hide this button" links are gone from
 //   every dock sheet, the arcade, My medicines and the home's WhatsApp sheet:
 //   holding a dock button hides it (fab.js, index.html, js/journal-meds.js).
-const CACHE_NAME = 'bipolarbear-v403';
+// v404: Bipolar Anonymous (James, 2026-11-03): a post being written comes
+//   back after its sheet is closed (in memory, until posted or the app
+//   closes); a hint shown while a sheet is open (the "wait for a reply" after
+//   a second comment) now shows on the sheet instead of behind it; 💛 and ❤️‍🩹
+//   on replies (firestore.rules comments match: likes / supports ±1); the
+//   greeting + check-in swipes away (or ✕) until the next day; tap another
+//   bear on the scale to change today's check-in (anonMoodCheckin `from`,
+//   functions deploy); the App Store / Play review card at a good moment
+//   (Bipolar Anonymous app 1.45, @capacitor-community/in-app-review). Touches
+//   js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v404';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

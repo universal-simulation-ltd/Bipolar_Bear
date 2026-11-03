@@ -507,6 +507,15 @@
        olive corner left the greeting, the credit line and the check-in's
        emojis hard to read (James, 30 Sep 2026). */
     .sys-card { background: linear-gradient(135deg, var(--yellow-light), var(--yellow)); border-radius: 16px; padding: 16px; margin-bottom: 10px; text-align: center; }
+    /* The daily greeting swipes away sideways (bindGreetingSwipe); vertical
+       scrolling stays with the page. */
+    .sys-card[data-sys="daily"] { position: relative; touch-action: pan-y; }
+    .sys-hide {
+      position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; border-radius: 50%;
+      border: none; background: transparent; color: var(--on-yellow); opacity: 0.55;
+      font-size: 0.875rem; line-height: 1; cursor: pointer; font-family: inherit;
+    }
+    html.theme-dark .sys-hide { color: var(--dark); }
     .sys-card .sys-emoji { font-size: 1.375rem; margin-bottom: 4px; }
     .sys-card .sys-text  { font-size: 0.875rem; font-weight: 700; color: var(--on-yellow); margin-bottom: 2px; }
     .sys-card .sys-meta  { font-size: 0.6875rem; color: var(--on-yellow); }
@@ -606,6 +615,16 @@
       opacity: 0; transition: opacity 0.2s; pointer-events: none;
     }
     .fab-hint.show { opacity: 1; }
+    /* The same hint while a sheet is open (showHint → _sheetHint), which would
+       otherwise hide the bar's one. Placed by script above the sheet. */
+    .sheet-hint {
+      position: absolute; left: 50%; transform: translateX(-50%); z-index: 5;
+      max-width: calc(100% - 32px); width: max-content; text-align: center;
+      background: rgba(28,16,4,0.92); color: #fff; font-size: 0.8125rem; font-weight: 600; line-height: 1.4;
+      border-radius: 20px; padding: 8px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+    .sheet-hint.show { opacity: 1; }
     .fab-bar { background: var(--surface); border-radius: 40px; box-shadow: 0 4px 24px rgba(0,0,0,0.14); display: flex; align-items: center; gap: 6px; padding: 8px 14px; pointer-events: all; }
     .fab-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(245,200,0,0.13); transition: all 0.15s; }
     .fab-btn.active { background: var(--yellow); box-shadow: 0 2px 8px rgba(245,200,0,0.4); }
@@ -738,6 +757,8 @@
     .comment-text { font-size: 0.8125rem; color: var(--dark); line-height: 1.55; padding-left: 36px; }
     .comment-actions { display: flex; align-items: center; gap: 6px; margin-top: 4px; padding-left: 36px; }
     .comment-actions .icon-btn { font-size: 0.875rem; }
+    /* 💛 / ❤️‍🩹 on a reply: the post buttons, a size down. */
+    .comment-actions .c-react { padding: 3px 9px; font-size: 0.75rem; gap: 4px; }
 
     /* ── Wiki tab ── */
     #wiki-section { padding: 12px 12px 110px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
@@ -1193,6 +1214,14 @@
     .mood-bar span { display: block; height: 100%; }
     .mood-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8125rem; color: var(--dark); }
     .mood-legend .ml-i { display: inline-flex; align-items: center; gap: 3px; }
+    /* Your bear on the scale, and the others as buttons to change to. */
+    .mood-legend .ml-pick {
+      border: 2px solid transparent; background: none; border-radius: 16px; padding: 2px 6px;
+      font: inherit; color: inherit; cursor: pointer;
+    }
+    .mood-legend .ml-pick.mine { border-color: var(--yellow-dark); background: rgba(255,255,255,0.5); }
+    html.theme-dark .mood-legend .ml-pick.mine { background: rgba(255,255,255,0.08); }
+    .mood-same .ms-tap { display: inline-flex; cursor: pointer; }
     .mood-legend b, .mood-you b { font-weight: 800; }
     .ml-img { width: 22px; height: 22px; object-fit: contain; vertical-align: middle; }
     .mood-note { font-size: 0.7188rem; color: var(--muted); margin-top: 8px; }

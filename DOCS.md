@@ -3098,6 +3098,59 @@ for the day (from -5 days with a countdown)", World Bipolar Day and any others.
   their images in `store-assets/app-events/wbd-2027/`) back the World Bipolar
   Day featuring nomination (store-assets/nominations.md).
 
+### 2.34 Bipolar Anonymous: drafts, hints over sheets, reply hearts, the greeting, changing a check-in, the review card (2026-11-03, v404)
+
+James, 2026-11-03, six requests at once. Test: `scripts/test-anon-board-1103.mjs`
+(26 checks, negative controls included); rules: `scripts/firestore-rules`
+(security, "💛 and ❤️‍🩹 on a reply").
+
+- **The new-post draft** (`_composeDrafts` in `js/anonymous.js`): the compose
+  sheet's text is kept per `currentTab + ':' + composeMode()` as it's typed, and
+  ✏️ puts it back. In memory only (same rule as comment drafts: nothing typed is
+  stored on the device), so "until they close the app" is the app process
+  ending. Cleared when the post is sent; put back if the post or suggestion
+  fails.
+- **Hints over sheets** (`showHint` → `_sheetHint`): `#fab-hint` lives in the
+  `.fab-footer` (z-index 40), under every `.overlay` (100+), so a hint raised
+  while a sheet was open was never seen: the comment gate's "Please wait until
+  someone else replies" was the reported one. With an overlay open, the hint is
+  a `#sheet-hint` moved *into* the topmost open overlay, just above its `.sheet`
+  (or inside its top edge when the sheet fills the screen). Inside the overlay so
+  it travels with it when the keyboard pushes the page.
+- **💛 / ❤️‍🩹 on replies** (`commentReactionsHtml`, `handleCommentReaction`):
+  `likes` / `supports` on `bbAnonPosts/{post}/comments/{id}`, ±1, remembered on
+  the device in `Anon_likedComments` / `Anon_supportedComments` as
+  `postId/commentId`. Not on your own reply, none on the crisis bear. They don't
+  lift the "wait for someone else to reply" gate: that gate is about replies.
+  `firestore.rules`: a reply's `likes` / `supports` may move by exactly one,
+  alone, from a signed-in session; a new reply must carry 0 of each.
+- **The greeting swipes away** (`bindGreetingSwipe`, `hideGreeting`): the
+  `sys_daily` card (greeting + check-in) swipes sideways (or ✕) and
+  `Anon_greetingHidden` = today's **phone** date keeps it away until tomorrow.
+  The swipe starts anywhere on the card, the bears included; a drag that moved
+  doesn't also count as a tap. The awareness card above it is separate.
+- **Changing today's check-in** (`changeMood`): once checked in, your bear (or
+  "See the whole board") opens the scale; its bears are buttons, yours ringed.
+  `anonMoodCheckin({ mood, from })` moves one from `from` to `mood` and answers
+  `moved: true`. The marker still holds no mood, so `from` is the device's word
+  for it (as with poll votes); the server only takes from a total that has
+  something in it, only for `source: 'board'`, and at most `MOOD_MAX_CHANGES`
+  (5) a day per account (`changes` on the `bbAnonMoodSeen` marker). An answer
+  without `moved` (an undeployed server, the cap) puts the card back.
+  ⚠️ **Owner-gated:** `firebase deploy --only functions:anonMoodCheckin` and
+  `firebase deploy --only firestore:rules`. Until then the change says
+  "Couldn't check in" and reply hearts are refused (and put back).
+- **The review card** (`_maybeAskForReview`): only where
+  `Capacitor.Plugins.InAppReview` exists: the Bipolar Anonymous app from 1.45
+  (`bipolaranonymous-native` now carries `@capacitor-community/in-app-review`
+  8) and Bipolar Bear's app. Asked 2.5 s after a post or reply that doesn't read like a crisis, or a
+  Stable check-in; only from the 3rd day the board was opened (`Anon_useDays`),
+  never with a sheet open, at most once per 120 days and 3 times in all
+  (`ReviewAskCount`, `ReviewLastAsked`: the **same** keys as the journal's
+  `_maybeRequestReview`, so the board inside Bipolar Bear's app, which has the
+  plugin too, shares its 3-ask budget rather than adding its own). Apple/Google
+  decide if the card shows; nothing learns whether it did.
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow

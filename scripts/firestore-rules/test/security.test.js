@@ -452,6 +452,22 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
         await assertSucceeds(who.guest().collectionGroup('comments').where('name', '==', 'Bear').get());
       });
 
+      it('💛 and ❤️‍🩹 on a reply: one step, signed in, nothing else', async () => {
+        const db = who.anon('reader');
+        const c = db.doc('bbAnonPosts/p1/comments/stamped');
+        await assertSucceeds(c.update({ likes: FV.increment(1) }));
+        await assertSucceeds(c.update({ supports: FV.increment(1) }));
+        await assertSucceeds(c.update({ supports: FV.increment(-1) }));
+        await assertFails(c.update({ likes: FV.increment(5) }));
+        await assertFails(c.update({ likes: 500 }));
+        await assertFails(c.update({ likes: FV.increment(1), supports: FV.increment(1) }));
+        await assertFails(c.update({ likes: FV.increment(1), text: 'x' }));
+        await assertFails(who.guest().doc('bbAnonPosts/p1/comments/old').update({ likes: FV.increment(1) }));
+        const ref = db.collection('bbAnonPosts/p1/comments').doc();
+        await assertFails(ref.set(Object.assign(commentDoc({ timestamp: FV.serverTimestamp() }),
+          { owner: ownerStamp('reader', ref.path), likes: 9 })));
+      });
+
       it('comments are never edited by members', async () => {
         await assertFails(who.anon('author').doc('bbAnonPosts/p1/comments/mine').update({ text: 'x' }));
         await assertFails(who.anon('x').doc('bbAnonPosts/p1/comments/old').update({ text: 'x' }));

@@ -251,9 +251,14 @@ service cloud.firestore {
         allow create: if signedIn()
           && adminFlagOk()
           && incoming().get('timestamp', null) == request.time
+          && incoming().get('likes', 0) == 0
+          && incoming().get('supports', 0) == 0
           && ownerOnCreate(commentPath())
           && !authorBanned(incoming().get('name', ''));
-        allow update: if isAdmin();
+        // 💛 and ❤️‍🩹 on a reply (2026-11-03): one step at a time, nothing else.
+        function commentLikeOk()    { return signedIn() && changedKeys().hasOnly(['likes']) && stepped('likes'); }
+        function commentSupportOk() { return signedIn() && changedKeys().hasOnly(['supports']) && stepped('supports'); }
+        allow update: if commentLikeOk() || commentSupportOk() || isAdmin();
         allow delete: if signedIn() && (ownsExisting(commentPath()) || isAdmin());
       }
     }

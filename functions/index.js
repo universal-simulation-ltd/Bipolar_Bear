@@ -1651,6 +1651,12 @@ exports.voteAnonPoll = onCall(
 // is what lets the marker carry no mood at all. source: 'journal' is Bipolar
 // Bear checking in for a linked account after a journal entry is saved — the
 // marker then says so (still no mood), so the board can explain the tick.
+// { mood, from } changes today's check-in (James, 2026-11-03: tap another bear
+// on the scale). As with poll votes, the device says what it picked before,
+// because the marker doesn't know; `from` comes off that total and `mood` goes
+// on. Capped at MOOD_MAX_CHANGES a day per account so it can't be used to
+// drain a total. Answers moved: true when it did.
+const MOOD_MAX_CHANGES = 5;
 exports.anonMoodCheckin = onCall(
   { region: REGION, invoker: 'public' },
   async (request) => {
@@ -1659,6 +1665,8 @@ exports.anonMoodCheckin = onCall(
     let mood = raw === null ? null : (MOOD_KINDS.includes(raw) ? raw : (MOOD_LEGACY[raw] || ''));
     if (mood === '') throw new HttpsError('invalid-argument', 'Unknown mood.');
     const via      = request.data && request.data.source === 'journal' ? 'journal' : 'board';
+    const rawFrom  = request.data && request.data.from != null ? String(request.data.from) : null;
+    const from     = rawFrom !== null && MOOD_KINDS.includes(rawFrom) ? rawFrom : null;
     // A journal entry only answers for you if you turned that on (opt-in since
     // 2026-10-12). Enforced here so older app builds, which assumed it was on
     // unless switched off, follow the same rule: they get a read, not a check-in.
@@ -1681,12 +1689,24 @@ exports.anonMoodCheckin = onCall(
       let checkedIn = seenSnap.exists;
       let seenVia   = seenSnap.exists ? (seenSnap.data().via || 'board') : null;
       const write   = {};
+      let moved     = false;
       if (mood !== null && !checkedIn) {
         counts[mood] += 1;
         Object.assign(write, { [mood]: admin.firestore.FieldValue.increment(1), day });
         tx.set(seenRef, { day, via });
         checkedIn = true;
         seenVia = via;
+      } else if (mood !== null && checkedIn && via === 'board' && from && from !== mood
+                 && Number(seenSnap.data().changes || 0) < MOOD_MAX_CHANGES) {
+        // Only what was really counted under `from` today can come off it.
+        if (Number(doc[from] || 0) > 0) {
+          counts[from] = Math.max(0, counts[from] - 1);
+          write[from] = admin.firestore.FieldValue.increment(-1);
+        }
+        counts[mood] += 1;
+        Object.assign(write, { [mood]: admin.firestore.FieldValue.increment(1), day });
+        tx.set(seenRef, { changes: admin.firestore.FieldValue.increment(1) }, { merge: true });
+        moved = true;
       }
       const real = MOOD_KINDS.reduce((n, k) => n + counts[k], 0);
       let bear = MOOD_KINDS.includes(doc.bear) ? doc.bear : null;
@@ -1702,7 +1722,7 @@ exports.anonMoodCheckin = onCall(
       if (Object.keys(write).length) tx.set(totalRef, write, { merge: true });
       // `bear` lets the client drop it from its optimistic count at the same
       // moment the server does, so the third check-in doesn't flicker.
-      return { counts, checkedIn, via: seenVia, bear };
+      return { counts, checkedIn, via: seenVia, bear, moved };
     });
     return { day, ...out };
   }

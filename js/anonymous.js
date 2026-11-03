@@ -149,6 +149,17 @@ const supportedPosts = new Set(
 function saveSupported() {
   BB.storage.set('Anon_supported', JSON.stringify([...supportedPosts]));
 }
+// 💛 and ❤️‍🩹 on replies too (James, 2026-11-03), remembered the same way,
+// keyed "postId/commentId". Counted in the reply's `likes` / `supports`
+// (firestore.rules, the comments match).
+const likedComments = new Set(JSON.parse(BB.storage.get('Anon_likedComments') || '[]'));
+const supportedComments = new Set(JSON.parse(BB.storage.get('Anon_supportedComments') || '[]'));
+function _saveCommentReactions() {
+  try {
+    BB.storage.set('Anon_likedComments', JSON.stringify([...likedComments]));
+    BB.storage.set('Anon_supportedComments', JSON.stringify([...supportedComments]));
+  } catch (e) {}
+}
 // Has anyone reacted to this post (💛 or ❤️‍🩹)? Lifts the "wait for a
 // reaction" gates.
 function _reacted(p) { return (p.likes || 0) + (p.supports || 0) > 0; }
@@ -869,11 +880,51 @@ function isSelfDeleteEligible(post) {
 }
 
 function showHint(msg) {
+  // With a sheet open, the bar's hint sits underneath it, unseen — "please
+  // wait for a reply" after a second comment was behind the thread (James,
+  // 2026-11-03). Show it on the sheet instead.
+  const over = _topOpenOverlay();
+  if (over) { _sheetHint(over, msg); return; }
   const h = document.getElementById('fab-hint');
   h.textContent = msg;
   h.classList.add('show');
   clearTimeout(h._t);
   h._t = setTimeout(() => h.classList.remove('show'), 2200);
+}
+
+// The open sheet on top: highest z-index, and the later one on a tie (that's
+// the one painted on top).
+function _topOpenOverlay() {
+  let top = null, topZ = -Infinity;
+  document.querySelectorAll('.overlay:not(.hidden)').forEach(o => {
+    const z = parseInt(getComputedStyle(o).zIndex, 10) || 0;
+    if (z >= topZ) { top = o; topZ = z; }
+  });
+  return top;
+}
+// One hint, moved into whichever sheet is open: just above the sheet on the
+// dimmed backdrop, or inside its top edge when the sheet fills the screen.
+// Inside the overlay so it moves with it when the keyboard pushes the page up.
+function _sheetHint(over, msg) {
+  let h = document.getElementById('sheet-hint');
+  if (!h) {
+    h = document.createElement('div');
+    h.id = 'sheet-hint';
+    h.className = 'sheet-hint';
+    h.setAttribute('role', 'status');
+    h.setAttribute('aria-live', 'polite');
+  }
+  if (h.parentNode !== over) over.appendChild(h);
+  h.textContent = msg;
+  const sheet = over.querySelector('.sheet') || over.firstElementChild;
+  const oR = over.getBoundingClientRect();
+  const sTop = (sheet ? sheet.getBoundingClientRect().top : oR.top) - oR.top;
+  let top = sTop - h.offsetHeight - 10;
+  if (top < 8) top = sTop + 10;
+  h.style.top = Math.round(top) + 'px';
+  h.classList.add('show');
+  clearTimeout(h._t);
+  h._t = setTimeout(() => h.classList.remove('show'), 2600);
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -1476,7 +1527,8 @@ function _moodSameHtml(k, counts) {
   const line = others
     ? esc(_wt('anon.ux.moodSame', { count: others, mood: MARK })) + ' ' + esc(_wt('anon.ux.moodNotAlone'))
     : esc(_wt('anon.ux.moodSameNone', { mood: MARK }));
-  return `<div class="mood-same">${_moodImg(k, 'ms-img')}<span>${line.replace(MARK, `<b>${esc(_wt(m.key))}</b>`)}</span></div>`;
+  // Tapping your bear opens the scale, where another bear changes it.
+  return `<div class="mood-same"><span class="ms-tap" data-mood-open>${_moodImg(k, 'ms-img')}</span><span>${line.replace(MARK, `<b>${esc(_wt(m.key))}</b>`)}</span></div>`;
 }
 function moodBlockHtml() {
   if (!_moodAskShown() || _moodState.failed) return '<div class="mood-block"></div>';
@@ -1493,7 +1545,11 @@ function moodBlockHtml() {
     const n = num(counts[m.k], 0);
     return n ? `<span style="flex:${n};background:${m.c}" title="${esc(_wt(m.key))}: ${n}"></span>` : '';
   }).join('') : '';
-  const legend = MOODS.map(m => `<span class="ml-i" title="${esc(_wt(m.key))}">${_moodImg(m.k, 'ml-img')}<b>${num(counts[m.k], 0)}</b></span>`).join('');
+  // With your own mood known on this device, the scale's bears are buttons:
+  // tap another to change today's check-in (changeMood).
+  const legend = MOODS.map(m => mine
+    ? `<button class="ml-i ml-pick${m.k === mine ? ' mine' : ''}" data-mood-change="${m.k}" aria-pressed="${m.k === mine}" title="${esc(_wt(m.key))}" aria-label="${esc(_wt(m.key))}: ${num(counts[m.k], 0)}">${_moodImg(m.k, 'ml-img')}<b>${num(counts[m.k], 0)}</b></button>`
+    : `<span class="ml-i" title="${esc(_wt(m.key))}">${_moodImg(m.k, 'ml-img')}<b>${num(counts[m.k], 0)}</b></span>`).join('');
   const countLabel = total === 1 ? _wt('anon.ux.moodOne') : _wt('anon.ux.moodCount', { n: total });
   // A negative delay picks the fade up where it was, so a feed re-render
   // mid-fade doesn't restart it.
@@ -1505,6 +1561,7 @@ function moodBlockHtml() {
     + (mine ? _moodSameHtml(mine, counts) : '')
     + (open && bar ? `<div class="mood-bar">${bar}</div>` : '')
     + (open ? `<div class="mood-legend">${legend}</div>` : '')
+    + (open && mine ? `<div class="mood-note">${esc(_wt('anon.ux.moodTapToChange'))}</div>` : '')
     + (_moodState.via === 'journal' ? `<div class="mood-note">✓ ${esc(_wt('anon.ux.moodViaJournal'))}</div>` : '')
     + `<button class="mood-all" data-mood-all aria-expanded="${open}">${esc(_wt(open ? 'anon.ux.moodHideAll' : 'anon.ux.moodSeeAll'))}</button>`
     + `</div>`;
@@ -1570,12 +1627,42 @@ async function checkInMood(kind) {
   try {
     const res = await _callFn('anonMoodCheckin', { mood: kind });
     Object.assign(_moodState, { counts: res.counts || counts, bear: res.counts ? (res.bear || null) : bear, checkedIn: true, via: res.via || 'board', day: res.day || '' });
+    if (kind === 'stable') _maybeAskForReview();
   } catch (e) {
     console.warn('[Anonymous] mood check-in failed', e);
     BB.storage.remove('Anon_mood');
     Object.assign(_moodState, prev);
     showHint(_wt('anon.ux.moodFailed'));
   }
+  _repaintMood();
+}
+
+// Tap another bear on the scale to change today's check-in. The server moves
+// one from the old total to the new (anonMoodCheckin with `from`); a server
+// that can't (not yet deployed, or the day's changes used up) answers without
+// moved: true, and the card goes back to how it was.
+async function changeMood(kind) {
+  const from = _myMood();
+  if (!from || kind === from || !MOODS.some(m => m.k === kind) || _moodState.changing) return;
+  const prev = Object.assign({}, _moodState, { counts: Object.assign({}, _moodState.counts) });
+  const counts = Object.assign({}, _moodState.counts);
+  counts[from] = Math.max(0, num(counts[from], 0) - 1);
+  counts[kind] = num(counts[kind], 0) + 1;
+  try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
+  Object.assign(_moodState, { counts, via: 'board', flashAt: Date.now(), changing: true });
+  _haptic('success');
+  _repaintMood();
+  try {
+    const res = await _callFn('anonMoodCheckin', { mood: kind, from });
+    if (!res.moved) throw new Error('not moved');
+    Object.assign(_moodState, { counts: res.counts || counts, bear: res.bear || null, day: res.day || _moodState.day });
+  } catch (e) {
+    console.warn('[Anonymous] mood change failed', e);
+    try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: from })); } catch (_) {}
+    Object.assign(_moodState, prev);
+    showHint(_wt('anon.ux.moodFailed'));
+  }
+  _moodState.changing = false;
   _repaintMood();
 }
 
@@ -1587,8 +1674,17 @@ function setupInteractions() {
   list.addEventListener('click', e => {
     const v = e.target.closest('[data-vote]');
     if (v) { votePoll(v.dataset.pid, parseInt(v.dataset.vote, 10)); return; }
+    if (_greetingSwiped) { _greetingSwiped = false; return; }   // the end of a swipe isn't a tap
+    if (e.target.closest('[data-sys-hide]')) { hideGreeting(); return; }
+    const ch = e.target.closest('[data-mood-change]');
+    if (ch) { changeMood(ch.dataset.moodChange); return; }
     const m = e.target.closest('[data-mood]');
     if (m) { checkInMood(m.dataset.mood); return; }
+    if (e.target.closest('[data-mood-open]') && !_moodState.showAll) {
+      _moodState.showAll = true;
+      _repaintMood();
+      return;
+    }
     if (e.target.closest('[data-mood-all]')) {
       _moodState.showAll = !_moodState.showAll;
       _repaintMood();
@@ -1597,6 +1693,56 @@ function setupInteractions() {
       if (b) b.focus({ preventScroll: true });
     }
   });
+  bindGreetingSwipe(list);
+}
+
+// Swipe the greeting sideways to put it away for the day, the way the
+// awareness card goes (js/shared/awareness.js): past a third of its width, or
+// a flick, it slides off; otherwise it springs back. Starts anywhere on the
+// card, bears included; a swipe that moved doesn't also count as a tap.
+let _greetingSwiped = false;
+function bindGreetingSwipe(list) {
+  let drag = null;
+  list.addEventListener('pointerdown', e => {
+    const card = e.target.closest('.sys-card[data-sys="daily"]');
+    if (!card || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    drag = { card, x: e.clientX, y: e.clientY, t: Date.now(), dx: 0, on: false, id: e.pointerId };
+  });
+  list.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.on) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
+      if (Math.abs(dx) < 10) return;
+      drag.on = true;
+      drag.card.style.transition = 'none';
+      try { drag.card.setPointerCapture(e.pointerId); } catch (_) {}
+    }
+    drag.dx = dx;
+    drag.card.style.transform = `translateX(${dx}px)`;
+    drag.card.style.opacity = String(Math.max(0.2, 1 - Math.abs(dx) / (drag.card.offsetWidth || 300)));
+  });
+  const end = e => {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    const d = drag; drag = null;
+    if (!d.on) return;
+    _greetingSwiped = true;
+    setTimeout(() => { _greetingSwiped = false; }, 400);
+    const w = d.card.offsetWidth || 300;
+    const fast = Math.abs(d.dx) / Math.max(1, Date.now() - d.t) > 0.8;
+    d.card.style.transition = 'transform .22s ease-out, opacity .22s ease-out';
+    if (Math.abs(d.dx) > w / 3 || (fast && Math.abs(d.dx) > 60)) {
+      d.card.style.transform = `translateX(${d.dx > 0 ? w * 1.2 : -w * 1.2}px)`;
+      d.card.style.opacity = '0';
+      _haptic();
+      setTimeout(hideGreeting, 220);
+    } else {
+      d.card.style.transform = '';
+      d.card.style.opacity = '';
+    }
+  };
+  list.addEventListener('pointerup', end);
+  list.addEventListener('pointercancel', end);
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2546,6 +2692,7 @@ function _openDeepLinkedPost() {
 
 function initBoard() {
   _openDeepLinkedPost();
+  _countUseDay();
   BB.storage.set('AnonLastVisit', Date.now());
   // Opening the board reads everything up to now — record it so the home
   // screen's Bipolar Anonymous tick is already active on the way back, before
@@ -2651,6 +2798,46 @@ function _fitBoardLogo() {
 // Record that the user posted (or commented) today, so the BipolarBear home
 // page can show its "posted today" tick next to Bipolar Anonymous. Same local
 // date key format the home page's entry ticks use.
+// ── "Rate Bipolar Anonymous" (the App Store / Play review card) ──
+// James, 2026-11-03: lots of new members, so ask the happy ones for a review.
+// In the phone apps (bipolaranonymous-native carries
+// @capacitor-community/in-app-review from 1.45; Bipolar Bear's app has it for
+// the journal's own ask, _maybeRequestReview in js/journal.js; on the web
+// there's no plugin and this does nothing). Asked after a good moment (a post
+// or reply that doesn't read like a crisis, or checking in Stable), never on
+// the first days, never over a sheet, at most once every 120 days and 3 times
+// in all, with the SAME counters as the journal's ask (ReviewAskCount /
+// ReviewLastAsked), so the board inside Bipolar Bear never adds asks of its
+// own. Apple and Google decide whether the card really shows (Apple: up to 3
+// times a year), and nothing here learns whether it did or what was given.
+const REVIEW_MIN_DAYS = 3, REVIEW_GAP_DAYS = 120, REVIEW_MAX_ASKS = 3;
+function _countUseDay() {
+  try {
+    const today = _localDay();
+    if (BB.storage.get('Anon_lastUseDay') === today) return;
+    BB.storage.set('Anon_lastUseDay', today);
+    BB.storage.set('Anon_useDays', String((parseInt(BB.storage.get('Anon_useDays'), 10) || 0) + 1));
+  } catch (e) {}
+}
+function _maybeAskForReview(text) {
+  try {
+    const R = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.InAppReview;
+    if (!R || typeof R.requestReview !== 'function') return;
+    if (text && _looksLikeCrisis(text)) return;
+    if ((parseInt(BB.storage.get('Anon_useDays'), 10) || 0) < REVIEW_MIN_DAYS) return;
+    const asks = parseInt(BB.storage.get('ReviewAskCount'), 10) || 0;
+    const last = parseInt(BB.storage.get('ReviewLastAsked'), 10) || 0;
+    if (asks >= REVIEW_MAX_ASKS || Date.now() - last < REVIEW_GAP_DAYS * 86400000) return;
+    setTimeout(() => {
+      if (_topOpenOverlay()) return;   // a sheet came up (first post, notifications): another day
+      if (document.visibilityState !== 'visible') return;
+      BB.storage.set('ReviewAskCount', String(asks + 1));
+      BB.storage.set('ReviewLastAsked', String(Date.now()));
+      Promise.resolve(R.requestReview()).catch(() => {});
+    }, 2500);
+  } catch (e) {}
+}
+
 function _anonMarkPostedToday() {
   const d = new Date();
   const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -5292,10 +5479,59 @@ function renderComment(c) {
     </div>
     ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt${isBot || c.isAdmin ? '' : ' data-medlink'}>${esc(c.text)}</div>`}
     <div class="comment-actions">
+      ${isBot ? '' : commentReactionsHtml(c, isMine)}
       <div style="flex:1"></div>
       ${(selfDeleteBtn || adminDeleteBtn || banBtn || sosBtn) ? moreMenuHtml(`${selfDeleteBtn}${adminDeleteBtn}${banBtn}${sosBtn}${reportBtn}${muteBtn}`) : ''}
     </div>
   </div>`;
+}
+
+// 💛 and ❤️‍🩹 under a reply, as on posts: neither on your own reply.
+function commentReactionsHtml(c, isMine) {
+  const key = commentTargetId + '/' + c.id;
+  const likes = num(c.likes, 0), supports = num(c.supports, 0);
+  const liked = likedComments.has(key), supported = supportedComments.has(key);
+  const own = isMine ? ' aria-disabled="true" style="opacity:0.35;cursor:default;"' : '';
+  return `<button class="like-btn c-react${liked ? ' liked' : ''}" data-creact="likes" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}"${own}${isMine ? ` title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>💛 <span>${likes}</span></button>`
+    + `<button class="support-btn c-react${supported ? ' supported' : ''}" data-creact="supports" aria-pressed="${supported}" aria-label="${esc(_wt('a11y.supports', { count: supports }))}"${own}${isMine ? ` title="${esc(_wt('anon.toast.cantSupportOwn'))}"` : ''}><span class="support-ico" aria-hidden="true">❤️‍🩹</span> <span class="support-n">${supports}</span></button>`;
+}
+async function handleCommentReaction(btn, card) {
+  const field = btn.dataset.creact;
+  const cid = card.dataset.cid;
+  const postId = commentTargetId;
+  if (!cid || !postId || (field !== 'likes' && field !== 'supports')) return;
+  const set = field === 'likes' ? likedComments : supportedComments;
+  const key = postId + '/' + cid;
+  const on = set.has(key);
+  if (!on && card.dataset.author === profile.monika) {
+    showHint(_wt(field === 'likes' ? 'anon.toast.cantLikeOwn' : 'anon.toast.cantSupportOwn'));
+    return;
+  }
+  if (_writeBlockedOffline()) return;
+  // Straight away on screen; the thread listener then redraws it from the
+  // reply itself (Firestore shows the local write at once).
+  const n = Math.max(0, (parseInt(btn.querySelector('span:last-child').textContent, 10) || 0) + (on ? -1 : 1));
+  if (on) set.delete(key); else { set.add(key); _haptic(); }
+  _saveCommentReactions();
+  btn.classList.toggle(field === 'likes' ? 'liked' : 'supported', !on);
+  btn.setAttribute('aria-pressed', String(!on));
+  btn.querySelector('span:last-child').textContent = n;
+  if (!db) return;
+  try {
+    await _ensureAuthSession();
+    await db.collection(BB_BRAND.collections.posts).doc(postId).collection('comments').doc(cid)
+      .update({ [field]: firebase.firestore.FieldValue.increment(on ? -1 : 1) });
+  } catch (e) {
+    console.warn('[Thread] reaction failed', e);
+    if (on) set.add(key); else set.delete(key);
+    _saveCommentReactions();
+    if (commentTargetId === postId) {
+      btn.classList.toggle(field === 'likes' ? 'liked' : 'supported', on);
+      btn.setAttribute('aria-pressed', String(on));
+      btn.querySelector('span:last-child').textContent = Math.max(0, n + (on ? 1 : -1));
+    }
+    showHint(_wt('anon.ux.reactFailed'));
+  }
 }
 
 function setupThread() {
@@ -5319,6 +5555,8 @@ function setupThread() {
   commentsList.addEventListener('click', e => {
     const more = e.target.closest('[data-more]');
     if (more) { openActions(more.closest('.comment-card')); return; }
+    const react = e.target.closest('[data-creact]');
+    if (react) { const rc = react.closest('.comment-card'); if (rc) handleCommentReaction(react, rc); return; }
     const btn = e.target.closest('button.icon-btn');
     if (!btn) return;
     const card = btn.closest('.comment-card');
@@ -5451,6 +5689,7 @@ function setupThread() {
       // offer notifications here as well. No-op once the sheet has been
       // answered, or on a device that can't do push.
       maybeAskNotifications();
+      _maybeAskForReview(text);
     } else {
       // Keep the typed text so the user can retry, and say what happened —
       // previously this failed silently and the comment just vanished.
@@ -5674,8 +5913,25 @@ function greetingHtml(text) {
   return m ? esc(m[1]) + '<br>' + esc(m[2]) : esc(text);
 }
 
+// The greeting and its check-in can be swiped away (or ✕) for the rest of the
+// day; it's back the next day, not on every open (James, 2026-11-03). Kept on
+// this device by the phone's own date, as the greeting is.
+function _localDay() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function _greetingHidden() { return BB.storage.get('Anon_greetingHidden') === _localDay(); }
+function hideGreeting() {
+  try { BB.storage.set('Anon_greetingHidden', _localDay()); } catch (e) {}
+  const card = document.querySelector('#post-list .sys-card[data-sys="daily"]');
+  if (card) card.remove();
+}
+
 function renderSystem(p) {
-  return `<div class="sys-card">
+  const daily = p.id === 'sys_daily';
+  if (daily && _greetingHidden()) return '';
+  return `<div class="sys-card"${daily ? ' data-sys="daily"' : ''}>
+    ${daily ? `<button class="sys-hide" data-sys-hide aria-label="${esc(_wt('a11y.close'))}">✕</button>` : ''}
     <div class="sys-emoji">${esc(p.icon) || '☀️'}</div>
     <div class="sys-text">${p.id === 'sys_daily' ? greetingHtml(p.text) : esc(p.text)}</div>
     <div class="sys-meta">BipolarBear${p.time ? ' · ' + esc(p.time) : (p.timestamp ? ' · ' + timeAgo(p.timestamp) : '')}</div>
@@ -5965,8 +6221,10 @@ function setupFAB() {
     setComposeMode();
     resetComposePoll();
     resetComposePhoto();
-    document.getElementById('compose-ta').value = '';
-    document.getElementById('compose-post').disabled = true;
+    // A post you started and closed comes back (see _composeDraftKey).
+    const draft = _composeDrafts.get(_composeDraftKey()) || '';
+    document.getElementById('compose-ta').value = draft;
+    document.getElementById('compose-post').disabled = !draft.trim();
     openOv('ov-compose');
     setTimeout(() => document.getElementById('compose-ta').focus(), 50);
   });
@@ -5981,6 +6239,21 @@ function setupFAB() {
 // ─────────────────────────────────────────────────────────────────
 // Compose
 // ─────────────────────────────────────────────────────────────────
+// A post being written survives the sheet closing (✕, a swipe down, a tap
+// outside): ✏️ brings it back until it's posted or the app is closed (James,
+// 2026-11-03: "I typed a new thread then accidentally closed the drawer and it
+// disappeared"). In memory only, like comment drafts: nothing typed is stored
+// on the device. One per tab and mode, so a General post doesn't turn up as a
+// suggested announcement.
+const _composeDrafts = new Map();
+function _composeDraftKey() { return currentTab + ':' + composeMode(); }
+function _keepComposeDraft() {
+  const ta = document.getElementById('compose-ta');
+  if (!ta) return;
+  if (ta.value.trim()) _composeDrafts.set(_composeDraftKey(), ta.value);
+  else _composeDrafts.delete(_composeDraftKey());
+}
+
 // 'suggest' when a member composes on the announcements tab — only the admin
 // publishes announcements. Everything else is an ordinary post.
 function composeMode() {
@@ -6174,7 +6447,7 @@ function setupCompose() {
   const ta   = document.getElementById('compose-ta');
   const post = document.getElementById('compose-post');
 
-  ta.addEventListener('input', () => { post.disabled = !ta.value.trim(); });
+  ta.addEventListener('input', () => { post.disabled = !ta.value.trim(); _keepComposeDraft(); });
 
   document.getElementById('compose-cancel').addEventListener('click', () => closeOv('ov-compose'));
 
@@ -6203,12 +6476,15 @@ function setupCompose() {
     }
     _posting = true;
     post.disabled = true;
+    const draftKey = _composeDraftKey();
+    _composeDrafts.delete(draftKey);   // sent: ✏️ opens empty next time
     closeOv('ov-compose');
 
     // Announcements are the admin's to publish — a member's goes to them for
     // review instead of onto the board.
     if (composeMode() === 'suggest') {
-      await submitSuggestion(text);
+      // Not sent: the words wait under ✏️ for another go.
+      if (!(await submitSuggestion(text))) _composeDrafts.set(draftKey, text);
       _posting = false;
       return;
     }
@@ -6299,6 +6575,7 @@ function setupCompose() {
         showHint(_wt(pollOpts ? 'anon.ux.pollFailed' : 'anon.net.postFailed'));
         _postImgUrls.delete(optimisticId);   // the picture stays attached for another go
         ta.value = text;
+        _composeDrafts.set(draftKey, text);
         post.disabled = false;
         openOv('ov-compose');
         _posting = false;
@@ -6313,6 +6590,7 @@ function setupCompose() {
       openOv('ov-firstpost');   // its close offers notifications
     } else {
       maybeAskNotifications();  // no-op unless they've never seen the posts offer
+      _maybeAskForReview(text);
     }
     _posting = false;
   });
@@ -6322,7 +6600,7 @@ function setupCompose() {
 // shows on the announcements tab straight away (faded, "waiting for approval")
 // because listenSuggestions picks it up once the id is remembered.
 async function submitSuggestion(text) {
-  if (!db) { showHint(_wt('anon.toast.suggFailed')); return; }
+  if (!db) { showHint(_wt('anon.toast.suggFailed')); return false; }
   try {
     await _ensureAuthSession();
     const ref = await db.collection(BB_BRAND.collections.annSuggestions).add({
@@ -6339,9 +6617,11 @@ async function submitSuggestion(text) {
     rememberSuggestion(ref.id);
     listenSuggestions(); // first suggestion on this device — start watching it
     showHint(_wt('anon.toast.suggSent'));
+    return true;
   } catch (e) {
     console.error('[Anonymous] suggestion failed', e);
     showHint(_wt('anon.toast.suggFailed'));
+    return false;
   }
 }
 
