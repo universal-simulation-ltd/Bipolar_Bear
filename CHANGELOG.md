@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 💊 **Medication: missing one medicine is "Some", not "Not taken".** On the medication step, tap a medicine to say you didn't take it and the day's answer becomes **🤏 Some**. Keep tapping: it only becomes **Not taken** once every medicine is marked as missed, and back to **Taken** if you un-tick them all. The medicines stay on screen so you can keep changing them, and the guided journal waits for **Next**. On the phone apps it needs the next update. (`CACHE_NAME` v405)
 - ✏️ **Bipolar Anonymous: a post you started isn't lost if the sheet closes.** Closed the new-post sheet by accident (✕, a swipe down or a tap outside)? Tap ✏️ and what you wrote is still there, until you post it or close the app. It's kept in the app's memory only, never saved on the phone. A suggested announcement keeps its own. (`CACHE_NAME` v404)
 - 💬 **Bipolar Anonymous: "Please wait until someone else replies" can be seen.** If you tried to comment twice in a row, the message showed behind the comments, so it looked as if nothing happened. Messages now show on top of whatever sheet is open. (`CACHE_NAME` v404)
 - 💛 **Bipolar Anonymous: 💛 and ❤️‍🩹 on replies.** Every reply now has the same two hearts as posts. Tap to give one, tap again to take it back. You can't give them to your own reply. (`CACHE_NAME` v404)

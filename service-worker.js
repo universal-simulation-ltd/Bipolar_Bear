@@ -1996,7 +1996,11 @@
 //   functions deploy); the App Store / Play review card at a good moment
 //   (Bipolar Anonymous app 1.45, @capacitor-community/in-app-review). Touches
 //   js/anonymous.js, css/anonymous.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v404';
+// v405: Journal medication step (2026-11-04): tapping a medicine to mark it
+//   missed now makes the day 🤏 Some until every medicine is missed (then Not
+//   taken), instead of jumping straight to Not taken; the chips stay on screen
+//   while the answer is Some, and focus mode waits for Next. js/journal.js.
+const CACHE_NAME = 'bipolarbear-v405';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

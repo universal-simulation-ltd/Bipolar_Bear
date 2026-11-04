@@ -14651,7 +14651,16 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       names.forEach(x => { if (!cur[x]) cur[x] = 'taken'; });
       cur[n] = cur[n] === 'missed' ? 'taken' : 'missed';
       selectedMedDoses = cur;
-      selectedMedication = BBMeds.aggregate(cur);
+      // None missed → Taken; every one missed → Not taken; anything in
+      // between is 🤏 Some (2026-11-04: one tap used to jump to Not taken).
+      const missed = names.filter(x => cur[x] === 'missed').length;
+      selectedMedication = missed === 0 ? 'taken' : missed === names.length ? 'not-taken' : 'some';
+      if (selectedMedication === 'some' && selectedMedAmounts) {
+        // Keep any doses the Some sheet recorded, for medicines still taken.
+        const keep = {};
+        Object.keys(selectedMedAmounts).forEach(k => { if (cur[k] === 'taken') keep[k] = selectedMedAmounts[k]; });
+        selectedMedAmounts = Object.keys(keep).length ? keep : null;
+      } else if (selectedMedication !== 'some') selectedMedAmounts = null;
       document.querySelectorAll('[data-medication]').forEach(b => b.classList.toggle('selected', b.dataset.medication === selectedMedication));
       scheduleDraftSave();
     }
@@ -14666,16 +14675,23 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       return BBMeds.dosesForAnswer(selectedMedication, names, selectedMedDoses);
     }
     function _medChipsHtml(fm) {
-      if (!window.BBMeds || (selectedMedication !== 'taken' && selectedMedication !== 'not-taken')) return '';
+      const sel = selectedMedication;
+      if (!window.BBMeds || (sel !== 'taken' && sel !== 'not-taken' && sel !== 'some')) return '';
       const names = _medNamesNow();
       if (names.length < 2) return '';
-      const doses = selectedMedDoses || BBMeds.dosesForAnswer(selectedMedication, names);
-      return BBMeds.chipsHtml(names, doses, fm ? '_fmMedToggle' : '_medToggle', fm && selectedMedication === 'not-taken' ? { ask: true, nextFn: '_fmMedNext' } : { ask: selectedMedication === 'not-taken' });
+      // 🤏 Some shows the chips once it knows which were taken (a tap on a
+      // chip, or the Some sheet's Done); with no detail yet it shows none.
+      const doses = sel === 'some' ? selectedMedDoses : (selectedMedDoses || BBMeds.dosesForAnswer(sel, names));
+      if (!doses) return '';
+      const ask = sel !== 'taken';
+      // Focus mode waits for Next while some are missed, so the person can
+      // keep tapping until the answer is right.
+      return BBMeds.chipsHtml(names, doses, fm ? '_fmMedToggle' : '_medToggle', fm && ask ? { ask: true, nextFn: '_fmMedNext' } : { ask });
     }
-    /** Classic form: the chips under the buttons (or what 🤏 Some recorded). */
+    /** Classic form: the chips under the buttons (and what 🤏 Some recorded). */
     function _renderMedDosesRow() {
       const el = document.getElementById('medDosesRow');
-      if (el) el.innerHTML = selectedMedication === 'some' ? _medSomeSumHtml() : _medChipsHtml(false);
+      if (el) el.innerHTML = _medChipsHtml(false) + (selectedMedication === 'some' ? _medSomeSumHtml() : '');
     }
     function _medToggle(i) { _medToggleAt(i); _renderMedDosesRow(); }
     // Focus mode: "Not taken" with two or more medicines asks which, and
