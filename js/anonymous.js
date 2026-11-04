@@ -5119,6 +5119,15 @@ async function rejectSuggestion(id) {
       status:     'rejected',
       reviewedAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
+    // Gone from this device at once (2026-11-04). The "Not published" card
+    // is for the author, and "mine" is by device: a suggestion written on
+    // this phone (before signing in as admin, or testing) stayed on the
+    // board after the admin refused it here. Another device's author still
+    // gets their card; only this device forgets it.
+    forgetSuggestion(id);
+    suggestions = suggestions.filter(x => x.id !== id);
+    if (currentTab === 'announcements') renderPosts(announcementFeed());
+    renderTabBadges();
     showHint(_wt('anon.toast.suggRejected'));
   } catch (e) {
     console.error('[Anonymous] reject suggestion failed', e);

@@ -2000,7 +2000,11 @@
 //   missed now makes the day 🤏 Some until every medicine is missed (then Not
 //   taken), instead of jumping straight to Not taken; the chips stay on screen
 //   while the answer is Some, and focus mode waits for Next. js/journal.js.
-const CACHE_NAME = 'bipolarbear-v405';
+// v406: Bipolar Anonymous (2026-11-04): refusing an announcement suggestion
+//   clears it from the refusing device at once. The author's "Not published"
+//   card is keyed by device, so a suggestion written on the admin's own phone
+//   stayed on the board after it was refused there. js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v406';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
