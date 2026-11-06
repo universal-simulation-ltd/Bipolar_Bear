@@ -180,7 +180,7 @@
    * by `_injectHTML()` and revealed by `_applyFabDock()` when assigned.
    */
   const _FAB_EXTRAS = [
-    { id: 'quicknote', icon: '📝', label: 'Quick Note', desc: 'Reminder for your next journal entry' },
+    { id: 'quicknote', icon: '📝', label: 'Quick Note', desc: 'Goes in your next journal entry' },
     { id: 'stats',     icon: '📊', label: 'Statistics',  desc: 'Open your mood journal stats' },
     { id: 'celeb',     icon: '⭐', label: 'Celebrity',   desc: 'Famous people with bipolar disorder' },
     { id: 'goals',     icon: '🎯', label: 'Goals',       desc: 'View your survival kit goals' },
@@ -1833,8 +1833,8 @@
   /**
    * Append the current textarea content to `bbQuickNotes` in localStorage
    * and show a transient "Note saved!" toast. Empty input → close-only.
-   * Notes are read by journal.html on the next entry compose to surface
-   * them as reminders.
+   * journal.js (_qnFillNotes) adds them to the notes of the next new entry
+   * and drops them from the list once that entry is saved.
    */
   window.saveQuickNote = function () {
     const _inp  = document.getElementById('bbQuickNoteInput');

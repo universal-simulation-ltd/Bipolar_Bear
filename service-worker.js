@@ -2004,7 +2004,12 @@
 //   clears it from the refusing device at once. The author's "Not published"
 //   card is keyed by device, so a suggestion written on the admin's own phone
 //   stayed on the board after it was refused there. js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v406';
+// v407: Journal (2026-11-06): quick notes go into the next new entry's notes
+//   (no longer a box above the mood picker, unreadable in dark mode) and leave
+//   the list once it is saved; the medication step shows the per-medicine
+//   chips from the start, a missed one moves the wheel to 🤏 Some, and
+//   "Which ones?" is gone. js/journal.js, js/shared/i18n.js, fab.js.
+const CACHE_NAME = 'bipolarbear-v407';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

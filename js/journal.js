@@ -1430,7 +1430,7 @@ function _tt(k, vars, fallback) {
         });
       }
 
-      wireToggleGroup('data-medication',   v => { _medSetAnswer(v); _renderMedDosesRow(); scheduleDraftSave(); if (v === 'some') _medOpenSome('form'); });
+      wireToggleGroup('data-medication',   v => { _medSetAnswer(v); _renderMedDosesRow(); scheduleDraftSave(); if (v === 'some' && _medNamesNow().length < 2) _medOpenSome('form'); });
       wireToggleGroup('data-alcohol',      v => { selectedAlcohol      = v; scheduleDraftSave(); });
       wireToggleGroup('data-exercise',     v => { selectedExercise     = v; scheduleDraftSave(); });
       wireToggleGroup('data-anxiety',      v => { selectedAnxiety      = v; scheduleDraftSave(); });
@@ -1881,6 +1881,9 @@ function _tt(k, vars, fallback) {
       // Notes
       const notesEl = document.getElementById('notes');
       if (notesEl) notesEl.value = draft.notes || '';
+      // The draft's notes replaced the field: add any quick note not in them.
+      _qnFilledIds = [];
+      _qnFillNotes();
 
       // Simple toggle fields
       const fieldMap = {
@@ -2548,6 +2551,8 @@ function _tt(k, vars, fallback) {
       const dateInput = document.getElementById('entryDate');
       const selectedDate = dateInput.value ? new Date(dateInput.value + 'T12:00:00') : new Date();
       
+      // Quick notes saved since the form opened still go in (new entries only).
+      _qnFillNotes();
       const now = new Date();
       const entry = {
         date: selectedDate.toISOString(),
@@ -2647,6 +2652,7 @@ function _tt(k, vars, fallback) {
         
         // Reset edit state
         const _wasNewEntry = !editingEntry;
+        if (_wasNewEntry) _qnClearFilled();
         editingEntry = null;
         _editFieldOverrides = null;
         document.getElementById('submitBtn').textContent = newEntryBtnLabel();
@@ -8047,25 +8053,9 @@ function _tt(k, vars, fallback) {
           const _chooseMoodHintDone = BB.storage.get('_fmChooseMoodHintDone') === '1';
           const _showChooseMoodHint = !_chooseMoodHintDone && !editingEntry;
           const _showFmTip = !BB.storage.get('_fmMoodTipShown') && _chooseMoodHintDone && BB.storage.get('_fmTapHoldHintReady') === '1';
-          // Quick notes from index.html — show accumulated notes above mood selector
-          let _quickNotesHtml = '';
-          try {
-            const _qn = JSON.parse(BB.storage.get('QuickNotes') || '[]');
-            if (_qn.length > 0) {
-              const _noteRows = _qn.map((n, i) => {
-                const _esc = n.text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                const _border = i > 0 ? 'margin-top:7px;padding-top:7px;border-top:1px solid rgba(74,158,255,0.2);' : '';
-                return `<div style="display:flex;align-items:flex-start;gap:8px;${_border}">
-                  <p style="flex:1;font-size:0.85em;color:#495057;margin:0;line-height:1.45;">${_esc}</p>
-                  <button onclick="_dismissQuickNote('${n.id}')" style="background:none;border:none;color:var(--text-muted-ink);font-size:1em;cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent;" title="${BB.t('journal.ui.dismiss')}">✕</button>
-                </div>`;
-              }).join('');
-              _quickNotesHtml = `<div style="background:#f0f7ff;border-radius:10px;padding:10px 14px;margin-bottom:14px;border-left:3px solid #5b8dee;">
-                <p style="font-size:0.75em;font-weight:700;color:#5b8dee;margin:0 0 7px;text-transform:uppercase;letter-spacing:0.3px;">${BB.t('journal.ui.yourNotes')}</p>
-                ${_noteRows}
-              </div>`;
-            }
-          } catch(_) {}
+          // Quick notes no longer show here: they go into the entry's notes
+          // (_qnFillNotes, 2026-11-06).
+          const _quickNotesHtml = '';
 
           // Check for yesterday's intention to display under heading
           let _prevIntentionHtml = '';
@@ -8469,8 +8459,8 @@ function _tt(k, vars, fallback) {
           // becomes tappable chips, taken or missed per medicine (1.44).
           const _medChips = _medChipsHtml(true);
           if (_medChips) medListHtml = _medChips;
-          // 🤏 Some: what it recorded, and "Which ones?" to change it.
-          if (selectedMedication === 'some') medListHtml += _medSomeSumHtml('fm');
+          // 🤏 Some is answered on the chips; "Which ones?" is gone (2026-11-06).
+          // One medicine: no chips, and Some opens the dose sheet as before.
           const _medHintDone = BB.storage.get('MedHintDone') === '1';
           // Plain mode (wheel BETA off) — the original pre-wheel layout: the
           // user's med list + a "Manage medications" link above the answer
@@ -8762,6 +8752,7 @@ function _tt(k, vars, fallback) {
         }
 
         case 'notes': {
+          _qnFillNotes();
           const _notesInitVal = (document.getElementById('notes')||{}).value||'';
           const _initWords = _notesInitVal.trim() ? _notesInitVal.trim().split(/\s+/).length : 0;
           return `<div class="fm-hero">
@@ -10443,6 +10434,7 @@ function _tt(k, vars, fallback) {
       _applySleepLock();
       // Restore any saved draft for today/yesterday (runs async-safe after DOM is ready)
       setTimeout(restoreDraft, 0);
+      setTimeout(_qnFillNotes, 0); // quick notes into a new entry's notes (after any draft)
       // Restart mood cycle in case it was stopped by a previous mood selection or edit
       if (window._startMoodCycle) window._startMoodCycle();
       // Briefly block pointer events on mood buttons to prevent ghost-touch from
@@ -11147,6 +11139,45 @@ function _tt(k, vars, fallback) {
     window._editCalDayIntention = _editCalDayIntention;
     window._saveCalDayIntention = _saveCalDayIntention;
 
+    // ── Quick notes (fab.js 📝) go into the next new entry's notes ──
+    // 2026-11-06: they used to show as a box above the mood picker (and
+    // unreadable in dark mode). Now each one is added to the notes once per
+    // new entry, where it can be edited or deleted like anything typed, and
+    // it leaves the quick-note list once that entry is saved.
+    var _qnFilledIds = [];
+    function _qnFillNotes() {
+      if (editingEntry) return;
+      const el = document.getElementById('notes');
+      if (!el) return;
+      let list;
+      try { list = JSON.parse(BB.storage.get('QuickNotes') || '[]'); } catch (_) { return; }
+      if (!Array.isArray(list) || !list.length) return;
+      let v = el.value || '';
+      list.forEach(n => {
+        if (!n || !n.text || _qnFilledIds.includes(n.id)) return;
+        _qnFilledIds.push(n.id);
+        if (v.includes(n.text)) return; // already there (a restored draft)
+        v = v.trim() ? v.replace(/\s+$/, '') + '\n' + n.text : n.text;
+      });
+      if (v !== el.value) {
+        el.value = v;
+        const fm = document.getElementById('fmNotesInput');
+        if (fm && !fm.value.trim()) fm.value = v;
+        if (typeof scheduleDraftSave === 'function' && selectedMood != null) scheduleDraftSave();
+      }
+    }
+    /** After a new entry is saved: drop the quick notes that went into it. */
+    function _qnClearFilled() {
+      if (!_qnFilledIds.length) return;
+      try {
+        const list = JSON.parse(BB.storage.get('QuickNotes') || '[]');
+        const left = (Array.isArray(list) ? list : []).filter(n => n && !_qnFilledIds.includes(n.id));
+        if (left.length) BB.storage.set('QuickNotes', JSON.stringify(left));
+        else BB.storage.remove('QuickNotes');
+      } catch (_) {}
+      _qnFilledIds = [];
+    }
+
     function resetEntryForm() {
       _editOriginalState = null;
       _fmDayFillSnapshot = null;
@@ -11248,6 +11279,9 @@ function _tt(k, vars, fallback) {
       if (typeof _fmActive !== 'undefined' && _fmActive) {
         document.getElementById('entryFormCard').style.display = 'none';
       }
+      // A fresh form: this entry's quick notes go in its notes.
+      _qnFilledIds = [];
+      _qnFillNotes();
     }
 
     function openFormForNewEntry(dateStr) {
@@ -14676,14 +14710,15 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     }
     function _medChipsHtml(fm) {
       const sel = selectedMedication;
-      if (!window.BBMeds || (sel !== 'taken' && sel !== 'not-taken' && sel !== 'some')) return '';
+      // The chips show from the start (no answer yet = all taken, as the
+      // wheel's Taken default), and under 🤏 Some (2026-11-06). Unsure: none.
+      if (!window.BBMeds || sel === 'unsure') return '';
       const names = _medNamesNow();
       if (names.length < 2) return '';
-      // 🤏 Some shows the chips once it knows which were taken (a tap on a
-      // chip, or the Some sheet's Done); with no detail yet it shows none.
-      const doses = sel === 'some' ? selectedMedDoses : (selectedMedDoses || BBMeds.dosesForAnswer(sel, names));
+      const doses = selectedMedDoses
+        || BBMeds.dosesForAnswer(sel === 'not-taken' ? 'not-taken' : 'taken', names);
       if (!doses) return '';
-      const ask = sel !== 'taken';
+      const ask = sel === 'not-taken' || sel === 'some';
       // Focus mode waits for Next while some are missed, so the person can
       // keep tapping until the answer is right.
       return BBMeds.chipsHtml(names, doses, fm ? '_fmMedToggle' : '_medToggle', fm && ask ? { ask: true, nextFn: '_fmMedNext' } : { ask });
@@ -14691,20 +14726,21 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     /** Classic form: the chips under the buttons (and what 🤏 Some recorded). */
     function _renderMedDosesRow() {
       const el = document.getElementById('medDosesRow');
-      if (el) el.innerHTML = _medChipsHtml(false) + (selectedMedication === 'some' ? _medSomeSumHtml() : '');
+      if (el) el.innerHTML = _medChipsHtml(false);
     }
     function _medToggle(i) { _medToggleAt(i); _renderMedDosesRow(); }
     // Focus mode: "Not taken" with two or more medicines asks which, and
     // waits for Next; every other answer moves on as before.
     function _fmMedAnswer(v) {
       _medSetAnswer(v);
-      if (v === 'some') {
-        // Show Some as the answer behind the sheet; the sheet moves on.
+      if (v === 'some' && _medNamesNow().length < 2) {
+        // One medicine: Some asks the dose; the sheet moves on.
         if (typeof window._fmRerenderStep === 'function') window._fmRerenderStep();
         _medOpenSome('fm');
         return;
       }
-      if (v === 'not-taken' && _medNamesNow().length >= 2) {
+      // Two or more: Not taken and Some wait on the chips for Next.
+      if ((v === 'not-taken' || v === 'some') && _medNamesNow().length >= 2) {
         scheduleDraftSave();
         if (typeof window._fmRerenderStep === 'function') window._fmRerenderStep();
         return;

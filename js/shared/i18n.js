@@ -473,7 +473,7 @@
       },
       quickNote: {
         title: 'Quick Note',
-        subtitle: 'Shows on your next journal entry',
+        subtitle: 'Goes in the notes of your next journal entry',
         placeholder: 'Something to remember...',
       },
       fabPicker: { addToDock: 'Add to dock' },
@@ -3842,7 +3842,7 @@
       },
       quickNote: {
         title: 'Nota rápida',
-        subtitle: 'Aparece en tu próxima entrada del diario',
+        subtitle: 'Se añade a las notas de tu próxima entrada del diario',
         placeholder: 'Algo para recordar...',
       },
       fabPicker: {
@@ -4743,7 +4743,7 @@
       },
       quickNote: {
         title: 'Note rapide',
-        subtitle: 'Apparaît sur ta prochaine entrée',
+        subtitle: 'S’ajoute aux notes de ta prochaine entrée',
         placeholder: 'Quelque chose à retenir...',
       },
       fabPicker: { addToDock: 'Ajouter au dock' },
@@ -8062,7 +8062,7 @@
       },
       quickNote: {
         title: 'Schnellnotiz',
-        subtitle: 'Erscheint bei deinem nächsten Tagebucheintrag',
+        subtitle: 'Kommt in die Notizen deines nächsten Tagebucheintrags',
         placeholder: 'Etwas, das du dir merken möchtest...',
       },
       fabPicker: {
@@ -10164,7 +10164,7 @@
       },
       quickNote: {
         title: 'Nota Rapida',
-        subtitle: 'Appare nella tua prossima voce del diario',
+        subtitle: 'Va nelle note della tua prossima voce del diario',
         placeholder: 'Qualcosa da ricordare...',
       },
       fabPicker: {
@@ -12266,7 +12266,7 @@
       },
       quickNote: {
         title: 'Nota Rápida',
-        subtitle: 'Aparece na tua próxima entrada do diário',
+        subtitle: 'Vai para as notas da tua próxima entrada do diário',
         placeholder: 'Algo para recordar...',
       },
       fabPicker: {
@@ -14368,7 +14368,7 @@
       },
       quickNote: {
         title: 'Snelle Notitie',
-        subtitle: 'Verschijnt bij je volgende dagboekinvoer',
+        subtitle: 'Komt in de notities van je volgende dagboekinvoer',
         placeholder: 'Iets om te onthouden...',
       },
       fabPicker: {
@@ -16478,7 +16478,7 @@
       },
       quickNote: {
         title: 'Szybka Notatka',
-        subtitle: 'Pojawi się przy Twoim następnym wpisie',
+        subtitle: 'Trafi do notatek Twojego następnego wpisu',
         placeholder: 'Coś do zapamiętania...',
       },
       fabPicker: {
@@ -18580,7 +18580,7 @@
       },
       quickNote: {
         title: 'Snabbanteckning',
-        subtitle: 'Visas vid din nästa dagboksanteckning',
+        subtitle: 'Hamnar i anteckningarna för din nästa dagboksanteckning',
         placeholder: 'Något att komma ihåg...',
       },
       fabPicker: {
@@ -20678,7 +20678,7 @@
       },
       quickNote: {
         title: '快速笔记',
-        subtitle: '显示在你的下一条日记记录中',
+        subtitle: '会放进你下一条日记的备注里',
         placeholder: '要记住的事情…',
       },
       fabPicker: {
