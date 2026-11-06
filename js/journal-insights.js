@@ -552,7 +552,10 @@
       if (dt.getFullYear() !== yr) o.year = 'numeric';
       var label = sm('markerLabel', { text: m.text, date: dt.toLocaleDateString(lg, o) });
       var x = m.idx * px + px / 2;
-      return '<button type="button" class="lc-blood lc-dose" data-date="' + m.key + '" style="left:' + (x - 11).toFixed(1) + 'px;top:' + (g.doseY - 11).toFixed(1) + 'px" aria-label="' + esc(label) + '" data-label="' + esc(label) + '">💊</button>';
+      // About one day wide (2026-11-06): at 13px a 💊 spread over three days.
+      // The 22px button keeps the tap target; only the glyph shrinks.
+      var fs = Math.max(7, Math.min(13, Math.round(px)));
+      return '<button type="button" class="lc-blood lc-dose" data-date="' + m.key + '" style="left:' + (x - 11).toFixed(1) + 'px;top:' + (g.doseY - 11).toFixed(1) + 'px;font-size:' + fs + 'px" aria-label="' + esc(label) + '" data-label="' + esc(label) + '">💊</button>';
     }).join('');
   }
   function markersHtml(g, blood, px) {

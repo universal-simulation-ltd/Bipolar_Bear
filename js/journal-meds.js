@@ -165,9 +165,13 @@
       var u = parseDose(usual);
       var amount = a && isNum(a.amount) ? Number(a.amount) : null;
       var unit = a && a.unit != null ? String(a.unit).trim() : u.unit;
-      var changed = per[n] === 'missed' ||
-        (per[n] === 'taken' && amount != null && u.amount != null && (Math.abs(amount - u.amount) > 1e-9 || norm(unit) !== norm(u.unit)));
-      return { name: n, status: per[n], amount: per[n] === 'taken' ? amount : null, unit: unit, usual: usual, changed: changed };
+      // doseChanged: taken at an amount other than the usual one. changed
+      // also counts a skipped medicine (for the entry's own note); the life
+      // chart's 💊 and the "different dose" lists use doseChanged only
+      // (2026-11-06: a skipped dose is already the Meds row's Took some).
+      var doseChanged = per[n] === 'taken' && amount != null && u.amount != null && (Math.abs(amount - u.amount) > 1e-9 || norm(unit) !== norm(u.unit));
+      var changed = per[n] === 'missed' || doseChanged;
+      return { name: n, status: per[n], amount: per[n] === 'taken' ? amount : null, unit: unit, usual: usual, changed: changed, doseChanged: doseChanged };
     });
     return { detail: meds.length > 0, meds: meds };
   }
@@ -179,7 +183,7 @@
   }
   /** The Some days with a changed dose (or a skipped medicine) in [a, b]. */
   function doseChangeDays(entries, a, b) {
-    return doseLog(entries, a, b).filter(function (x) { return x.some.meds.some(function (m) { return m.changed; }); });
+    return doseLog(entries, a, b).filter(function (x) { return x.some.meds.some(function (m) { return m.doseChanged; }); });
   }
 
   // ── the medicine list on a past day ─────────────────────────────────────────
@@ -615,8 +619,8 @@
   /** The life chart's marker text for a Some day with a changed dose, else null. */
   function someMarker(e) {
     var s = someOf(e);
-    if (!s || !s.meds.some(function (m) { return m.changed; })) return null;
-    return someText(e);
+    if (!s || !s.meds.some(function (m) { return m.doseChanged; })) return null;
+    return s.meds.filter(function (m) { return m.doseChanged; }).map(someItemText).join(' · ');
   }
   /** The medicines (with the usual dose) for a day: the list that day. */
   function listForDay(k) {
@@ -1168,7 +1172,7 @@
     var b = doseChangeDays(entries, r.before.from, r.before.to), a = doseChangeDays(entries, r.after.from, r.after.to);
     if (!b.length && !a.length) return '';
     var list = b.concat(a).slice().sort(function (x, y) { return x.day < y.day ? -1 : 1; }).slice(0, 6).map(function (x) {
-      return fmtDate(x.day, { day: 'numeric', month: 'short' }) + ': ' + x.some.meds.filter(function (m) { return m.changed; }).map(someItemText).join(', ');
+      return fmtDate(x.day, { day: 'numeric', month: 'short' }) + ': ' + x.some.meds.filter(function (m) { return m.doseChanged; }).map(someItemText).join(', ');
     }).join('; ');
     return ts('cmpDoses', { before: b.length, after: a.length }) + ' ' + list + (b.length + a.length > 6 ? '; …' : '');
   }
@@ -1475,7 +1479,7 @@
         }).join(' · '), inner) : [t('pdfNoneMissed')];
         var someDays = doseChangeDays(entries, addDays(to, -29), to);
         var someLines = someDays.length ? doc.splitTextToSize(someDays.slice(0, 20).map(function (x) {
-          return fmtDate(x.day, { day: 'numeric', month: 'short' }) + ': ' + x.some.meds.filter(function (m) { return m.changed; }).map(someItemText).join(', ');
+          return fmtDate(x.day, { day: 'numeric', month: 'short' }) + ': ' + x.some.meds.filter(function (m) { return m.doseChanged; }).map(someItemText).join(', ');
         }).join(' · '), inner) : [];
         var h = 12 + a.meds.length * 5 + 6 + missedLines.length * 3.4 + 4 + (someLines.length ? 5.3 + someLines.length * 3.4 : 0);
         y = _box(doc, o, y, h, t('pdfMedsTitle'));

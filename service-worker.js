@@ -2024,7 +2024,12 @@
 //   (its own listener), and asks for the newest 60 posts, falling back to the
 //   old unordered query until the (tab, timestamp desc) index in
 //   firestore.indexes.json is deployed. js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v411';
+// v412: Life chart (2026-11-06): the 💊 "different dose" marker only for a
+//   medicine taken at another amount (doseChanged), not a skipped one (the
+//   Meds row's Took some already shows it); the same for the PDF and
+//   before/after "different dose" lists; the 💊 is about one day wide.
+//   js/journal-meds.js, js/journal-insights.js.
+const CACHE_NAME = 'bipolarbear-v412';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
