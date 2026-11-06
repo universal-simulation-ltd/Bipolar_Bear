@@ -16888,6 +16888,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       });
       return [...defaults, ...user];
     }
+    // Alcohol and Added Sugar can't leave the list, so deleting one with its
+    // data leaves an empty slot to name (2026-11-06) rather than the same row
+    // under its default name. Device-local flag; naming it clears the flag.
+    function _fieldIsBlank(key) { try { return localStorage.getItem('bbFieldBlank_' + key) === '1'; } catch (_) { return false; } }
     function _getBuiltinFieldLabel(key, fallback) {
       return localStorage.getItem('_labelOverride_' + key) || fallback;
     }
@@ -16945,7 +16949,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           : (localStorage.getItem(f.key) !== null
               ? localStorage.getItem(f.key) === 'true'
               : (f.legacy ? localStorage.getItem(f.legacy) === 'true' : f.key === 'trackBudget'));
-        const _storedLabel = f.renameable ? (localStorage.getItem('_labelOverride_' + f.key) || null) : null;
+        const _blank = f.renameable && _fieldIsBlank(f.key);
+        const _storedLabel = f.renameable && !_blank ? (localStorage.getItem('_labelOverride_' + f.key) || null) : null;
         const _displayLabel = _storedLabel || f.label;
         if (f.renameable && _editingBuiltinKey === f.key) {
           const _bEmojiGrid = EMOJI_LIST.map(e =>
@@ -16954,7 +16959,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <button id="editEmojiPickerBtn" onclick="toggleEditEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_editingFieldEmoji || f.label.split(' ')[0]}</button>
-              <input id="builtinFieldEditInput" type="text" value="${_storedLabel ? _storedLabel.replace(/^\S+\s*/, '') : f.label.replace(/^\S+\s*/, '')}" maxlength="20"
+              <input id="builtinFieldEditInput" type="text" value="${_blank ? '' : _storedLabel ? _storedLabel.replace(/^\S+\s*/, '') : f.label.replace(/^\S+\s*/, '')}" placeholder="${_esc(BB.t('journal.ui.addName'))}" maxlength="20"
                 style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
                 onkeydown="if(event.key==='Enter')saveBuiltinFieldLabel('${f.key}')">
               <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.save')}</button>
@@ -16986,7 +16991,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           : f.deletable ? _iconBtn(`deleteBuiltinField('${f.key}')`, '×', BB.t('journal.ui.deleteField'), '1.2em')
           : _iconBtn(`startEditBuiltinField('${f.key}')`, '✏', _esc(BB.t('trk143.editOrDelete')));
         // 🔒 by the three whose name can't be changed (2026-11-06).
-        const _nameHtml = f.renameable ? _displayLabel
+        const _nameHtml = _blank
+          ? `<span style="font-style:italic;color:var(--text-muted-ink);">[${_esc(BB.t('journal.ui.addName'))}]</span>`
+          : f.renameable ? _displayLabel
           : `${_displayLabel} <span title="${_esc(BB.t('journal.ui.nameLocked'))}" aria-label="${_esc(BB.t('journal.ui.nameLocked'))}" style="font-size:0.8em;">🔒</span>`;
         return _row(f.key, active, lead, _nameHtml, _subFor(f));
       }).join('');
@@ -17070,7 +17077,12 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       }
     }
 
+    var _fieldIsBlankPendingOn = null;
     function toggleField(key) {
+      if (_fieldIsBlank(key)) {
+        const _on = _editFieldOverrides !== null ? !!_editFieldOverrides[key] : localStorage.getItem(key) === 'true';
+        if (!_on) { _fieldIsBlankPendingOn = key; startEditBuiltinField(key); return; }
+      }
       if (_editFieldOverrides !== null) {
         // Edit mode: flip in-memory override only, don't touch global prefs
         _editFieldOverrides[key] = !_editFieldOverrides[key];
@@ -17171,6 +17183,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       const emoji = _editingFieldEmoji || '';
       if (newName) {
         localStorage.setItem('_labelOverride_' + key, (emoji ? emoji + ' ' : '') + newName);
+        localStorage.removeItem('bbFieldBlank_' + key);
+        // Named after a delete: switch it on, as the tap that asked for a name meant to.
+        if (_fieldIsBlankPendingOn === key) { _fieldIsBlankPendingOn = null; _editingBuiltinKey = null; toggleField(key); }
       } else {
         localStorage.removeItem('_labelOverride_' + key);
       }
@@ -17184,6 +17199,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
 
     function cancelBuiltinFieldEdit() {
       _editingBuiltinKey = null;
+      _fieldIsBlankPendingOn = null;
       renderFieldPickerList();
     }
     window.cancelBuiltinFieldEdit = cancelBuiltinFieldEdit;
@@ -17469,6 +17485,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         localStorage.setItem(t.pref, 'false');
         if (t.legacy) localStorage.removeItem(t.legacy);
         localStorage.removeItem('_labelOverride_' + t.pref);
+        // A renameable fixed row (Alcohol, Added Sugar) becomes an empty slot.
+        const _fp = FIELD_PICKER_FIELDS.find(f => f.key === t.pref);
+        if (_fp && _fp.renameable) localStorage.setItem('bbFieldBlank_' + t.pref, '1');
         if (_editFieldOverrides !== null) _editFieldOverrides[t.pref] = false;
       }
       try {

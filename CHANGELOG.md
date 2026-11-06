@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🗑️ **Track Data: a deleted Alcohol or Added Sugar leaves an empty slot.** These two rows can't leave the list, so after **Delete tracker and all its data** the row still said "Added Sugar" and looked as if nothing had happened. It now reads **[Add a name]**: switch it on and it asks for a name first, so you can reuse it for something else. **Stop tracking** keeps the name, because your past answers stay under it. In every language. (`CACHE_NAME` v410)
 - 🔢 **Track Data: how many entries each tracker has.** Next to each switch you can now see roughly how many of your entries have an answer for it: **1+**, **10+**, **100+** or **1k+**. Press and hold for the exact number. (`CACHE_NAME` v409)
 - 🔒 **Track Data: Goals, Budget and Emotions show a 🔒.** Their names can't be changed, so they now have a 🔒 next to them. Tapping ✏ opens the same row as the other fields, with the name locked and **Delete…** underneath. In every language. (`CACHE_NAME` v408)
 - 📝 **Quick notes go into your next entry's notes.** A quick note you save from the dock is now added to the notes of your next journal entry, where you can edit or delete it, instead of showing in a box above the mood picker (which was hard to read in dark mode). Once you save the entry it's gone from your quick notes. In every language. (`CACHE_NAME` v407)

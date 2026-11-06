@@ -2016,7 +2016,11 @@
 // v409: Track Data (2026-11-06): each tracker shows how many entries hold an
 //   answer for it, beside its switch (1+ / 10+ / 100+ / 1k+ / 10k+; the exact
 //   number on long-press and for screen readers). js/journal.js.
-const CACHE_NAME = 'bipolarbear-v409';
+// v410: Track Data (2026-11-06): deleting Alcohol or Added Sugar with its data
+//   leaves an empty "[Add a name]" slot (bbFieldBlank_<pref>, this device)
+//   instead of the same row under its default name; switching the slot on
+//   asks for a name first. journal.ui.addName in 10 languages.
+const CACHE_NAME = 'bipolarbear-v410';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
