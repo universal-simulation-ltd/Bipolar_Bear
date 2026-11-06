@@ -2009,7 +2009,11 @@
 //   the list once it is saved; the medication step shows the per-medicine
 //   chips from the start, a missed one moves the wheel to 🤏 Some, and
 //   "Which ones?" is gone. js/journal.js, js/shared/i18n.js, fab.js.
-const CACHE_NAME = 'bipolarbear-v407';
+// v408: Track Data (2026-11-06): ✏ on Goals, Budget and Emotions opens the
+//   same edit-name row as the other fields, with the name locked (🔒) and
+//   Delete… under it; the three show a 🔒 in the list. journal.ui.nameLocked
+//   in 10 languages. js/journal.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v408';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

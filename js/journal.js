@@ -16905,7 +16905,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       // Every row: [✏ / × slot] [name, with what it means underneath] [switch].
       // The left slot is always there (empty when there's nothing to do), so
       // names and switches line up down the list (James, 2026-10-13).
-      const _sw = (key, active, name) => `<label class="bb-switch" style="flex-shrink:0;" onclick="event.stopPropagation()"><input type="checkbox"${active ? ' checked' : ''} onchange="toggleField('${key}')" aria-label="${String(name).replace(/"/g, '&quot;')}"><span class="bb-slider"></span></label>`;
+      const _sw = (key, active, name) => `<label class="bb-switch" style="flex-shrink:0;" onclick="event.stopPropagation()"><input type="checkbox"${active ? ' checked' : ''} onchange="toggleField('${key}')" aria-label="${String(name).replace(/<[^>]*>/g, '').replace(/🔒/g, '').trim().replace(/"/g, '&quot;')}"><span class="bb-slider"></span></label>`;
       const _iconBtn = (onclick, glyph, label, size) => `<button onclick="event.stopPropagation();${onclick}" aria-label="${label}" title="${label}" style="background:none;border:none;color:var(--text-muted-ink);font-size:${size || '1em'};cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;">${glyph}</button>`;
       const _row = (key, active, leadHtml, name, sub) => `<div data-trk-tid="${_trkTidForPref(key) || ''}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
           <div style="width:36px;flex-shrink:0;display:flex;justify-content:center;">${leadHtml || ''}</div>
@@ -16954,10 +16954,18 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           </div>`;
         }
         if (!f.renameable && _editingBuiltinKey === f.key) {
-          // Goals, Budget, Emotions: nothing to rename, so the edit row is just Delete….
+          // Goals, Budget, Emotions (2026-11-06): the same edit-name row as
+          // the others, so ✏ always opens the same thing, but the name is
+          // locked (🔒) — these three can be switched off or deleted, not renamed.
+          const _lockLbl = _esc(BB.t('journal.ui.nameLocked'));
+          const _lockEmoji = _displayLabel.split(' ')[0];
+          const _lockName = _displayLabel.replace(/^\S+\s*/, '');
           return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="flex:1;min-width:0;font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${_displayLabel}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <div aria-hidden="true" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;display:flex;align-items:center;justify-content:center;box-sizing:border-box;opacity:0.6;">${_lockEmoji}</div>
+              <div role="textbox" aria-readonly="true" aria-label="${_lockLbl}" title="${_lockLbl}" style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;box-sizing:border-box;display:flex;align-items:center;gap:6px;background:#f1f3f5;color:var(--text-muted-ink);">
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_lockName}</span><span aria-hidden="true">🔒</span>
+              </div>
               <button onclick="cancelBuiltinFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             ${_delLink(_trkTidForPref(f.key))}
@@ -16966,7 +16974,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         const lead = f.renameable ? _iconBtn(`startEditBuiltinField('${f.key}')`, '✏', _renameLbl)
           : f.deletable ? _iconBtn(`deleteBuiltinField('${f.key}')`, '×', BB.t('journal.ui.deleteField'), '1.2em')
           : _iconBtn(`startEditBuiltinField('${f.key}')`, '✏', _esc(BB.t('trk143.editOrDelete')));
-        return _row(f.key, active, lead, _displayLabel, _subFor(f));
+        // 🔒 by the three whose name can't be changed (2026-11-06).
+        const _nameHtml = f.renameable ? _displayLabel
+          : `${_displayLabel} <span title="${_esc(BB.t('journal.ui.nameLocked'))}" aria-label="${_esc(BB.t('journal.ui.nameLocked'))}" style="font-size:0.8em;">🔒</span>`;
+        return _row(f.key, active, lead, _nameHtml, _subFor(f));
       }).join('');
 
       const editEmojiGrid = EMOJI_LIST.map(e =>
