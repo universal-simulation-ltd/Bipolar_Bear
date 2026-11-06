@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🔢 **Track Data: how many entries each tracker has.** Next to each switch you can now see roughly how many of your entries have an answer for it: **1+**, **10+**, **100+** or **1k+**. Press and hold for the exact number. (`CACHE_NAME` v409)
 - 🔒 **Track Data: Goals, Budget and Emotions show a 🔒.** Their names can't be changed, so they now have a 🔒 next to them. Tapping ✏ opens the same row as the other fields, with the name locked and **Delete…** underneath. In every language. (`CACHE_NAME` v408)
 - 📝 **Quick notes go into your next entry's notes.** A quick note you save from the dock is now added to the notes of your next journal entry, where you can edit or delete it, instead of showing in a box above the mood picker (which was hard to read in dark mode). Once you save the entry it's gone from your quick notes. In every language. (`CACHE_NAME` v407)
 - 💊 **Medication: tap the medicines straight away.** With two or more medicines, the medication step now shows a button for each from the start. Tap one you didn't take and the wheel moves to **🤏 Some**; tap them all and it moves to **Not taken**. The "Which ones?" link is gone (**Manage medications** is still there). (`CACHE_NAME` v407)

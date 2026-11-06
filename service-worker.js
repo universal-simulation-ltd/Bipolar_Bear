@@ -2013,7 +2013,10 @@
 //   same edit-name row as the other fields, with the name locked (🔒) and
 //   Delete… under it; the three show a 🔒 in the list. journal.ui.nameLocked
 //   in 10 languages. js/journal.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v408';
+// v409: Track Data (2026-11-06): each tracker shows how many entries hold an
+//   answer for it, beside its switch (1+ / 10+ / 100+ / 1k+ / 10k+; the exact
+//   number on long-press and for screen readers). js/journal.js.
+const CACHE_NAME = 'bipolarbear-v409';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -16907,13 +16907,24 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       // names and switches line up down the list (James, 2026-10-13).
       const _sw = (key, active, name) => `<label class="bb-switch" style="flex-shrink:0;" onclick="event.stopPropagation()"><input type="checkbox"${active ? ' checked' : ''} onchange="toggleField('${key}')" aria-label="${String(name).replace(/<[^>]*>/g, '').replace(/🔒/g, '').trim().replace(/"/g, '&quot;')}"><span class="bb-slider"></span></label>`;
       const _iconBtn = (onclick, glyph, label, size) => `<button onclick="event.stopPropagation();${onclick}" aria-label="${label}" title="${label}" style="background:none;border:none;color:var(--text-muted-ink);font-size:${size || '1em'};cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;padding:0;-webkit-tap-highlight-color:transparent;">${glyph}</button>`;
+      // How many entries hold an answer for each tracker, beside its switch:
+      // 1+ / 10+ / 100+ / 1k+ / 10k+ (2026-11-06). From the loaded entries; no reads.
+      const _cnt = {};
+      try { _trkAll().forEach(t => { _cnt[t.tid] = _trkCount(t); }); } catch (_) {}
+      const _cntHtml = key => {
+        const n = _cnt[_trkTidForPref(key)] || 0;
+        if (!n) return '';
+        const lbl = n >= 10000 ? '10k+' : n >= 1000 ? '1k+' : n >= 100 ? '100+' : n >= 10 ? '10+' : '1+';
+        const full = _esc(BB.t('trk143.entries', { count: n }));
+        return `<span class="trk-count" title="${full}" aria-label="${full}" style="flex-shrink:0;font-size:0.72em;font-weight:600;color:var(--text-muted-ink);background:rgba(128,128,128,0.16);border-radius:10px;padding:2px 7px;white-space:nowrap;">${lbl}</span>`;
+      };
       const _row = (key, active, leadHtml, name, sub) => `<div data-trk-tid="${_trkTidForPref(key) || ''}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
           <div style="width:36px;flex-shrink:0;display:flex;justify-content:center;">${leadHtml || ''}</div>
           <div onclick="toggleField('${key}')" style="flex:1;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;">
             <div style="font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${name}</div>
             ${sub ? `<div style="font-size:0.74em;color:var(--text-muted-ink);margin-top:1px;line-height:1.3;">${sub}</div>` : ''}
           </div>
-          ${_sw(key, active, name)}
+          ${_cntHtml(key)}${_sw(key, active, name)}
         </div>`;
       const _subFor = f => f.synced ? BB.t('journal.ui.fieldSetUp')
         : f.sublabel === 'Reverse' ? BB.t('journal.ui.fieldReverse')
