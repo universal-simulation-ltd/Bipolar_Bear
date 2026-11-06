@@ -4911,10 +4911,43 @@ function listenPosts(opts) {
   // even when the user is looking at the other tab.
   const rendered = {};
   ['announcements', 'general'].forEach(tab => {
-    unsubTabListeners[tab] = db.collection(BB_BRAND.collections.posts)
-      .where('tab', '==', tab)
-      .limit(60)
-      .onSnapshot({ includeMetadataChanges: true }, snap => {
+    // Two listeners per tab (2026-11-06):
+    //  • the newest 60 posts. Without an order, .limit(60) returned 60 posts
+    //    in document-id order (effectively random), so past 60 posts a tab
+    //    could lose recent posts and its pinned one. Ordering by timestamp
+    //    needs the (tab, timestamp desc) index in firestore.indexes.json;
+    //    until it is deployed the query fails, so it falls back to the old
+    //    unordered one rather than leaving the board empty.
+    //  • the tab's pinned post, always (equality filters only: no new index),
+    //    so it shows however many posts there are.
+    const base = () => db.collection(BB_BRAND.collections.posts).where('tab', '==', tab);
+    let mainDocs = [], pinDocs = [], unsubMain = null, unsubPin = null;
+    const publish = () => {
+      const seen = new Set();
+      const docs = [...pinDocs, ...mainDocs].filter(d => !seen.has(d.id) && seen.add(d.id));
+      postsByTab[tab] = docs.map(d => _maskAdmin({ id: d.id, ...d.data() }));
+      if (tab === 'general') maybePostDailyTopic(); // rotate the daily topic if due
+      if (tab === currentTab) {
+        localPosts = postsByTab[tab];
+        renderPosts(tab === 'general'
+          ? assembleGeneralPosts(localPosts)
+          : announcementFeed());
+        if (_ptrDone) _ptrDone();
+      }
+      renderTabBadges();
+    };
+    const onError = err => {
+      console.error('[Anonymous] posts error', tab, err);
+      _setBoardOffline(true);
+      if (tab === currentTab) {
+        renderPosts(currentTab === 'general'
+          ? assembleGeneralPosts(localPosts)
+          : announcementFeed());
+      }
+    };
+    const listenMain = ordered => {
+      const q = ordered ? base().orderBy('timestamp', 'desc').limit(60) : base().limit(60);
+      unsubMain = q.onSnapshot({ includeMetadataChanges: true }, snap => {
         if (tab === currentTab) _noteSnapshotSource(snap.metadata.fromCache);
         // A snapshot that only says the data is now confirmed by the server
         // (or only cached) changes nothing on screen.
@@ -4923,25 +4956,24 @@ function listenPosts(opts) {
           return;
         }
         rendered[tab] = true;
-        postsByTab[tab] = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }));
-        if (tab === 'general') maybePostDailyTopic(); // rotate the daily topic if due
-        if (tab === currentTab) {
-          localPosts = postsByTab[tab];
-          renderPosts(tab === 'general'
-            ? assembleGeneralPosts(localPosts)
-            : announcementFeed());
-          if (_ptrDone) _ptrDone();
-        }
-        renderTabBadges();
+        mainDocs = snap.docs;
+        publish();
       }, err => {
-        console.error('[Anonymous] posts error', tab, err);
-        _setBoardOffline(true);
-        if (tab === currentTab) {
-          renderPosts(currentTab === 'general'
-            ? assembleGeneralPosts(localPosts)
-            : announcementFeed());
+        // The index isn't deployed yet: the old query, which needs none.
+        if (ordered && err && err.code === 'failed-precondition') {
+          console.warn('[Anonymous] posts index missing; unordered feed', tab);
+          listenMain(false);
+          return;
         }
+        onError(err);
       });
+    };
+    listenMain(true);
+    unsubPin = base().where('pinned', '==', true).onSnapshot(snap => {
+      pinDocs = snap.docs;
+      if (rendered[tab]) publish();
+    }, err => console.warn('[Anonymous] pinned listener error', tab, err && err.code));
+    unsubTabListeners[tab] = () => { if (unsubMain) unsubMain(); if (unsubPin) unsubPin(); };
   });
 }
 

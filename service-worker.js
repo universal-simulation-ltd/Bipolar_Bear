@@ -2020,7 +2020,11 @@
 //   leaves an empty "[Add a name]" slot (bbFieldBlank_<pref>, this device)
 //   instead of the same row under its default name; switching the slot on
 //   asks for a name first. journal.ui.addName in 10 languages.
-const CACHE_NAME = 'bipolarbear-v410';
+// v411: Bipolar Anonymous (2026-11-06): each tab always loads its pinned post
+//   (its own listener), and asks for the newest 60 posts, falling back to the
+//   old unordered query until the (tab, timestamp desc) index in
+//   firestore.indexes.json is deployed. js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v411';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
