@@ -258,7 +258,15 @@ service cloud.firestore {
         // 💛 and ❤️‍🩹 on a reply (2026-11-03): one step at a time, nothing else.
         function commentLikeOk()    { return signedIn() && changedKeys().hasOnly(['likes']) && stepped('likes'); }
         function commentSupportOk() { return signedIn() && changedKeys().hasOnly(['supports']) && stepped('supports'); }
-        allow update: if commentLikeOk() || commentSupportOk() || isAdmin();
+        // The author renaming their monika (2026-11-08), as renameOk for posts:
+        // their name in the thread and @ tags of them follow the new one.
+        function commentRenameOk() {
+          return signedIn()
+            && changedKeys().hasOnly(['name', 'initials', 'grad1', 'grad2'])
+            && ownsExisting(commentPath())
+            && (!changedKeys().hasAny(['name']) || !authorBanned(resource.data.get('name', '')));
+        }
+        allow update: if commentLikeOk() || commentSupportOk() || commentRenameOk() || isAdmin();
         allow delete: if signedIn() && (ownsExisting(commentPath()) || isAdmin());
       }
     }

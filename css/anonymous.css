@@ -749,6 +749,22 @@
       border-top: 1px solid var(--line);
     }
     .thread-compose .compose-ta { margin-bottom: 8px; min-height: 56px; }
+    /* @ tags in a thread (2026-11-08): who can be tagged, above the box. */
+    .thread-compose { position: relative; }
+    .mention-list {
+      position: absolute; left: 0; right: 0; bottom: calc(100% - 4px); z-index: 5;
+      background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.14); padding: 4px; max-height: 40vh; overflow-y: auto;
+    }
+    .mention-list[hidden] { display: none; }
+    .mention-opt {
+      display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+      background: none; border: none; border-radius: 8px; padding: 8px 10px; min-height: 44px;
+      font: inherit; font-size: 0.875rem; color: var(--dark); cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .mention-opt:hover, .mention-opt:focus-visible, .mention-opt.active { background: var(--yellow-bg); outline: none; }
+    .mention-opt .post-av-circle { width: 26px; height: 26px; font-size: 0.625rem; flex-shrink: 0; }
+    .mention { font-weight: 700; color: var(--yellow-ink); }
 
     /* ── Comment cards ── */
     .comment-card { padding: 10px 0; border-bottom: 1px solid var(--line); }

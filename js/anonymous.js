@@ -1274,6 +1274,8 @@ function _keepCommentDraft() {
 function _replyTo(author) {
   const ta = document.getElementById('thread-ta');
   if (!ta || !author) return;
+  const _who = _threadPeople().find(x => x.name === author);
+  if (_who) _rememberMention(_who);
   const tag = '@' + author + ' ';
   if (!ta.value.startsWith(tag)) ta.value = tag + ta.value.replace(/^@\S+\s/, '');
   document.getElementById('thread-send').disabled = !ta.value.trim();
@@ -5250,6 +5252,8 @@ async function openThread(postId) {
   _threadStickToBottom = true; // open on the newest comment, not the top of the thread
   markOlderThreadsSeen(post); // their dots go when this thread closes (syncUnreadFlags)
 
+  _threadDocs = { post, comments: [] };
+  _hideMentions();
   document.getElementById('thread-original-post').innerHTML = renderThreadHeader(post);
   _wirePostImages(document.getElementById('thread-original-post'));
   // No medicine links anywhere in a thread that reads like someone in crisis
@@ -5295,6 +5299,7 @@ async function openThread(postId) {
       markThreadSeen(postId, Math.max(snap.docs.length, num(post.commentCount, 0)));
       const comments = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }))
         .filter(c => !c.name || (!mutedUsers.has(c.name) && !isBanned(c.name)));
+      _threadDocs = { post: localPosts.find(p => p.id === postId) || post, comments };
       const el = document.getElementById('thread-comments-list');
       // Measure before the innerHTML swap — afterwards the old scroll position
       // means nothing.
@@ -5518,7 +5523,7 @@ function renderComment(c) {
         <span style="font-size:0.6875rem;color:var(--muted);margin-left:6px;">${c.timestamp ? timeAgo(c.timestamp) : _wt('anon.time.now')}</span>
       </div>
     </div>
-    ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt${isBot || c.isAdmin ? '' : ' data-medlink'}>${esc(c.text)}</div>`}
+    ${isBot && c.botKind === 'crisis' ? _crisisBotBody(c) : `<div class="comment-text" data-tt${isBot || c.isAdmin ? '' : ' data-medlink'}>${_commentTextHtml(c)}</div>`}
     <div class="comment-actions">
       ${isBot ? '' : commentReactionsHtml(c, isMine)}
       <div style="flex:1"></div>
@@ -5575,11 +5580,138 @@ async function handleCommentReaction(btn, card) {
   }
 }
 
+// ── @ tags in a thread (James, 2026-11-08) ─────────────────────────
+// Only in a thread, and only people who have already posted in it: the
+// post's author and everyone who has replied (not you, bots, or anyone muted
+// or banned). A reply keeps `mentions: [{ref, name}]`, where ref is 'post'
+// (the post's author) or the id of the tagged person's first reply in the
+// thread. The board stores no stable id for a person on purpose, so a tag
+// is tied to something they wrote: shown, it reads that post's or reply's
+// CURRENT name, so a Monika change carries through to every tag of them
+// (posts are renamed by their author; replies too since this change).
+let _threadDocs = { post: null, comments: [] };   // what the open thread shows
+const _threadMentions = new Map();                // postId → [{ref, name}] picked while writing
+function _threadPeople() {
+  const out = [], seen = new Set([profile.monika]);
+  const add = (ref, d) => {
+    if (!d || !d.name || d.isBot || seen.has(d.name) || mutedUsers.has(d.name) || isBanned(d.name)) return;
+    seen.add(d.name);
+    out.push({ ref, name: d.name, initials: d.initials || initials(d.name), grad1: d.grad1, grad2: d.grad2 });
+  };
+  const p = _threadDocs.post;
+  if (p && !p.isTopic && !p.isAnnouncement && !p.isSystem) add('post', p);
+  _threadDocs.comments.forEach(c => add(c.id, c));
+  return out;
+}
+function _rememberMention(person) {
+  if (!commentTargetId || !person) return;
+  const list = (_threadMentions.get(commentTargetId) || []).filter(m => m.ref !== person.ref);
+  list.push({ ref: person.ref, name: person.name });
+  _threadMentions.set(commentTargetId, list);
+}
+/** The name a tag shows now: the current name on what its ref points at. */
+function _mentionNameNow(m) {
+  if (m.ref === 'post') return (_threadDocs.post && _threadDocs.post.name) || m.name;
+  const c = _threadDocs.comments.find(x => x.id === m.ref);
+  return (c && c.name) || m.name;
+}
+/** A reply's text, escaped, with its tags in bold under today's names. */
+function _commentTextHtml(c) {
+  let html = esc(c.text || '');
+  const ms = Array.isArray(c.mentions) ? c.mentions.filter(m => m && typeof m.name === 'string' && m.name && typeof m.ref === 'string') : [];
+  if (!ms.length) return html;
+  // Longest first, so "@Sam" can't take the front off "@Samantha". Each
+  // match becomes a placeholder first, so a new name can't be matched again.
+  const subs = [];
+  ms.slice().sort((a, b) => b.name.length - a.name.length).forEach(m => {
+    const at = esc('@' + m.name);
+    if (!html.includes(at)) return;
+    const token = '\u0000' + subs.length + '\u0000';
+    subs.push(`<span class="mention">@${esc(_mentionNameNow(m))}</span>`);
+    html = html.split(at).join(token);
+  });
+  return html.replace(/\u0000(\d+)\u0000/g, (_, i) => subs[+i]);
+}
+/** The @word being typed just before the caret, or null. */
+function _mentionQuery(ta) {
+  const upto = ta.value.slice(0, ta.selectionStart == null ? ta.value.length : ta.selectionStart);
+  const m = upto.match(/(^|\s)@([^\s@]*)$/);
+  return m ? { q: m[2], start: upto.length - m[2].length - 1 } : null;
+}
+let _mentionActive = 0;
+function _hideMentions() {
+  const list = document.getElementById('mention-list');
+  if (list) { list.hidden = true; list.innerHTML = ''; }
+  const ta = document.getElementById('thread-ta');
+  if (ta) { ta.removeAttribute('aria-activedescendant'); ta.setAttribute('aria-expanded', 'false'); }
+}
+function _showMentions() {
+  const ta = document.getElementById('thread-ta'), list = document.getElementById('mention-list');
+  if (!ta || !list) return;
+  const q = _mentionQuery(ta);
+  if (!q) { _hideMentions(); return; }
+  const needle = q.q.toLowerCase();
+  const people = _threadPeople().filter(x => x.name.toLowerCase().includes(needle))
+    .sort((a, b) => (a.name.toLowerCase().startsWith(needle) ? 0 : 1) - (b.name.toLowerCase().startsWith(needle) ? 0 : 1))
+    .slice(0, 6);
+  if (!people.length) { _hideMentions(); return; }
+  _mentionActive = Math.min(_mentionActive, people.length - 1);
+  list.setAttribute('aria-label', _wt('anon.thread.tagPeople'));
+  list.innerHTML = people.map((x, i) => {
+    const g1 = safeColor(x.grad1, YELLOW_LT), g2 = safeColor(x.grad2, YELLOW_DARK);
+    return `<button type="button" class="mention-opt${i === _mentionActive ? ' active' : ''}" id="mention-opt-${i}" role="option" aria-selected="${i === _mentionActive}" data-mref="${esc(x.ref)}">`
+      + `<span class="post-av-circle" style="background:${_avBg(g1, g2)};color:${_avInk(g1, g2)};">${esc(x.initials)}</span>`
+      + `<span>${esc(x.name)}</span></button>`;
+  }).join('');
+  list.hidden = false;
+  ta.setAttribute('aria-expanded', 'true');
+  ta.setAttribute('aria-activedescendant', 'mention-opt-' + _mentionActive);
+}
+function _pickMention(ref) {
+  const ta = document.getElementById('thread-ta');
+  const person = _threadPeople().find(x => x.ref === ref);
+  const q = ta && _mentionQuery(ta);
+  if (!person || !q) { _hideMentions(); return; }
+  const before = ta.value.slice(0, q.start), after = ta.value.slice(q.start + 1 + q.q.length);
+  const ins = '@' + person.name + ' ';
+  ta.value = before + ins + after.replace(/^ /, '');
+  const caret = before.length + ins.length;
+  try { ta.setSelectionRange(caret, caret); } catch (_) {}
+  _rememberMention(person);
+  _hideMentions();
+  document.getElementById('thread-send').disabled = !ta.value.trim();
+  _keepCommentDraft();
+  _fitThreadTa();
+  ta.focus();
+}
+
 function setupThread() {
   const ta      = document.getElementById('thread-ta');
   const sendBtn = document.getElementById('thread-send');
 
-  ta.addEventListener('input', () => { sendBtn.disabled = !ta.value.trim(); _keepCommentDraft(); _fitThreadTa(); });
+  ta.addEventListener('input', () => { sendBtn.disabled = !ta.value.trim(); _keepCommentDraft(); _fitThreadTa(); _mentionActive = 0; _showMentions(); });
+  // @ tags: the list follows the caret; ↑ ↓ Enter / Tab pick, Escape closes.
+  ta.setAttribute('aria-autocomplete', 'list');
+  ta.setAttribute('aria-controls', 'mention-list');
+  ta.addEventListener('click', _showMentions);
+  ta.addEventListener('blur', () => setTimeout(_hideMentions, 150));
+  ta.addEventListener('keydown', e => {
+    const list = document.getElementById('mention-list');
+    if (!list || list.hidden) return;
+    const opts = list.querySelectorAll('.mention-opt');
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      _mentionActive = (_mentionActive + (e.key === 'ArrowDown' ? 1 : -1) + opts.length) % opts.length;
+      _showMentions();
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      const o = opts[_mentionActive];
+      if (o) { e.preventDefault(); _pickMention(o.dataset.mref); }
+    } else if (e.key === 'Escape') { e.preventDefault(); _hideMentions(); }
+  });
+  const _ml = document.getElementById('mention-list');
+  // pointerdown, so the box keeps focus (and the keyboard stays up) on a phone.
+  _ml.addEventListener('pointerdown', e => { if (e.target.closest('.mention-opt')) e.preventDefault(); });
+  _ml.addEventListener('click', e => { const o = e.target.closest('.mention-opt'); if (o) _pickMention(o.dataset.mref); });
   document.getElementById('thread-close').addEventListener('click', closeThread);
 
   // Comment moderation controls (delegated — the comments list re-renders on
@@ -5678,6 +5810,9 @@ function setupThread() {
       isAdmin:   asAdmin,
       timestamp: firebase.firestore.FieldValue.serverTimestamp(),
     };
+    // @ tags still in the text, at most 10.
+    const _ms = (_threadMentions.get(commentTargetId) || []).filter(m => text.includes('@' + m.name)).slice(0, 10);
+    if (_ms.length) comment.mentions = _ms.map(m => ({ ref: m.ref, name: m.name }));
     if (asAdmin) {
       const { name, initials, grad1, grad2, streak } = _adminAuthorFields();
       Object.assign(comment, { name, initials, grad1, grad2, streak });
@@ -5697,6 +5832,7 @@ function setupThread() {
           await cref.set(await _withOwner(cref.path, comment));
         }
         sent = true;
+        _threadMentions.delete(commentTargetId);
         _threadStickToBottom = true; // follow your own comment down to the end
         // Your own reply is read the instant you send it. The thread listener
         // lands on the same number a moment later, but recording it here means
@@ -7553,6 +7689,17 @@ document.getElementById('ms-save').addEventListener('click', async () => {
           grad1:    col.g1,
           grad2:    col.g2,
         }).catch(() => {})));
+      // And this member's replies (2026-11-08), so their name in a thread and
+      // every @ tag of them (read from what they wrote) follow the new one.
+      // Needs the commentRenameOk rule; until it is deployed each update is
+      // refused and the replies keep the old name, as before.
+      if (nameChanged) try {
+        const cs = await db.collectionGroup('comments').where('name', '==', oldMonika).get();
+        const cmine = await Promise.all(cs.docs.map(doc => _isMine(doc)));
+        await Promise.all(cs.docs.filter((doc, i) => cmine[i]).map(doc => doc.ref.update({
+          name: newMonika, initials: newInit || initials(newMonika), grad1: col.g1, grad2: col.g2,
+        }).catch(() => {})));
+      } catch (e) { console.warn('[Monika] update replies failed', e); }
       if (nameChanged) {
         await db.collection(BB_BRAND.collections.monikas).doc(oldMonika.toLowerCase()).delete().catch(() => {});
       }

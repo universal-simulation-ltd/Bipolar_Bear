@@ -2029,7 +2029,13 @@
 //   Meds row's Took some already shows it); the same for the PDF and
 //   before/after "different dose" lists; the 💊 is about one day wide.
 //   js/journal-meds.js, js/journal-insights.js.
-const CACHE_NAME = 'bipolarbear-v412';
+// v413: Bipolar Anonymous (2026-11-08): @ tags in a thread, from the people
+//   who have posted in it; a tag keeps {ref, name} and shows the current
+//   name of the post / reply it points at, so a Monika change carries
+//   through. A Monika change now renames the member's own replies too (needs
+//   the commentRenameOk rule deployed). js/anonymous.js, anonymous.html,
+//   css/anonymous.css, js/shared/i18n.js, firestore.rules.
+const CACHE_NAME = 'bipolarbear-v413';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
