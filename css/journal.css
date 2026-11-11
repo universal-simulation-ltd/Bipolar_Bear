@@ -2586,6 +2586,11 @@
   body.bb-fm-full #fmContent { min-height: 0; flex: 1 1 auto; }
   body.bb-fm-full #fmHeaderSpacer { flex: 1 1 0; }
   body.bb-fm-full #fmContent.fm-content-hero { padding-bottom: 6px; }
+  /* Medication: wheel + per-medicine chips + Manage + 🔔 pill can be taller
+     than the screen. Shrinking let it spill out of its box and paint over
+     "✓ Draft saved" underneath (2026-11-11), so it keeps its height and the
+     card scrolls instead. */
+  body.bb-fm-full #fmContent.fm-meds { flex-shrink: 0; }
   body.bb-fm-full #fmHeaderSpacer { min-height: 2px; }
   /* Review step: hero, date and pills keep their size; the list gives way. */
   body.bb-fm-full #fmContent.fm-done > * { flex-shrink: 0; }
