@@ -1165,7 +1165,8 @@ Derived, never read directly from Health:
   mood    ← _suggestMoodFromHealth(steps, sleepH)   (same rule as focused
             mode's "best guess": 7–9h sleep short-circuits to stable)
   energy  ← _energyFromSteps(steps)                 (same mapping as the
-            single-day steps import)
+            single-day steps import; tops out at 7 "More than
+            usual" — steps never suggest "Too much")
 
 UI:       preview lists every day with its values and its source, each with a
           checkbox (all ticked by default) so the user can drop any day before

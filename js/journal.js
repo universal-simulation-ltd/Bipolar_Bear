@@ -7705,9 +7705,16 @@ function _tt(k, vars, fallback) {
       return score < 0 ? 'low' : score > 0 ? 'elevated' : 'stable';
     }
 
-    /** Steps → an energy value on the form's 0–10 scale. */
+    /**
+     * Steps → an energy value on the form's 0–10 scale.
+     *
+     * Tops out at 7 ("More than usual"), never 10 ("Too much"), however many
+     * steps (James, 2026-11-11). Walking is a good thing; a busy day on foot
+     * must not be labelled as too much energy. Only the user can pick
+     * "Too much" themselves.
+     */
     function _energyFromSteps(s) {
-      return s < 1000 ? 0 : s < 3000 ? 3 : s < 10000 ? 5 : s < 20000 ? 7 : 10;
+      return s < 1000 ? 0 : s < 3000 ? 3 : s < 10000 ? 5 : 7;
     }
 
     // ── "Fill in the rest": asked after Health has filled sleep and steps ──

@@ -2039,7 +2039,10 @@
 //   ?mood= link (home bears / widget) no longer skips the question; the mood
 //   lands first and the question comes once that entry is saved ("Saved. N
 //   earlier days are missing"). js/journal.js, js/shared/i18n-missing.js.
-const CACHE_NAME = 'bipolarbear-v414';
+// v415: Health sync never suggests "Too much" energy from steps (2026-11-11):
+//   _energyFromSteps tops out at "More than usual" (7) for 10k+ steps; 20k+
+//   used to give "Too much" (10). js/journal.js.
+const CACHE_NAME = 'bipolarbear-v415';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
