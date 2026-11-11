@@ -15510,13 +15510,20 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
      * <next day>?" or "Stop there", newest day first.
      *
      * Asked once per page load, and "Not now" holds it for the rest of the day
-     * (bbMultiMissingDay). It stands aside for a ?mood= deep link, an edit,
-     * or any other journal dialog already open.
+     * (bbMultiMissingDay). It stands aside for an edit or any other journal
+     * dialog already open.
+     *
+     * A quick check-in (the home bears or the phone widget, a ?mood= deep
+     * link) isn't interrupted: the mood goes on the current day as usual, and
+     * once that entry is saved it asks the same question about the days
+     * still missing (_mmAfterCheckin, James 2026-11-11). Until then it was
+     * never asked on that route at all.
      */
     let _mmAsked = false;     // this page load has decided
     let _mmQueue = null;      // by hand: date keys still to fill, newest first
     let _mmPending = null;    // the queue while "Continue?" is on screen
-    let _mmFromPrompt = false; // auto-fill was opened from here, so Cancel comes back
+    let _mmFromPrompt = false; // auto-fill was opened from here ({keys, saved}), so Cancel comes back
+    let _mmAfterCheckin = null; // quick check-in: missing keys to ask about once its entry is saved
 
     function _mmDayKey(d) {
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -15554,11 +15561,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     function _mmMaybeAsk(entries, currentKey, currentDone) {
       if (_mmAsked) return;
       _mmAsked = true;
-      if (currentDone || _fmDeepLinkMood || editingEntry) return;
+      if (currentDone || editingEntry) return;
       const todayKey = _mmDayKey(new Date());
       if (BB.storage.get('MultiMissingDay') === todayKey) return;
       const keys = _mmMissingKeys(entries);
       if (keys.length < 2 || keys[0] !== currentKey) return;
+      // Quick check-in: let the mood land first, ask after the save.
+      if (_fmDeepLinkMood) { _mmAfterCheckin = keys; return; }
       _whenHintsDone(() => setTimeout(() => {
         // Something else got there first (a tutorial step, the journal
         // password, What's new): don't stack on it. It asks again next time.
@@ -15612,19 +15621,26 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     }
     window._mmDismiss = _mmDismiss;
 
-    /** "N entries missing": auto-fill all, by hand, or not now. */
-    function _mmShowAsk(keys) {
+    /**
+     * "N entries missing": auto-fill all, by hand, or not now. `saved` is the
+     * wording after a quick check-in's entry has just been saved.
+     */
+    function _mmShowAsk(keys, saved) {
       const n = keys.length, latest = _mmLong(keys[0]);
       _mmShow(
-        BB.t('missingDays.title', { count: n }),
-        BB.t('missingDays.body', { count: n, date: latest }),
+        saved
+          ? (n === 1 ? BB.t('missingDays.savedOne') : BB.t('missingDays.savedTitle', { count: n }))
+          : BB.t('missingDays.title', { count: n }),
+        saved
+          ? (n === 1 ? BB.t('missingDays.savedBodyOne', { date: latest }) : BB.t('missingDays.savedBody', { date: latest }))
+          : BB.t('missingDays.body', { count: n, date: latest }),
         [
           _mmButton(BB.t('missingDays.auto'), BB.t('missingDays.autoSub'), true, () => {
             _mmClose();
             BB.storage.set('MultiMissingDay', _mmDayKey(new Date()));
             // The auto-complete flow takes the days oldest first, like the list.
             _missingDatesCache = keys.slice().reverse().map(_mmKeyDate);
-            _mmFromPrompt = keys;
+            _mmFromPrompt = { keys, saved: !!saved };
             showAutoFillModal();
           }),
           _mmButton(BB.t('missingDays.manual'), BB.t('missingDays.manualSub', { date: latest }), false, () => {
@@ -15647,6 +15663,21 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
      * any are left, ask whether to carry on with the next one.
      */
     function _mmAfterSave(savedKey) {
+      if (_mmAfterCheckin) {
+        // The quick check-in's entry is in: ask about the days still missing.
+        const keys = _mmAfterCheckin.filter(k => k !== savedKey);
+        _mmAfterCheckin = null;
+        if (!keys.length) return;
+        _reviewCandidateMood = null; // one question at a time
+        _whenHintsDone(() => setTimeout(() => {
+          // Another dialog got there first: don't stack on it. The journal
+          // asks again on a later day while the gaps are still there.
+          if (document.querySelector('.confirm-modal.active')) return;
+          if (editingEntry || _mmQueue || _mmPending) return;
+          _mmShowAsk(keys, true);
+        }, 700));
+        return;
+      }
       if (!_mmQueue) return;
       _mmQueue = _mmQueue.filter(k => k !== savedKey);
       if (!_mmQueue.length) { _mmQueue = null; return; }
@@ -16087,7 +16118,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       const modal = document.getElementById('autoFillModal');
       if (modal) modal.classList.remove('active');
       // Opened from "N entries missing": Cancel goes back to that question.
-      if (_mmFromPrompt) { const k = _mmFromPrompt; _mmFromPrompt = false; _mmShowAsk(k); return; }
+      if (_mmFromPrompt) { const k = _mmFromPrompt; _mmFromPrompt = false; _mmShowAsk(k.keys, k.saved); return; }
       const list = document.getElementById('missingDatesModal');
       if (list) list.classList.add('active');
     }

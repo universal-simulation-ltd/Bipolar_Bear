@@ -2035,7 +2035,11 @@
 //   through. A Monika change now renames the member's own replies too (needs
 //   the commentRenameOk rule deployed). js/anonymous.js, anonymous.html,
 //   css/anonymous.css, js/shared/i18n.js, firestore.rules.
-const CACHE_NAME = 'bipolarbear-v413';
+// v414: Several days missing after a quick check-in (2026-11-11): a
+//   ?mood= link (home bears / widget) no longer skips the question; the mood
+//   lands first and the question comes once that entry is saved ("Saved. N
+//   earlier days are missing"). js/journal.js, js/shared/i18n-missing.js.
+const CACHE_NAME = 'bipolarbear-v414';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

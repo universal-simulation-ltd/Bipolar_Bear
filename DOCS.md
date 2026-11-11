@@ -1224,6 +1224,25 @@ Marking:      nothing is written without the user's Save, but what they are
               changes.
 ```
 
+#### Several days missing: all at once or one by one (2026-11-03, 2026-11-11)
+
+Opening the journal with the current day (yesterday, or today in "log today"
+mode) AND at least one more day unlogged in the same 30-day window asks
+`#multiMissingModal`: ✨ Auto-fill all (the auto-complete above, current day
+included) / ✍️ Fill them in myself (newest first; after each new entry
+`_mmAfterSave` asks "Continue with <day>?" / "Stop there") / Not now
+(`bbMultiMissingDay` = today, so at most once a day). `_mmMaybeAsk` in
+`js/journal.js`, strings `missingDays.*` in `js/shared/i18n-missing.js`.
+
+**Quick check-in** (the home bears or the phone widget: `journal.html?mood=`)
+is not interrupted on the way in. `_mmMaybeAsk` parks the keys in
+`_mmAfterCheckin`, the mood goes on the current day as usual, and once that
+entry is saved `_mmAfterSave` asks the same question about the days left, in
+"Saved. N earlier days are missing" wording (`missingDays.saved*`). Before
+2026-11-11 this route never asked at all. If another dialog is already up it
+doesn't stack; the gaps are asked about again on a later day.
+Test: `scripts/test-missing-days.mjs` (13 checks, Playwright).
+
 ---
 
 ### 2.14 Bipolar Anonymous Notifications

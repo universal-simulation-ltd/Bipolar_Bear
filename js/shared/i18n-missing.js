@@ -2,8 +2,9 @@
  * Strings for "Several days missing" (James, 2026-11-03): opening the journal
  * with the current day AND at least one more day not logged asks whether to
  * ✨ auto-fill them all or ✍️ fill them in one at a time, and after each day
- * filled by hand asks whether to carry on with the next. js/journal.js
- * (_mmMaybeAsk / _mmAfterSave). All ten languages (machine translated). Added
+ * filled by hand asks whether to carry on with the next. After a quick
+ * check-in (home bears / widget) the same question comes once its entry is
+ * saved (`saved*`, 2026-11-11). js/journal.js (_mmMaybeAsk / _mmAfterSave). All ten languages (machine translated). Added
  * with BB.i18n.extend under the `missingDays` namespace. Loaded on
  * journal.html.
  *
@@ -25,7 +26,11 @@
       "nextOne": "Saved. 1 more to go",
       "nextBody": "Carry on with {date}, or stop there? The rest stay under Missing entries.",
       "next": "✍️ Continue with {date}",
-      "stop": "Stop there"
+      "stop": "Stop there",
+      "savedTitle": "Saved. {count} earlier days are missing",
+      "savedOne": "Saved. 1 earlier day is missing",
+      "savedBody": "The latest is {date}. Fill them all in at once, or one day at a time?",
+      "savedBodyOne": "{date} isn't logged yet. Fill it in now?"
     },
     es: {
       "title": "Faltan {count} entradas",
@@ -39,7 +44,11 @@
       "nextOne": "Guardado. Falta 1",
       "nextBody": "¿Sigues con {date} o lo dejas aquí? Los demás siguen en Entradas que faltan.",
       "next": "✍️ Seguir con {date}",
-      "stop": "Dejarlo aquí"
+      "stop": "Dejarlo aquí",
+      "savedTitle": "Guardado. Faltan {count} días anteriores",
+      "savedOne": "Guardado. Falta 1 día anterior",
+      "savedBody": "El más reciente es {date}. ¿Los rellenas todos a la vez o día a día?",
+      "savedBodyOne": "{date} aún no está registrado. ¿Lo rellenas ahora?"
     },
     fr: {
       "title": "{count} entrées manquantes",
@@ -53,7 +62,11 @@
       "nextOne": "Enregistré. Encore 1",
       "nextBody": "Continuer avec {date}, ou s'arrêter là ? Les autres restent dans Entrées manquantes.",
       "next": "✍️ Continuer avec {date}",
-      "stop": "M'arrêter là"
+      "stop": "M'arrêter là",
+      "savedTitle": "Enregistré. {count} jours précédents manquent",
+      "savedOne": "Enregistré. 1 jour précédent manque",
+      "savedBody": "Le plus récent est {date}. Tout remplir d'un coup, ou un jour à la fois ?",
+      "savedBodyOne": "{date} n'est pas encore noté. Le remplir maintenant ?"
     },
     de: {
       "title": "{count} Einträge fehlen",
@@ -67,7 +80,11 @@
       "nextOne": "Gespeichert. Noch 1",
       "nextBody": "Mit {date} weitermachen oder hier aufhören? Die übrigen bleiben unter Fehlende Einträge.",
       "next": "✍️ Weiter mit {date}",
-      "stop": "Hier aufhören"
+      "stop": "Hier aufhören",
+      "savedTitle": "Gespeichert. {count} frühere Tage fehlen",
+      "savedOne": "Gespeichert. 1 früherer Tag fehlt",
+      "savedBody": "Zuletzt {date}. Alle auf einmal ausfüllen oder Tag für Tag?",
+      "savedBodyOne": "{date} ist noch nicht eingetragen. Jetzt ausfüllen?"
     },
     it: {
       "title": "Mancano {count} voci",
@@ -81,7 +98,11 @@
       "nextOne": "Salvato. Ne manca 1",
       "nextBody": "Continui con {date} o ti fermi qui? Gli altri restano in Voci mancanti.",
       "next": "✍️ Continua con {date}",
-      "stop": "Fermati qui"
+      "stop": "Fermati qui",
+      "savedTitle": "Salvato. Mancano {count} giorni precedenti",
+      "savedOne": "Salvato. Manca 1 giorno precedente",
+      "savedBody": "Il più recente è {date}. Li compili tutti insieme o un giorno alla volta?",
+      "savedBodyOne": "{date} non è ancora registrato. Lo compili ora?"
     },
     pt: {
       "title": "Faltam {count} registos",
@@ -95,7 +116,11 @@
       "nextOne": "Guardado. Falta 1",
       "nextBody": "Continuar com {date} ou parar aqui? Os outros ficam em Registos em falta.",
       "next": "✍️ Continuar com {date}",
-      "stop": "Parar aqui"
+      "stop": "Parar aqui",
+      "savedTitle": "Guardado. Faltam {count} dias anteriores",
+      "savedOne": "Guardado. Falta 1 dia anterior",
+      "savedBody": "O mais recente é {date}. Preenches todos de uma vez ou um dia de cada vez?",
+      "savedBodyOne": "{date} ainda não está registado. Preenches agora?"
     },
     nl: {
       "title": "{count} invoeren ontbreken",
@@ -109,7 +134,11 @@
       "nextOne": "Opgeslagen. Nog 1",
       "nextBody": "Doorgaan met {date} of hier stoppen? De rest blijft onder Ontbrekende invoeren.",
       "next": "✍️ Verder met {date}",
-      "stop": "Hier stoppen"
+      "stop": "Hier stoppen",
+      "savedTitle": "Opgeslagen. {count} eerdere dagen ontbreken",
+      "savedOne": "Opgeslagen. 1 eerdere dag ontbreekt",
+      "savedBody": "De laatste is {date}. Alles in één keer invullen of dag voor dag?",
+      "savedBodyOne": "{date} is nog niet ingevuld. Nu invullen?"
     },
     pl: {
       "title": "Brakuje {count} wpisów",
@@ -123,7 +152,11 @@
       "nextOne": "Zapisano. Został 1",
       "nextBody": "Kontynuować z {date} czy na tym skończyć? Pozostałe zostaną w Brakujących wpisach.",
       "next": "✍️ Dalej: {date}",
-      "stop": "Na tym skończę"
+      "stop": "Na tym skończę",
+      "savedTitle": "Zapisano. Brakuje {count} wcześniejszych dni",
+      "savedOne": "Zapisano. Brakuje 1 wcześniejszego dnia",
+      "savedBody": "Ostatnio {date}. Uzupełnić wszystkie naraz czy dzień po dniu?",
+      "savedBodyOne": "Brak wpisu z {date}. Uzupełnić teraz?"
     },
     sv: {
       "title": "{count} anteckningar saknas",
@@ -137,7 +170,11 @@
       "nextOne": "Sparat. 1 kvar",
       "nextBody": "Fortsätta med {date} eller sluta här? Resten finns kvar under Saknade anteckningar.",
       "next": "✍️ Fortsätt med {date}",
-      "stop": "Sluta här"
+      "stop": "Sluta här",
+      "savedTitle": "Sparat. {count} tidigare dagar saknas",
+      "savedOne": "Sparat. 1 tidigare dag saknas",
+      "savedBody": "Senast {date}. Fyll i alla på en gång eller en dag i taget?",
+      "savedBodyOne": "{date} är inte loggad än. Fyll i nu?"
     },
     zh: {
       "title": "缺少 {count} 条记录",
@@ -151,7 +188,11 @@
       "nextOne": "已保存。还剩 1 天",
       "nextBody": "继续填写 {date}，还是到此为止？其余的会留在「缺失的记录」中。",
       "next": "✍️ 继续填写 {date}",
-      "stop": "到此为止"
+      "stop": "到此为止",
+      "savedTitle": "已保存。之前还有 {count} 天没有记录",
+      "savedOne": "已保存。之前还有 1 天没有记录",
+      "savedBody": "最近的是 {date}。一次全部填写，还是一天一天来？",
+      "savedBodyOne": "{date} 还没有记录。现在填写吗？"
     }
   };
   Object.keys(S).forEach(function (code) { BB.i18n.extend(code, { missingDays: S[code] }); });
