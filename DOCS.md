@@ -2063,7 +2063,10 @@ the sweep. The 10-minute restore window and the open delete are gone.
 ⚠️ **Never rotate or delete `ANON_PROFILE_SECRET`** (Secret Manager).
 
 **Retention** — `privacySweep`, daily 04:10 London (`RETENTION` in
-privacy.js; keep privacy.html §8 in step): posts 7 days idle (reported 90),
+privacy.js; keep privacy.html §8 in step): posts 7 days idle (reported 90;
+announcements never — they stay until the admin deletes them, but their
+replies go at 7 days by `sweepAnnouncementReplies`, 2026-11-16; the client's
+`cleanOldPosts` skips them too),
 reports 90, reviewed suggestions 90, translations 7, codes 30 min (a
 verified code's address is stripped by `verifyAnonCode` at once, and
 `getBBStats` deletes the record when it reads it; each `sendAnonCode` clears

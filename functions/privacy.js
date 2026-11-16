@@ -447,7 +447,12 @@ async function migrateLegacyProfiles(secret, { apply = true } = {}) {
   return out;
 }
 
-/** Posts the 7-day rule (and the 90-day rule for reported ones) has expired. */
+/**
+ * Posts the 7-day rule (and the 90-day rule for reported ones) has expired.
+ * Announcements are exempt (2026-11-16): they stay until the admin takes them
+ * down. Their replies are members' words, so those still go on the post rule
+ * (sweepAnnouncementReplies).
+ */
 async function sweepPosts(apply) {
   const now = Date.now();
   const cutoff = TS.fromMillis(now - RETENTION.postDays * DAY);
@@ -455,7 +460,7 @@ async function sweepPosts(apply) {
   const refs = [];
   snap.forEach((doc) => {
     const d = doc.data();
-    if (d.pinned || d.isTopic) return;
+    if (d.pinned || d.isTopic || d.tab === 'announcements') return;
     const age = now - millis(d.timestamp);
     if (d.reported) { if (age > RETENTION.reportedPostDays * DAY) refs.push(doc.ref); return; }
     if (millis(d.lastActivity) >= cutoff.toMillis()) return;
@@ -463,6 +468,32 @@ async function sweepPosts(apply) {
   });
   if (apply) for (const r of refs) await db.recursiveDelete(r);
   return refs.length;
+}
+
+/**
+ * Replies under an announcement, on the same terms as a post: 7 days old
+ * (90 if reported). The announcement itself stays, so its commentCount is
+ * brought down by the number removed.
+ */
+async function sweepAnnouncementReplies(apply) {
+  const now = Date.now();
+  const cutoff = TS.fromMillis(now - RETENTION.postDays * DAY);
+  const anns = await db.collection(POSTS).where('tab', '==', 'announcements').get();
+  let n = 0;
+  for (const ann of anns.docs) {
+    const old = await ann.ref.collection('comments').where('timestamp', '<', cutoff).get();
+    const refs = old.docs.filter((c) => {
+      const d = c.data();
+      return !d.reported || now - millis(d.timestamp) > RETENTION.reportedPostDays * DAY;
+    }).map((c) => c.ref);
+    if (!refs.length) continue;
+    n += refs.length;
+    if (!apply) continue;
+    await deleteRefs(refs);
+    const left = Math.max(0, (Number(ann.get('commentCount')) || 0) - refs.length);
+    await ann.ref.update({ commentCount: left }).catch(() => {});
+  }
+  return n;
 }
 
 /** Replies whose post is gone (deleted before onAnonPostDeleted existed). */
@@ -566,6 +597,7 @@ async function runPrivacySweep({ apply = true, secret } = {}) {
   r.presence = await sweepByTime('bbPresence', 'lastSeen', RETENTION.presenceHours * 3600000, apply);
   r.anonPresence = await sweepByTime('bbAnonPresence', 'lastSeen', RETENTION.presenceHours * 3600000, apply);
   r.posts = await sweepPosts(apply);
+  r.announcementReplies = await sweepAnnouncementReplies(apply);
   r.orphanComments = await sweepOrphanComments(apply);
   r.adminAuthored = await sweepAdminAuthored(apply);
   if (secret) r.profiles = await migrateLegacyProfiles(secret, { apply });

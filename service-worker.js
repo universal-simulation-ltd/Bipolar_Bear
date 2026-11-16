@@ -2042,7 +2042,10 @@
 // v415: Health sync never suggests "Too much" energy from steps (2026-11-11):
 //   _energyFromSteps tops out at "More than usual" (7) for 10k+ steps; 20k+
 //   used to give "Too much" (10). js/journal.js.
-const CACHE_NAME = 'bipolarbear-v415';
+// v416: Bipolar Anonymous announcements are no longer swept after 7 days
+//   (2026-11-16): cleanOldPosts skips tab 'announcements'; privacy.html §8
+//   wording in every language. js/anonymous.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v416';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -5183,7 +5183,7 @@ async function dismissSuggestion(id) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Auto-delete posts older than 7 days (skip reported ones)
+// Auto-delete posts older than 7 days (skip reported, pinned, topics, announcements)
 // ─────────────────────────────────────────────────────────────────
 async function cleanOldPosts() {
   if (!db) return;
@@ -5199,6 +5199,11 @@ async function cleanOldPosts() {
     snap.docs.forEach(doc => {
       const data = doc.data();
       if (data.reported || data.pinned || data.isTopic) return; // topics are managed by the rotation, never auto-swept
+      // Announcements stay until the admin takes them down (2026-11-16): the
+      // sweep used to take them after a quiet week like any post, which is how
+      // the MBE announcement and its picture vanished. Their replies still go
+      // after POST_RETENTION_DAYS — the server sweep (functions/privacy.js) does that.
+      if (data.tab === 'announcements') return;
       // Preserve if a comment was added within the 7-day window
       if (data.lastActivity) {
         const laMs = data.lastActivity.toMillis
