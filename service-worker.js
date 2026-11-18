@@ -2045,7 +2045,7 @@
 // v416: Bipolar Anonymous announcements are no longer swept after 7 days
 //   (2026-11-16): cleanOldPosts skips tab 'announcements'; privacy.html §8
 //   wording in every language. js/anonymous.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v416';
+const CACHE_NAME = 'bipolarbear-v417';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

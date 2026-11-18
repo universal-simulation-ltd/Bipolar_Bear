@@ -1892,7 +1892,7 @@ exports.uidSignIn = onCall(
         const others = await db.collection(UID_LINKS).where('firebaseUid', '==', existing.uid).limit(1).get();
         if (!others.empty) {
           throw new HttpsError('already-exists',
-            'This email belongs to another Bipolar Bear account. Email inbox@unisim.co.uk and we will sort it out.');
+            'This email belongs to another Bipolar Bear account. Email bipolar@unisim.co.uk and we will sort it out.');
         }
         await writeUidLink(person.id, existing.uid, person.email, 'adopted');
         continue;
