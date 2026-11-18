@@ -5,6 +5,8 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 💾 **"Save and close" when you've changed a tracker's name.** While a tracker's name or emoji has an unsaved change, Track Data's **Done** button reads **Save and close**. In every language. (`CACHE_NAME` v423)
+- 📏 **Scale trackers take half the room.** The scale is now two rows, the slider and the numbers under it, with the numbers closer to the slider. The **Less / Normal / More** line is gone; the numbers and Track Data's "−2 less … +2 more than usual" say the same. (`CACHE_NAME` v423)
 - ✏️ **Renaming a tracker saves by itself.** In **Track Data**, the Save button is gone from a tracker's edit row: the name and emoji are kept as you type or pick, and when you press Enter, open another tracker or close Track Data. **✕** puts them back as they were. An emptied name keeps the old one. (`CACHE_NAME` v422)
 - 🎚️ **Tap the scale's handle again to clear it, at any value.** Tapping the round handle a second time clears the answer whether it's on −2, 0 or +2, and so does tapping the chosen number again. Dragging never clears. This now works on iPhone too, where a tap on the handle wasn't always noticed. (`CACHE_NAME` v422)
 - 📝 **Quick note: add to the note you haven't used yet.** The quick-note box now grows as you write, so the whole note stays easy to read, and it scrolls after half the screen. If your last quick note hasn't gone into a saved entry yet, tapping 📝 opens it so you can add to it, and saving keeps it as one note. Emptying the box and saving removes it. (`CACHE_NAME` v421)

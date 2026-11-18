@@ -2066,7 +2066,11 @@
 //   clear at any value (and the chosen number again), from our own touch /
 //   pointer tap detection, since iOS doesn't reliably click a range thumb.
 //   js/journal.js.
-const CACHE_NAME = 'bipolarbear-v422';
+// v423: Track Data's Done reads "Save and close" while an edit row has a
+//   change; the scale is two rows (slider + numbers), the Less / Normal / More
+//   line dropped and the numbers pulled up (2026-11-18, James). journal.html,
+//   js/journal.js, css/journal.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v423';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

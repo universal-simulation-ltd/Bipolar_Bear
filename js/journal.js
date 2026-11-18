@@ -17113,7 +17113,6 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')" onkeydown="if(event.key==='Backspace'||event.key==='Delete'){event.preventDefault();_cfScaleClear('${f.id}','${where}');}">
             <div class="cf-scale-ticks">${ticks}</div>
           </div>
-          <div class="cf-scale-ends" aria-hidden="true"><span>${_esc(BB.t('journal.chip.less'))}</span><span>${_esc(BB.t('journal.value.normal'))}</span><span>${_esc(BB.t('journal.chip.more'))}</span></div>
         </div>`;
     }
     /** A tapped number under the slider; the chosen number again clears. */
@@ -17367,6 +17366,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       </div>`;
 
       list.innerHTML = builtIn + custom + _trkOldHtml(_old);
+      _fpDoneLabel();
       _trkWireOld();
       const addRow = document.getElementById('fieldPickerAddRow');
       if (addRow) addRow.innerHTML = addForm;
@@ -17467,6 +17467,14 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     // tapped. An emptied name keeps the old one.
     let _fieldEditSnap = null;
     let _fieldEditSyncTimer = null;
+    /** Track Data's bottom button reads "Save and close" while an open edit
+     *  row has a change in it, "Done" otherwise (James, 2026-11-18). */
+    function _fpDoneLabel() {
+      const b = document.getElementById('fieldPickerDoneBtn');
+      if (!b) return;
+      const key = (_fieldEditSnap && _fieldEditSnap.dirty && (_editingFieldId || _editingBuiltinKey)) ? 'journal.mods.saveAndClose' : 'journal.mods.done';
+      if (b.getAttribute('data-i18n') !== key) { b.setAttribute('data-i18n', key); b.textContent = BB.t(key); }
+    }
     function _fieldEditSnapshot() {
       if (_editingFieldId) {
         const f = getCustomFields().find(x => x.id === _editingFieldId);
@@ -17492,6 +17500,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         else if (snap.override != null) localStorage.setItem('_labelOverride_' + key, snap.override);
         else localStorage.removeItem('_labelOverride_' + key);
       } else return;
+      snap.dirty = true;
+      _fpDoneLabel();
       clearTimeout(_fieldEditSyncTimer);
       _fieldEditSyncTimer = setTimeout(() => { try { syncTrackingPrefsToFirestore(); } catch (_) {} }, 1500);
     }

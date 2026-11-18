@@ -3021,26 +3021,28 @@ html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-tex
 .cf-type-btn:focus-visible { outline: 2px solid var(--brand-primary, #ff9500); outline-offset: 2px; }
 .cf-type-btn.cf-type-locked { opacity: 0.45; cursor: default; }
 .cf-type-toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 5000; max-width: min(90vw, 360px); padding: 10px 16px; border-radius: 12px; background: rgba(33,37,41,0.92); color: #fff; font-size: 0.85em; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,0.25); pointer-events: none; }
-.cf-scale { min-width: 0; padding: 2px 0 4px; }
+.cf-scale { min-width: 0; padding: 0; }
 .cf-scale-head { display: flex; align-items: center; min-height: 28px; }
 .cf-scale-title { font-size: 0.88em; font-weight: 600; color: #495057; overflow-wrap: anywhere; }
-/* Big-thumb slider: 32px thumb, the numbers sit under each stop. */
-.cf-scale-track { position: relative; padding: 0 0 46px; }
-.cf-scale input[type="range"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 40px; margin: 0; padding: 0; border: none !important; border-radius: 0; box-shadow: none !important; outline-offset: 4px; background: transparent !important; cursor: pointer; touch-action: pan-y; }
+/* Big-thumb slider: 32px thumb, the numbers sit close under each stop. Two
+   rows only (James, 2026-11-18: three rows took too much room); the
+   Less / Normal / More line went: the numbers and Track Data's
+   "−2 less … +2 more than usual" say it, and aria-valuetext says it aloud. */
+.cf-scale-track { position: relative; padding: 0 0 26px; }
+.cf-scale input[type="range"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 36px; margin: 0; padding: 0; border: none !important; border-radius: 0; box-shadow: none !important; outline-offset: 4px; background: transparent !important; cursor: pointer; touch-action: pan-y; }
 .cf-scale input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: #dee2e6; }
 .cf-scale input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: #dee2e6; }
 .cf-scale input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -12px; border-radius: 50%; background: var(--brand-primary, #ff9500); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 .cf-scale input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-primary, #ff9500); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 .cf-scale.cf-unset input[type="range"]::-webkit-slider-thumb { background: #adb5bd; }
 .cf-scale.cf-unset input[type="range"]::-moz-range-thumb { background: #adb5bd; }
-.cf-scale-ticks { position: absolute; left: 0; right: 0; top: 38px; height: 44px; }
-.cf-scale-tick { position: absolute; top: 0; transform: translateX(-50%); width: 44px; height: 44px; padding: 0; border: none; border-radius: 10px; background: none; color: var(--text-muted-ink, #6c757d); font-size: 0.82em; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.cf-scale-ticks { position: absolute; left: 0; right: 0; top: 28px; height: 32px; }
+.cf-scale-tick { position: absolute; top: 0; transform: translateX(-50%); width: 44px; height: 32px; padding: 0; border: none; border-radius: 10px; background: none; color: var(--text-muted-ink, #6c757d); font-size: 0.82em; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .cf-scale-tick.on { background: var(--brand-tint, #fff6ec); color: var(--brand-ink, #8a4b00); }
-.cf-scale-ends { display: flex; justify-content: space-between; margin-top: -4px; font-size: 0.7em; color: var(--text-muted-ink, #6c757d); }
 /* The name in the grid's name column, like every other tracker (2026-11-18):
    level with the slider line rather than the middle of slider + numbers, and
    narrower number targets so five fit the answer column. */
-.cf-scale-name { align-self: start; margin-top: 10px; }
+.cf-scale-name { align-self: start; margin-top: 8px; }
 .cf-scale.cf-in-col .cf-scale-tick { width: 36px; }
 html.theme-dark .cf-type-btn { background: var(--dk-surface-2, #30281f); border-color: var(--dk-line, #4a3d30); color: var(--dk-text, #f5ebdd); }
 html.theme-dark .cf-scale-title { color: var(--dk-text, #f5ebdd); }
