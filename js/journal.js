@@ -185,6 +185,7 @@ function _tt(k, vars, fallback) {
     }
 
     let _allEntries = []; // full sorted entry list for personalised feedback
+    let _allEntriesLoaded = false; // loadEntries has filled _allEntries at least once
     let _missingDatesCache = []; // dates listed by the last showMissingDates() — input to auto-complete
 
     // _resolvePointerPosition is provided by js/shared/onboarding.js.
@@ -3110,6 +3111,7 @@ function _tt(k, vars, fallback) {
             return;
           }
           _allEntries = [];
+          _allEntriesLoaded = true;
           _writeRecentMoods([]);
           _fileReminderMoods();
           if (_undecryptableCount > 0) {
@@ -3145,6 +3147,7 @@ function _tt(k, vars, fallback) {
         if (loader) loader.style.display = 'none';
         entries.sort((a, b) => b.timestamp - a.timestamp);
         _allEntries = entries;
+        _allEntriesLoaded = true;
         setTimeout(() => { try { _trkMaybeAutoClean(); } catch (_) {} }, 0);
         _writeRecentMoods(entries);
         _fileReminderMoods();
@@ -17000,7 +17003,31 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       return _cfValText(String(n)) + ', ' + (n > 0 ? BB.t('journal.value.moreThanUsual') : n < 0 ? BB.t('journal.value.lessThanUsual') : BB.t('journal.value.normal'));
     }
     /** Yes/no → no/yes (reversed) → scale → yes/no, from the ✏ list's type button. */
+    /** Whether a custom field has been answered: on any loaded entry, or on the
+     *  form now. Its answer type is then fixed (James, 2026-11-18), so old
+     *  answers never get read as a different kind. Until the entries have
+     *  loaded we can't tell, so it counts as answered. */
+    function _cfHasAnswers(id) {
+      const cur = selectedCustom && selectedCustom[id];
+      if (cur != null && cur !== '') return true;
+      if (!_allEntriesLoaded) return true;
+      return (_allEntries || []).some(e => e && e.customFields && _trkVal(e.customFields[id]));
+    }
+    /** A tap on a locked type button: say why it doesn't change. */
+    function _cfTypeLockedTap() {
+      const old = document.getElementById('_cfTypeLockedToast');
+      if (old) old.remove();
+      const el = document.createElement('div');
+      el.id = '_cfTypeLockedToast';
+      el.className = 'cf-type-toast';
+      el.setAttribute('role', 'status');
+      el.textContent = BB.t('journal.ui.cfTypeLocked');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 2800);
+    }
+    window._cfTypeLockedTap = _cfTypeLockedTap;
     function cycleCustomFieldType(id) {
+      if (_cfHasAnswers(id)) { _cfTypeLockedTap(); return; }
       const fields = getCustomFields().map(f => {
         if (f.id !== id) return f;
         const next = { ...f };
@@ -17026,6 +17053,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       const face = type === 'scale'
         ? `<svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><line x1="2" y1="7" x2="20" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="3.5" x2="2" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="20" y1="3.5" x2="20" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="11" cy="7" r="3.6" fill="var(--brand-primary,#ff9500)"/></svg>`
         : (type === 'reverse' ? 'N/Y' : 'Y/N');
+      if (_cfHasAnswers(f.id)) {
+        const locked = BB.t('journal.ui.cfTypeLocked');
+        return `<button type="button" data-cf-type="${f.id}" onclick="event.stopPropagation();_cfTypeLockedTap()" class="cf-type-btn cf-type-locked" aria-disabled="true" aria-label="${_esc(locked)}" title="${_esc(locked)}">${face}</button>`;
+      }
       return `<button type="button" data-cf-type="${f.id}" onclick="event.stopPropagation();cycleCustomFieldType('${f.id}')" class="cf-type-btn" aria-label="${_esc(lbl)}" title="${_esc(lbl)}">${face}</button>`;
     }
     /**
@@ -17034,29 +17065,29 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
      * slider with a big thumb and the numbers underneath as tap targets. It
      * spans the whole row of whatever grid it's in. Starts on 0 but reads as
      * not answered until it's slid or tapped (an untouched slider saves
-     * nothing). `where` is 'fm' (focus mode's Additional step) or 'form'.
+     * nothing). Tapping the handle (or the "0") when it's already on 0
+     * clears the answer again; there's no Clear button (James, 2026-11-18).
+     * `where` is 'fm' (focus mode's Additional step) or 'form'.
      */
     function _cfScaleHtml(f, where) {
       const n = _cfScaleNum(selectedCustom[f.id]);
       const name = `${f.emoji ? f.emoji + ' ' : ''}${f.label}`;
       const ticks = [-2, -1, 0, 1, 2].map((v, i) => `<button type="button" tabindex="-1" aria-hidden="true" class="cf-scale-tick${n === v ? ' on' : ''}" style="left:calc(16px + (100% - 32px) * ${i / 4})" onclick="_cfScaleSet('${f.id}',${v},'${where}')">${_cfValText(String(v))}</button>`).join('');
       return `<div class="cf-scale${n === null ? ' cf-unset' : ''}" data-cf-scale="${f.id}">
-          <div class="cf-scale-head">
-            <span class="cf-scale-title">${_esc(name)}</span>
-            <button type="button" class="cf-scale-clear" onclick="_cfScaleClear('${f.id}','${where}')" aria-label="${_esc(BB.t('journal.ui.cfScaleClear') + ': ' + name)}"${n === null ? ' hidden' : ''}>✕ ${_esc(BB.t('journal.ui.cfScaleClear'))}</button>
-          </div>
+          <div class="cf-scale-head"><span class="cf-scale-title">${_esc(name)}</span></div>
           <div class="cf-scale-track">
             <input type="range" min="-2" max="2" step="1" value="${n === null ? 0 : n}"
               aria-label="${_esc(name)}" aria-valuetext="${_esc(_cfScaleSpoken(n))}"
-              oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')"
-              onclick="if(this.closest('.cf-unset')){_cfScaleInput(this,'${f.id}');_cfScaleCommit('${where}');}">
+              onpointerdown="_cfScaleDown(this)" oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')"
+              onclick="_cfScaleTap(this,'${f.id}','${where}')" onkeydown="if(event.key==='Backspace'||event.key==='Delete'){event.preventDefault();_cfScaleClear('${f.id}','${where}');}">
             <div class="cf-scale-ticks">${ticks}</div>
           </div>
           <div class="cf-scale-ends" aria-hidden="true"><span>${_esc(BB.t('journal.chip.less'))}</span><span>${_esc(BB.t('journal.value.normal'))}</span><span>${_esc(BB.t('journal.chip.more'))}</span></div>
         </div>`;
     }
-    /** A tapped number under the slider. */
+    /** A tapped number under the slider; the "0" again when on 0 clears. */
     function _cfScaleSet(id, v, where) {
+      if (v === 0 && selectedCustom[id] === '0') { _cfScaleClear(id, where); return; }
       selectedCustom[id] = String(v);
       try { saveDraft(); } catch (_) {}
       if (where === 'fm') _fmCheckMoreData(); else renderCustomTrackingRows();
@@ -17068,14 +17099,25 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       const wrap = el.closest('.cf-scale');
       if (wrap) {
         wrap.classList.remove('cf-unset');
-        const clr = wrap.querySelector('.cf-scale-clear');
-        if (clr) clr.hidden = false;
         wrap.querySelectorAll('.cf-scale-tick').forEach((t, i) => t.classList.toggle('on', i - 2 === n));
       }
     }
     function _cfScaleCommit(where) {
       try { saveDraft(); } catch (_) {}
       if (where === 'fm') _fmCheckMoreData();
+    }
+    /** Remember what the slider held when the finger went down, so a tap
+     *  can tell "tapped the handle on 0" from "dragged it onto 0". */
+    function _cfScaleDown(el) {
+      el.dataset.down = el.closest('.cf-unset') ? 'unset' : String(el.value);
+    }
+    /** A tap on an untouched slider records where it sits; a tap on the
+     *  handle when it was already on 0 (and still is) clears the answer. */
+    function _cfScaleTap(el, id, where) {
+      const down = el.dataset.down;
+      delete el.dataset.down;
+      if (el.closest('.cf-unset')) { _cfScaleInput(el, id); _cfScaleCommit(where); return; }
+      if (down === '0' && Number(el.value) === 0) _cfScaleClear(id, where);
     }
     function _cfScaleClear(id, where) {
       delete selectedCustom[id];
@@ -17086,6 +17128,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     window._cfScaleInput = _cfScaleInput;
     window._cfScaleCommit = _cfScaleCommit;
     window._cfScaleClear = _cfScaleClear;
+    window._cfScaleDown = _cfScaleDown;
+    window._cfScaleTap = _cfScaleTap;
     window._cfScaleSet = _cfScaleSet;
 
     // Alcohol and Added Sugar can't leave the list, so deleting one with its
@@ -17945,10 +17989,28 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     function _trkOpenSheet(tid, state) {
       const t = _trkDescribe(tid);
       if (!t) return;
+      // No answers on any entry: nothing to keep or delete, so don't ask
+      // which kind of delete — just remove the tracker (James, 2026-11-18).
+      // Only once the entries have loaded, so "none yet" never reads as "none".
+      if (!state && _allEntriesLoaded && _trkCount(t) === 0) { _trkRemoveEmpty(t); return; }
       _trkSheet = { tid, label: t.label, count: _trkCount(t), state: state || 'choose' };
       _trkRenderSheet();
       document.getElementById('trkDeleteModal').classList.add('active');
       requestAnimationFrame(() => { const b = document.querySelector('#trkDeleteBody [data-trk-first]'); if (b) b.focus(); });
+    }
+    /** Remove a tracker that holds no answers: the definition, its switch and its name. No entries are touched. */
+    function _trkRemoveEmpty(t) {
+      _trkClearSelection(t);
+      _trkForget(t);
+      _trkSyncForget(t);
+      _editingBuiltinKey = null;
+      _editingFieldId = null;
+      applyTrackingPrefs();
+      renderFieldPickerList();
+      if (typeof _fmActive !== 'undefined' && _fmActive && typeof _buildFocusedSteps === 'function') {
+        _fmSteps = _buildFocusedSteps();
+        _fmStepIndex = Math.min(_fmStepIndex, _fmSteps.length - 1);
+      }
     }
     function _trkCloseSheet() {
       if (_trkSheet && _trkSheet.state === 'working') return; // finish (or fail) first

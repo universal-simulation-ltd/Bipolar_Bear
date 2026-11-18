@@ -2052,7 +2052,11 @@
 // v419: Scale trackers made for thumbs (2026-11-18, James): two lines, name
 //   with ✕ Clear, then a full-width slider with a 32px thumb and the numbers
 //   −2 … +2 underneath as 44px tap targets. js/journal.js, css/journal.css.
-const CACHE_NAME = 'bipolarbear-v419';
+// v420: Scale trackers lose the Clear button (2026-11-18, James): tap the
+// handle (or the "0") when it's already on 0 to clear the answer.
+// Also: a field's answer type (Y/N, N/Y, scale) locks once it has an answer,
+// and deleting a tracker with no answers skips the stop / delete-data sheet.
+const CACHE_NAME = 'bipolarbear-v420';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
