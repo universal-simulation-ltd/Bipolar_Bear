@@ -941,7 +941,7 @@ where help is (📣 → Support, or bipolar@unisim.co.uk). Dismissing it shows
 `_showSupportHint()` once per device (`bbSupportHintShown`): a label over the
 📣 button that opens the feedback popup on **Support**. Any other tap, or 8 s,
 clears it. Support feedback asks a guest for an email, and the
-`onFeedbackSubmitted` email to inbox@unisim.co.uk carries it as `reply_to`.
+`onFeedbackSubmitted` email to bipolar@unisim.co.uk carries it as `reply_to`.
 
 **Tutorial skip**: hold the logo for 5 seconds before step 12. Instantly sets step to 12 and marks all flags, with a "✅ Tutorial skipped" toast (no finale). At step 12 the same hold offers "Reset Dock?".
 
