@@ -7770,7 +7770,8 @@ function _tt(k, vars, fallback) {
             return;
           }
           const no  = { v: 'no',  l: `${f.positive === 'no' ? '✅' : '✗'} ${vN}` };
-          const yes = { v: 'yes', l: `${f.positive === 'no' && f.emoji ? f.emoji : '✅'} ${vY}` };
+          // Reversed, "yes" is the answer to watch: its own emoji, never ✅ (James, 2026-11-18).
+          const yes = { v: 'yes', l: f.positive === 'no' ? (f.emoji ? `${f.emoji} ${vY}` : vY) : `✅ ${vY}` };
           add('custom:' + f.id, `${f.emoji || '📝'} ${f.label}`, f.positive === 'no' ? [yes, no] : [no, yes]);
         });
       } catch (e) {}
@@ -8739,13 +8740,17 @@ function _tt(k, vars, fallback) {
               const _sNoteHtml = localStorage.getItem('elaborateResponsesEnabled') === 'true' && _sn0 !== null && _sn0 !== 0
                 ? `<div style="grid-column:1/-1;margin-bottom:4px;"><input type="text" placeholder="${BB.t('journal.placeholder.moreDetails')}" value="${_sNoteVal.replace(/"/g,'&quot;')}" style="width:100%;border:1.5px solid #e9ecef;border-radius:10px;padding:6px 10px;font-size:0.85em;font-family:inherit;box-sizing:border-box;outline:none;" oninput="selectedStepNotes['${f.id}']=this.value;saveDraft();"></div>`
                 : '';
-              _md += `<div style="grid-column:1/-1;">${_cfScaleHtml(f, 'fm')}</div>
+              _md += `<span class="cf-scale-name" style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${f.emoji||'📝'} ${_esc(f.label)}</span>
+              <div style="min-width:0;">${_cfScaleHtml(f, 'fm', { inColumn: true })}</div>
               ${_sNoteHtml}`;
               continue;
             }
             const _fPosNo = f.positive === 'no';
             const _noOpt  = {label:`${_fPosNo?'✅':'✗'}<br>${_vN}`,               color:'var(--brand-primary)',  sel:selectedCustom[f.id]==='no',  set:`selectedCustom['${f.id}']='no';_fmCheckMoreData()`};
-            const _yesOpt = {label:`${_fPosNo&&f.emoji?f.emoji:'✅'}<br>${_vY}`, color:_fPosNo?'#dc3545':'var(--brand-primary)', sel:selectedCustom[f.id]==='yes', set:`selectedCustom['${f.id}']='yes';_fmCheckMoreData()`};
+            // Reversed, "yes" is the answer to watch, so no ✅ on it: its own
+            // emoji, or none (an invisible one keeps the buttons level) (James, 2026-11-18).
+            const _yesIcon = !_fPosNo ? '✅' : f.emoji ? f.emoji : '<span aria-hidden="true" style="visibility:hidden;">✅</span>';
+            const _yesOpt = {label:`${_yesIcon}<br>${_vY}`, color:_fPosNo?'#dc3545':'var(--brand-primary)', sel:selectedCustom[f.id]==='yes', set:`selectedCustom['${f.id}']='yes';_fmCheckMoreData()`};
             _STEP_NOTE_LABELS[f.id] = `${f.emoji||''} ${f.label}`.trim();
             const _cfNegSel = _fPosNo ? selectedCustom[f.id]==='yes' : selectedCustom[f.id]==='no';
             const _cfNoteVal = selectedStepNotes[f.id] || '';
@@ -11207,6 +11212,28 @@ function _tt(k, vars, fallback) {
         if (typeof scheduleDraftSave === 'function' && selectedMood != null) scheduleDraftSave();
       }
     }
+    // A quick note re-opened and changed (fab.js, 2026-11-18) replaces the
+    // earlier one(s). If they were already added to the entry being filled,
+    // take their text out again and add the new note instead, so it isn't
+    // there twice (text the person has since edited stays as it is).
+    window.addEventListener('bb:quicknotes', ev => {
+      const d = (ev && ev.detail) || {};
+      const was = (d.before || []).filter(n => n && _qnFilledIds.includes(n.id));
+      if (!was.length) return;
+      const el = document.getElementById('notes');
+      const fm = document.getElementById('fmNotesInput');
+      const strip = v => {
+        let out = v || '';
+        was.forEach(n => { out = out.replace(n.text, ''); });
+        return out.replace(/\n{3,}/g, '\n\n').trim();
+      };
+      _qnFilledIds = _qnFilledIds.filter(id => !was.some(n => n.id === id));
+      // On focus mode's notes step its box is the one being typed in.
+      if (el) el.value = strip(fm ? fm.value : el.value);
+      _qnFillNotes();
+      if (fm && el) { fm.value = el.value; _fmNotesInput(fm); }
+      if (typeof scheduleDraftSave === 'function' && selectedMood != null) scheduleDraftSave();
+    });
     /** After a new entry is saved: drop the quick notes that went into it. */
     function _qnClearFilled() {
       if (!_qnFilledIds.length) return;
@@ -17068,13 +17095,16 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
      * nothing). Tapping the handle (or the "0") when it's already on 0
      * clears the answer again; there's no Clear button (James, 2026-11-18).
      * `where` is 'fm' (focus mode's Additional step) or 'form'.
+     * `opts.inColumn`: the name is in the grid's name column, like every other
+     * tracker's (James, 2026-11-18), so the slider goes without its own title.
      */
-    function _cfScaleHtml(f, where) {
+    function _cfScaleHtml(f, where, opts) {
+      const inCol = !!(opts && opts.inColumn);
       const n = _cfScaleNum(selectedCustom[f.id]);
       const name = `${f.emoji ? f.emoji + ' ' : ''}${f.label}`;
       const ticks = [-2, -1, 0, 1, 2].map((v, i) => `<button type="button" tabindex="-1" aria-hidden="true" class="cf-scale-tick${n === v ? ' on' : ''}" style="left:calc(16px + (100% - 32px) * ${i / 4})" onclick="_cfScaleSet('${f.id}',${v},'${where}')">${_cfValText(String(v))}</button>`).join('');
-      return `<div class="cf-scale${n === null ? ' cf-unset' : ''}" data-cf-scale="${f.id}">
-          <div class="cf-scale-head"><span class="cf-scale-title">${_esc(name)}</span></div>
+      return `<div class="cf-scale${n === null ? ' cf-unset' : ''}${inCol ? ' cf-in-col' : ''}" data-cf-scale="${f.id}">
+          ${inCol ? '' : `<div class="cf-scale-head"><span class="cf-scale-title">${_esc(name)}</span></div>`}
           <div class="cf-scale-track">
             <input type="range" min="-2" max="2" step="1" value="${n === null ? 0 : n}"
               aria-label="${_esc(name)}" aria-valuetext="${_esc(_cfScaleSpoken(n))}"
@@ -17147,6 +17177,34 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       '📚','🎵','🎨','🛁','🐾','🍫',
     ];
 
+    // ── Any emoji (James, 2026-11-18) ──
+    // The grid is a shortcut, not the limit: a box at the top of each emoji
+    // grid takes any emoji from the keyboard. Letters are ignored; the first
+    // emoji typed (one whole grapheme, so 👩🏽‍💻 and 🇬🇧 stay whole) is picked.
+    function _firstEmoji(text) {
+      const str = String(text || '');
+      let parts;
+      try { parts = Array.from(new Intl.Segmenter(undefined, { granularity: 'grapheme' }).segment(str), x => x.segment); }
+      catch (_) { parts = Array.from(str); }
+      // Never anything that could break the markup it's put into.
+      return parts.find(g => /\p{Extended_Pictographic}|\p{Regional_Indicator}|\u20E3/u.test(g) && !/[<>"'&`\\\s]/.test(g)) || '';
+    }
+    /** The "type any emoji" box; `fn` is the window function a pick goes to. */
+    function _anyEmojiBoxHtml(fn) {
+      const ph = _esc(BB.t('journal.ui.anyEmoji'));
+      return `<input type="text" class="bb-any-emoji" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"
+        placeholder="${ph}" aria-label="${ph}" oninput="_anyEmojiInput(this,'${fn}')" onblur="this.value=''"
+        style="flex:1 0 100%;height:36px;margin:2px 2px 4px;padding:0 10px;border:1.5px dashed #ced4da;border-radius:8px;background:#fff;font-size:0.85em;outline:none;box-sizing:border-box;">`;
+    }
+    function _anyEmojiInput(el, fn) {
+      const e = _firstEmoji(el.value);
+      if (!e) return;
+      el.value = '';
+      el.blur();
+      if (typeof window[fn] === 'function') window[fn](e);
+    }
+    window._anyEmojiInput = _anyEmojiInput;
+
     function renderFieldPickerList() {
       const list = document.getElementById('fieldPickerList');
       if (!list) return;
@@ -17209,7 +17267,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.save')}</button>
               <button onclick="cancelBuiltinFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
-            <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:120px;overflow-y:auto;">${_bEmojiGrid}</div>
+            <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:160px;overflow-y:auto;">${_anyEmojiBoxHtml('selectEditPickerEmoji')}${_bEmojiGrid}</div>
             ${_delLink(_trkTidForPref(f.key))}
           </div>`;
         }
@@ -17263,7 +17321,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               <button onclick="cancelCustomFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f0f0f0;border-radius:8px;">
-              ${editEmojiGrid}
+              ${_anyEmojiBoxHtml('selectEditPickerEmoji')}${editEmojiGrid}
             </div>
             ${_delLink('c:' + f.id)}
           </div>`;
@@ -17287,7 +17345,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           <button onclick="addCustomField()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">Add</button>
         </div>
         <div id="emojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f8f9fa;border-radius:8px;">
-          ${emojiPickerGrid}
+          ${_anyEmojiBoxHtml('selectPickerEmoji')}${emojiPickerGrid}
         </div>
       </div>`;
 
@@ -18273,7 +18331,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           ? !!_editFieldOverrides[cKey]
           : localStorage.getItem(cKey) === 'true';
         if (!show) return '';
-        if (_cfIsScale(f)) return `<div style="grid-column:1/-1;">${_cfScaleHtml(f, 'form')}</div>`;
+        if (_cfIsScale(f)) return `<div style="display:contents">
+          <span class="cf-scale-name" style="font-size:0.9em;font-weight:600;color:#495057;">${f.emoji ? f.emoji + ' ' : ''}${_esc(f.label)}</span>
+          <div style="grid-column:span 3;min-width:0;">${_cfScaleHtml(f, 'form', { inColumn: true })}</div>
+        </div>`;
         const noSel = selectedCustom[f.id] === 'no';
         const yesSel = selectedCustom[f.id] === 'yes';
         const _posNo  = f.positive === 'no';

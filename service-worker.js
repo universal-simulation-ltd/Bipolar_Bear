@@ -2056,7 +2056,12 @@
 // handle (or the "0") when it's already on 0 to clear the answer.
 // Also: a field's answer type (Y/N, N/Y, scale) locks once it has an answer,
 // and deleting a tracker with no answers skips the stop / delete-data sheet.
-const CACHE_NAME = 'bipolarbear-v420';
+// v421: Quick note and trackers (2026-11-18, James): the quick-note box grows
+//   as you write and opens on the note not yet in an entry, to add to it; a
+//   reversed tracker's Yes has no ✅; a scale's name sits in the name column;
+//   any emoji can be typed for a tracker. fab.js, js/journal.js,
+//   css/journal.css, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v421';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

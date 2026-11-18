@@ -3037,6 +3037,11 @@ html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-tex
 .cf-scale-tick { position: absolute; top: 0; transform: translateX(-50%); width: 44px; height: 44px; padding: 0; border: none; border-radius: 10px; background: none; color: var(--text-muted-ink, #6c757d); font-size: 0.82em; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .cf-scale-tick.on { background: var(--brand-tint, #fff6ec); color: var(--brand-ink, #8a4b00); }
 .cf-scale-ends { display: flex; justify-content: space-between; margin-top: -4px; font-size: 0.7em; color: var(--text-muted-ink, #6c757d); }
+/* The name in the grid's name column, like every other tracker (2026-11-18):
+   level with the slider line rather than the middle of slider + numbers, and
+   narrower number targets so five fit the answer column. */
+.cf-scale-name { align-self: start; margin-top: 10px; }
+.cf-scale.cf-in-col .cf-scale-tick { width: 36px; }
 html.theme-dark .cf-type-btn { background: var(--dk-surface-2, #30281f); border-color: var(--dk-line, #4a3d30); color: var(--dk-text, #f5ebdd); }
 html.theme-dark .cf-scale-title { color: var(--dk-text, #f5ebdd); }
 html.theme-dark .cf-scale input[type="range"]::-webkit-slider-runnable-track { background: var(--dk-line, #4a3d30); }

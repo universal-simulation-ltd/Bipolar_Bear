@@ -671,7 +671,7 @@
           <div style="font-size:2em;text-align:center;margin-bottom:6px;">📝</div>
           <div style="font-weight:700;font-size:1.05em;color:#212529;margin-bottom:4px;text-align:center;" data-i18n="quickNote.title">Quick Note</div>
           <p style="font-size:0.82em;color:var(--text-muted-ink);margin-bottom:12px;text-align:center;" data-i18n="quickNote.subtitle">Shows on your next journal entry</p>
-          <textarea id="bbQuickNoteInput" placeholder="Something to remember..." data-i18n-placeholder="quickNote.placeholder" style="width:100%;min-height:90px;border:1.5px solid #e9ecef;border-radius:10px;padding:10px 12px;font-size:0.9em;color:#495057;resize:vertical;box-sizing:border-box;font-family:inherit;line-height:1.5;outline:none;"></textarea>
+          <textarea id="bbQuickNoteInput" placeholder="Something to remember..." data-i18n-placeholder="quickNote.placeholder" oninput="_qnGrow(this)" style="width:100%;min-height:90px;max-height:50vh;overflow-y:auto;border:1.5px solid #e9ecef;border-radius:10px;padding:10px 12px;font-size:0.9em;color:#495057;resize:none;box-sizing:border-box;font-family:inherit;line-height:1.5;outline:none;"></textarea>
           <div style="display:flex;gap:10px;margin-top:12px;">
             <button onclick="closeQuickNoteModal()" style="flex:1;padding:11px;background:white;color:var(--text-muted-ink);border:1.5px solid #e9ecef;border-radius:12px;font-weight:600;font-size:0.9em;cursor:pointer;" data-i18n="common.cancel">Cancel</button>
             <button onclick="saveQuickNote()" style="flex:1;padding:11px;background:var(--brand-btn);color:white;border:none;border-radius:12px;font-weight:700;font-size:0.9em;cursor:pointer;"><span data-i18n="common.save">Save</span> ✓</button>
@@ -1812,16 +1812,39 @@
     }
   }
 
+  /** The quick notes not yet in a saved journal entry. */
+  function _qnPending() {
+    try { const l = JSON.parse(BB.storage.get('QuickNotes') || '[]'); return Array.isArray(l) ? l.filter(n => n && n.text) : []; } catch (_) { return []; }
+  }
+
   /**
-   * Open the Quick Note modal with an empty textarea and focus it after a
-   * short delay (gives the modal CSS time to settle on iOS).
+   * The note box grows with what's written, up to half the screen, then
+   * scrolls (James, 2026-11-18: "so you can re-read your note easier").
+   */
+  window._qnGrow = function (el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 3) + 'px';
+  };
+
+  /**
+   * Open the Quick Note modal. A note that hasn't gone into a saved entry yet
+   * is shown, so it can be added to (James, 2026-11-18); otherwise the box is
+   * empty. The cursor goes to the end once the modal has settled (iOS).
    */
   window.openQuickNoteModal = function () {
     const _m   = document.getElementById('bbQuickNoteModal');
     const _inp = document.getElementById('bbQuickNoteInput');
-    if (_inp) _inp.value = '';
+    if (_inp) _inp.value = _qnPending().map(n => n.text).join('\n');
     if (_m) _m.style.display = 'flex';
-    setTimeout(() => { if (_inp) _inp.focus(); }, 120);
+    window._qnGrow(_inp);
+    setTimeout(() => {
+      if (!_inp) return;
+      _inp.focus();
+      const end = _inp.value.length;
+      try { _inp.setSelectionRange(end, end); } catch (_) {}
+      _inp.scrollTop = _inp.scrollHeight;
+    }, 120);
   };
 
   /** Hide the Quick Note modal. */
@@ -1831,19 +1854,24 @@
   };
 
   /**
-   * Append the current textarea content to `bbQuickNotes` in localStorage
-   * and show a transient "Note saved!" toast. Empty input → close-only.
-   * journal.js (_qnFillNotes) adds them to the notes of the next new entry
-   * and drops them from the list once that entry is saved.
+   * Save the box as THE pending quick note: it holds the earlier unsaved
+   * note(s) plus anything added, so it replaces them (emptying the box and
+   * saving removes them). A transient "Note saved!" toast confirms a note.
+   * journal.js (_qnFillNotes) adds it to the notes of the next new entry and
+   * drops it from the list once that entry is saved; `bb:quicknotes` tells an
+   * open journal form to swap the old text for the new.
    */
   window.saveQuickNote = function () {
     const _inp  = document.getElementById('bbQuickNoteInput');
     const _text = _inp ? _inp.value.trim() : '';
     window.closeQuickNoteModal();
-    if (!_text) return;
-    const _notes = JSON.parse(BB.storage.get('QuickNotes') || '[]');
-    _notes.push({ text: _text, ts: Date.now(), id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5) });
-    BB.storage.set('QuickNotes', JSON.stringify(_notes));
+    const _before = _qnPending();
+    if (_text === _before.map(n => n.text).join('\n').trim()) return;
+    const _after = _text ? { text: _text, ts: Date.now(), id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5) } : null;
+    if (_after) BB.storage.set('QuickNotes', JSON.stringify([_after]));
+    else BB.storage.remove('QuickNotes');
+    try { window.dispatchEvent(new CustomEvent('bb:quicknotes', { detail: { before: _before, after: _after } })); } catch (_) {}
+    if (!_after) return;
     const _t = document.createElement('div');
     _t.textContent = _bbT('fab.noteSaved', '📝 Note saved!');
     Object.assign(_t.style, { position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
