@@ -3235,7 +3235,7 @@ function _tt(k, vars, fallback) {
                 if (entry.alcohol)    _chips.push([`🍺 ${entry.alcohol==='yes'?_Y:_No}`, entry.alcohol==='no'?_G:_R]);
                 if (entry.smoking)    _chips.push([`🚬 ${entry.smoking==='yes'?_Y:_No}`, entry.smoking==='no'?_G:_R]);
                 if (entry.drugs)      _chips.push([`🌿 ${entry.drugs==='yes'?_Y:_No}`, entry.drugs==='no'?_G:_R]);
-                Object.entries(entry.customFields||{}).forEach(([id,v])=>{if(!v)return;const cf=getCustomFields().find(f=>f.id===id);if(cf)_chips.push([`${_esc(cf.emoji||cf.label)} ${v==='yes'?_Y:_No}`,_N]);});
+                Object.entries(entry.customFields||{}).forEach(([id,v])=>{if(!v)return;const cf=getCustomFields().find(f=>f.id===id);if(cf)_chips.push([`${_esc(cf.emoji||cf.label)} ${_cfScaleNum(v)!==null?_cfValText(v):v==='yes'?_Y:_No}`,_N]);});
                 const _achStr = _chips.length ? `<span style="flex-basis:100%;font-size:0.88em;margin-top:1px;text-align:left;">${_chips.map(([t,c])=>`<span style="color:${c};font-weight:600">${t}</span>`).join('<span style="color:#dee2e6">  </span>')}</span>` : '';
                 const _eLabel = entry.energy == null ? '⚡️ —' : entry.energy === 0 ? BB.t('journal.energy.notEnough') : entry.energy <= 4 ? BB.t('journal.energy.less') : entry.energy <= 6 ? BB.t('journal.energy.normal') : entry.energy <= 8 ? BB.t('journal.energy.more') : BB.t('journal.energy.tooMuch');
                 const _sleepBuckets = new Set([5, 6.5, 8, 9.5, 11]);
@@ -3833,7 +3833,9 @@ function _tt(k, vars, fallback) {
       if (entry.drugs)       rows.push(`<div style="margin-bottom:6px;"><b>${_lb('drugs')}</b> ${cap(entry.drugs)}</div>`);
       if (entry.customFields) {
         Object.entries(entry.customFields).forEach(([k, v]) => {
-          if (v) rows.push(`<div style="margin-bottom:6px;"><b>${k}:</b> ${v}</div>`);
+          if (!v) return;
+          const _cf = getCustomFields().find(f => f.id === k);
+          rows.push(`<div style="margin-bottom:6px;"><b>${_esc(_cf ? `${_cf.emoji ? _cf.emoji + ' ' : ''}${_cf.label}` : k)}:</b> ${_esc(_cfValText(v))}</div>`);
         });
       }
       if (entry.notes) rows.push(`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:0.9em;line-height:1.5;color:#495057;">${_esc(entry.notes)}</div>`);
@@ -7760,6 +7762,10 @@ function _tt(k, vars, fallback) {
       try {
         getCustomFields().forEach(f => {
           if (!_trackingPref(`trackCustom_${f.id}`)) return;
+          if (_cfIsScale(f)) {
+            add('custom:' + f.id, `${f.emoji || '📝'} ${f.label}`, ['-2', '-1', '0', '1', '2'].map(v => ({ v, l: _cfValText(v) })));
+            return;
+          }
           const no  = { v: 'no',  l: `${f.positive === 'no' ? '✅' : '✗'} ${vN}` };
           const yes = { v: 'yes', l: `${f.positive === 'no' && f.emoji ? f.emoji : '✅'} ${vY}` };
           add('custom:' + f.id, `${f.emoji || '📝'} ${f.label}`, f.positive === 'no' ? [yes, no] : [no, yes]);
@@ -8723,6 +8729,18 @@ function _tt(k, vars, fallback) {
             }
           }
           for (const f of _custFields) {
+            if (_cfIsScale(f)) {
+              _STEP_NOTE_LABELS[f.id] = `${f.emoji||''} ${f.label}`.trim();
+              const _sn0 = _cfScaleNum(selectedCustom[f.id]);
+              const _sNoteVal = selectedStepNotes[f.id] || '';
+              const _sNoteHtml = localStorage.getItem('elaborateResponsesEnabled') === 'true' && _sn0 !== null && _sn0 !== 0
+                ? `<div style="grid-column:1/-1;margin-bottom:4px;"><input type="text" placeholder="${BB.t('journal.placeholder.moreDetails')}" value="${_sNoteVal.replace(/"/g,'&quot;')}" style="width:100%;border:1.5px solid #e9ecef;border-radius:10px;padding:6px 10px;font-size:0.85em;font-family:inherit;box-sizing:border-box;outline:none;" oninput="selectedStepNotes['${f.id}']=this.value;saveDraft();"></div>`
+                : '';
+              _md += `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${f.emoji||'📝'} ${f.label}</span>
+              ${_cfScaleHtml(f, 'fm')}
+              ${_sNoteHtml}`;
+              continue;
+            }
             const _fPosNo = f.positive === 'no';
             const _noOpt  = {label:`${_fPosNo?'✅':'✗'}<br>${_vN}`,               color:'var(--brand-primary)',  sel:selectedCustom[f.id]==='no',  set:`selectedCustom['${f.id}']='no';_fmCheckMoreData()`};
             const _yesOpt = {label:`${_fPosNo&&f.emoji?f.emoji:'✅'}<br>${_vY}`, color:_fPosNo?'#dc3545':'var(--brand-primary)', sel:selectedCustom[f.id]==='yes', set:`selectedCustom['${f.id}']='yes';_fmCheckMoreData()`};
@@ -8836,7 +8854,7 @@ function _tt(k, vars, fallback) {
               if(selectedStress)       _chips.push([`😓 ${selectedStress==='high'?_more:selectedStress==='medium'?_normal:_less}`, selectedStress==='low'?_G:selectedStress==='medium'?_N:_R]);
               if(selectedIrritability) _chips.push([`😤 ${selectedIrritability==='yes'?_more:selectedIrritability==='medium'?_normal:_less}`, selectedIrritability==='no'?_G:selectedIrritability==='medium'?_N:_R]);
               if(selectedAlcohol)      _chips.push([`🍺 ${selectedAlcohol==='yes'?_yes:_no}`, selectedAlcohol==='no'?_G:_R]);
-              getCustomFields().filter(f=>selectedCustom[f.id]).forEach(f=>{const _cv=selectedCustom[f.id];const _cc=f.positive==='no'?(_cv==='yes'?_R:_G):_N;_chips.push([`${f.emoji||'•'} ${_cv==='yes'?_yes:_no}`,_cc]);});
+              getCustomFields().filter(f=>selectedCustom[f.id]).forEach(f=>{const _cv=selectedCustom[f.id];if(_cfScaleNum(_cv)!==null){_chips.push([`${f.emoji||'•'} ${_cfValText(_cv)}`,_N]);return;}const _cc=f.positive==='no'?(_cv==='yes'?_R:_G):_N;_chips.push([`${f.emoji||'•'} ${_cv==='yes'?_yes:_no}`,_cc]);});
               const _html=_chips.map(([t,c])=>`<span style="color:${c};font-weight:600">${t}</span>`).join('<span style="color:#dee2e6">  </span>');
               const _mdNoteKeys = ['goals','budget','exercise','outside','anxiety','stress','irritability','alcohol',...getCustomFields().map(f=>f.id)];
               const _mdNotes = _elabOn ? _mdNoteKeys.map(k=>_sn(k)?`${_STEP_NOTE_LABELS[k]||k}: ${_sn(k)}`:null).filter(Boolean).join(' · ') : null;
@@ -8926,6 +8944,19 @@ function _tt(k, vars, fallback) {
           if (step.customField) {
             const f = step.customField;
             const cur = selectedCustom[f.id]||null;
+            if (_cfIsScale(f)) {
+              // One tap answers and moves on, like the yes/no buttons.
+              return [
+                {val:'2',  label:`+2 · ${BB.t('journal.value.moreThanUsual')}`},
+                {val:'1',  label:'+1'},
+                {val:'0',  label:`0 · ${BB.t('journal.value.normal')}`},
+                {val:'-1', label:'\u22121'},
+                {val:'-2', label:`\u22122 · ${BB.t('journal.value.lessThanUsual')}`},
+              ].map((o,i) => `<button class="fm-opt ${cur===o.val?'sel':''}"
+                onclick="selectedCustom['${f.id}']='${o.val}'; _fmAdvance();"
+                style="border-left:4px solid ${o.val==='0'?'#2ECC40':'#adb5bd'};${i>0?'margin-top:8px;':''}">
+                <span>${o.label}</span></button>`).join('');
+            }
             return [
               {val:'no',  label:'❌ ' + BB.t('journal.value.no'),  color:'#6c757d'},
               {val:'yes', label:'✅ ' + BB.t('journal.value.yes'), color:'#2ECC40'},
@@ -9194,10 +9225,10 @@ function _tt(k, vars, fallback) {
       // on the same button rather than dropping it to the top of the page.
       const _fc = document.getElementById('fmContent');
       const _ae = document.activeElement;
-      const _fi = (_fc && _ae && _fc.contains(_ae)) ? Array.prototype.indexOf.call(_fc.querySelectorAll('button'), _ae) : -1;
+      const _fi = (_fc && _ae && _fc.contains(_ae)) ? Array.prototype.indexOf.call(_fc.querySelectorAll('button,input[type=range]'), _ae) : -1;
       _renderFocusedStep();
       if (_fi >= 0) {
-        const _nb = document.querySelectorAll('#fmContent button')[_fi];
+        const _nb = document.querySelectorAll('#fmContent button, #fmContent input[type=range]')[_fi];
         if (_nb) { try { _nb.focus({ preventScroll: true }); } catch (_) {} }
       }
       const step = _fmSteps[_fmStepIndex];
@@ -9229,6 +9260,7 @@ function _tt(k, vars, fallback) {
       }
       const _elaborateOn = localStorage.getItem('elaborateResponsesEnabled') === 'true';
       const _custNoteOpen = _elaborateOn && getCustomFields().some(f => {
+        if (_cfIsScale(f)) { const _n = _cfScaleNum(selectedCustom[f.id]); return _n !== null && _n !== 0; }
         const _neg = f.positive === 'no' ? selectedCustom[f.id]==='yes' : selectedCustom[f.id]==='no';
         return _neg;
       });
@@ -11054,7 +11086,7 @@ function _tt(k, vars, fallback) {
         if (entry.customFields) {
           getCustomFields().forEach(f => {
             const val = entry.customFields[f.id];
-            if (val) html += _calRow(f.emoji || '•', f.label, cap(val));
+            if (val) html += _calRow(f.emoji || '•', f.label, _cfScaleNum(val) !== null ? _cfValText(val) : cap(val));
           });
         }
         html += `</div>`;
@@ -11777,6 +11809,19 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       return (ov && _pdfStripEmoji(ov)) || BB.t(t.labelKey);
     }
     function _pdfCustomLabel(f) { return _pdfStripEmoji(f.label) || f.label || ''; }
+    /**
+     * A scale tracker's line in the report's Additional data box: its average
+     * on the −2 … +2 scale and how many days it was answered. Null when the
+     * tracker isn't a scale or holds only older yes/no answers.
+     */
+    function _pdfScaleSummary(entries, f) {
+      if (!_cfIsScale(f)) return null;
+      const nums = entries.map(e => _cfScaleNum(e.customFields && e.customFields[f.id])).filter(n => n !== null);
+      if (!nums.length) return null;
+      const avg = Math.round(nums.reduce((a, b) => a + b, 0) / nums.length * 10) / 10;
+      const avgTxt = (avg > 0 ? '+' : '') + avg.toFixed(1);
+      return BB.t('journal.ui.cfScalePdfAvg', { avg: avgTxt, count: nums.length });
+    }
     /** The additional trackers that can appear in this user's report. */
     function _pdfTrackerList(entries) {
       const list = [];
@@ -12550,12 +12595,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
                 ay += 5;
               });
               allCustomTracked.forEach(f => {
+                const _sc = _pdfScaleSummary(allEntries, f);
                 const yesN = allEntries.filter(e => e.customFields?.[f.id] === 'yes').length;
                 const noN  = allEntries.filter(e => e.customFields?.[f.id] === 'no').length;
                 const untN = allEntries.length - yesN - noN;
                 setColor(grey); doc.setFont(undefined, 'normal'); doc.text(f.label, margin + 4, ay);
                 setColor(dark); doc.setFont(undefined, 'bold');
-                doc.text(BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), margin + colW - 4, ay, { align: 'right' });
+                doc.text(_sc || BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), margin + colW - 4, ay, { align: 'right' });
                 ay += 5;
               });
             }
@@ -12581,12 +12627,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
                 ry += 5;
               });
               recentCustomTracked.forEach(f => {
+                const _sc = _pdfScaleSummary(recent, f);
                 const yesN = recent.filter(e => e.customFields?.[f.id] === 'yes').length;
                 const noN  = recent.filter(e => e.customFields?.[f.id] === 'no').length;
                 const untN = recent.length - yesN - noN;
                 setColor(grey); doc.setFont(undefined, 'normal'); doc.text(f.label, col2 + 4, ry);
                 setColor(dark); doc.setFont(undefined, 'bold');
-                doc.text(BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), col2 + colW - 4, ry, { align: 'right' });
+                doc.text(_sc || BB.t('t143.pdf.yesNoUntracked', { yes: yesN, no: noN, untracked: untN }), col2 + colW - 4, ry, { align: 'right' });
                 ry += 5;
               });
             }
@@ -13120,7 +13167,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           const customStr = Object.entries(entry.customFields || {})
             .map(([id, val]) => {
               const cf = _trackerShown('custom:' + id) ? getCustomFields().find(f => f.id === id) : null;
-              return cf ? `  ·  ${_pdfCustomLabel(cf)}: ${val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
+              return cf ? `  ·  ${_pdfCustomLabel(cf)}: ${_cfScaleNum(val) !== null ? _cfValText(val).replace('\u2212', '-') : val === 'yes' ? BB.t('journal.value.yes') : BB.t('journal.value.no')}` : '';
             }).filter(Boolean).join('');
           const _moodLabel = { manic:BB.t('mood.manic'), elevated:BB.t('mood.elevated'), stable:BB.t('mood.stable'), good:BB.t('mood.stable'), low:BB.t('mood.low'), depressed:BB.t('mood.depressed') };
           const detail = `${_moodLabelNum(entry.mood)}  ·  ${BB.t('journal.label.energy')} ${_energyStr(entry.energy)}  ·  ${BB.t('journal.label.sleep')} ${entry.sleep}h${sleepQualityStr}${stepsStr}${_kv('journal.lifeChart.meds', _medPdfText(entry) + (window.BBMeds && BBMeds.entryNote(entry) ? ' (' + BBMeds.entryNote(entry) + ')' : ''))}${anxietyStr}${irritabilityStr}${stressStr2}${alcoholStr}${smokingStr}${drugsStr}${exerciseStr}${outsideStr}${customStr}${autoStr}${recordedPart}`;
@@ -16926,6 +16973,111 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       });
       return [...defaults, ...user];
     }
+
+    // ── Scale trackers (2026-11-18, from Monika's feedback) ──
+    // A custom tracker is yes/no, reversed no/yes (positive:'no'), or a scale
+    // (scale:true): −2 … +2 around the person's usual 0 — "my sex drive is a
+    // bit more than normal" = +1. Scale answers are stored as the strings
+    // '-2' … '2', so 0 still counts as answered everywhere `if (v)` is used.
+    // The answer decides how it reads, not the field: yes/no answers saved
+    // before a field became a scale still read as yes/no.
+    function _cfIsScale(f) { return !!(f && f.scale); }
+    function _cfScaleNum(v) {
+      if (v == null || v === '') return null;
+      const s = String(v);
+      return /^[-+]?[0-2]$/.test(s) ? Number(s) : null;
+    }
+    /** "+1", "−2", "0" (true minus sign), or Yes / No. */
+    function _cfValText(v) {
+      const n = _cfScaleNum(v);
+      if (n !== null) return n > 0 ? '+' + n : n < 0 ? '−' + (-n) : '0';
+      if (v === 'yes') return BB.t('journal.value.yes');
+      if (v === 'no') return BB.t('journal.value.no');
+      return String(v == null ? '' : v);
+    }
+    /** Spoken form for a slider: "+1, more than usual". */
+    function _cfScaleSpoken(n) {
+      if (n == null) return BB.t('journal.ui.cfScaleNotSet');
+      return _cfValText(String(n)) + ', ' + (n > 0 ? BB.t('journal.value.moreThanUsual') : n < 0 ? BB.t('journal.value.lessThanUsual') : BB.t('journal.value.normal'));
+    }
+    /** Yes/no → no/yes (reversed) → scale → yes/no, from the ✏ list's type button. */
+    function cycleCustomFieldType(id) {
+      const fields = getCustomFields().map(f => {
+        if (f.id !== id) return f;
+        const next = { ...f };
+        if (_cfIsScale(f)) { delete next.scale; delete next.positive; }
+        else if (f.positive === 'no') { next.scale = true; delete next.positive; }
+        else next.positive = 'no';
+        return next;
+      });
+      localStorage.setItem('customTrackingFields', JSON.stringify(fields));
+      applyTrackingPrefs();
+      renderFieldPickerList();
+      syncTrackingPrefsToFirestore();
+      // A check-in already open keeps its own copy of the field on a step of its own.
+      try { if (typeof _fmSteps !== 'undefined') _fmSteps.forEach(s => { if (s && s.customField && s.customField.id === id) s.customField = fields.find(f => f.id === id) || s.customField; }); } catch (_) {}
+      try { renderCustomTrackingRows(); } catch (_) {}
+      const btn = document.querySelector(`[data-cf-type="${id}"]`);
+      if (btn) { try { btn.focus({ preventScroll: true }); } catch (_) {} }
+    }
+    /** The ✏ list's type button: "Y/N", "N/Y", or a little slider. */
+    function _cfTypeBtnHtml(f) {
+      const type = _cfIsScale(f) ? 'scale' : f.positive === 'no' ? 'reverse' : 'yn';
+      const lbl = BB.t(type === 'scale' ? 'journal.ui.cfTypeScale' : type === 'reverse' ? 'journal.ui.cfTypeReverse' : 'journal.ui.cfTypeYesNo');
+      const face = type === 'scale'
+        ? `<svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true"><line x1="2" y1="7" x2="20" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="3.5" x2="2" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="20" y1="3.5" x2="20" y2="10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="11" cy="7" r="3.6" fill="var(--brand-primary,#ff9500)"/></svg>`
+        : (type === 'reverse' ? 'N/Y' : 'Y/N');
+      return `<button type="button" data-cf-type="${f.id}" onclick="event.stopPropagation();cycleCustomFieldType('${f.id}')" class="cf-type-btn" aria-label="${_esc(lbl)}" title="${_esc(lbl)}">${face}</button>`;
+    }
+    /**
+     * A small −2 … +2 slider for a scale tracker. Starts on 0 but reads as
+     * not answered until it's slid or tapped (an untouched slider saves
+     * nothing). `where` is 'fm' (focus mode's Additional step) or 'form'.
+     */
+    function _cfScaleHtml(f, where) {
+      const n = _cfScaleNum(selectedCustom[f.id]);
+      const name = `${f.emoji ? f.emoji + ' ' : ''}${f.label}`;
+      const ticks = ['−2', '−1', '0', '+1', '+2'].map(t => `<span>${t}</span>`).join('');
+      return `<div class="cf-scale${n === null ? ' cf-unset' : ''}" data-cf-scale="${f.id}">
+          <div class="cf-scale-row">
+            <span class="cf-scale-end" aria-hidden="true">${_esc(BB.t('journal.chip.less'))}</span>
+            <div class="cf-scale-track">
+              <input type="range" min="-2" max="2" step="1" value="${n === null ? 0 : n}"
+                aria-label="${_esc(name)}" aria-valuetext="${_esc(_cfScaleSpoken(n))}"
+                oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')"
+                onclick="if(this.closest('.cf-unset')){_cfScaleInput(this,'${f.id}');_cfScaleCommit('${where}');}">
+              <div class="cf-scale-ticks" aria-hidden="true">${ticks}</div>
+            </div>
+            <span class="cf-scale-end" aria-hidden="true">${_esc(BB.t('journal.chip.more'))}</span>
+            <button type="button" class="cf-scale-clear" onclick="_cfScaleClear('${f.id}','${where}')" aria-label="${_esc(BB.t('journal.ui.cfScaleClear') + ': ' + name)}" title="${_esc(BB.t('journal.ui.cfScaleClear'))}"${n === null ? ' hidden' : ''}>✕</button>
+          </div>
+        </div>`;
+    }
+    function _cfScaleInput(el, id) {
+      const n = Math.max(-2, Math.min(2, Math.round(Number(el.value) || 0)));
+      selectedCustom[id] = String(n);
+      el.setAttribute('aria-valuetext', _cfScaleSpoken(n));
+      const wrap = el.closest('.cf-scale');
+      if (wrap) {
+        wrap.classList.remove('cf-unset');
+        const clr = wrap.querySelector('.cf-scale-clear');
+        if (clr) clr.hidden = false;
+      }
+    }
+    function _cfScaleCommit(where) {
+      try { saveDraft(); } catch (_) {}
+      if (where === 'fm') _fmCheckMoreData();
+    }
+    function _cfScaleClear(id, where) {
+      delete selectedCustom[id];
+      if (where === 'fm') { try { saveDraft(); } catch (_) {} _fmCheckMoreData(); }
+      else { try { saveDraft(); } catch (_) {} renderCustomTrackingRows(); }
+    }
+    window.cycleCustomFieldType = cycleCustomFieldType;
+    window._cfScaleInput = _cfScaleInput;
+    window._cfScaleCommit = _cfScaleCommit;
+    window._cfScaleClear = _cfScaleClear;
+
     // Alcohol and Added Sugar can't leave the list, so deleting one with its
     // data leaves an empty slot to name (2026-11-06) rather than the same row
     // under its default name. Device-local flag; naming it clears the flag.
@@ -16960,13 +17112,13 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         const full = _esc(BB.t('trk143.entries', { count: n }));
         return `<span class="trk-count" title="${full}" aria-label="${full}" style="flex-shrink:0;font-size:0.72em;font-weight:600;color:var(--text-muted-ink);background:rgba(128,128,128,0.16);border-radius:10px;padding:2px 7px;white-space:nowrap;">${lbl}</span>`;
       };
-      const _row = (key, active, leadHtml, name, sub) => `<div data-trk-tid="${_trkTidForPref(key) || ''}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
+      const _row = (key, active, leadHtml, name, sub, extra) => `<div data-trk-tid="${_trkTidForPref(key) || ''}" style="display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid #f0f0f0;">
           <div style="width:36px;flex-shrink:0;display:flex;justify-content:center;">${leadHtml || ''}</div>
           <div onclick="toggleField('${key}')" style="flex:1;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;">
             <div style="font-size:0.92em;color:#495057;overflow-wrap:anywhere;">${name}</div>
             ${sub ? `<div style="font-size:0.74em;color:var(--text-muted-ink);margin-top:1px;line-height:1.3;">${sub}</div>` : ''}
           </div>
-          ${_cntHtml(key)}${_sw(key, active, name)}
+          ${extra || ''}${_cntHtml(key)}${_sw(key, active, name)}
         </div>`;
       const _subFor = f => f.synced ? BB.t('journal.ui.fieldSetUp')
         : f.sublabel === 'Reverse' ? BB.t('journal.ui.fieldReverse')
@@ -17064,7 +17216,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         }
 
         return _row(`trackCustom_${f.id}`, active, _iconBtn(`editCustomField('${f.id}')`, '✏', _renameLbl),
-          `${f.emoji ? f.emoji + ' ' : ''}${f.label}`, f.positive === 'no' ? BB.t('journal.ui.fieldReverse') : '');
+          `${f.emoji ? f.emoji + ' ' : ''}${f.label}`,
+          _cfIsScale(f) ? BB.t('journal.ui.cfScaleSub') : f.positive === 'no' ? BB.t('journal.ui.fieldReverse') : '',
+          _cfTypeBtnHtml(f));
       }).join('');
 
       const emojiPickerGrid = EMOJI_LIST.map(e =>
@@ -18047,6 +18201,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           ? !!_editFieldOverrides[cKey]
           : localStorage.getItem(cKey) === 'true';
         if (!show) return '';
+        if (_cfIsScale(f)) return `<div style="display:contents">
+          <span style="font-size:0.9em;font-weight:600;color:#495057;">${f.emoji ? f.emoji + ' ' : ''}${f.label}?</span>
+          <div style="grid-column:span 3;">${_cfScaleHtml(f, 'form')}</div>
+        </div>`;
         const noSel = selectedCustom[f.id] === 'no';
         const yesSel = selectedCustom[f.id] === 'yes';
         const _posNo  = f.positive === 'no';

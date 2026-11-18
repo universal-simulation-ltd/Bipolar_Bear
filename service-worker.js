@@ -2045,7 +2045,11 @@
 // v416: Bipolar Anonymous announcements are no longer swept after 7 days
 //   (2026-11-16): cleanOldPosts skips tab 'announcements'; privacy.html §8
 //   wording in every language. js/anonymous.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v417';
+// v418: Scale trackers (2026-11-18, Monika's feedback): a custom tracker's
+//   type button in Track Data cycles Y/N → N/Y → scale; a scale tracker asks
+//   −2 … +2 on a small slider (stored '-2'…'2'). js/journal.js, css/journal.css,
+//   js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v418';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

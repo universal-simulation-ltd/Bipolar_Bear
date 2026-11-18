@@ -3012,3 +3012,22 @@ html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-tex
 .bb-breath-prompt .bbp-go { padding: 4px 12px; background: #0b7285; color: #fff; }
 .bb-breath-prompt .bbp-no { min-width: 34px; padding: 4px 8px; background: none; color: #5c7378; }
 .bb-breath-prompt button:focus-visible { outline: 2px solid #0b7285; outline-offset: 2px; }
+
+/* ── Scale trackers (2026-11-18) ──
+   The ✏ list's type button (Y/N → N/Y → slider) and the small −2 … +2
+   slider that a scale tracker shows when logging. An untouched slider sits
+   on 0 but greyed out: nothing is saved until it's slid or tapped. */
+.cf-type-btn { flex-shrink: 0; min-width: 40px; height: 28px; padding: 0 6px; border: 1.5px solid #dee2e6; border-radius: 8px; background: #fff; color: #495057; font-size: 0.72em; font-weight: 700; letter-spacing: 0.02em; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.cf-type-btn:focus-visible { outline: 2px solid var(--brand-primary, #ff9500); outline-offset: 2px; }
+.cf-scale { min-width: 0; }
+.cf-scale-row { display: flex; align-items: center; gap: 6px; }
+.cf-scale-end { font-size: 0.72em; color: var(--text-muted-ink, #6c757d); white-space: nowrap; }
+.cf-scale input[type="range"] { width: 100%; margin: 0; height: 28px; accent-color: var(--brand-primary, #ff9500); cursor: pointer; }
+.cf-scale.cf-unset input[type="range"] { accent-color: #adb5bd; opacity: 0.55; }
+.cf-scale-track { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cf-scale-ticks { display: flex; justify-content: space-between; margin: -4px 0 0; font-size: 0.68em; color: var(--text-muted-ink, #6c757d); font-variant-numeric: tabular-nums; }
+.cf-scale-ticks span { width: 1.6em; text-align: center; }
+.cf-scale-clear { flex-shrink: 0; width: 28px; min-width: 28px; height: 28px; padding: 0; border: none; border-radius: 8px; background: none; color: var(--text-muted-ink, #6c757d); font-size: 0.85em; line-height: 1; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.cf-scale-clear[hidden] { display: inline-flex; visibility: hidden; }
+html.theme-dark .cf-type-btn { background: var(--dk-surface-2, #30281f); border-color: var(--dk-line, #4a3d30); color: var(--dk-text, #f5ebdd); }
+html.theme-dark .cf-scale.cf-unset input[type="range"] { accent-color: #6b5d4f; }
