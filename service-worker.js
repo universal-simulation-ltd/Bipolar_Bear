@@ -2061,7 +2061,12 @@
 //   reversed tracker's Yes has no ✅; a scale's name sits in the name column;
 //   any emoji can be typed for a tracker. fab.js, js/journal.js,
 //   css/journal.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v421';
+// v422: Track Data edits save as you go, no Save button; ✕ puts the name and
+//   emoji back (2026-11-18, James). Scale trackers: tap the handle again to
+//   clear at any value (and the chosen number again), from our own touch /
+//   pointer tap detection, since iOS doesn't reliably click a range thumb.
+//   js/journal.js.
+const CACHE_NAME = 'bipolarbear-v422';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

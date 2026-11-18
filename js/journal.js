@@ -17108,16 +17108,17 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           <div class="cf-scale-track">
             <input type="range" min="-2" max="2" step="1" value="${n === null ? 0 : n}"
               aria-label="${_esc(name)}" aria-valuetext="${_esc(_cfScaleSpoken(n))}"
-              onpointerdown="_cfScaleDown(this)" oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')"
-              onclick="_cfScaleTap(this,'${f.id}','${where}')" onkeydown="if(event.key==='Backspace'||event.key==='Delete'){event.preventDefault();_cfScaleClear('${f.id}','${where}');}">
+              ontouchstart="_cfScaleDown(this,event)" ontouchend="_cfScaleTap(this,'${f.id}','${where}',event)"
+              onpointerdown="if(event.pointerType!=='touch')_cfScaleDown(this,event)" onpointerup="if(event.pointerType!=='touch')_cfScaleTap(this,'${f.id}','${where}',event)"
+              oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')" onkeydown="if(event.key==='Backspace'||event.key==='Delete'){event.preventDefault();_cfScaleClear('${f.id}','${where}');}">
             <div class="cf-scale-ticks">${ticks}</div>
           </div>
           <div class="cf-scale-ends" aria-hidden="true"><span>${_esc(BB.t('journal.chip.less'))}</span><span>${_esc(BB.t('journal.value.normal'))}</span><span>${_esc(BB.t('journal.chip.more'))}</span></div>
         </div>`;
     }
-    /** A tapped number under the slider; the "0" again when on 0 clears. */
+    /** A tapped number under the slider; the chosen number again clears. */
     function _cfScaleSet(id, v, where) {
-      if (v === 0 && selectedCustom[id] === '0') { _cfScaleClear(id, where); return; }
+      if (selectedCustom[id] === String(v)) { _cfScaleClear(id, where); return; }
       selectedCustom[id] = String(v);
       try { saveDraft(); } catch (_) {}
       if (where === 'fm') _fmCheckMoreData(); else renderCustomTrackingRows();
@@ -17136,18 +17137,36 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       try { saveDraft(); } catch (_) {}
       if (where === 'fm') _fmCheckMoreData();
     }
-    /** Remember what the slider held when the finger went down, so a tap
-     *  can tell "tapped the handle on 0" from "dragged it onto 0". */
-    function _cfScaleDown(el) {
-      el.dataset.down = el.closest('.cf-unset') ? 'unset' : String(el.value);
+    // Tap the handle again to clear (James, 2026-11-18: "click the actual
+    // selector, the circle, a second time to clear", at any value, like the
+    // numbers). Our own tap detection, from touch events on a phone and
+    // pointer events for a mouse: iOS doesn't reliably send a click for a tap
+    // on a range input's thumb. A tap = under 10px of movement and 700ms, on
+    // the handle (within 26px of where it sits), with the value unchanged.
+    // A drag, a hold or a tap on the track never clears.
+    function _cfScaleDown(el, ev) {
+      const p = ev && ev.touches ? ev.touches[0] : ev;
+      el._cfTap = { x: p ? p.clientX : null, y: p ? p.clientY : null, at: Date.now(),
+        v: el.closest('.cf-unset') ? null : Number(el.value) };
     }
-    /** A tap on an untouched slider records where it sits; a tap on the
-     *  handle when it was already on 0 (and still is) clears the answer. */
-    function _cfScaleTap(el, id, where) {
-      const down = el.dataset.down;
-      delete el.dataset.down;
-      if (el.closest('.cf-unset')) { _cfScaleInput(el, id); _cfScaleCommit(where); return; }
-      if (down === '0' && Number(el.value) === 0) _cfScaleClear(id, where);
+    function _cfScaleTap(el, id, where, ev) {
+      const d = el._cfTap;
+      el._cfTap = null;
+      if (!d) return;
+      const p = ev && ev.changedTouches ? ev.changedTouches[0] : ev;
+      if (Date.now() - d.at > 700) return;
+      if (p && d.x != null && (Math.abs(p.clientX - d.x) > 10 || Math.abs(p.clientY - d.y) > 10)) return;
+      const r = el.getBoundingClientRect();
+      const at = d.v == null ? 0 : d.v;
+      const cx = r.left + 16 + (r.width - 32) * (at + 2) / 4;
+      if (p && d.x != null && Math.abs(d.x - cx) > 26) return;
+      if (d.v == null) {
+        // An untouched slider: the tap answers where the handle sits (0).
+        // A mouse may have moved it already (oninput); then that stands.
+        if (el.closest('.cf-unset')) { _cfScaleInput(el, id); _cfScaleCommit(where); }
+        return;
+      }
+      if (Number(el.value) === d.v) _cfScaleClear(id, where);
     }
     function _cfScaleClear(id, where) {
       delete selectedCustom[id];
@@ -17263,8 +17282,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               <button id="editEmojiPickerBtn" onclick="toggleEditEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_editingFieldEmoji || f.label.split(' ')[0]}</button>
               <input id="builtinFieldEditInput" type="text" value="${_blank ? '' : _storedLabel ? _storedLabel.replace(/^\S+\s*/, '') : f.label.replace(/^\S+\s*/, '')}" placeholder="${_esc(BB.t('journal.ui.addName'))}" maxlength="20"
                 style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
-                onkeydown="if(event.key==='Enter')saveBuiltinFieldLabel('${f.key}')">
-              <button onclick="saveBuiltinFieldLabel('${f.key}')" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.save')}</button>
+                oninput="_fieldEditLive()" onkeydown="if(event.key==='Enter')_finishFieldEdit()">
               <button onclick="cancelBuiltinFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:6px;background:#f8f9fa;border-radius:8px;max-height:160px;overflow-y:auto;">${_anyEmojiBoxHtml('selectEditPickerEmoji')}${_bEmojiGrid}</div>
@@ -17314,10 +17332,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           return `<div style="padding:8px 4px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
               <button id="editEmojiPickerBtn" onclick="toggleEditEmojiPicker()" title="${BB.t('journal.ui.pickEmoji')}" style="width:38px;height:38px;min-width:38px;border-radius:8px;border:1.5px solid #e9ecef;background:#fff;font-size:1.2em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_editingFieldEmoji || '🏷️'}</button>
-              <input id="customFieldEditInput" type="text" value="${f.label}" maxlength="15"
+              <input id="customFieldEditInput" type="text" value="${_esc(f.label)}" maxlength="15"
                 style="flex:1;min-width:0;height:38px;padding:0 10px;border:1.5px solid #e9ecef;border-radius:8px;font-size:0.9em;outline:none;box-sizing:border-box;"
-                onkeydown="if(event.key==='Enter')saveCustomFieldEdit()">
-              <button onclick="saveCustomFieldEdit()" style="height:38px;box-sizing:border-box;background:var(--brand-btn);color:white;border:none;border-radius:8px;padding:0 12px;font-size:0.85em;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;">${BB.t('common.save')}</button>
+                oninput="_fieldEditLive()" onkeydown="if(event.key==='Enter')_finishFieldEdit()">
               <button onclick="cancelCustomFieldEdit()" aria-label="${BB.t('common.cancel')}" style="height:38px;box-sizing:border-box;background:#e9ecef;color:#495057;border:none;border-radius:8px;padding:0 10px;font-size:0.85em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
             </div>
             <div id="editEmojiPickerGrid" style="display:none;flex-wrap:wrap;gap:2px;padding:4px 2px;background:#f0f0f0;border-radius:8px;">
@@ -17441,11 +17458,76 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       if (grid) grid.style.display = 'none';
     }
 
+    // ── Editing a tracker's name / emoji saves as you go (James, 2026-11-18:
+    // "No need for the save button … just save it anyway. There's an X if
+    // they want to discard"). Each keystroke and emoji pick is written to
+    // localStorage at once (the row stays open, so a re-render keeps it);
+    // the row closing any way but ✕ (Enter, another ✏, a switch, closing
+    // Track Data) finishes the save; ✕ puts back what was there when ✏ was
+    // tapped. An emptied name keeps the old one.
+    let _fieldEditSnap = null;
+    let _fieldEditSyncTimer = null;
+    function _fieldEditSnapshot() {
+      if (_editingFieldId) {
+        const f = getCustomFields().find(x => x.id === _editingFieldId);
+        _fieldEditSnap = f ? { kind: 'custom', id: f.id, field: { ...f } } : null;
+      } else if (_editingBuiltinKey) {
+        _fieldEditSnap = { kind: 'builtin', key: _editingBuiltinKey, override: localStorage.getItem('_labelOverride_' + _editingBuiltinKey) };
+      } else _fieldEditSnap = null;
+    }
+    /** Write what's in the open edit row now, without closing it. */
+    function _fieldEditLive() {
+      const snap = _fieldEditSnap;
+      if (_editingFieldId && snap && snap.kind === 'custom' && snap.id === _editingFieldId) {
+        const input = document.getElementById('customFieldEditInput');
+        const label = (input ? input.value.trim() : '') || snap.field.label;
+        const fields = getCustomFields().map(f => f.id === _editingFieldId ? { ...f, label, emoji: _editingFieldEmoji } : f);
+        localStorage.setItem('customTrackingFields', JSON.stringify(fields));
+      } else if (_editingBuiltinKey && snap && snap.kind === 'builtin' && snap.key === _editingBuiltinKey) {
+        const input = document.getElementById('builtinFieldEditInput');
+        if (!input) return; // the three whose names are locked
+        const name = input.value.trim();
+        const key = _editingBuiltinKey;
+        if (name) localStorage.setItem('_labelOverride_' + key, (_editingFieldEmoji ? _editingFieldEmoji + ' ' : '') + name);
+        else if (snap.override != null) localStorage.setItem('_labelOverride_' + key, snap.override);
+        else localStorage.removeItem('_labelOverride_' + key);
+      } else return;
+      clearTimeout(_fieldEditSyncTimer);
+      _fieldEditSyncTimer = setTimeout(() => { try { syncTrackingPrefsToFirestore(); } catch (_) {} }, 1500);
+    }
+    window._fieldEditLive = _fieldEditLive;
+    /** Close the open edit row, keeping what's in it. */
+    function _finishFieldEdit() {
+      clearTimeout(_fieldEditSyncTimer);
+      if (_editingFieldId) {
+        const input = document.getElementById('customFieldEditInput');
+        if (input && !input.value.trim() && _fieldEditSnap && _fieldEditSnap.field) input.value = _fieldEditSnap.field.label;
+        if (input && input.value.trim()) { _fieldEditSnap = null; saveCustomFieldEdit(); return; }
+        _fieldEditSnap = null; cancelCustomFieldEdit(true); return;
+      }
+      if (_editingBuiltinKey) {
+        const key = _editingBuiltinKey;
+        const input = document.getElementById('builtinFieldEditInput');
+        const snap = _fieldEditSnap;
+        _fieldEditSnap = null;
+        if (input && input.value.trim()) { saveBuiltinFieldLabel(key); return; }
+        // Emptied (or a locked name): leave the name as it was.
+        if (input && snap && snap.kind === 'builtin') {
+          if (snap.override != null) localStorage.setItem('_labelOverride_' + key, snap.override);
+          else localStorage.removeItem('_labelOverride_' + key);
+        }
+        cancelBuiltinFieldEdit(true);
+      }
+    }
+    window._finishFieldEdit = _finishFieldEdit;
+
     function editCustomField(id) {
       const field = getCustomFields().find(f => f.id === id);
       if (!field) return;
+      _finishFieldEdit();
       _editingFieldId = id;
       _editingFieldEmoji = field.emoji || '';
+      _fieldEditSnapshot();
       renderFieldPickerList();
     }
 
@@ -17464,18 +17546,36 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       syncTrackingPrefsToFirestore();
     }
 
-    function cancelCustomFieldEdit() {
+    /** ✕: put the name and emoji back as they were (`kept`: the row is
+     *  closing with its changes, already written, so nothing to undo). */
+    function cancelCustomFieldEdit(kept) {
+      const snap = _fieldEditSnap;
+      _fieldEditSnap = null;
+      clearTimeout(_fieldEditSyncTimer);
+      let undone = false;
+      if (kept !== true && snap && snap.kind === 'custom') {
+        const list = getCustomFields();
+        if (list.some(f => f.id === snap.id)) {
+          localStorage.setItem('customTrackingFields', JSON.stringify(list.map(f => f.id === snap.id ? snap.field : f)));
+          undone = true;
+        }
+      }
       _editingFieldId = null;
       _editingFieldEmoji = '';
+      if (undone) { applyTrackingPrefs(); syncTrackingPrefsToFirestore(); }
       renderFieldPickerList();
     }
 
     function startEditBuiltinField(key) {
+      const _already = _editingBuiltinKey === key && !_editingFieldId;
+      if (!_already) _finishFieldEdit();
       _editingBuiltinKey = key;
       // Pre-set emoji from stored override or field default
       const stored = localStorage.getItem('_labelOverride_' + key) || '';
       const f = (typeof FIELD_PICKER_FIELDS !== 'undefined' ? FIELD_PICKER_FIELDS : []).find(x => x.key === key);
       _editingFieldEmoji = (stored && stored.split(' ')[0]) || (f ? f.label.split(' ')[0] : '');
+      // Re-opening the row that's already open keeps the first snapshot, so ✕ still undoes everything.
+      if (!_already) _fieldEditSnapshot();
       renderFieldPickerList();
     }
     window.startEditBuiltinField = startEditBuiltinField;
@@ -17501,7 +17601,17 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     }
     window.saveBuiltinFieldLabel = saveBuiltinFieldLabel;
 
-    function cancelBuiltinFieldEdit() {
+    /** ✕: put the name back as it was (`kept`: see cancelCustomFieldEdit). */
+    function cancelBuiltinFieldEdit(kept) {
+      const snap = _fieldEditSnap;
+      _fieldEditSnap = null;
+      clearTimeout(_fieldEditSyncTimer);
+      if (kept !== true && snap && snap.kind === 'builtin') {
+        if (snap.override != null) localStorage.setItem('_labelOverride_' + snap.key, snap.override);
+        else localStorage.removeItem('_labelOverride_' + snap.key);
+        if (typeof renderCustomTrackingRows === 'function') renderCustomTrackingRows();
+        syncTrackingPrefsToFirestore();
+      }
       _editingBuiltinKey = null;
       _fieldIsBlankPendingOn = null;
       renderFieldPickerList();
@@ -17520,6 +17630,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       if (btn) btn.textContent = emoji;
       const grid = document.getElementById('editEmojiPickerGrid');
       if (grid) grid.style.display = 'none';
+      _fieldEditLive();
     }
 
     function addCustomField() {
@@ -18214,6 +18325,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     }
     function _trkOldEdit(tid) {
       _trkOldEditTid = _trkOldEditTid === tid ? null : tid;
+      _finishFieldEdit();
       _editingBuiltinKey = null; _editingFieldId = null;
       renderFieldPickerList();
       const row = document.querySelector('#trkOldSection .trk-old-row.is-editing');
@@ -18349,6 +18461,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     }
 
     function closeFieldPicker() {
+      _finishFieldEdit();
       _editingBuiltinKey = null;
       _editingFieldId = null;
       document.getElementById('fieldPickerModal').classList.remove('active');
