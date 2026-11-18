@@ -8736,8 +8736,7 @@ function _tt(k, vars, fallback) {
               const _sNoteHtml = localStorage.getItem('elaborateResponsesEnabled') === 'true' && _sn0 !== null && _sn0 !== 0
                 ? `<div style="grid-column:1/-1;margin-bottom:4px;"><input type="text" placeholder="${BB.t('journal.placeholder.moreDetails')}" value="${_sNoteVal.replace(/"/g,'&quot;')}" style="width:100%;border:1.5px solid #e9ecef;border-radius:10px;padding:6px 10px;font-size:0.85em;font-family:inherit;box-sizing:border-box;outline:none;" oninput="selectedStepNotes['${f.id}']=this.value;saveDraft();"></div>`
                 : '';
-              _md += `<span style="font-size:0.88em;font-weight:600;color:#495057;white-space:nowrap;">${f.emoji||'📝'} ${f.label}</span>
-              ${_cfScaleHtml(f, 'fm')}
+              _md += `<div style="grid-column:1/-1;">${_cfScaleHtml(f, 'fm')}</div>
               ${_sNoteHtml}`;
               continue;
             }
@@ -17030,28 +17029,37 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       return `<button type="button" data-cf-type="${f.id}" onclick="event.stopPropagation();cycleCustomFieldType('${f.id}')" class="cf-type-btn" aria-label="${_esc(lbl)}" title="${_esc(lbl)}">${face}</button>`;
     }
     /**
-     * A small −2 … +2 slider for a scale tracker. Starts on 0 but reads as
+     * A scale tracker's two lines (2026-11-18, made for thumbs at James's ask):
+     * line 1 is its name with ✕ Clear at the right, line 2 a full-width −2 … +2
+     * slider with a big thumb and the numbers underneath as tap targets. It
+     * spans the whole row of whatever grid it's in. Starts on 0 but reads as
      * not answered until it's slid or tapped (an untouched slider saves
      * nothing). `where` is 'fm' (focus mode's Additional step) or 'form'.
      */
     function _cfScaleHtml(f, where) {
       const n = _cfScaleNum(selectedCustom[f.id]);
       const name = `${f.emoji ? f.emoji + ' ' : ''}${f.label}`;
-      const ticks = ['−2', '−1', '0', '+1', '+2'].map(t => `<span>${t}</span>`).join('');
+      const ticks = [-2, -1, 0, 1, 2].map((v, i) => `<button type="button" tabindex="-1" aria-hidden="true" class="cf-scale-tick${n === v ? ' on' : ''}" style="left:calc(16px + (100% - 32px) * ${i / 4})" onclick="_cfScaleSet('${f.id}',${v},'${where}')">${_cfValText(String(v))}</button>`).join('');
       return `<div class="cf-scale${n === null ? ' cf-unset' : ''}" data-cf-scale="${f.id}">
-          <div class="cf-scale-row">
-            <span class="cf-scale-end" aria-hidden="true">${_esc(BB.t('journal.chip.less'))}</span>
-            <div class="cf-scale-track">
-              <input type="range" min="-2" max="2" step="1" value="${n === null ? 0 : n}"
-                aria-label="${_esc(name)}" aria-valuetext="${_esc(_cfScaleSpoken(n))}"
-                oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')"
-                onclick="if(this.closest('.cf-unset')){_cfScaleInput(this,'${f.id}');_cfScaleCommit('${where}');}">
-              <div class="cf-scale-ticks" aria-hidden="true">${ticks}</div>
-            </div>
-            <span class="cf-scale-end" aria-hidden="true">${_esc(BB.t('journal.chip.more'))}</span>
-            <button type="button" class="cf-scale-clear" onclick="_cfScaleClear('${f.id}','${where}')" aria-label="${_esc(BB.t('journal.ui.cfScaleClear') + ': ' + name)}" title="${_esc(BB.t('journal.ui.cfScaleClear'))}"${n === null ? ' hidden' : ''}>✕</button>
+          <div class="cf-scale-head">
+            <span class="cf-scale-title">${_esc(name)}</span>
+            <button type="button" class="cf-scale-clear" onclick="_cfScaleClear('${f.id}','${where}')" aria-label="${_esc(BB.t('journal.ui.cfScaleClear') + ': ' + name)}"${n === null ? ' hidden' : ''}>✕ ${_esc(BB.t('journal.ui.cfScaleClear'))}</button>
           </div>
+          <div class="cf-scale-track">
+            <input type="range" min="-2" max="2" step="1" value="${n === null ? 0 : n}"
+              aria-label="${_esc(name)}" aria-valuetext="${_esc(_cfScaleSpoken(n))}"
+              oninput="_cfScaleInput(this,'${f.id}')" onchange="_cfScaleCommit('${where}')"
+              onclick="if(this.closest('.cf-unset')){_cfScaleInput(this,'${f.id}');_cfScaleCommit('${where}');}">
+            <div class="cf-scale-ticks">${ticks}</div>
+          </div>
+          <div class="cf-scale-ends" aria-hidden="true"><span>${_esc(BB.t('journal.chip.less'))}</span><span>${_esc(BB.t('journal.value.normal'))}</span><span>${_esc(BB.t('journal.chip.more'))}</span></div>
         </div>`;
+    }
+    /** A tapped number under the slider. */
+    function _cfScaleSet(id, v, where) {
+      selectedCustom[id] = String(v);
+      try { saveDraft(); } catch (_) {}
+      if (where === 'fm') _fmCheckMoreData(); else renderCustomTrackingRows();
     }
     function _cfScaleInput(el, id) {
       const n = Math.max(-2, Math.min(2, Math.round(Number(el.value) || 0)));
@@ -17062,6 +17070,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         wrap.classList.remove('cf-unset');
         const clr = wrap.querySelector('.cf-scale-clear');
         if (clr) clr.hidden = false;
+        wrap.querySelectorAll('.cf-scale-tick').forEach((t, i) => t.classList.toggle('on', i - 2 === n));
       }
     }
     function _cfScaleCommit(where) {
@@ -17077,6 +17086,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     window._cfScaleInput = _cfScaleInput;
     window._cfScaleCommit = _cfScaleCommit;
     window._cfScaleClear = _cfScaleClear;
+    window._cfScaleSet = _cfScaleSet;
 
     // Alcohol and Added Sugar can't leave the list, so deleting one with its
     // data leaves an empty slot to name (2026-11-06) rather than the same row
@@ -18201,10 +18211,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           ? !!_editFieldOverrides[cKey]
           : localStorage.getItem(cKey) === 'true';
         if (!show) return '';
-        if (_cfIsScale(f)) return `<div style="display:contents">
-          <span style="font-size:0.9em;font-weight:600;color:#495057;">${f.emoji ? f.emoji + ' ' : ''}${f.label}?</span>
-          <div style="grid-column:span 3;">${_cfScaleHtml(f, 'form')}</div>
-        </div>`;
+        if (_cfIsScale(f)) return `<div style="grid-column:1/-1;">${_cfScaleHtml(f, 'form')}</div>`;
         const noSel = selectedCustom[f.id] === 'no';
         const yesSel = selectedCustom[f.id] === 'yes';
         const _posNo  = f.positive === 'no';

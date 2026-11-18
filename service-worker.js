@@ -2049,7 +2049,10 @@
 //   type button in Track Data cycles Y/N → N/Y → scale; a scale tracker asks
 //   −2 … +2 on a small slider (stored '-2'…'2'). js/journal.js, css/journal.css,
 //   js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v418';
+// v419: Scale trackers made for thumbs (2026-11-18, James): two lines, name
+//   with ✕ Clear, then a full-width slider with a 32px thumb and the numbers
+//   −2 … +2 underneath as 44px tap targets. js/journal.js, css/journal.css.
+const CACHE_NAME = 'bipolarbear-v419';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
