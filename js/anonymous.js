@@ -4989,7 +4989,6 @@ function listenPosts(opts) {
 
 function announcementPosts() {
   return [
-    { id: 'ann1', isAnnouncement: true, text: _wt('anon.feed.annWelcome'), timestamp: null },
     { id: 'ann2', isAnnouncement: true, text: _wt('anon.feed.annMedProfile'), timestamp: null },
   ];
 }
@@ -5019,11 +5018,14 @@ const BEAR_STORE_LINKS = {
   googlePlay: 'https://play.google.com/store/apps/details?id=com.bipolarbear.app',
 };
 const ANN_IMAGE_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'sv', 'zh'];
+//
+// Order (James, 2026-11-19): the welcome first, then the Bear card.
 function builtInAnnouncements() {
+  const welcome = { id: 'ann1', isAnnouncement: true, text: _wt('anon.feed.annWelcome'), timestamp: null };
   const inBearApp = !_isAnonymousApp && !!(window.isNative && window.isNative());
-  if (inBearApp) return [];
+  if (inBearApp) return [welcome];
   const lang = (window.BB && BB.i18n) ? String(BB.i18n.getLang() || 'en').split('-')[0] : 'en';
-  return [{
+  return [welcome, {
     id: 'ann-bear-stores', isAnnouncement: true, timestamp: null,
     text: _wt('anon.feed.annBearStores'),
     image: `images/announcements/bear-stores-${ANN_IMAGE_LANGS.includes(lang) ? lang : 'en'}.jpg`,

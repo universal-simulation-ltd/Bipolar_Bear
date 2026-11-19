@@ -2102,7 +2102,10 @@
 //   (images/announcements/) and App Store / Google Play badges, 10 languages
 //   (2026-11-19, James). Hidden inside the Bear phone app. js/anonymous.js,
 //   css/anonymous.css, js/shared/i18n.js, scripts/build-anonymous.js.
-const CACHE_NAME = 'bipolarbear-v431';
+// v432: the 📢 tab's built-in cards run Welcome first, then the Bear store
+//   card; the Welcome now always shows, not only on an empty board
+//   (2026-11-19, James). js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v432';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
