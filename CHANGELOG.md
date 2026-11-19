@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🎚️ **The scale's handle no longer covers the numbers.** The numbers now sit just below the round handle instead of under its edge, so the handle is easy to grab and slide, and a tap on its lower half no longer lands on a number. (`CACHE_NAME` v424)
 - 💾 **"Save and close" when you've changed a tracker's name.** While a tracker's name or emoji has an unsaved change, Track Data's **Done** button reads **Save and close**. In every language. (`CACHE_NAME` v423)
 - 📏 **Scale trackers take half the room.** The scale is now two rows, the slider and the numbers under it, with the numbers closer to the slider. The **Less / Normal / More** line is gone; the numbers and Track Data's "−2 less … +2 more than usual" say the same. (`CACHE_NAME` v423)
 - ✏️ **Renaming a tracker saves by itself.** In **Track Data**, the Save button is gone from a tracker's edit row: the name and emoji are kept as you type or pick, and when you press Enter, open another tracker or close Track Data. **✕** puts them back as they were. An emptied name keeps the old one. (`CACHE_NAME` v422)

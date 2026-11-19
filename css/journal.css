@@ -3028,16 +3028,19 @@ html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-tex
    rows only (James, 2026-11-18: three rows took too much room); the
    Less / Normal / More line went: the numbers and Track Data's
    "−2 less … +2 more than usual" say it, and aria-valuetext says it aloud. */
-.cf-scale-track { position: relative; padding: 0 0 26px; }
-.cf-scale input[type="range"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 36px; margin: 0; padding: 0; border: none !important; border-radius: 0; box-shadow: none !important; outline-offset: 4px; background: transparent !important; cursor: pointer; touch-action: pan-y; }
+.cf-scale-track { position: relative; padding: 0 0 30px; }
+.cf-scale input[type="range"] { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 36px; margin: 0; padding: 0; border: none !important; border-radius: 0; box-shadow: none !important; outline-offset: 4px; background: transparent !important; cursor: pointer; touch-action: pan-y; position: relative; z-index: 1; }
 .cf-scale input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: #dee2e6; }
 .cf-scale input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: #dee2e6; }
 .cf-scale input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 32px; height: 32px; margin-top: -12px; border-radius: 50%; background: var(--brand-primary, #ff9500); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 .cf-scale input[type="range"]::-moz-range-thumb { width: 26px; height: 26px; border-radius: 50%; background: var(--brand-primary, #ff9500); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 .cf-scale.cf-unset input[type="range"]::-webkit-slider-thumb { background: #adb5bd; }
 .cf-scale.cf-unset input[type="range"]::-moz-range-thumb { background: #adb5bd; }
-.cf-scale-ticks { position: absolute; left: 0; right: 0; top: 28px; height: 32px; }
-.cf-scale-tick { position: absolute; top: 0; transform: translateX(-50%); width: 44px; height: 32px; padding: 0; border: none; border-radius: 10px; background: none; color: var(--text-muted-ink, #6c757d); font-size: 0.82em; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* The numbers start below the thumb (it ends 34px down), so the dot never
+   covers them and a thumb on the dot grabs the slider, not a number
+   (James, 2026-11-19). */
+.cf-scale-ticks { position: absolute; left: 0; right: 0; top: 38px; height: 28px; }
+.cf-scale-tick { position: absolute; top: 0; transform: translateX(-50%); width: 44px; height: 28px; padding: 0; border: none; border-radius: 10px; background: none; color: var(--text-muted-ink, #6c757d); font-size: 0.82em; font-weight: 600; font-variant-numeric: tabular-nums; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .cf-scale-tick.on { background: var(--brand-tint, #fff6ec); color: var(--brand-ink, #8a4b00); }
 /* The name in the grid's name column, like every other tracker (2026-11-18):
    level with the slider line rather than the middle of slider + numbers, and

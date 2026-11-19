@@ -2070,7 +2070,9 @@
 //   change; the scale is two rows (slider + numbers), the Less / Normal / More
 //   line dropped and the numbers pulled up (2026-11-18, James). journal.html,
 //   js/journal.js, css/journal.css, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v423';
+// v424: the scale's numbers start below the handle, so the dot never covers
+//   them and grabbing it drags the slider (2026-11-19, James). css/journal.css.
+const CACHE_NAME = 'bipolarbear-v424';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
