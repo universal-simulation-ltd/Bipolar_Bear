@@ -1118,7 +1118,7 @@ function _tt(k, vars, fallback) {
         // Advanced settings badge + tap-hold hint pending
         'bbAdvancedBadgePending', 'bbAdvancedBadgeVisible',
         'bb_fmTapHoldHintPending', 'bb_fmTapHoldHintReady',
-        'bbHasEntries', 'bbFeedbackFabHidden', 'bbWaFabHidden', 'bbReviewFabHidden', 'bbGameFabHidden', 'bbFooterHidden', 'bbFabStateAt',
+        'bbHasEntries', 'bbFeedbackFabHidden', 'bbWaFabHidden', 'bbReviewFabHidden', 'bbGameFabHidden', 'bbHomeFabHidden', 'bbFooterHidden', 'bbFabStateAt',
         'bbPinEnabled', 'bbPinCode', 'bbGuestNoPin',
         'bbWelcomeShown',
         'focusedModeEnabled', 'moreDataOpenByDefault', 'showMoodSuggestion',
@@ -14127,7 +14127,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
          // Streaks — must clear so the home page doesn't render a stale badge
          // for the just-deleted account on the post-redirect render.
          'bbCurrentStreak','bbStableStreak',
-         'bbFeedbackFabHidden','bbWaFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden','bbArcade',
+         'bbFeedbackFabHidden','bbWaFabHidden','bbReviewFabHidden','bbGameFabHidden','bbHomeFabHidden','bbFooterHidden','bbArcade',
          // FAB customisation: clear slot assignments and the first-run flag
          // so the new install gets the first-run dock layout again.
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',

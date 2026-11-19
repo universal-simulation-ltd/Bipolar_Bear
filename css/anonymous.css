@@ -629,6 +629,29 @@
     .fab-btn { width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.25rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(245,200,0,0.13); transition: all 0.15s; }
     .fab-btn.active { background: var(--yellow); box-shadow: 0 2px 8px rgba(245,200,0,0.4); }
     .fab-btn-compose { width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.375rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: linear-gradient(135deg, var(--yellow-light), var(--yellow-dark)); box-shadow: 0 4px 12px rgba(245,200,0,0.5); }
+    /* 📢 / 💬 carry the tabs' unseen dot too: on a phone the tabs are hidden. */
+    .fab-btn { position: relative; }
+    .fab-btn.has-badge::after {
+      content: ''; position: absolute; top: 2px; right: 2px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: #e53935; box-shadow: 0 0 0 2px var(--surface);
+      animation: badge-pulse 1.4s ease-in-out infinite;
+    }
+    /* Phones (<768px): the bottom bar is the navigation (owner rule
+       2026-11-19, BRANDING.md "On a phone, navigation sits at the bottom"),
+       so the Announcements / General / Wiki strip in the header, which only
+       repeated 📢 💬 📖, goes; the header keeps a little room under it. */
+    @media (max-width: 767.98px) {
+      .board-tabs { display: none; }
+      .board-header { padding-bottom: 12px; }
+    }
+    /* Six buttons on a 320–379px phone: a little smaller and closer so the
+       bar fits inside the 12px gutters. */
+    @media (max-width: 379.98px) {
+      .fab-bar { gap: 4px; padding: 8px 10px; }
+      .fab-btn { width: 40px; height: 40px; font-size: 1.125rem; }
+      .fab-btn-compose { width: 48px; height: 48px; font-size: 1.25rem; }
+    }
 
     /* ── Overlays ── */
     .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: flex-end; z-index: 100; }

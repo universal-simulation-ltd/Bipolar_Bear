@@ -1278,3 +1278,36 @@
 @container (min-width: 600px) {
   .sk-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   PHONES (<768px): the section tabs sit at the BOTTOM, in thumb reach
+   (owner rule 2026-11-19, BRANDING.md "On a phone, navigation sits at the
+   bottom"). The strip — 🏠 Home, the section tabs, 🆘 Help — is fixed to the
+   foot of the screen and reaches down behind fab.js's dock (.fab-footer,
+   80px, z-index 45), which sits on its lower part: one white panel, tabs on
+   top, dock buttons below, nothing overlapping. The active tab's bar moves
+   to its top edge. js/survival-kit.js reads the strip's position
+   (_skNavFixed) for its scroll offsets. ≥768px is unchanged (sticky, top).
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767.98px) {
+  :root { --sk-dock-h: 80px; }
+  html.is-android { --sk-dock-h: calc(80px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))); }
+  .sticky-nav {
+    position: fixed;
+    top: auto; left: 0; right: 0; bottom: 0;
+    padding-top: 0;
+    padding-bottom: var(--sk-dock-h);
+    border-bottom: none;
+    border-radius: 22px 22px 0 0;
+    overflow: hidden;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.10);
+    z-index: 44;
+    will-change: auto;
+  }
+  .sticky-nav a { border-bottom: none; border-top: 3px solid transparent; }
+  .sticky-nav a.active { border-top-color: var(--orange); }
+  .sticky-nav-home a, .sticky-nav-help a { padding-top: 12px; padding-bottom: 12px; }
+  /* Room for the strip + dock under the last card. */
+  .container { padding-bottom: calc(var(--sk-dock-h) + 96px); }
+  .section { scroll-margin-top: calc(8px + env(safe-area-inset-top, 0px)); }
+}

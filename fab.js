@@ -34,6 +34,7 @@
  *   bbFeedbackFabHidden       — feedback FAB hidden
  *   bbReviewFabHidden         — review (app-store rating) FAB hidden
  *   bbGameFabHidden           — game (🕹️ Bear Arcade) FAB hidden
+ *   bbHomeFabHidden           — 🏠 Home taken off the dock (it sits in slot 2 by default)
  *   bbFooterHidden            — entire footer hidden
  *   bbFabsUnlocked            — '1' once the onboarding tutorial has unlocked the dock
  *   bbFabFirstRunDone         — '1' after first-run defaults applied (one-shot)
@@ -107,7 +108,7 @@
       const v = BB.storage.get('FabSlot_' + s);
       if (v) fabState['slot' + s] = v;
     }
-    ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden'].forEach(k => {
+    ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbHomeFabHidden','bbFooterHidden'].forEach(k => {
       if (localStorage.getItem(k) === '1') fabState[k] = '1';
     });
     window.db.collection('userSettings').doc(window.currentUser.uid)
@@ -119,8 +120,9 @@
 
   /**
    * One-shot first-run marker. The default dock is Crisis Support (🆘) in
-   * slot 1, an empty `+` in slot 2, the Bear Arcade (🕹️) in slot 3 and Send
-   * Feedback (📣) in slot 4 (James, 2026-10-12). Data Security, Buy Us a
+   * slot 1, 🏠 Home in slot 2 (an empty `+` until 2026-11-19), the Bear
+   * Arcade (🕹️) in slot 3 and Send Feedback (📣) in slot 4 (James,
+   * 2026-10-12). Data Security, Buy Us a
    * Coffee and Leave a Review are picker-only (`auto: false` below).
    *
    * Installs from before 2026-10-05 ran an older version of this block that
@@ -162,8 +164,9 @@
    * (or the lowest free slot) without being picked; the rest only appear once
    * the user puts them in a slot from the picker (an explicit bbFabSlot_N
    * assignment), so an install that had them docked before 2026-10-12 without
-   * ever picking them loses them to the new default dock. Nothing auto-fills
-   * slot 2: it shows the `+` placeholder. Reordering this array does not move
+   * ever picking them loses them to the new default dock. Slot 2 holds 🏠
+   * Home (an `auto` extra, below) unless the user put something else there or
+   * took Home off; then it shows the `+` placeholder. Reordering this array does not move
    * existing users' FABs — slot persistence is keyed on `id` via bbFabSlot_*.
    */
   const _FAB_DEFAULTS = [
@@ -175,9 +178,17 @@
     { id: 'review',   icon: '⭐', label: 'Leave a Review',  desc: 'Rate Bipolar Bear on the app store', hiddenKey: 'bbReviewFabHidden', auto: false },
   ];
   /**
-   * Extra FABs available via the picker — never auto-assigned, only added
-   * by the user. Each maps to a hidden `<button id="<id>ExtraFab">` injected
-   * by `_injectHTML()` and revealed by `_applyFabDock()` when assigned.
+   * Extra FABs available via the picker, added by the user. Each maps to a
+   * hidden `<button id="<id>ExtraFab">` injected by `_injectHTML()` and
+   * revealed by `_applyFabDock()` when assigned.
+   *
+   * An extra with `auto: true` also docks itself in its `slotNum` when that
+   * slot is free: nothing assigned there (bbFabSlot_N unset) and no default
+   * placed there. Holding it and choosing Hide sets its `hiddenKey`, and
+   * Reset dock clears that. Only 🏠 Home does this (James, 2026-11-19: on a
+   * phone, navigation sits at the bottom), so a dock nobody customised gets
+   * Home and a customised slot 2 is left alone. Breathing stays picker-only:
+   * the four slots are full once Home is in.
    */
   const _FAB_EXTRAS = [
     { id: 'quicknote', icon: '📝', label: 'Quick Note', desc: 'Goes in your next journal entry' },
@@ -196,7 +207,7 @@
     // James, 2026-11-19: the breathing player in one tap, and Home within
     // thumb reach (the home link is at the top of the screen).
     { id: 'breathing', icon: '🌬️', label: 'Breathing', desc: 'A slow breathing exercise' },
-    { id: 'home',      icon: '🏠', label: 'Home',      desc: 'Back to the home page' },
+    { id: 'home',      icon: '🏠', label: 'Home',      desc: 'Back to the home page', auto: true, slotNum: 2, hiddenKey: 'bbHomeFabHidden' },
   ];
 
   /** Public figures shown by the Celebrity FAB. `wiki` is the URL slug. */
@@ -870,6 +881,8 @@
    * @type {Set<string>}
    */
   let _placedDefaults = new Set();
+  /** Ids of the `auto` extras (🏠 Home) docked by default on the last run. */
+  let _placedAutoExtras = new Set();
 
   function _applyFabDock() {
     const _fabsUnlocked = BB.storage.get('FabsUnlocked') === '1';
@@ -925,6 +938,7 @@
       const _chat = document.getElementById('chatFab');
       if (_chat) _chat.style.display = 'none';
       _placedDefaults = new Set();
+      _placedAutoExtras = new Set();
       return;
     }
 
@@ -1013,6 +1027,23 @@
       }
     }
 
+    // `auto` extras (🏠 Home) take their slotNum when nothing is assigned
+    // there and no default landed in it — and they aren't hidden or docked
+    // elsewhere by the user (then the loop above already showed them).
+    _placedAutoExtras = new Set();
+    _FAB_EXTRAS.forEach(_ex => {
+      if (!_ex.auto || localStorage.getItem(_ex.hiddenKey) === '1') return;
+      for (let s = 1; s <= 4; s++) if (BB.storage.get('FabSlot_' + s) === _ex.id) return;
+      const s = _ex.slotNum;
+      if (_slotOccupied[s] || BB.storage.get('FabSlot_' + s)) return;
+      const _ef = document.getElementById(_extraMap[_ex.id]);
+      if (!_ef) return;
+      _ef.style.display = 'flex';
+      _ef.style.left = _slotPos[s];
+      _slotOccupied[s] = true;
+      _placedAutoExtras.add(_ex.id);
+    });
+
     // Placeholder dots for truly empty slots
     for (let s = 1; s <= 4; s++) {
       const _ph = document.getElementById('fabPh' + s);
@@ -1067,7 +1098,7 @@
         _opts.appendChild(_btn);
       }
     });
-    const _assignedExtras = new Set();
+    const _assignedExtras = new Set(_placedAutoExtras);
     for (let s = 1; s <= 4; s++) {
       const v = BB.storage.get('FabSlot_' + s);
       if (v && _extraMap[v]) _assignedExtras.add(v);
@@ -1078,6 +1109,7 @@
         _btn.style.cssText = 'display:flex;align-items:center;gap:14px;width:100%;padding:13px 14px;background:#f8f9fa;border:1.5px solid #e9ecef;border-radius:14px;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;';
         _btn.innerHTML = `<span style="font-size:1.6em;line-height:1;">${_extra.icon}</span><div><div style="font-weight:700;font-size:0.95em;color:#212529;">${_bbT('fab.picker.' + _extra.id + 'Label', _extra.label)}</div><div style="font-size:0.8em;color:var(--text-muted-ink);margin-top:2px;">${_bbT('fab.picker.' + _extra.id + 'Desc', _extra.desc)}</div></div>`;
         _btn.addEventListener('click', () => {
+          if (_extra.hiddenKey) localStorage.removeItem(_extra.hiddenKey);
           for (let s = 1; s <= 4; s++) {
             if (BB.storage.get('FabSlot_' + s) === _extra.id) BB.storage.remove('FabSlot_' + s);
           }
@@ -1108,6 +1140,9 @@
    * @param {string} extraId One of the `_FAB_EXTRAS[].id` values.
    */
   window._hideExtraFab = function (extraId) {
+    // An `auto` extra would dock itself again: remember it was taken off.
+    const _ex = _FAB_EXTRAS.find(e => e.id === extraId);
+    if (_ex && _ex.auto) localStorage.setItem(_ex.hiddenKey, '1');
     for (let s = 1; s <= 4; s++) {
       if (BB.storage.get('FabSlot_' + s) === extraId) BB.storage.remove('FabSlot_' + s);
     }

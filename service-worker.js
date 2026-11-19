@@ -2090,7 +2090,14 @@
 // v429: the dock's + picker offers 🌬️ Breathing (opens the player on the
 //   favourite) and 🏠 Home (the home page, or back to its top), 10 languages
 //   (2026-11-19, James). fab.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v429';
+// v430: phone navigation at the bottom (owner rule 2026-11-19). The dock puts
+//   🏠 Home in slot 2 unless that slot is customised (an `auto` extra, hidden
+//   by holding it: bbHomeFabHidden); the Survival Kit's section tabs move to
+//   a strip fixed above the dock below 768px; Bipolar Anonymous's bottom bar
+//   gains 📖 Wiki and its header tabs go below 768px. fab.js, js/index.js,
+//   js/journal.js, css/survival-kit.css, js/survival-kit.js, anonymous.html,
+//   css/anonymous.css, js/anonymous.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v430';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

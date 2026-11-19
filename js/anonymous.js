@@ -2999,7 +2999,11 @@ function renderTabBadges() {
     const btn = document.querySelector(`.board-tab[data-tab="${tab}"]`);
     // The admin's announcements tab also flags suggestions waiting on them.
     const waiting = tab === 'announcements' && profile.isAdmin && pendingSuggestionCount() > 0;
-    if (btn) btn.classList.toggle('has-badge', tab !== currentTab && (waiting || tabHasUnseen(tab)));
+    const on = tab !== currentTab && (waiting || tabHasUnseen(tab));
+    if (btn) btn.classList.toggle('has-badge', on);
+    // Same dot on the bottom bar's 📢 / 💬 (the tabs are hidden on a phone).
+    const fab = document.getElementById(tab === 'announcements' ? 'fab-ann' : 'fab-gen');
+    if (fab) fab.classList.toggle('has-badge', on);
   });
 }
 // ──────────────────────────────────────────────────────────────────
@@ -3134,10 +3138,14 @@ function setTab(tab) {
     b.classList.toggle('active', b.dataset.tab === tab);
     b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
   });
-  document.getElementById('fab-ann').classList.toggle('active', tab === 'announcements');
-  document.getElementById('fab-gen').classList.toggle('active', tab === 'general');
-  document.getElementById('fab-ann').setAttribute('aria-pressed', tab === 'announcements' ? 'true' : 'false');
-  document.getElementById('fab-gen').setAttribute('aria-pressed', tab === 'general' ? 'true' : 'false');
+  // The bottom bar's 📢 💬 📖 mirror the tabs (on a phone the tab strip is
+  // hidden and the bar is the only way between them, css/anonymous.css).
+  [['fab-ann', 'announcements'], ['fab-gen', 'general'], ['fab-wiki', 'wiki']].forEach(([id, t]) => {
+    const b = document.getElementById(id);
+    if (!b) return;
+    b.classList.toggle('active', tab === t);
+    b.setAttribute('aria-pressed', tab === t ? 'true' : 'false');
+  });
 
   const postList    = document.getElementById('post-list');
   const wikiSection = document.getElementById('wiki-section');
@@ -6386,6 +6394,10 @@ function setupFAB() {
     if (currentTab === 'general') { showHint(_wt('anon.toast.genOpen')); return; }
     setTab('general');
   });
+  // 📖 Wiki, as the top tab does (James, 2026-11-19: on a phone the tabs are
+  // hidden, so the bar has to reach every one of them).
+  const wikiBtn = document.getElementById('fab-wiki');
+  if (wikiBtn) wikiBtn.addEventListener('click', () => { if (currentTab !== 'wiki') setTab('wiki'); });
   document.getElementById('fab-compose').addEventListener('click', () => {
     if (_writeBlockedOffline()) return;
     if (isMeBanned()) {

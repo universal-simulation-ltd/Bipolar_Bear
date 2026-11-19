@@ -139,9 +139,33 @@ function _skLocale() {
     // its tab instead of jumping back to "All"). Cleared by tapping "All".
     let _skNavId = null;
 
+    // On phones (<768px) the tab strip is fixed at the foot of the screen,
+    // behind the dock (css/survival-kit.css, 2026-11-19), so nothing covers
+    // the top of the page but the status bar; from 768px it sticks to the top.
+    function _skNavFixed() {
+      const nav = document.querySelector('.sticky-nav');
+      return !!nav && getComputedStyle(nav).position === 'fixed';
+    }
+    // The status bar / notch (env(safe-area-inset-top)), in px.
+    function _skSafeTop() {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none;';
+      document.body.appendChild(probe);
+      const h = probe.offsetHeight || 0;
+      probe.remove();
+      return h;
+    }
+    // What covers the top of the page: the sticky strip, or (phones) the status bar.
     function _skNavOffset() {
+      if (_skNavFixed()) return _skSafeTop() + 8;
       const nav = document.querySelector('.sticky-nav');
       return (nav ? nav.offsetHeight : 60) + 8;
+    }
+    // What covers the bottom: on phones the strip with the dock under it.
+    function _skBottomInset() {
+      if (!_skNavFixed()) return 0;
+      const nav = document.querySelector('.sticky-nav');
+      return nav ? nav.offsetHeight : 0;
     }
     // Scrolls `el` to just under the sticky nav. Works for both the window
     // (phones) and the #scroll-view container of the desktop iPhone frame.
@@ -235,7 +259,7 @@ function _skLocale() {
       const tile = wasOpen && document.querySelector('[data-sk-open="' + wasOpen + '"]');
       if (tile) {
         const r = tile.getBoundingClientRect();
-        if (r.top < _skNavOffset() || r.bottom > window.innerHeight) {
+        if (r.top < _skNavOffset() || r.bottom > window.innerHeight - _skBottomInset()) {
           tile.scrollIntoView({ behavior: 'auto', block: 'center' });
         }
         try { tile.focus({ preventScroll: true }); } catch (_) {}
@@ -384,7 +408,7 @@ function _skLocale() {
         if (_ms) {
           const _r = _ms.getBoundingClientRect();
           // Only scroll if the mood scale panel is not fully visible
-          if (_r.bottom > window.innerHeight) {
+          if (_r.bottom > window.innerHeight - _skBottomInset()) {
             _ms.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         }
@@ -479,9 +503,7 @@ function _skLocale() {
       requestAnimationFrame(() => {
         const title = document.getElementById('survivalGuideTitle');
         if (!title) return;
-        const nav = document.querySelector('.sticky-nav');
-        const navH = nav ? nav.offsetHeight : 60;
-        const target = title.getBoundingClientRect().top + window.scrollY - navH - 8;
+        const target = title.getBoundingClientRect().top + window.scrollY - _skNavOffset();
         const start = window.scrollY;
         const distance = target - start;
         // Reduce Motion: jump straight there instead of the 1.2 s glide.

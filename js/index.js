@@ -552,7 +552,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             // device with no dock layout of its own yet.
             if (d.fabState && typeof d.fabState === 'object') {
               const _fs = d.fabState;
-              const _hidKeys = ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden'];
+              const _hidKeys = ['bbWaFabHidden','bbQuickNoteFabHidden','bbCoffeeFabHidden','bbFeedbackFabHidden','bbReviewFabHidden','bbGameFabHidden','bbHomeFabHidden','bbFooterHidden'];
               const _cloudAt = Number(_fs.at) || 0;
               const _localAt = Number(BB.storage.get('FabStateAt')) || 0;
               let _localHasLayout = _hidKeys.some(k => localStorage.getItem(k) === '1');
@@ -1442,7 +1442,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         // Misc hints
         'PersonalHintDone',
         'FavouriteHintSeen', 'PrivateHintSeen', 'FavAnniShown',
-        'FeedbackFabHidden', 'WaFabHidden', 'CoffeeFabHidden', 'QuickNoteFabHidden', 'ReviewFabHidden', 'GameFabHidden', 'FooterHidden', 'FabsUnlocked', 'FabStateAt',
+        'FeedbackFabHidden', 'WaFabHidden', 'CoffeeFabHidden', 'QuickNoteFabHidden', 'ReviewFabHidden', 'GameFabHidden', 'HomeFabHidden', 'FooterHidden', 'FabsUnlocked', 'FabStateAt',
         'FabSlot_1', 'FabSlot_2', 'FabSlot_3', 'FabSlot_4',
         'LogoEasterEggFound',
         'PinEnabled', 'PinCode',
@@ -1965,7 +1965,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
          'bb_fmTapHoldHintPending','bb_fmTapHoldHintReady',
          'bbHasEntries','bbOnboardingStep',
          'bbCurrentStreak','bbStableStreak',
-         'bbFeedbackFabHidden','bbWaFabHidden','bbReviewFabHidden','bbGameFabHidden','bbFooterHidden','bbArcade',
+         'bbFeedbackFabHidden','bbWaFabHidden','bbReviewFabHidden','bbGameFabHidden','bbHomeFabHidden','bbFooterHidden','bbArcade',
          'bbFabSlot_1','bbFabSlot_2','bbFabSlot_3','bbFabSlot_4',
          'bbFabsUnlocked','bbFabFirstRunDone','bbFabStateAt',
          'bbLogoEasterEggFound','bbCustomFieldHintDone',
@@ -2204,7 +2204,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
             document.getElementById('_dockCancelBtn').addEventListener('click', () => _confirmOverlay.remove());
             document.getElementById('_dockConfirmBtn').addEventListener('click', () => {
               _confirmOverlay.remove();
-              ['WaFabHidden','QuickNoteFabHidden','CoffeeFabHidden','FeedbackFabHidden','ReviewFabHidden','GameFabHidden','FabSlot_1','FabSlot_2','FabSlot_3','FabSlot_4'].forEach(k => BB.storage.remove(k));
+              ['WaFabHidden','QuickNoteFabHidden','CoffeeFabHidden','FeedbackFabHidden','ReviewFabHidden','GameFabHidden','HomeFabHidden','FabSlot_1','FabSlot_2','FabSlot_3','FabSlot_4'].forEach(k => BB.storage.remove(k));
               // Sync the reset, or the next home load restores the old dock.
               if (typeof window._syncFabsToFirestore === 'function') window._syncFabsToFirestore();
               _applyOnboardingGating();

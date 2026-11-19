@@ -922,7 +922,7 @@
         mute: { title: 'Mute this user?', body: 'All their posts and comments will be hidden on this device. You can unmute them any time from the About screen.', bodyNamed: 'Hide all posts and comments from {name} on this device? You can unmute them any time from the About screen.', confirm: 'Mute 🙈', unmute: "Unmute" },
         ban: { title: 'Ban this user?', body: 'Their posts will be removed and they won\'t be able to post or comment. Ban permanently for a zero-tolerance breach, for 7 days for anything else.', bodyNamed: 'Ban {name}? Their posts will be removed and they won\'t be able to post or comment. Ban permanently for a zero-tolerance breach, for 7 days for anything else.', confirm: 'Ban permanently 🚫' },
         thread: { title: 'Comments', placeholder: 'Add a comment…', send: 'Send 💛', tagPeople: "Tag someone in this thread" },
-        tips: { moniker: 'Your moniker settings', about: 'About Bipolar Anonymous', announcements: 'Announcements', compose: 'Write a post', search: 'Search the wiki', general: 'General Chat', privacy: 'Privacy info' },
+        tips: { moniker: 'Your moniker settings', about: 'About Bipolar Anonymous', announcements: 'Announcements', compose: 'Write a post', search: 'Search the wiki', general: 'General Chat', wiki: 'Wiki', privacy: 'Privacy info' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -3081,7 +3081,7 @@
         mute: { title: '¿Silenciar a este usuario?', body: 'Todas sus publicaciones y comentarios se ocultarán en este dispositivo. Puedes dejar de silenciarlo en cualquier momento desde la pantalla Acerca de.', bodyNamed: '¿Ocultar todas las publicaciones y comentarios de {name} en este dispositivo? Puedes dejar de silenciarlo en cualquier momento desde la pantalla Acerca de.', confirm: 'Silenciar 🙈', unmute: "Reactivar" },
         ban: { title: '¿Vetar a este usuario?', body: 'Sus publicaciones se eliminarán y no podrá publicar ni comentar. Veta para siempre si incumple la tolerancia cero; 7 días por cualquier otra cosa.', bodyNamed: '¿Vetar a {name}? Sus publicaciones se eliminarán y no podrá publicar ni comentar. Veta para siempre si incumple la tolerancia cero; 7 días por cualquier otra cosa.', confirm: 'Vetar para siempre 🚫' },
         thread: { title: 'Comentarios', placeholder: 'Añade un comentario…', send: 'Enviar 💛', tagPeople: "Etiqueta a alguien de este hilo" },
-        tips: { moniker: 'Ajustes de tu moniker', about: 'Acerca de Bipolar Anonymous', announcements: 'Anuncios', compose: 'Escribir una publicación', search: 'Buscar en la wiki', general: 'Chat general', privacy: 'Información de privacidad' },
+        tips: { moniker: 'Ajustes de tu moniker', about: 'Acerca de Bipolar Anonymous', announcements: 'Anuncios', compose: 'Escribir una publicación', search: 'Buscar en la wiki', general: 'Chat general', wiki: 'Wiki', privacy: 'Información de privacidad' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -5254,7 +5254,7 @@
         mute: { title: 'Masquer cet utilisateur ?', body: 'Tous ses posts et commentaires seront masqués sur cet appareil. Tu peux le réafficher à tout moment depuis l\'écran À propos.', bodyNamed: 'Masquer tous les posts et commentaires de {name} sur cet appareil ? Tu peux le réafficher à tout moment depuis l\'écran À propos.', confirm: 'Masquer 🙈', unmute: "Réafficher" },
         ban: { title: 'Bannir cet utilisateur ?', body: 'Ses posts seront supprimés et il ne pourra plus publier ni commenter. Bannis définitivement pour une infraction à la tolérance zéro, 7 jours pour le reste.', bodyNamed: 'Bannir {name} ? Ses posts seront supprimés et il ne pourra plus publier ni commenter. Bannis définitivement pour une infraction à la tolérance zéro, 7 jours pour le reste.', confirm: 'Bannir définitivement 🚫' },
         thread: { title: 'Commentaires', placeholder: 'Ajouter un commentaire…', send: 'Envoyer 💛', tagPeople: "Identifier quelqu’un de ce fil" },
-        tips: { moniker: 'Réglages de ton moniker', about: 'À propos de Bipolar Anonymous', announcements: 'Annonces', compose: 'Écrire un post', search: 'Rechercher dans le wiki', general: 'Chat général', privacy: 'Infos de confidentialité' },
+        tips: { moniker: 'Réglages de ton moniker', about: 'À propos de Bipolar Anonymous', announcements: 'Annonces', compose: 'Écrire un post', search: 'Rechercher dans le wiki', general: 'Chat général', wiki: 'Wiki', privacy: 'Infos de confidentialité' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -7307,7 +7307,7 @@
         mute: { title: 'Diesen Benutzer stummschalten?', body: 'Alle seine Beiträge und Kommentare werden auf diesem Gerät ausgeblendet. Du kannst die Stummschaltung jederzeit über den Info-Bildschirm aufheben.', bodyNamed: 'Alle Beiträge und Kommentare von {name} auf diesem Gerät ausblenden? Du kannst die Stummschaltung jederzeit über den Info-Bildschirm aufheben.', confirm: 'Stummschalten 🙈', unmute: "Einblenden" },
         ban: { title: 'Diesen Benutzer sperren?', body: 'Die Beiträge werden entfernt und die Person kann weder posten noch kommentieren. Dauerhaft sperren bei einem Verstoß gegen die Null-Toleranz-Regel, sonst für 7 Tage.', bodyNamed: '{name} sperren? Die Beiträge werden entfernt und die Person kann weder posten noch kommentieren. Dauerhaft sperren bei einem Verstoß gegen die Null-Toleranz-Regel, sonst für 7 Tage.', confirm: 'Dauerhaft sperren 🚫' },
         thread: { title: 'Kommentare', placeholder: 'Kommentar hinzufügen…', send: 'Senden 💛', tagPeople: "Jemanden aus diesem Thread markieren" },
-        tips: { moniker: 'Deine Moniker-Einstellungen', about: 'Über Bipolar Anonymous', announcements: 'Ankündigungen', compose: 'Beitrag schreiben', search: 'Wiki durchsuchen', general: 'Allgemeiner Chat', privacy: 'Datenschutzinfos' },
+        tips: { moniker: 'Deine Moniker-Einstellungen', about: 'Über Bipolar Anonymous', announcements: 'Ankündigungen', compose: 'Beitrag schreiben', search: 'Wiki durchsuchen', general: 'Allgemeiner Chat', wiki: 'Wiki', privacy: 'Datenschutzinfos' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -9412,7 +9412,7 @@
         mute: { title: 'Silenziare questo utente?', body: 'Tutti i suoi post e commenti saranno nascosti su questo dispositivo. Puoi riattivarlo in qualsiasi momento dalla schermata Informazioni.', bodyNamed: 'Nascondere tutti i post e i commenti di {name} su questo dispositivo? Puoi riattivarlo in qualsiasi momento dalla schermata Informazioni.', confirm: 'Silenzia 🙈', unmute: "Riattiva" },
         ban: { title: 'Bandire questo utente?', body: 'I suoi post saranno rimossi e non potrà pubblicare né commentare. Banna per sempre per una violazione della tolleranza zero, 7 giorni per il resto.', bodyNamed: 'Bandire {name}? I suoi post saranno rimossi e non potrà pubblicare né commentare. Banna per sempre per una violazione della tolleranza zero, 7 giorni per il resto.', confirm: 'Banna per sempre 🚫' },
         thread: { title: 'Commenti', placeholder: 'Aggiungi un commento…', send: 'Invia 💛', tagPeople: "Tagga qualcuno di questa discussione" },
-        tips: { moniker: 'Impostazioni del tuo moniker', about: 'Informazioni su Bipolar Anonymous', announcements: 'Annunci', compose: 'Scrivi un post', search: 'Cerca nella wiki', general: 'Chat generale', privacy: 'Info sulla privacy' },
+        tips: { moniker: 'Impostazioni del tuo moniker', about: 'Informazioni su Bipolar Anonymous', announcements: 'Annunci', compose: 'Scrivi un post', search: 'Cerca nella wiki', general: 'Chat generale', wiki: 'Wiki', privacy: 'Info sulla privacy' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -11517,7 +11517,7 @@
         mute: { title: 'Silenciar este utilizador?', body: 'Todas as suas publicações e comentários serão ocultados neste dispositivo. Podes reativá-lo a qualquer momento no ecrã Sobre.', bodyNamed: 'Ocultar todas as publicações e comentários de {name} neste dispositivo? Podes reativá-lo a qualquer momento no ecrã Sobre.', confirm: 'Silenciar 🙈', unmute: "Reativar" },
         ban: { title: 'Banir este utilizador?', body: 'As publicações serão removidas e não poderá publicar nem comentar. Bane para sempre numa infração à tolerância zero, 7 dias no resto.', bodyNamed: 'Banir {name}? As publicações serão removidas e não poderá publicar nem comentar. Bane para sempre numa infração à tolerância zero, 7 dias no resto.', confirm: 'Banir para sempre 🚫' },
         thread: { title: 'Comentários', placeholder: 'Adicionar um comentário…', send: 'Enviar 💛', tagPeople: "Identifica alguém desta conversa" },
-        tips: { moniker: 'Definições do teu moniker', about: 'Sobre o Bipolar Anonymous', announcements: 'Anúncios', compose: 'Escrever uma publicação', search: 'Pesquisar na wiki', general: 'Chat geral', privacy: 'Informações de privacidade' },
+        tips: { moniker: 'Definições do teu moniker', about: 'Sobre o Bipolar Anonymous', announcements: 'Anúncios', compose: 'Escrever uma publicação', search: 'Pesquisar na wiki', general: 'Chat geral', wiki: 'Wiki', privacy: 'Informações de privacidade' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -13622,7 +13622,7 @@
         mute: { title: 'Deze gebruiker dempen?', body: 'Al hun berichten en reacties worden op dit apparaat verborgen. Je kunt ze op elk moment weer tonen via het scherm Over.', bodyNamed: 'Alle berichten en reacties van {name} op dit apparaat verbergen? Je kunt ze op elk moment weer tonen via het scherm Over.', confirm: 'Dempen 🙈', unmute: "Dempen opheffen" },
         ban: { title: 'Deze gebruiker verbannen?', body: 'Hun berichten worden verwijderd en ze kunnen niet plaatsen of reageren. Verban permanent bij een overtreding van de nultolerantie, 7 dagen bij al het andere.', bodyNamed: '{name} verbannen? Hun berichten worden verwijderd en ze kunnen niet plaatsen of reageren. Verban permanent bij een overtreding van de nultolerantie, 7 dagen bij al het andere.', confirm: 'Permanent verbannen 🚫' },
         thread: { title: 'Reacties', placeholder: 'Een reactie toevoegen…', send: 'Verzenden 💛', tagPeople: "Iemand uit dit gesprek taggen" },
-        tips: { moniker: 'Je moniker-instellingen', about: 'Over Bipolar Anonymous', announcements: 'Aankondigingen', compose: 'Een bericht schrijven', search: 'Wiki doorzoeken', general: 'Algemene chat', privacy: 'Privacy-info' },
+        tips: { moniker: 'Je moniker-instellingen', about: 'Over Bipolar Anonymous', announcements: 'Aankondigingen', compose: 'Een bericht schrijven', search: 'Wiki doorzoeken', general: 'Algemene chat', wiki: 'Wiki', privacy: 'Privacy-info' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -15727,7 +15727,7 @@
         mute: { title: 'Wyciszyć tego użytkownika?', body: 'Wszystkie jego wpisy i komentarze zostaną ukryte na tym urządzeniu. W każdej chwili możesz cofnąć wyciszenie na ekranie O aplikacji.', bodyNamed: 'Ukryć wszystkie wpisy i komentarze użytkownika {name} na tym urządzeniu? W każdej chwili możesz cofnąć wyciszenie na ekranie O aplikacji.', confirm: 'Wycisz 🙈', unmute: "Wyłącz wyciszenie" },
         ban: { title: 'Zbanować tego użytkownika?', body: 'Jego wpisy zostaną usunięte i nie będzie mógł publikować ani komentować. Zbanuj na stałe za naruszenie zasady zera tolerancji, na 7 dni za wszystko inne.', bodyNamed: 'Zbanować użytkownika {name}? Jego wpisy zostaną usunięte i nie będzie mógł publikować ani komentować. Zbanuj na stałe za naruszenie zasady zera tolerancji, na 7 dni za wszystko inne.', confirm: 'Zbanuj na stałe 🚫' },
         thread: { title: 'Komentarze', placeholder: 'Dodaj komentarz…', send: 'Wyślij 💛', tagPeople: "Oznacz kogoś z tego wątku" },
-        tips: { moniker: 'Ustawienia Twojej moniker', about: 'O Bipolar Anonymous', announcements: 'Ogłoszenia', compose: 'Napisz wpis', search: 'Przeszukaj wiki', general: 'Czat ogólny', privacy: 'Informacje o prywatności' },
+        tips: { moniker: 'Ustawienia Twojej moniker', about: 'O Bipolar Anonymous', announcements: 'Ogłoszenia', compose: 'Napisz wpis', search: 'Przeszukaj wiki', general: 'Czat ogólny', wiki: 'Wiki', privacy: 'Informacje o prywatności' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -17840,7 +17840,7 @@
         mute: { title: 'Tysta den här användaren?', body: 'Alla deras inlägg och kommentarer döljs på den här enheten. Du kan sluta tysta dem när som helst från Om-skärmen.', bodyNamed: 'Dölja alla inlägg och kommentarer från {name} på den här enheten? Du kan sluta tysta dem när som helst från Om-skärmen.', confirm: 'Tysta 🙈', unmute: "Sluta tysta" },
         ban: { title: 'Stänga av den här användaren?', body: 'Deras inlägg tas bort och de kan inte posta eller kommentera. Stäng av permanent vid brott mot nolltoleransen, i 7 dagar för allt annat.', bodyNamed: 'Stänga av {name}? Deras inlägg tas bort och de kan inte posta eller kommentera. Stäng av permanent vid brott mot nolltoleransen, i 7 dagar för allt annat.', confirm: 'Stäng av permanent 🚫' },
         thread: { title: 'Kommentarer', placeholder: 'Lägg till en kommentar…', send: 'Skicka 💛', tagPeople: "Tagga någon i den här tråden" },
-        tips: { moniker: 'Dina moniker-inställningar', about: 'Om Bipolar Anonymous', announcements: 'Meddelanden', compose: 'Skriv ett inlägg', search: 'Sök i wikin', general: 'Allmän chatt', privacy: 'Integritetsinfo' },
+        tips: { moniker: 'Dina moniker-inställningar', about: 'Om Bipolar Anonymous', announcements: 'Meddelanden', compose: 'Skriv ett inlägg', search: 'Sök i wikin', general: 'Allmän chatt', wiki: 'Wiki', privacy: 'Integritetsinfo' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
@@ -19945,7 +19945,7 @@
         mute: { title: '屏蔽此用户？', body: '他们的所有帖子和评论将在此设备上被隐藏。你可以随时在“关于”页面取消屏蔽。', bodyNamed: '在此设备上隐藏 {name} 的所有帖子和评论？你可以随时在“关于”页面取消屏蔽。', confirm: '屏蔽 🙈', unmute: "取消屏蔽" },
         ban: { title: '封禁此用户？', body: '他们的帖子将被移除，并将无法发帖或评论。违反零容忍规则请永久封禁，其他违规封禁 7 天。', bodyNamed: '封禁 {name}？他们的帖子将被移除，并将无法发帖或评论。违反零容忍规则请永久封禁，其他违规封禁 7 天。', confirm: '永久封禁 🚫' },
         thread: { title: '评论', placeholder: '添加评论…', send: '发送 💛', tagPeople: "标记此讨论中的人" },
-        tips: { moniker: '你的Moniker设置', about: '关于Bipolar Anonymous', announcements: '公告', compose: '写帖子', search: '搜索维基', general: '综合聊天', privacy: '隐私信息' },
+        tips: { moniker: '你的Moniker设置', about: '关于Bipolar Anonymous', announcements: '公告', compose: '写帖子', search: '搜索维基', general: '综合聊天', wiki: '百科', privacy: '隐私信息' },
         // Member-suggested announcements awaiting the admin (see
         // visibleSuggestions in js/anonymous.js).
         sugg: {
