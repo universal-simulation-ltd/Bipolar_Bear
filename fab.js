@@ -193,6 +193,10 @@
     // James, 2026-10-28: My safety plan in one tap (js/shared/safety-plan.js).
     { id: 'safetyplan', icon: '🛟', label: 'My safety plan', desc: 'Warning signs, people to call, reasons to keep going' },
     { id: 'anon',      icon: '💬', label: 'Bipolar Anonymous', desc: 'Open the community board' },
+    // James, 2026-11-19: the breathing player in one tap, and Home within
+    // thumb reach (the home link is at the top of the screen).
+    { id: 'breathing', icon: '🌬️', label: 'Breathing', desc: 'A slow breathing exercise' },
+    { id: 'home',      icon: '🏠', label: 'Home',      desc: 'Back to the home page' },
   ];
 
   /** Public figures shown by the Celebrity FAB. `wiki` is the URL slug. */
@@ -229,7 +233,7 @@
     return (s && s !== key) ? s : c.field;
   }
   /** Map from extra FAB id → DOM id of the injected button. */
-  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab', survival: 'survivalExtraFab', safetyplan: 'safetyplanExtraFab', anon: 'anonExtraFab' };
+  const _extraMap = { stats: 'statsExtraFab', celeb: 'celebExtraFab', goals: 'goalsExtraFab', quicknote: 'quicknoteExtraFab', meds: 'medsExtraFab', survival: 'survivalExtraFab', safetyplan: 'safetyplanExtraFab', anon: 'anonExtraFab', breathing: 'breathingExtraFab', home: 'homeExtraFab' };
 
   // ── Appearance (automatic / light / dark) ─────────────────────────────────
   // Stored in localStorage.bbTheme ('auto' | 'light' | 'dark', default auto =
@@ -655,6 +659,8 @@
       <button class="bb-extra-fab" id="survivalExtraFab" onclick="openSurvivalFromDock()" title="Survival Kit" data-i18n-title="fab.picker.survivalLabel" style="display:none;">🧰</button>
       <button class="bb-extra-fab" id="safetyplanExtraFab" onclick="openSafetyPlanFromDock()" title="My safety plan" data-i18n-title="fab.picker.safetyplanLabel" style="display:none;">🛟</button>
       <button class="bb-extra-fab" id="anonExtraFab" onclick="openAnonFromDock()" title="Bipolar Anonymous" data-i18n-title="fab.picker.anonLabel" style="display:none;">💬</button>
+      <button class="bb-extra-fab" id="breathingExtraFab" onclick="openBreathingFromDock()" title="Breathing" data-i18n-title="fab.picker.breathingLabel" style="display:none;">🌬️</button>
+      <button class="bb-extra-fab" id="homeExtraFab" onclick="openHomeFromDock()" title="Home" data-i18n-title="fab.picker.homeLabel" style="display:none;">🏠</button>
 
       <!-- FAB picker sheet -->
       <div id="bbFabPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeFabPicker();">
@@ -1714,6 +1720,23 @@
       return;
     }
     window.location.href = 'survival-kit.html';
+  };
+  /**
+   * The dock's 🌬️: the breathing player over the page, on the favourite
+   * exercise (js/shared/breathing.js, on every dock page). The Survival
+   * Kit's Breathing section is only a fallback.
+   */
+  window.openBreathingFromDock = function () {
+    if (window.BB && BB.breathing && typeof BB.breathing.open === 'function') { BB.breathing.open({}); return; }
+    window.location.href = 'survival-kit.html#breathing';
+  };
+  /** The dock's 🏠: the home page (on it: back to the top). */
+  window.openHomeFromDock = function () {
+    if (/(^|\/)(index\.html)?$/.test(window.location.pathname)) {
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('scroll-view')?.scrollTo({ top: 0, behavior: 'smooth' }); } catch (_) {}
+      return;
+    }
+    window.location.href = 'index.html';
   };
   /**
    * The dock's 💬: the Bipolar Anonymous board. It needs an account, so

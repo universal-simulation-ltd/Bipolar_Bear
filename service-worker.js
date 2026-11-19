@@ -2087,7 +2087,10 @@
 //   playback + mix-with-others audio session while the player is open, so its
 //   sound follows the volume buttons, not the silent switch (2026-11-19, James).
 //   js/shared/breathing.js. Needs the native build with the handler.
-const CACHE_NAME = 'bipolarbear-v428';
+// v429: the dock's + picker offers 🌬️ Breathing (opens the player on the
+//   favourite) and 🏠 Home (the home page, or back to its top), 10 languages
+//   (2026-11-19, James). fab.js, js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v429';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
