@@ -53,7 +53,8 @@
 
   var SETTINGS = ['currentMedList', 'moodDefinitions', 'moodMemories', 'copingStrategies',
     'myCommitments', 'customReminders', 'survivalGratitude', 'rememberThis', 'medHistory',
-    'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans'];
+    'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans',
+    'sleepTarget']; // 😴 My usual sleep, "8-8.5" or "" (js/shared/sleep-target.js)
   // Merged rather than replaced when this device has something to add.
   var UNION_FIELDS = {
     medHistory: function (a, b) { return mergeHistory(a, b); },
@@ -62,7 +63,7 @@
     medPastChanges: function (a, b) { return mergeById(a, b); },
     medBloodPlans: function (a, b) { return mergeById(a, b); },
   };
-  var STRING_FIELDS = { rememberThis: true };
+  var STRING_FIELDS = { rememberThis: true, sleepTarget: true };
   var PERSONAL = ['personalName', 'personalDOB', 'personalMedicalNum', 'personalDiagnosis',
     'personalDiagnosisDate', 'personalAddress', 'personalMobile', 'personalEmail',
     'personalEmergencyContact', 'personalNotes'];

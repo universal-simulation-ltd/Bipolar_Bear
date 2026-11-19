@@ -41,6 +41,7 @@
   <script src="js/shared/i18n-week.js"></script>
   <script src="js/shared/i18n-journalpw.js"></script>
   <script src="js/shared/i18n-missing.js"></script>
+  <script src="js/shared/sleep-target.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
@@ -1872,6 +1873,9 @@
           </div>
           <label class="bb-switch"><input type="checkbox" id="moodSpectrumToggle" onchange="_toggleMoodSpectrum()"><span class="bb-slider"></span></label>
         </div>
+
+        <!-- 😴 My usual sleep: the sleep bands and colours follow it (not set = 7–9 h) — _renderSleepTargetRow in js/journal.js, js/shared/sleep-target.js -->
+        <div id="sleepTargetRow" style="margin-bottom: 16px; text-align: left;"></div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <div>

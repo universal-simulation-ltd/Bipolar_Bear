@@ -2105,7 +2105,14 @@
 // v432: the 📢 tab's built-in cards run Welcome first, then the Bear store
 //   card; the Welcome now always shows, not only on an empty board
 //   (2026-11-19, James). js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v432';
+// v433: 😴 My usual sleep (Journal Options): a range, 6–10 h in halves, that
+//   the sleep bands follow everywhere (colours, the five coarse choices, the
+//   Bear's estimate, the Health-based mood guess, insights, the short-sleep
+//   warning); not set = 7–9 h, the old bands. Synced encrypted (secure-store
+//   SETTINGS). From a member's idea (2026-11-19, James). js/shared/sleep-target.js
+//   (new, precached), js/journal.js, js/journal-insights.js, journal.html,
+//   js/shared/secure-store.js, js/index.js, js/survival-kit.js.
+const CACHE_NAME = 'bipolarbear-v433';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2171,6 +2178,7 @@ const STATIC_ASSETS = [
   './js/shared/i18n-awareness.js',
   './js/shared/breathing.js',
   './js/shared/i18n-breathe.js',
+  './js/shared/sleep-target.js',
   './js/shared/i18n-week.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',

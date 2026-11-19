@@ -822,7 +822,7 @@ function _tt(k, vars, fallback) {
               ['PinEnabled','PinCode','FavAnniShown',
                'PrivateHintSeen','FavouriteHintSeen','_moodTipShown','_fmMoodTipShown','_draft']
                 .forEach(k => BB.storage.remove(k));
-              ['moreDataOpenByDefault','showMoodSuggestion','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled','earlyWarnEnabled','bbEarlyWarnSeen','breathPromptsEnabled']
+              ['moreDataOpenByDefault','showMoodSuggestion','moodLinkingEnabled','moodSpectrumEnabled','wheelModeEnabled','earlyWarnEnabled','bbEarlyWarnSeen','breathPromptsEnabled','sleepTarget']
                 .forEach(k => localStorage.removeItem(k));
               BB.storage.remove('OnboardingStep'); // new user starts at step 0
               localStorage.setItem('focusedModeEnabled', '1');
@@ -876,6 +876,7 @@ function _tt(k, vars, fallback) {
             if (_userCryptoKey && window.BB && BB.secure) {
               BB.secure.settings(user.uid, doc.exists ? doc.data() : null).then((r) => {
                 if (r && r.view && r.view.currentMedList !== undefined && typeof loadMedicationList === 'function') loadMedicationList();
+                if (r && r.view && r.view.sleepTarget !== undefined) document.dispatchEvent(new CustomEvent('bb:sleeptarget'));
               }).catch(() => {});
               BB.secure.personal(user.uid).catch(() => {});
             }
@@ -1104,7 +1105,7 @@ function _tt(k, vars, fallback) {
       [
         'trackGoals', 'trackBudget', 'trackExercise', 'trackOutside',
         'trackAnxiety', 'trackAlcohol', 'trackEmotions',
-        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey', 'bbBloodChartTest', 'dailyGoals', 'dailyBudget',
+        'customTrackingFields', 'deletedCustomTrackers', 'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'sleepTarget', 'bbMedsCompareKey', 'bbBloodChartTest', 'dailyGoals', 'dailyBudget',
         'statsStartDate', 'unlockedAchievements',
         'bbOnboardingStep',
         'bbFavAnniShown',
@@ -1277,12 +1278,42 @@ function _tt(k, vars, fallback) {
       }
     }
 
-    // Function to get sleep button color — mirrors energy colour scheme
+    // Function to get sleep button color — mirrors energy colour scheme.
+    // Bands follow 😴 My usual sleep (BB.sleepTarget; 7–9 h when not set, which
+    // gives the original ≤5 / <7 / ≤9 / more split).
     function getSleepColor(hours) {
-      if (hours <= 5)  return '#1e3a5f'; // ≤5h  — dark blue (poor sleep)
-      if (hours < 7)   return '#ff922b'; // 6-7h  — same as Low energy
-      if (hours <= 9)  return '#fd7e14'; // 7-8h, 8-9h — same as High energy
-      return '#e8590c';                  // ≥10h — same as Full energy
+      const b = BB.sleepTarget ? BB.sleepTarget.band(hours) : null;
+      if (b === 'veryShort') return '#1e3a5f'; // dark blue (poor sleep)
+      if (b === 'short')     return '#ff922b'; // same as Low energy
+      if (b === 'healthy')   return '#fd7e14'; // same as High energy
+      if (b)                 return '#e8590c'; // same as Full energy
+      if (hours <= 5)  return '#1e3a5f';
+      if (hours < 7)   return '#ff922b';
+      if (hours <= 9)  return '#fd7e14';
+      return '#e8590c';
+    }
+
+    /** The old form's five sleep buttons: values, labels and colours from
+     *  BB.sleepTarget.buckets(). Run at start-up and whenever the setting
+     *  changes; a selected button stays selected if its value still exists. */
+    function _sleepFormRanges() {
+      return BB.sleepTarget ? BB.sleepTarget.buckets().map(b => ({ label: b.label.replace(/h$/, '').replace('–', '-'), value: b.val }))
+        : [{ label: '≤5', value: 5 }, { label: '6-7', value: 6.5 }, { label: '7-9', value: 8 }, { label: '9-10', value: 9.5 }, { label: '10+', value: 11 }];
+    }
+    function _applySleepTargetToForm() {
+      const ranges = _sleepFormRanges();
+      document.querySelectorAll('.sleep-btn').forEach((b, i) => {
+        const r = ranges[i];
+        if (!r) return;
+        const wasLabel = b.textContent === b.dataset.baseLabel;
+        b.dataset.sleep = r.value;
+        b.dataset.baseLabel = r.label;
+        b.dataset.color = getSleepColor(r.value);
+        if (wasLabel) b.textContent = r.label;
+        const sel = b.classList.contains('selected');
+        b.style.background = sel ? b.dataset.color : '#f8f9fa';
+        b.style.color = sel ? _onFillInk(b.dataset.color) : '#495057';
+      });
     }
 
     // Initialize buttons after DOM is ready
@@ -1341,13 +1372,7 @@ function _tt(k, vars, fallback) {
       const sleepSelector = document.getElementById('sleepSelector');
       if (!sleepSelector) return;
 
-      const sleepRanges = [
-        { label: '≤5', value: 5 },
-        { label: '6-7', value: 6.5 },
-        { label: '7-9', value: 8 },
-        { label: '9-10', value: 9.5 },
-        { label: '10+', value: 11 }
-      ];
+      const sleepRanges = _sleepFormRanges();
       
       sleepRanges.forEach(range => {
         const btn = document.createElement('button');
@@ -3241,8 +3266,7 @@ function _tt(k, vars, fallback) {
                 Object.entries(entry.customFields||{}).forEach(([id,v])=>{if(!v)return;const cf=getCustomFields().find(f=>f.id===id);if(cf)_chips.push([`${_esc(cf.emoji||cf.label)} ${_cfScaleNum(v)!==null?_cfValText(v):v==='yes'?_Y:_No}`,_N]);});
                 const _achStr = _chips.length ? `<span style="flex-basis:100%;font-size:0.88em;margin-top:1px;text-align:left;">${_chips.map(([t,c])=>`<span style="color:${c};font-weight:600">${t}</span>`).join('<span style="color:#dee2e6">  </span>')}</span>` : '';
                 const _eLabel = entry.energy == null ? '⚡️ —' : entry.energy === 0 ? BB.t('journal.energy.notEnough') : entry.energy <= 4 ? BB.t('journal.energy.less') : entry.energy <= 6 ? BB.t('journal.energy.normal') : entry.energy <= 8 ? BB.t('journal.energy.more') : BB.t('journal.energy.tooMuch');
-                const _sleepBuckets = new Set([5, 6.5, 8, 9.5, 11]);
-                const _sLabel = entry.sleep == null ? '?' : !_sleepBuckets.has(entry.sleep) ? `${entry.sleep}h` : entry.sleep <= 5 ? '≤5h' : entry.sleep < 7 ? '6-7h' : entry.sleep < 9 ? '7-9h' : entry.sleep < 10 ? '9-10h' : '10+h';
+                const _sLabel = entry.sleep == null ? '?' : BB.sleepTarget ? BB.sleepTarget.labelOf(entry.sleep) : `${entry.sleep}h`;
                 const _sqLabel = entry.sleepQuality === 'good' ? ' 😊' : entry.sleepQuality === 'bad' ? ' 😴' : entry.sleepQuality === 'unsure' ? ' 😐' : '';
                 return `<span style="white-space:nowrap">${_eLabel}</span><span style="white-space:nowrap">&nbsp;| 🛌 ${_sLabel}${_sqLabel}</span>${entry.steps != null ? `<span style="white-space:nowrap">&nbsp;| 🏃 ${entry.steps >= 1000 ? Math.round(entry.steps / 1000) + 'k' : entry.steps}</span>` : ''}${_achStr}`;
               })()}</div>
@@ -5878,13 +5902,21 @@ function _tt(k, vars, fallback) {
       { val:7,  label:BB.t('journal.energy.more'),      color:'#FF851B' },
       { val:10, label:BB.t('journal.energy.tooMuch'),   color:'#FF4136' },
     ];
-    const _FM_SLEEP_RANGES = [
-      { val:5,   label:'😫 ≤5h',   color:'#FF4136' },
-      { val:6.5, label:'😕 6–7h',  color:'#FF851B' },
-      { val:8,   label:'😊 7–9h',  color:'#2ECC40' },
-      { val:9.5, label:'😴 9–10h', color:'#0074D9' },
-      { val:11,  label:'💤 10+h',  color:'#7B68EE' },
-    ];
+    // The five coarse sleep choices. Values, labels and bands come from
+    // 😴 My usual sleep (js/shared/sleep-target.js): with nothing set they are
+    // the original ≤5h / 6–7h / 7–9h / 9–10h / 10+h at 5 / 6.5 / 8 / 9.5 / 11.
+    const _FM_SLEEP_BAND_STYLE = {
+      veryShort: { emoji:'😫', color:'#FF4136' },
+      short:     { emoji:'😕', color:'#FF851B' },
+      healthy:   { emoji:'😊', color:'#2ECC40' },
+      long:      { emoji:'😴', color:'#0074D9' },
+      veryLong:  { emoji:'💤', color:'#7B68EE' },
+    };
+    function _fmSleepRanges() {
+      return BB.sleepTarget.buckets().map(b => ({
+        val: b.val, label: `${_FM_SLEEP_BAND_STYLE[b.band].emoji} ${b.label}`, color: _FM_SLEEP_BAND_STYLE[b.band].color,
+      }));
+    }
 
     // ── Full spectrum scales ──────────────────────────────────────────────────
     // With the "Full spectrum" setting on, sleep and energy get the same
@@ -5905,7 +5937,7 @@ function _tt(k, vars, fallback) {
      * Emoji / label / colour for any sleep value in hours. Shared by the full
      * spectrum slider, the full spectrum wheel, the summary chips and the done
      * step, so a value picked in one place reads identically everywhere.
-     * Bands mirror _FM_SLEEP_RANGES so colours stay consistent with the coarse UI.
+     * Bands come from BB.sleepTarget, the same as _fmSleepRanges(), so colours stay consistent with the coarse UI.
      */
     function _fmSleepMeta(h) {
       const n = Number(h);
@@ -5913,12 +5945,12 @@ function _tt(k, vars, fallback) {
       const label = n <= _FM_SLEEP_FULL_MIN ? `≤${_FM_SLEEP_FULL_MIN}h`
         : n >= _FM_SLEEP_FULL_MAX ? `≥${_FM_SLEEP_FULL_MAX}h`
         : `${_fmtHours(n)}h`;
-      const _b = k => BB.t('journal.sleepBand.' + k);
-      if (n <= 5)  return { emoji:'😫', label, band:_b('veryShort'), color:'#FF4136' };
-      if (n < 7)   return { emoji:'😕', label, band:_b('short'),     color:'#FF851B' };
-      if (n <= 9)  return { emoji:'😊', label, band:_b('healthy'),   color:'#2ECC40' };
-      if (n <= 10) return { emoji:'😴', label, band:_b('long'),      color:'#0074D9' };
-      return { emoji:'💤', label, band:_b('veryLong'), color:'#7B68EE' };
+      // Bands follow 😴 My usual sleep; once it's set the middle one reads
+      // "Your usual" rather than "Healthy range".
+      const k = BB.sleepTarget.band(n);
+      const st = _FM_SLEEP_BAND_STYLE[k];
+      const bandText = (k === 'healthy' && BB.sleepTarget.get()) ? BB.t('sleepT.usual') : BB.t('journal.sleepBand.' + k);
+      return { emoji: st.emoji, label, band: bandText, color: st.color };
     }
 
     /** Trim a trailing .0 so 6.5 stays "6.5" but 7 reads "7", not "7.0". */
@@ -5992,7 +6024,7 @@ function _tt(k, vars, fallback) {
 
     /** Map exact sleep hours to the wheel bucket value (matches the label ranges). */
     function _fmSleepBucketOf(h) {
-      return h <= 5.5 ? 5 : h < 7 ? 6.5 : h <= 9 ? 8 : h <= 10 ? 9.5 : 11;
+      return BB.sleepTarget.bucketOf(h);
     }
 
     function _fmFormatPromptDate(d) {
@@ -6188,6 +6220,71 @@ function _tt(k, vars, fallback) {
       }
     }
     window._toggleMoodSpectrum = _toggleMoodSpectrum;
+
+    // ── 😴 My usual sleep (Journal Options; js/shared/sleep-target.js) ──────
+    // Two pickers, From and To, 6–10 h in halves; From = "Not set" clears it.
+    // Under them, the median of the last 30 nights (7+ logged) with a Use it
+    // button, since most people don't know their number.
+    function _sleepRecentMedian() {
+      const since = Date.now() - 30 * 86400000;
+      const v = (_allEntries || []).filter(e => e && e.sleep != null && isFinite(Number(e.sleep)) && Number(e.timestamp) >= since)
+        .map(e => Number(e.sleep)).sort((a, b) => a - b);
+      if (v.length < 7) return null;
+      const m = v.length % 2 ? v[(v.length - 1) / 2] : (v[v.length / 2 - 1] + v[v.length / 2]) / 2;
+      return Math.round(m * 10) / 10;
+    }
+    function _renderSleepTargetRow() {
+      const host = document.getElementById('sleepTargetRow');
+      if (!host || !BB.sleepTarget) return;
+      const ST = BB.sleepTarget, t = ST.get();
+      // "8,5 h" in German, "8.5 h" in English.
+      const f = v => { try { return Number(v).toLocaleString(BB.i18n.getLang ? BB.i18n.getLang() : undefined, { maximumFractionDigits: 1 }); } catch (_) { return ST.fmt(v); } };
+      const opt = (v, sel) => `<option value="${v}"${sel ? ' selected' : ''}>${f(v)} h</option>`;
+      const selStyle = 'flex:1 1 0;min-width:0;padding:8px 10px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;color:#495057;background:white;';
+      const med = _sleepRecentMedian();
+      const medHalf = med != null ? Math.min(10, Math.max(6, Math.round(med * 2) / 2)) : null;
+      const showUse = medHalf != null && !(t && t.lo <= medHalf && medHalf <= t.hi);
+      host.innerHTML = `
+        <label for="sleepTargetFrom" style="display:block;font-weight:600;color:#495057;font-size:0.95em;">${BB.t('sleepT.settingTitle')}</label>
+        <div style="color:var(--text-muted-ink);font-size:0.82em;margin:2px 0 8px;line-height:1.4;">${BB.t('sleepT.settingDesc')}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.85em;color:var(--text-muted-ink);">${BB.t('sleepT.from')}</span>
+          <select id="sleepTargetFrom" onchange="_onSleepTargetPick()" style="${selStyle}">
+            <option value=""${t ? '' : ' selected'}>${BB.t('sleepT.notSet')}</option>
+            ${ST.OPTIONS.map(v => opt(v, t && t.lo === v)).join('')}
+          </select>
+          <span style="font-size:0.85em;color:var(--text-muted-ink);">${BB.t('sleepT.to')}</span>
+          <select id="sleepTargetTo" onchange="_onSleepTargetPick()" style="${selStyle}"${t ? '' : ' disabled'} aria-label="${BB.t('sleepT.to')}">
+            ${t ? ST.OPTIONS.filter(v => v >= t.lo).map(v => opt(v, t.hi === v)).join('') : '<option>–</option>'}
+          </select>
+        </div>
+        ${t ? '' : `<div style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;">${BB.t('sleepT.defaultNote')}</div>`}
+        ${med != null ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;color:var(--text-muted-ink);font-size:0.8em;">
+            <span>${BB.t('sleepT.hint', { h: f(med) })}</span>
+            ${showUse ? `<button type="button" onclick="_useSleepTargetHint(${medHalf})" class="btn-outline-orange" style="flex:none;padding:4px 10px;background:white;color:var(--brand-ink);border:1.5px solid var(--brand-primary);border-radius:8px;cursor:pointer;font-size:0.95em;font-weight:600;">${BB.t('sleepT.useHint')}</button>` : ''}
+          </div>` : ''}`;
+    }
+    function _onSleepTargetPick() {
+      const from = document.getElementById('sleepTargetFrom');
+      const to = document.getElementById('sleepTargetTo');
+      if (!from || !from.value) { BB.sleepTarget.set(null, null); return; }
+      const lo = parseFloat(from.value);
+      const cur = BB.sleepTarget.get();
+      // A new From with no To yet (or a To now below it) starts as a one-value range.
+      let hi = (to && !to.disabled && to.value && cur) ? parseFloat(to.value) : lo;
+      if (!(hi >= lo)) hi = lo;
+      BB.sleepTarget.set(lo, hi);
+    }
+    function _useSleepTargetHint(h) { BB.sleepTarget.set(h, h); }
+    window._onSleepTargetPick = _onSleepTargetPick;
+    window._useSleepTargetHint = _useSleepTargetHint;
+    // Everything that draws sleep in a band follows the setting at once.
+    document.addEventListener('bb:sleeptarget', () => {
+      _renderSleepTargetRow();
+      _applySleepTargetToForm();
+      if (typeof _fmActive !== 'undefined' && _fmActive) _renderFocusedStep();
+    });
+    document.addEventListener('bb:languagechange', () => _renderSleepTargetRow());
 
     // Switch focus mode between the spinner wheel (default) and the plain
     // step-by-step list. The switch is "Plain list", so it starts unticked:
@@ -7703,10 +7800,13 @@ function _tt(k, vars, fallback) {
      */
     function _suggestMoodFromHealth(steps, sleepH) {
       if (steps == null && sleepH == null) return null;
-      if (sleepH != null && sleepH >= 7 && sleepH <= 9) return 'stable';
+      // Sleep thresholds follow 😴 My usual sleep (7–9 h when not set: the
+      // original ≥7 & ≤9 stable, ≥9.5 low, ≤5.5 elevated).
+      const _sr = BB.sleepTarget.range();
+      if (sleepH != null && sleepH >= _sr.lo && sleepH <= _sr.hi) return 'stable';
       let score = 0; // negative → low, positive → elevated
       if (steps != null)  { if (steps < 3000)  score--; else if (steps > 15000) score++; }
-      if (sleepH != null) { if (sleepH >= 9.5) score--; else if (sleepH <= 5.5) score++; }
+      if (sleepH != null) { if (sleepH >= _sr.hi + 0.5) score--; else if (sleepH <= _sr.lo - 1.5) score++; }
       return score < 0 ? 'low' : score > 0 ? 'elevated' : 'stable';
     }
 
@@ -8302,7 +8402,7 @@ function _tt(k, vars, fallback) {
               : _fmSleepError === 'nodata' ? '🤷 No sleep data found — try again'
               : '📱 ' + _syncSourceLabel();
             const _syncBtn = _showSleepSyncBtn ? `<button onclick="importSleepFromHealth()" style="width:100%;padding:11px 16px;margin-bottom:14px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;">${_syncText}</button>` : '';
-            const _syncedRange = (_sleepHealthSynced && !_fmSleepClear) ? _FM_SLEEP_RANGES.find(r => r.val === _committedBucket) : null;
+            const _syncedRange = (_sleepHealthSynced && !_fmSleepClear) ? _fmSleepRanges().find(r => r.val === _committedBucket) : null;
             const _bannerCol = _syncedRange ? _syncedRange.color : '#51cf66';
             const _syncedBanner = (_sleepHealthSynced && !_fmSleepClear)
               ? `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;margin-bottom:10px;background:${_bannerCol}18;border:1.5px solid ${_bannerCol}55;border-radius:10px;">
@@ -8339,7 +8439,7 @@ function _tt(k, vars, fallback) {
                 // here. Without it the step would be unreachable in this mode.
                 + `<p style="text-align:center;margin:10px 0 0;"><button onclick="_fmSleepSliderQuality(document.getElementById('fmSlscSlider').value)" style="background:none;border:none;color:var(--brand-ink);font-size:0.8em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px;-webkit-tap-highlight-color:transparent;">${BB.t('journal.sleepQualityAdd')}</button></p>`;
             }
-            const _sleepCards = `<div class="fm-card-grid">${_FM_SLEEP_RANGES.map(r => {
+            const _sleepCards = `<div class="fm-card-grid">${_fmSleepRanges().map(r => {
               const isSel = _committedBucket === r.val;
               const [emoji, ...rest] = r.label.split(' ');
               const text = (isSel && _sleepHealthSynced && !_fmSleepClear) ? `${selectedSleep}h` : rest.join(' ');
@@ -8389,7 +8489,7 @@ function _tt(k, vars, fallback) {
               ? `<p style="text-align:center;margin:0;"><button onclick="importSleepFromHealth()" style="background:none;border:none;color:var(--brand-ink);font-size:0.82em;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;-webkit-tap-highlight-color:transparent;">${_fmSleepError === 'nodata' ? '🤷 No sleep data found — try again' : '❌ Sync failed — try again'}</button></p>` : '';
             return _fmHeroHtml() + _retryLinkFull + _fullSleepWheel;
           }
-          const _sleepWheel = _fmWheelHtml(_FM_SLEEP_RANGES.map(r => {
+          const _sleepWheel = _fmWheelHtml(_fmSleepRanges().map(r => {
             const isSel = _committedBucket === r.val;
             const [emoji, ...rest] = r.label.split(' ');
             // Tapping the already-synced bucket keeps the exact synced hours;
@@ -8818,7 +8918,8 @@ function _tt(k, vars, fallback) {
           // still reads "🪫 Less than usual" / "7h" rather than a bare number.
           const eLabel = {0:BB.t('journal.energy.notEnough'),3:BB.t('journal.energy.less'),5:BB.t('journal.energy.normal'),7:BB.t('journal.energy.more'),10:BB.t('journal.energy.tooMuch')}[selectedEnergy]
             || (selectedEnergy != null ? `${_fmEnergyMeta(selectedEnergy).emoji} ${_fmEnergyMeta(selectedEnergy).label}` : selectedEnergy);
-          const sLabel = {5:'≤5h',6.5:'6–7h',8:'7–9h',9.5:'9–10h',11:'10+h'}[selectedSleep]
+          const _sRng = _fmSleepRanges().find(r => r.val === selectedSleep);
+          const sLabel = (_sRng && _sRng.label.replace(/^\S+\s*/, ''))
             || (selectedSleep != null ? _fmSleepMeta(selectedSleep).label : selectedSleep + 'h');
           const notesVal = (document.getElementById('fmNotesInput')||document.getElementById('notes')||{}).value||'';
           const intentionVal = (document.getElementById('fmIntentionInput')||{}).value ?? selectedIntention;
@@ -9037,7 +9138,7 @@ function _tt(k, vars, fallback) {
           if (lvl) { html = lvl.label.split(' ')[0]; borderColor = lvl.color; }
           else if (selectedEnergy != null) { const m = _fmEnergyMeta(selectedEnergy); html = m.emoji; borderColor = m.color; }
         } else if (s.id === 'sleep' && !_fmSleepClear) {
-          const rng = _FM_SLEEP_RANGES.find(r => r.val === selectedSleep);
+          const rng = _fmSleepRanges().find(r => r.val === selectedSleep);
           const _sm = selectedSleep != null ? _fmSleepMeta(selectedSleep) : null;
           const hrsText = (_sleepHealthSynced && selectedSleep != null) ? `${selectedSleep}h` : (rng ? rng.label.replace(/^\S+\s*/, '') : (_sm ? _sm.label : null));
           const rngColor = rng ? rng.color : (_sm ? _sm.color : '#667eea');
@@ -9385,6 +9486,10 @@ function _tt(k, vars, fallback) {
       }
     }
 
+    // Sleep's weight in the Bear's estimate, by band (BB.sleepTarget). With no
+    // usual sleep set: ≤5 h +20, <7 h +5, ≤9 h 0, ≤10 h −8, more −15, as always.
+    const _SLEEP_BAND_SCORE = { veryShort: 20, short: 5, healthy: 0, long: -8, veryLong: -15 };
+
     // Estimate mood from a saved entry object (mirrors _estimateMoodState logic)
     function _estimateMoodFromEntry(e) {
       const fields = [];
@@ -9392,10 +9497,7 @@ function _tt(k, vars, fallback) {
       // Energy: extremes (0/10) are strong signals; middle values (3/7) are mild.
       // This prevents lethargic energy from dominating when few other fields are answered.
       _f(_energyScore(e.energy), -50, 50);
-      if (e.sleep != null) {
-        const s = e.sleep;
-        _f(s <= 5 ? 20 : s < 7 ? 5 : s <= 9 ? 0 : s <= 10 ? -8 : -15, -15, 20);
-      }
+      if (e.sleep != null) _f(_SLEEP_BAND_SCORE[BB.sleepTarget.band(e.sleep)] || 0, -15, 20);
       if (e.medication === 'not-taken' && !e.medSome) _f(8, 0, 8); // not taking meds → manic/hypomanic signal; taken is neutral (a 🤏 Some day can be a prescribed lower dose: neutral)
       if (e.irritability != null) _f(e.irritability === 'yes' ? 8 : e.irritability === 'medium' ? 0 : -4, -4, 8);
       if (e.anxiety != null)     _f(e.anxiety === 'high' ? -10 : e.anxiety === 'medium' ? 0 : 5, -10, 5);
@@ -9437,12 +9539,9 @@ function _tt(k, vars, fallback) {
       // This prevents lethargic energy from dominating when few other fields are answered.
       _field(_energyScore(selectedEnergy), -50, 50);
 
-      // Sleep: −15 (depressed) → +20 (manic, sleep-deprived)
-      if (selectedSleep != null) {
-        const sScore = selectedSleep <= 5 ? 20 : selectedSleep < 7 ? 5 :
-                       selectedSleep <= 9 ? 0  : selectedSleep <= 10 ? -8 : -15;
-        _field(sScore, -15, 20);
-      }
+      // Sleep: −15 (depressed) → +20 (manic, sleep-deprived), banded by
+      // 😴 My usual sleep
+      if (selectedSleep != null) _field(_SLEEP_BAND_SCORE[BB.sleepTarget.band(selectedSleep)] || 0, -15, 20);
 
       // Medication: not taken is a manic/hypomanic signal; taken is neutral (no score contribution)
       if (selectedMedication === 'not-taken') _field(8, 0, 8);
@@ -9596,13 +9695,17 @@ function _tt(k, vars, fallback) {
       if (lagMood.length >= 8) {
         const r = pearson(lagMood.map(p => p.sleep), lagMood.map(p => p.nextMood));
         if (r !== null && Math.abs(r) >= 0.1) {
-          const hi = lagMood.filter(p => p.sleep >= 7);
-          const lo = lagMood.filter(p => p.sleep < 7);
+          // Split at the bottom of 😴 My usual sleep (7 h when not set).
+          const _split = BB.sleepTarget.range().lo;
+          const hi = lagMood.filter(p => p.sleep >= _split);
+          const lo = lagMood.filter(p => p.sleep < _split);
           let detail = '';
           if (hi.length >= 3 && lo.length >= 3) {
             const avgHi = (hi.reduce((s, p) => s + p.nextMood, 0) / hi.length).toFixed(1);
             const avgLo = (lo.reduce((s, p) => s + p.nextMood, 0) / lo.length).toFixed(1);
-            detail = T('sleepMoodDetail', { hi: msFmt(avgHi), lo: msFmt(avgLo) });
+            detail = BB.sleepTarget.get()
+              ? BB.t('sleepT.moodDetail', { h: BB.sleepTarget.fmt(_split), hi: msFmt(avgHi), lo: msFmt(avgLo) })
+              : T('sleepMoodDetail', { hi: msFmt(avgHi), lo: msFmt(avgLo) });
           }
           const accent = r >= 0.3 ? '#51cf66' : r <= -0.3 ? '#ff6b6b' : '#adb5bd';
           results.push(ins('😴', T('sleepMoodTitle'),
@@ -11255,11 +11358,12 @@ function _tt(k, vars, fallback) {
         b.style.color = '#495057';
         if (b.dataset.baseLabel) b.textContent = b.dataset.baseLabel;
       });
-      const defaultSleepBtn = document.querySelector('[data-sleep="8"]');
+      const _defSleepVal = BB.sleepTarget ? BB.sleepTarget.buckets()[2].val : 8;
+      const defaultSleepBtn = document.querySelector(`.sleep-btn[data-sleep="${_defSleepVal}"]`);
       if (defaultSleepBtn) {
         defaultSleepBtn.classList.add('selected');
-        defaultSleepBtn.style.background = defaultSleepBtn.dataset.color || getSleepColor(8);
-        defaultSleepBtn.style.color = _onFillInk(defaultSleepBtn.dataset.color || getSleepColor(8));
+        defaultSleepBtn.style.background = defaultSleepBtn.dataset.color || getSleepColor(_defSleepVal);
+        defaultSleepBtn.style.color = _onFillInk(defaultSleepBtn.dataset.color || getSleepColor(_defSleepVal));
       }
 
       document.querySelectorAll('.medication-btn').forEach(b => b.classList.remove('selected'));
@@ -11591,6 +11695,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           // The medication list itself (it was missing until 1.44) and the
           // per-medicine logs; all merged back in on import, never replaced.
           'currentMedList', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans',
+          'sleepTarget', // 😴 My usual sleep
         ];
         const settings = {};
         _settingsKeys.forEach(k => {
@@ -13449,6 +13554,11 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               if (Array.isArray(v) && v.length) _secPatch[f] = BB.medLog.mergeIn(kind, v);
             });
           }
+          // 😴 My usual sleep: the backup's value (already on the device from the loop above).
+          if (settings.sleepTarget !== undefined) {
+            _secPatch.sleepTarget = settings.sleepTarget;
+            document.dispatchEvent(new CustomEvent('bb:sleeptarget'));
+          }
           if (currentUser && window.db && Object.keys(_secPatch).length) BB.secure.saveSettings(currentUser.uid, _secPatch);
           // Medication history: merged with this device's, never replaced; an
           // account gets it encrypted (js/shared/secure-store.js).
@@ -13955,6 +14065,8 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         'breathPromptsEnabled', // 🌬️ Breathing prompts (off again)
       ];
       _keys.forEach(k => localStorage.removeItem(k));
+      // 😴 My usual sleep back to not set (7–9 h), on the account too.
+      if (BB.sleepTarget && BB.sleepTarget.get()) BB.sleepTarget.set(null, null);
       // Clear custom field toggle keys, label overrides, and tracking prefs (trackCustom_*, _labelOverride_*, trackXxx)
       Object.keys(localStorage).filter(k =>
         k.startsWith('trackCustom_') || k.startsWith('_labelOverride_') ||
@@ -14157,7 +14269,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         localStorage.removeItem('customReminders');
         localStorage.removeItem('currentMedList');
         localStorage.removeItem('medHistory');
-        ['medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey'].forEach(k => localStorage.removeItem(k));
+        ['medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'sleepTarget', 'bbMedsCompareKey'].forEach(k => localStorage.removeItem(k));
         try { if (window.BBMeds) BBMeds.clearDueReminder(); } catch (_) {}
         localStorage.removeItem('dailyGoals');
         localStorage.removeItem('dailyBudget');
@@ -16728,7 +16840,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       applyTrackingPrefs();
       if (page === 'mobile') { _settingsShow('settingsMobilePanel'); _updateNativePinBtn(); }
       else if (page === 'focus') _settingsShow('settingsAdvancedPanel');
-      else if (page === 'journal') { _settingsShow('settingsAdvancedJournalPanel'); _renderStepToggles(); }
+      else if (page === 'journal') { _settingsShow('settingsAdvancedJournalPanel'); _renderStepToggles(); _renderSleepTargetRow(); }
       else if (page === 'stats') _settingsShow('settingsAdvancedMorePanel');
     }
     function _settingsToIndex() {
@@ -19802,8 +19914,10 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         // Guard against invalid/zero timestamps returning nonsense duration
         if (!hours || hours <= 0 || isNaN(hours)) { showNoData(); return; }
 
-        // Range-based bucket: matches the label ranges (≤5h / 6-7h / 7-9h / 9-10h / 10+h)
+        // Range-based bucket: matches the label ranges (≤5h / 6-7h / 7-9h / 9-10h / 10+h,
+        // or the ones 😴 My usual sleep gives)
         function _sleepBucketVal(h) {
+          if (BB.sleepTarget) return BB.sleepTarget.bucketOf(h);
           if (h <= 5.5) return 5;
           if (h < 7)   return 6.5;
           if (h <= 9)  return 8;

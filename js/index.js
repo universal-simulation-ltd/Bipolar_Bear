@@ -1461,7 +1461,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
       // raw localStorage.
       const otherKeysToRemove = [
         'moodDefinitions', 'copingStrategies',
-        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'bbMedsCompareKey', 'bbBloodChartTest', 'dailyGoals',
+        'currentMedList', 'medHistory', 'medSideEffects', 'medBloodLevels', 'medPastChanges', 'medBloodPlans', 'sleepTarget', 'bbMedsCompareKey', 'bbBloodChartTest', 'dailyGoals',
         'unlockedAchievements',
       ];
       otherKeysToRemove.forEach(k => localStorage.removeItem(k));
@@ -1983,7 +1983,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
         try { BB.safetyPlan.clearLocal(); BB.lowMoodSupport.clearLocal(); } catch (_) {}
       try { BB.secure.clearPending(); } catch (_) {}
         ['moodDefinitions','copingStrategies','moodMemories','survivalGratitude',
-         'rememberThis','myCommitments','customReminders','currentMedList','medHistory','medSideEffects','medBloodLevels','medPastChanges','medBloodPlans','bbMedsCompareKey',
+         'rememberThis','myCommitments','customReminders','currentMedList','medHistory','medSideEffects','medBloodLevels','medPastChanges','medBloodPlans','sleepTarget','bbMedsCompareKey',
          'dailyGoals','dailyBudget','logoVariant'].forEach(k => localStorage.removeItem(k));
 
         localStorage.setItem('focusedModeEnabled', '1');
