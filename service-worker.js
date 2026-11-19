@@ -2083,7 +2083,11 @@
 //   star it (again to unstar). The scale's chosen number keeps 28px under the
 //   phone "button min-height 44px" rule, so it no longer runs into the next row
 //   (2026-11-19, James). js/shared/breathing.js, css/journal.css.
-const CACHE_NAME = 'bipolarbear-v427';
+// v428: Breathing asks the iPhone app ("breathAudio" handler) for a
+//   playback + mix-with-others audio session while the player is open, so its
+//   sound follows the volume buttons, not the silent switch (2026-11-19, James).
+//   js/shared/breathing.js. Needs the native build with the handler.
+const CACHE_NAME = 'bipolarbear-v428';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

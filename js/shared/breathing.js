@@ -398,10 +398,24 @@
   }
   function onHide() { if (P && P.running && document.visibilityState === 'hidden') stop(); }
 
+  // iPhone app: while the player is open its sound is media that mixes with
+  // other audio, so it follows the volume buttons instead of the silent switch
+  // and music keeps playing (BridgeViewController "breathAudio", 2026-11-19).
+  // Android already plays it on the media volume; the web and older app builds
+  // have no handler, so this does nothing there.
+  function nativeAudio(on) {
+    try {
+      var h = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.breathAudio;
+      if (h) h.postMessage({ on: !!on });
+    } catch (_) {}
+  }
+  window.addEventListener('pagehide', function () { nativeAudio(false); });
+
   function open(o) {
     o = o || {};
     if (P) close();
     injectStyle();
+    nativeAudio(true);
     var back = document.createElement('div');
     back.className = 'bbbr-back';
     back.innerHTML = '<div class="bbbr-sheet" role="dialog" aria-modal="true" aria-labelledby="bbbrTitle"></div>';
@@ -421,6 +435,7 @@
     stop();
     P = null;
     p.back.remove();
+    nativeAudio(false);
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('visibilitychange', onHide);
     try { if (p.opener && p.opener.focus && document.contains(p.opener)) p.opener.focus(); } catch (_) {}
