@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🛌 **iPhone: a night with a long wake-up counts in full.** If you were awake for an hour or two in the middle of the night, the sleep from Apple Health only counted the part before you woke (7h 42m where Health said 10h 26m). A wake-up of up to 3 hours now stays part of the same night; a nap earlier in the day is still kept apart. Needs the next phone update. (native `e5e1efd`)
 - ⭐ **Breathing: double-tap a tab for your favourite.** The Favourite button is gone from the breathing player. Double-tap an exercise's tab at the top to make it your favourite (it gets a ★ and goes first), and double-tap it again to unstar it. The ☆ on each card in the Survival Kit list still works. (`CACHE_NAME` v427)
 - 🎚️ **The scale's chosen number stays in its row.** On phones the highlight behind the chosen number was taller than the row and ran into the tracker below. (`CACHE_NAME` v427)
 - ➕ **Additional tracking waits for you.** Answering the last tracker no longer jumps to the next step. You stay on the page, so you can still change an answer or open ✏ Track Data, and press **Next →** when you're done. (`CACHE_NAME` v426)
