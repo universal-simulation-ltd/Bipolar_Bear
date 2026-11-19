@@ -5,6 +5,8 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- ⭐ **Breathing: double-tap a tab for your favourite.** The Favourite button is gone from the breathing player. Double-tap an exercise's tab at the top to make it your favourite (it gets a ★ and goes first), and double-tap it again to unstar it. The ☆ on each card in the Survival Kit list still works. (`CACHE_NAME` v427)
+- 🎚️ **The scale's chosen number stays in its row.** On phones the highlight behind the chosen number was taller than the row and ran into the tracker below. (`CACHE_NAME` v427)
 - ➕ **Additional tracking waits for you.** Answering the last tracker no longer jumps to the next step. You stay on the page, so you can still change an answer or open ✏ Track Data, and press **Next →** when you're done. (`CACHE_NAME` v426)
 - 🌬️ **Breathing: tap the circle to start.** The Start button is gone: tap the circle in the middle to start, and tap it again to stop. A line under the circle says so, in every language. (`CACHE_NAME` v425)
 - 🌙 **Breathing reads in dark mode.** "Ready when you are" and the countdown were dark teal on the dark background; the circle is now a deeper blue and the words are light. (`CACHE_NAME` v425)

@@ -175,7 +175,7 @@
     '.bbbr-x{grid-column:3;width:44px;height:44px;border:none;background:none;font-size:1.2em;color:#6c5f52;cursor:pointer;border-radius:50%;font-family:inherit}' +
     '.bbbr-chips{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;margin:0 -4px;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}' +
     '.bbbr-chips::-webkit-scrollbar{display:none}' +
-    '.bbbr-chip{flex:0 0 auto;min-height:40px;padding:8px 14px;border-radius:20px;border:1.5px solid #e6dccd;background:#fff;color:inherit;font:inherit;font-size:.86em;font-weight:700;cursor:pointer;white-space:nowrap}' +
+    '.bbbr-chip{touch-action:manipulation;flex:0 0 auto;min-height:40px;padding:8px 14px;border-radius:20px;border:1.5px solid #e6dccd;background:#fff;color:inherit;font:inherit;font-size:.86em;font-weight:700;cursor:pointer;white-space:nowrap}' +
     '.bbbr-chip[aria-checked="true"]{background:#0b7285;border-color:#0b7285;color:#fff}' +
     '.bbbr-desc{font-size:.84em;color:#5c534a;line-height:1.45;margin:4px 4px 0;min-height:2.9em}' +
     '.bbbr-pat{font-size:.8em;font-weight:700;color:#0b7285;margin-top:4px}' +
@@ -259,7 +259,6 @@
     var seg = MINS.map(function (m) {
       return '<button type="button" role="radio" data-m="' + m + '" aria-checked="' + (m === P.mins) + '">' + esc(tr('mins', { n: m })) + '</button>';
     }).join('');
-    var isFav = favourite() === P.id;
     P.back.querySelector('.bbbr-sheet').innerHTML =
       '<div class="bbbr-top"><h2 class="bbbr-h" id="bbbrTitle" tabindex="-1">🌬️ ' + esc(tr('title')) + '</h2>' +
       '<button type="button" class="bbbr-x" data-nf-close aria-label="' + esc(tr('close')) + '">✕</button></div>' +
@@ -274,7 +273,7 @@
       '<div class="bbbr-left" aria-hidden="true">' + esc(tr('left', { t: fmt(P.mins * 60000) })) + '</div>' +
       '<div class="bbbr-opts"><span class="bbbr-seg" role="radiogroup" aria-label="' + esc(tr('length')) + '">' + seg + '</span>' +
       '<button type="button" class="bbbr-tog" data-act="mute" aria-pressed="' + muted() + '">🔇 ' + esc(tr('mute')) + '</button>' +
-      '<button type="button" class="bbbr-tog" data-act="fav" aria-pressed="' + isFav + '">' + (isFav ? '★ ' : '☆ ') + esc(tr('fav')) + '</button></div>' +
+      '</div>' +
       '<p class="bbbr-safe">' + esc(tr('safety')) + '</p>';
   }
 
@@ -352,6 +351,19 @@
     if (b.classList.contains('bbbr-tap')) { if (P.running) stop(); else start(); return; }
     if (b.classList.contains('bbbr-chip')) {
       var id = b.getAttribute('data-id');
+      // Double-tap a tab to make it the favourite, or tap the ★ one twice to
+      // unstar it (the suite's double-tap rule; James, 2026-11-19: no
+      // Favourite button in the player).
+      var now = Date.now();
+      if (P.lastChip === id && now - P.lastChipAt < 400) {
+        P.lastChip = null;
+        setFavourite(id);
+        Array.prototype.forEach.call(P.back.querySelectorAll('.bbbr-chip'), function (x) {
+          x.textContent = (x.getAttribute('data-id') === favourite() ? '★ ' : '') + name(get(x.getAttribute('data-id')));
+        });
+        return;
+      }
+      P.lastChip = id; P.lastChipAt = now;
       if (id === P.id) return;
       stop(); P.id = id; render(); focusSel('.bbbr-chip[data-id="' + id + '"]');
       return;
@@ -371,15 +383,6 @@
       b.setAttribute('aria-pressed', String(m));
       if (P.audio) ramp(P.audio.master.gain, m ? 0 : 1, P.audio.ac.currentTime, 0.2);
       return;
-    }
-    if (act === 'fav') {
-      setFavourite(P.id);
-      var on = favourite() === P.id;
-      b.setAttribute('aria-pressed', String(on));
-      b.textContent = (on ? '★ ' : '☆ ') + tr('fav');
-      Array.prototype.forEach.call(P.back.querySelectorAll('.bbbr-chip'), function (x) {
-        x.textContent = (x.getAttribute('data-id') === favourite() ? '★ ' : '') + name(get(x.getAttribute('data-id')));
-      });
     }
   }
   function focusSel(sel) { try { var f = el(sel); if (f) f.focus(); } catch (_) {} }

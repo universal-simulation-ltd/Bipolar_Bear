@@ -3047,6 +3047,9 @@ html.theme-dark .set-idx-row { border-color: var(--dk-line); color: var(--dk-tex
    narrower number targets so five fit the answer column. */
 .cf-scale-name { align-self: start; margin-top: 8px; }
 .cf-scale.cf-in-col .cf-scale-tick { width: 36px; }
+/* The phone-width "button { min-height: 44px }" made the chosen number's tint
+   44px tall, into the next row (James, 2026-11-19): the numbers keep 28px. */
+.cf-scale .cf-scale-tick { min-height: 0; }
 html.theme-dark .cf-type-btn { background: var(--dk-surface-2, #30281f); border-color: var(--dk-line, #4a3d30); color: var(--dk-text, #f5ebdd); }
 html.theme-dark .cf-scale-title { color: var(--dk-text, #f5ebdd); }
 html.theme-dark .cf-scale input[type="range"]::-webkit-slider-runnable-track { background: var(--dk-line, #4a3d30); }

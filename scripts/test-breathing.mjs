@@ -210,15 +210,17 @@ console.log('Survival Kit: the section, the favourite and the player');
   await sleep(100);
   assert.deepEqual(await page.evaluate(() => [localStorage.getItem('bbBreathMins'), localStorage.getItem('bbBreathMute'), document.querySelector('.bbbr-left').textContent,
     document.querySelector('.bbbr-tog[data-act="mute"]').getAttribute('aria-pressed')]), ['3', '1', '3:00 left', 'true']);
-  // The ★ in the player makes the shown exercise the favourite.
-  await page.click('.bbbr-tog[data-act="fav"]');
+  // No Favourite button in the player: double-tapping a tab makes it the favourite.
+  assert.equal(await page.evaluate(() => !!document.querySelector('.bbbr-tog[data-act="fav"]')), false, 'the Favourite button is gone');
+  await page.dblclick('.bbbr-chip[data-id="box"]');
   await sleep(100);
   assert.equal(await page.evaluate(() => localStorage.getItem('bbBreathFav')), 'box');
+  assert.equal(await page.evaluate(() => document.querySelector('.bbbr-chip[data-id="box"]').textContent.startsWith('★ ')), true, 'the tab shows ★');
   await page.keyboard.press('Escape');
   await sleep(200);
   assert.equal(await playerOpen(page), false, 'Escape did not close it');
   assert.equal(await page.evaluate(() => document.querySelector('#skBreathList .bbbr-card .bbbr-card-name').firstChild.textContent), 'Box breathing', 'the list follows the player\'s ★');
-  ok('3 min and Mute are kept; ★ Favourite in the player; Escape closes it; the list follows');
+  ok('3 min and Mute are kept; double-tap a tab makes it the favourite (no button); Escape closes it; the list follows');
 
   // Reopen: remembers 3 min + mute.
   await page.click('#skBreathList [data-play="even"]');
