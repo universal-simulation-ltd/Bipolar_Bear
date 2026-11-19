@@ -5003,7 +5003,54 @@ function demoData() {
 // through here so the faded cards can't be dropped by one code path.
 function announcementFeed() {
   const published = localPosts.length ? sortPosts(localPosts) : announcementPosts();
-  return [...visibleSuggestions(), ...published];
+  return [...visibleSuggestions(), ...builtInAnnouncements(), ...published];
+}
+
+// Built-in announcements that sit at the top of the tab whatever the board
+// holds. They live in code, not Firestore, so the 7-day sweep can't take them
+// and they need no admin post. Remove an entry to take it down.
+//
+// Bipolar Bear on the stores (2026-11-19, James): the localised Play feature
+// graphic (images/announcements/bear-stores-<lang>.jpg) plus App Store and
+// Google Play badges that open the listings. Hidden inside the Bipolar Bear
+// phone app itself, where it would be telling people to get the app they're in.
+const BEAR_STORE_LINKS = {
+  appStore:   'https://apps.apple.com/gb/app/bipolar-bear/id6766637453',
+  googlePlay: 'https://play.google.com/store/apps/details?id=com.bipolarbear.app',
+};
+const ANN_IMAGE_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'sv', 'zh'];
+function builtInAnnouncements() {
+  const inBearApp = !_isAnonymousApp && !!(window.isNative && window.isNative());
+  if (inBearApp) return [];
+  const lang = (window.BB && BB.i18n) ? String(BB.i18n.getLang() || 'en').split('-')[0] : 'en';
+  return [{
+    id: 'ann-bear-stores', isAnnouncement: true, timestamp: null,
+    text: _wt('anon.feed.annBearStores'),
+    image: `images/announcements/bear-stores-${ANN_IMAGE_LANGS.includes(lang) ? lang : 'en'}.jpg`,
+    imageAlt: _wt('anon.feed.annBearStoresAlt'),
+    storeLinks: BEAR_STORE_LINKS,
+  }];
+}
+
+// Official-style store badges (same artwork as welcome.html's sprite, inlined
+// so the board needs no sprite of its own). Labels stay in English, as on the
+// real Apple / Google badges.
+function _storeBadgesHtml(links) {
+  const apple = `<a class="ann-store-badge" href="${esc(links.appStore)}" target="_blank" rel="noopener"
+      aria-label="${esc(_wt('anon.feed.annAppStore'))}" title="${esc(_wt('anon.feed.annAppStore'))}">
+    <svg viewBox="0 0 180 56" aria-hidden="true"><rect x="1" y="1" width="178" height="54" rx="12" fill="#000" stroke="rgba(255,255,255,0.22)"/>
+      <path fill="#fff" transform="translate(14,10) scale(1.35)" d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
+      <text x="56" y="23" fill="#fff" font-family="Nunito,sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Download on the</text>
+      <text x="55" y="44" fill="#fff" font-family="Nunito,sans-serif" font-size="21" font-weight="800" letter-spacing="-0.3">App Store</text></svg></a>`;
+  const google = `<a class="ann-store-badge" href="${esc(links.googlePlay)}" target="_blank" rel="noopener"
+      aria-label="${esc(_wt('anon.feed.annGooglePlay'))}" title="${esc(_wt('anon.feed.annGooglePlay'))}">
+    <svg viewBox="0 0 180 56" aria-hidden="true"><rect x="1" y="1" width="178" height="54" rx="12" fill="#000" stroke="rgba(255,255,255,0.22)"/>
+      <g transform="translate(15,13) scale(1.3)">
+        <polygon fill="#00c3ff" points="4.5,2.2 4.5,12 13.2,12"/><polygon fill="#00d968" points="4.5,12 4.5,21.8 13.2,12"/>
+        <polygon fill="#ff5a44" points="4.5,2.2 13.2,12 20.5,12"/><polygon fill="#ffcb26" points="4.5,21.8 13.2,12 20.5,12"/></g>
+      <text x="56" y="22" fill="#fff" font-family="Nunito,sans-serif" font-size="9" font-weight="700" letter-spacing="1.6">GET IT ON</text>
+      <text x="55" y="44" fill="#fff" font-family="Nunito,sans-serif" font-size="20" font-weight="800" letter-spacing="-0.3">Google Play</text></svg></a>`;
+  return `<div class="ann-store-badges">${apple}${google}</div>`;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -6200,6 +6247,8 @@ function renderAnnouncement(p) {
       <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);">BipolarBear</div>
     </div>
     <div class="post-text" data-tt>${esc(p.text)}</div>
+    ${p.image ? `<img class="ann-image" src="${esc(p.image)}" alt="${esc(p.imageAlt || '')}" width="1024" height="500" loading="lazy" decoding="async">` : ''}
+    ${p.storeLinks ? _storeBadgesHtml(p.storeLinks) : ''}
     ${wikiBtn}
   </div>`;
 }

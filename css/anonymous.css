@@ -542,6 +542,13 @@
       -webkit-tap-highlight-color: transparent;
     }
     .ann-wiki-link:active { background: var(--yellow); color: var(--on-yellow); }
+    /* Built-in announcement picture + store badges (builtInAnnouncements) */
+    .ann-image { display: block; width: 100%; height: auto; aspect-ratio: 1024 / 500; margin-top: 10px; border-radius: 12px; object-fit: cover; background: #ff9a3c; }
+    .ann-store-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .ann-store-badge { display: block; flex: 0 1 150px; min-width: 120px; line-height: 0; border-radius: 10px; -webkit-tap-highlight-color: transparent; transition: transform 0.15s ease; }
+    .ann-store-badge svg { display: block; width: 100%; height: auto; }
+    .ann-store-badge:active { transform: scale(0.96); }
+    .ann-store-badge:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
     /* Suggested announcement awaiting the admin. Deliberately faded and
        dashed — it is not on the board yet, and must never read as one that is.
        Seen only by its author and by the admin (see visibleSuggestions). */

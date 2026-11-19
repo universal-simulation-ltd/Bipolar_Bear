@@ -174,6 +174,11 @@ copyDir('vendor');
 // bears; these are ~20 KB thumbnails of images/moods/*.png.
 copyDir('images/moods/sm');
 
+// ─── 7a2. Built-in announcement pictures ─────────────────────────────
+// builtInAnnouncements() in js/anonymous.js: the localised Bipolar Bear
+// feature graphic (~75 KB a language) on the store-launch card.
+copyDir('images/announcements');
+
 // ─── 7b. Wiki data ──────────────────────────────────────────────────
 // JSON files fetched at runtime by the Wiki tab renderers in
 // js/anonymous.js (renderWikiGroups / renderWikiWisdom).

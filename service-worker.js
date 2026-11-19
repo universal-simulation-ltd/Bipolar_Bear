@@ -2097,7 +2097,12 @@
 //   gains 📖 Wiki and its header tabs go below 768px. fab.js, js/index.js,
 //   js/journal.js, css/survival-kit.css, js/survival-kit.js, anonymous.html,
 //   css/anonymous.css, js/anonymous.js, js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v430';
+// v431: Bipolar Anonymous's 📢 tab opens on a built-in card: Bipolar Bear is
+//   on iPhone and Android, with the localised feature graphic
+//   (images/announcements/) and App Store / Google Play badges, 10 languages
+//   (2026-11-19, James). Hidden inside the Bear phone app. js/anonymous.js,
+//   css/anonymous.css, js/shared/i18n.js, scripts/build-anonymous.js.
+const CACHE_NAME = 'bipolarbear-v431';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
