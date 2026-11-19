@@ -2076,7 +2076,10 @@
 //   hint under the circle says it); dark mode gets a deeper circle and light
 //   words so "Ready when you are" reads (2026-11-19, James).
 //   js/shared/breathing.js, js/shared/i18n-breathe.js.
-const CACHE_NAME = 'bipolarbear-v425';
+// v426: focus mode's Additional tracking no longer moves on by itself once
+//   every tracker is answered; it waits for Next, so Track Data stays in reach
+//   (2026-11-19, James). js/journal.js.
+const CACHE_NAME = 'bipolarbear-v426';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

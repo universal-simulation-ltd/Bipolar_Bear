@@ -9226,7 +9226,7 @@ function _tt(k, vars, fallback) {
     }
     window._fmToggleExtra = _fmToggleExtra;
 
-    // Called after each inline more_data answer: re-render and auto-advance when all done
+    // Called after each inline more_data answer: re-render, keeping focus. Next → moves on.
     function _fmCheckMoreData() {
       // The step re-renders on every answer; keep keyboard / VoiceOver focus
       // on the same button rather than dropping it to the top of the page.
@@ -9238,54 +9238,8 @@ function _tt(k, vars, fallback) {
         const _nb = document.querySelectorAll('#fmContent button, #fmContent input[type=range]')[_fi];
         if (_nb) { try { _nb.focus({ preventScroll: true }); } catch (_) {} }
       }
-      const step = _fmSteps[_fmStepIndex];
-      if (!step || step.id !== 'more_data') return;
-      const _builtIn = step.extras || [];
-      const _alreadyInSteps = new Set(_fmSteps.map(s => s.id));
-      let _done = true;
-      for (const ex of _builtIn) {
-        if (ex.id === 'goals') {
-          if (!selectedGoals)     { _done = false; break; }
-        } else if (ex.id === 'anxiety') {
-          if (!selectedAnxiety || !selectedStress || !selectedIrritability) { _done = false; break; }
-        } else if (ex.id === 'exercise') {
-          if (!selectedExercise)  { _done = false; break; }
-        } else if (ex.id === 'outside') {
-          if (!selectedOutside)   { _done = false; break; }
-        } else if (ex.id === 'alcohol') {
-          if (!selectedAlcohol)   { _done = false; break; }
-        } else if (ex.id === 'budget') {
-          if (!selectedBudget)    { _done = false; break; }
-        }
-      }
-      if (_done) {
-        try {
-          JSON.parse(localStorage.getItem('customTrackingFields') || '[]').forEach(f => {
-            if (!_alreadyInSteps.has(`custom_${f.id}`) && _fmIsTracking(`trackCustom_${f.id}`) && !selectedCustom[f.id]) _done = false;
-          });
-        } catch(e) {}
-      }
-      const _elaborateOn = localStorage.getItem('elaborateResponsesEnabled') === 'true';
-      const _custNoteOpen = _elaborateOn && getCustomFields().some(f => {
-        if (_cfIsScale(f)) { const _n = _cfScaleNum(selectedCustom[f.id]); return _n !== null && _n !== 0; }
-        const _neg = f.positive === 'no' ? selectedCustom[f.id]==='yes' : selectedCustom[f.id]==='no';
-        return _neg;
-      });
-      const _noteOpen = (_elaborateOn && selectedBudget === 'no') || (_elaborateOn && selectedGoals === 'none') || (_elaborateOn && selectedAlcohol === 'yes') || (_elaborateOn && selectedOutside === 'no') || _custNoteOpen;
-      if (_done && !_noteOpen && localStorage.getItem('fmConfirmStep') !== 'true') {
-        const _mdIdx = _fmStepIndex;
-        const _doneIdx = _fmSteps.length - 1;
-        setTimeout(() => {
-          if (_fmStepIndex === _mdIdx) {
-            if (_fmReturnToDone && _fmStepIndex < _doneIdx) {
-              _fmReturnToDone = false;
-              _fmGoTo(_fmNextTarget(_fmStepIndex));
-            } else {
-              _fmGoTo(_fmStepIndex + 1);
-            }
-          }
-        }, 350);
-      }
+      // No auto-advance once every tracker is answered (James, 2026-11-19):
+      // they may still want ✏ Track Data, so the step waits for Next →.
     }
     window._fmCheckMoreData = _fmCheckMoreData;
 
