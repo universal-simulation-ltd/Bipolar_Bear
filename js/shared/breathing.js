@@ -193,7 +193,9 @@
     '.bbbr-seg button[aria-checked="true"]{background:#e3fafc;color:#0b7285}' +
     '.bbbr-tog{min-height:40px;padding:6px 12px;border-radius:20px;border:1.5px solid #e6dccd;background:none;font:inherit;font-size:.82em;font-weight:700;color:inherit;cursor:pointer}' +
     '.bbbr-tog[aria-pressed="true"]{background:#fff4e6;border-color:#f59f00;color:#a35200}' +
-    '.bbbr-go{width:100%;min-height:50px;padding:13px;border:none;border-radius:14px;background:#0b7285;color:#fff;font:inherit;font-weight:800;font-size:1.02em;cursor:pointer}' +
+    // The circle is the start / stop button (James, 2026-11-19: no Start button).
+    '.bbbr-tap{position:absolute;z-index:1;width:210px;height:210px;border-radius:50%;border:none;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}' +
+    '.bbbr-hint{font-size:.82em;font-weight:700;color:#0b7285;margin:0 0 2px;min-height:1.3em}' +
     '.bbbr-safe{font-size:.74em;color:#6c5f52;margin:10px 4px 0;line-height:1.4}' +
     '.bbbr-sheet button:focus-visible{outline:3px solid #f59f00;outline-offset:2px}' +
     // Survival Kit cards (renderList)
@@ -222,7 +224,13 @@
     'html.theme-dark .bbbr-desc,html.theme-dark .bbbr-card-desc{color:#d8c9b6}html.theme-dark .bbbr-left,html.theme-dark .bbbr-safe,html.theme-dark .bbbr-x{color:#c9b8a5}' +
     'html.theme-dark .bbbr-pat,html.theme-dark .bbbr-card-pat{color:#66d9e8}' +
     'html.theme-dark .bbbr-card-badge{background:#3d2a12;color:#ffc078}' +
-    'html.theme-dark .bbbr-go,html.theme-dark .bbbr-play{background:#0c8599}';
+    'html.theme-dark .bbbr-play{background:#0c8599}' +
+    // Dark: a deeper circle and light words, so "Ready when you are" reads both
+    // over the small circle and the dark sheet around it (2026-11-19).
+    'html.theme-dark .bbbr-orb{background:radial-gradient(circle at 40% 35%,#22b8cf,#0c8599 55%,#0b5f6e);box-shadow:0 0 40px rgba(34,184,207,.25)}' +
+    'html.theme-dark .bbbr-ring{border-color:rgba(102,217,232,.3)}' +
+    'html.theme-dark .bbbr-mid{color:#f8f3ec;text-shadow:0 1px 3px rgba(0,0,0,.6)}' +
+    'html.theme-dark .bbbr-hint{color:#66d9e8}';
   function injectStyle() {
     if (document.getElementById('bbbrStyle')) return;
     var st = document.createElement('style');
@@ -260,12 +268,13 @@
       '<p class="bbbr-desc">' + esc(tr('t.' + tq.id + '.desc')) + '</p>' +
       '<div class="bbbr-stage"><div class="bbbr-ring" aria-hidden="true"></div><div class="bbbr-orb" aria-hidden="true"></div>' +
       '<div class="bbbr-mid"><div class="bbbr-phase" role="status" aria-live="polite">' + esc(tr('ready')) + '</div>' +
-      '<div class="bbbr-count" aria-hidden="true"></div></div></div>' +
+      '<div class="bbbr-count" aria-hidden="true"></div></div>' +
+      '<button type="button" class="bbbr-tap" aria-label="' + esc(tr('start')) + '"></button></div>' +
+      '<p class="bbbr-hint" aria-hidden="true">' + esc(tr('tapStart')) + '</p>' +
       '<div class="bbbr-left" aria-hidden="true">' + esc(tr('left', { t: fmt(P.mins * 60000) })) + '</div>' +
       '<div class="bbbr-opts"><span class="bbbr-seg" role="radiogroup" aria-label="' + esc(tr('length')) + '">' + seg + '</span>' +
       '<button type="button" class="bbbr-tog" data-act="mute" aria-pressed="' + muted() + '">🔇 ' + esc(tr('mute')) + '</button>' +
       '<button type="button" class="bbbr-tog" data-act="fav" aria-pressed="' + isFav + '">' + (isFav ? '★ ' : '☆ ') + esc(tr('fav')) + '</button></div>' +
-      '<button type="button" class="bbbr-go">' + esc(tr('start')) + '</button>' +
       '<p class="bbbr-safe">' + esc(tr('safety')) + '</p>';
   }
 
@@ -278,7 +287,7 @@
     if (orb) { orb.style.transitionDuration = '1s'; orb.style.transform = ''; orb.style.opacity = ''; }
     var ph = el('.bbbr-phase'); if (ph) ph.textContent = label || tr('ready');
     var c = el('.bbbr-count'); if (c) c.textContent = '';
-    var go = el('.bbbr-go'); if (go) go.textContent = tr(label ? 'again' : 'start');
+    goState(label ? 'again' : 'start');
     var left = el('.bbbr-left'); if (left) left.textContent = label ? '' : tr('left', { t: fmt(P.mins * 60000) });
   }
   function step() {
@@ -315,6 +324,11 @@
     haptic();
     P.timer = setTimeout(step, secs * 1000);
   }
+  // The circle's spoken name and the hint under it: start, stop or again.
+  function goState(k) {
+    var t = el('.bbbr-tap'); if (t) t.setAttribute('aria-label', tr(k));
+    var h = el('.bbbr-hint'); if (h) h.textContent = tr(k === 'stop' ? 'tapStop' : k === 'again' ? 'tapAgain' : 'tapStart');
+  }
   function start() {
     if (!P) return;
     stop();
@@ -322,7 +336,7 @@
     P.startedAt = Date.now();
     P.endAt = P.startedAt + P.mins * 60000;
     P.audio = audioStart();
-    el('.bbbr-go').textContent = tr('stop');
+    goState('stop');
     // A short pause so the first breath in starts from the small circle.
     var orb = el('.bbbr-orb');
     if (orb) void orb.offsetWidth;
@@ -335,7 +349,7 @@
     if (e.target === P.back) { close(); return; }
     if (!b) return;
     if (b.classList.contains('bbbr-x')) { close(); return; }
-    if (b.classList.contains('bbbr-go')) { if (P.running) stop(); else start(); return; }
+    if (b.classList.contains('bbbr-tap')) { if (P.running) stop(); else start(); return; }
     if (b.classList.contains('bbbr-chip')) {
       var id = b.getAttribute('data-id');
       if (id === P.id) return;

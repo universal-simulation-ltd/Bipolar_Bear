@@ -182,13 +182,13 @@ console.log('Survival Kit: the section, the favourite and the player');
   assert.equal(p0.chips[0], '★ Double sigh', 'the favourite chip is first and starred');
   ok('▶ Start opens the player on that exercise (1 minute, the favourite first in the row)');
 
-  await page.click('.bbbr-go');
+  await page.click('.bbbr-tap');
   await sleep(600);
   const run1 = await page.evaluate(() => ({
     phase: document.querySelector('.bbbr-phase').textContent, count: document.querySelector('.bbbr-count').textContent,
-    orb: document.querySelector('.bbbr-orb').style.transform, go: document.querySelector('.bbbr-go').textContent,
+    orb: document.querySelector('.bbbr-orb').style.transform, go: document.querySelector('.bbbr-tap').getAttribute('aria-label'), hint: document.querySelector('.bbbr-hint').textContent,
   }));
-  assert.deepEqual(run1, { phase: 'Breathe in', count: '4', orb: 'scale(1)', go: 'Stop' });
+  assert.deepEqual(run1, { phase: 'Breathe in', count: '4', orb: 'scale(1)', go: 'Stop', hint: 'Tap the circle to stop' });
   await shot(page, 'breathe-player-in');
   await sleep(4000);
   const run2 = await page.evaluate(() => ({ phase: document.querySelector('.bbbr-phase').textContent, orb: document.querySelector('.bbbr-orb').style.transform }));
@@ -198,12 +198,12 @@ console.log('Survival Kit: the section, the favourite and the player');
   assert.equal(run3.phase, 'Breathe out');
   assert.equal(run3.orb, 'scale(0.5)');
   assert.match(run3.left, /^0:5\d left$/);
-  ok('Start: Breathe in (circle grows, 4…) → Hold → Breathe out (circle shrinks), the time left counts down');
+  ok('Tap the circle: Breathe in (circle grows, 4…) → Hold → Breathe out (circle shrinks), the time left counts down');
 
-  await page.click('.bbbr-go');
+  await page.click('.bbbr-tap');
   await sleep(200);
-  assert.deepEqual(await page.evaluate(() => [document.querySelector('.bbbr-phase').textContent, document.querySelector('.bbbr-go').textContent, document.querySelector('.bbbr-count').textContent]), ['Ready when you are', 'Start', '']);
-  ok('Stop resets it');
+  assert.deepEqual(await page.evaluate(() => [document.querySelector('.bbbr-phase').textContent, document.querySelector('.bbbr-tap').getAttribute('aria-label'), document.querySelector('.bbbr-hint').textContent, document.querySelector('.bbbr-count').textContent, !!document.querySelector('.bbbr-go')]), ['Ready when you are', 'Start', 'Tap the circle to start', '', false]);
+  ok('Tapping the circle again stops and resets it; no Start button');
 
   await page.click('.bbbr-seg [data-m="3"]');
   await page.click('.bbbr-tog[data-act="mute"]');
@@ -415,7 +415,7 @@ console.log('German');
   assert.equal(await page.evaluate(() => document.querySelector('#fmBreathPrompt .bbp-txt').textContent), '🌬️ Eine Minute langsam atmen?');
   await page.click('#fmBreathPrompt .bbp-go');
   await sleep(200);
-  assert.equal(await page.evaluate(() => document.querySelector('.bbbr-go').textContent), 'Start');
+  assert.equal(await page.evaluate(() => document.querySelector('.bbbr-tap').getAttribute('aria-label')), 'Start');
   assert.equal(await page.evaluate(() => document.querySelector('.bbbr-pat').textContent), 'Ein 4 · Aus 6');
   ok('German: the prompt and the player');
   await ctx.close();

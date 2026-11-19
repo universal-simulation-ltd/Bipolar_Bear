@@ -5,6 +5,8 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 🌬️ **Breathing: tap the circle to start.** The Start button is gone: tap the circle in the middle to start, and tap it again to stop. A line under the circle says so, in every language. (`CACHE_NAME` v425)
+- 🌙 **Breathing reads in dark mode.** "Ready when you are" and the countdown were dark teal on the dark background; the circle is now a deeper blue and the words are light. (`CACHE_NAME` v425)
 - 🎚️ **The scale's handle no longer covers the numbers.** The numbers now sit just below the round handle instead of under its edge, so the handle is easy to grab and slide, and a tap on its lower half no longer lands on a number. (`CACHE_NAME` v424)
 - 💾 **"Save and close" when you've changed a tracker's name.** While a tracker's name or emoji has an unsaved change, Track Data's **Done** button reads **Save and close**. In every language. (`CACHE_NAME` v423)
 - 📏 **Scale trackers take half the room.** The scale is now two rows, the slider and the numbers under it, with the numbers closer to the slider. The **Less / Normal / More** line is gone; the numbers and Track Data's "−2 less … +2 more than usual" say the same. (`CACHE_NAME` v423)

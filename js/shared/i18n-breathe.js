@@ -14,6 +14,7 @@
     en: {
       title: 'Breathing', techniques: 'Breathing exercises', close: 'Close',
       ready: 'Ready when you are', start: 'Start', stop: 'Stop', again: 'Again',
+      tapStart: 'Tap the circle to start', tapStop: 'Tap the circle to stop', tapAgain: 'Tap the circle to go again',
       done: 'Well done. Take a moment before you carry on.',
       left: '{t} left', mins: '{n} min', length: 'Length', mute: 'Mute',
       fav: 'Favourite', favBadge: 'Favourite', favAria: 'Make {name} my favourite', startAria: 'Start {name}',
@@ -43,6 +44,7 @@
     es: {
       title: 'Respiración', techniques: 'Ejercicios de respiración', close: 'Cerrar',
       ready: 'Cuando quieras', start: 'Empezar', stop: 'Parar', again: 'Otra vez',
+      tapStart: 'Toca el círculo para empezar', tapStop: 'Toca el círculo para parar', tapAgain: 'Toca el círculo para repetir',
       done: 'Muy bien. Tómate un momento antes de seguir.',
       left: 'Quedan {t}', mins: '{n} min', length: 'Duración', mute: 'Silenciar',
       fav: 'Favorito', favBadge: 'Favorito', favAria: 'Hacer de {name} mi favorito', startAria: 'Empezar {name}',
@@ -72,6 +74,7 @@
     fr: {
       title: 'Respiration', techniques: 'Exercices de respiration', close: 'Fermer',
       ready: 'Quand tu es prêt', start: 'Commencer', stop: 'Arrêter', again: 'Recommencer',
+      tapStart: 'Touche le cercle pour commencer', tapStop: 'Touche le cercle pour arrêter', tapAgain: 'Touche le cercle pour recommencer',
       done: 'Bravo. Prends un moment avant de continuer.',
       left: 'Encore {t}', mins: '{n} min', length: 'Durée', mute: 'Couper le son',
       fav: 'Favori', favBadge: 'Favori', favAria: 'Faire de {name} mon favori', startAria: 'Commencer {name}',
@@ -101,6 +104,7 @@
     de: {
       title: 'Atmen', techniques: 'Atemübungen', close: 'Schließen',
       ready: 'Wenn du bereit bist', start: 'Start', stop: 'Stopp', again: 'Noch einmal',
+      tapStart: 'Tippe auf den Kreis, um zu starten', tapStop: 'Tippe auf den Kreis, um zu stoppen', tapAgain: 'Tippe auf den Kreis für noch eine Runde',
       done: 'Gut gemacht. Nimm dir einen Moment, bevor du weitermachst.',
       left: 'Noch {t}', mins: '{n} Min.', length: 'Dauer', mute: 'Stumm',
       fav: 'Favorit', favBadge: 'Favorit', favAria: '{name} zu meinem Favoriten machen', startAria: '{name} starten',
@@ -130,6 +134,7 @@
     it: {
       title: 'Respirazione', techniques: 'Esercizi di respirazione', close: 'Chiudi',
       ready: 'Quando vuoi', start: 'Inizia', stop: 'Ferma', again: 'Ancora',
+      tapStart: 'Tocca il cerchio per iniziare', tapStop: 'Tocca il cerchio per fermare', tapAgain: 'Tocca il cerchio per ricominciare',
       done: 'Ben fatto. Prenditi un momento prima di continuare.',
       left: 'Mancano {t}', mins: '{n} min', length: 'Durata', mute: 'Muto',
       fav: 'Preferito', favBadge: 'Preferito', favAria: 'Rendi {name} il mio preferito', startAria: 'Inizia {name}',
@@ -159,6 +164,7 @@
     pt: {
       title: 'Respiração', techniques: 'Exercícios de respiração', close: 'Fechar',
       ready: 'Quando estiveres pronto', start: 'Começar', stop: 'Parar', again: 'Outra vez',
+      tapStart: 'Toca no círculo para começar', tapStop: 'Toca no círculo para parar', tapAgain: 'Toca no círculo para repetir',
       done: 'Muito bem. Tira um momento antes de continuar.',
       left: 'Faltam {t}', mins: '{n} min', length: 'Duração', mute: 'Sem som',
       fav: 'Favorito', favBadge: 'Favorito', favAria: 'Tornar {name} o meu favorito', startAria: 'Começar {name}',
@@ -188,6 +194,7 @@
     nl: {
       title: 'Ademhaling', techniques: 'Ademhalingsoefeningen', close: 'Sluiten',
       ready: 'Wanneer je klaar bent', start: 'Start', stop: 'Stop', again: 'Nog eens',
+      tapStart: 'Tik op de cirkel om te beginnen', tapStop: 'Tik op de cirkel om te stoppen', tapAgain: 'Tik op de cirkel om opnieuw te beginnen',
       done: 'Goed gedaan. Neem even de tijd voordat je verdergaat.',
       left: 'Nog {t}', mins: '{n} min', length: 'Duur', mute: 'Geluid uit',
       fav: 'Favoriet', favBadge: 'Favoriet', favAria: 'Maak {name} mijn favoriet', startAria: 'Start {name}',
@@ -217,6 +224,7 @@
     pl: {
       title: 'Oddychanie', techniques: 'Ćwiczenia oddechowe', close: 'Zamknij',
       ready: 'Kiedy będziesz gotowy', start: 'Start', stop: 'Stop', again: 'Jeszcze raz',
+      tapStart: 'Dotknij koła, aby zacząć', tapStop: 'Dotknij koła, aby zatrzymać', tapAgain: 'Dotknij koła, aby zacząć jeszcze raz',
       done: 'Dobra robota. Daj sobie chwilę, zanim pójdziesz dalej.',
       left: 'Zostało {t}', mins: '{n} min', length: 'Czas', mute: 'Wycisz',
       fav: 'Ulubione', favBadge: 'Ulubione', favAria: 'Ustaw {name} jako ulubione', startAria: 'Rozpocznij {name}',
@@ -246,6 +254,7 @@
     sv: {
       title: 'Andning', techniques: 'Andningsövningar', close: 'Stäng',
       ready: 'När du är redo', start: 'Starta', stop: 'Stoppa', again: 'Igen',
+      tapStart: 'Tryck på cirkeln för att starta', tapStop: 'Tryck på cirkeln för att stoppa', tapAgain: 'Tryck på cirkeln för att börja igen',
       done: 'Bra gjort. Ta en stund innan du fortsätter.',
       left: '{t} kvar', mins: '{n} min', length: 'Längd', mute: 'Ljud av',
       fav: 'Favorit', favBadge: 'Favorit', favAria: 'Gör {name} till min favorit', startAria: 'Starta {name}',
@@ -275,6 +284,7 @@
     zh: {
       title: '呼吸', techniques: '呼吸练习', close: '关闭',
       ready: '准备好就开始', start: '开始', stop: '停止', again: '再来一次',
+      tapStart: '点按圆圈开始', tapStop: '点按圆圈停止', tapAgain: '点按圆圈再来一次',
       done: '做得好。继续之前先休息一下。',
       left: '还剩 {t}', mins: '{n} 分钟', length: '时长', mute: '静音',
       fav: '最爱', favBadge: '最爱', favAria: '把 {name} 设为我的最爱', startAria: '开始 {name}',

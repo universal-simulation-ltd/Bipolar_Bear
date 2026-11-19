@@ -2072,7 +2072,11 @@
 //   js/journal.js, css/journal.css, js/shared/i18n.js.
 // v424: the scale's numbers start below the handle, so the dot never covers
 //   them and grabbing it drags the slider (2026-11-19, James). css/journal.css.
-const CACHE_NAME = 'bipolarbear-v424';
+// v425: Breathing: tap the circle to start / stop (the Start button went, a
+//   hint under the circle says it); dark mode gets a deeper circle and light
+//   words so "Ready when you are" reads (2026-11-19, James).
+//   js/shared/breathing.js, js/shared/i18n-breathe.js.
+const CACHE_NAME = 'bipolarbear-v425';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
