@@ -5,6 +5,7 @@
 > that stretch.
 
 ## Next — after v1.40 (build 45)
+- 😴 **My usual sleep suggests a range.** Under **😴 My usual sleep**, the button now fills in an hour around what you usually slept, so a usual of 7.5 hours sets **7 to 8 h** instead of 7.5 to 7.5, and the button says so (**Use 7–8 h**). If you used it before and got a single number, it offers the range again. In every language. (`CACHE_NAME` v436)
 - 📢 **Bipolar Anonymous: getting around is only at the bottom.** The bar at the bottom now holds just **📢 Announcements**, **✏️ Write** (🔍 Search on the Wiki), **💬 Chat** and **📖 Wiki**. The Announcements / General / Wiki tabs at the top are gone on iPads and computers too. **ℹ️ About Bipolar Anonymous** and **🔒 Your privacy, explained** moved to your moniker settings (tap your name at the top right). And **📢 Announcements** now starts with **Are you looking for the chat? Click here**, which takes you to the main chat. In every language. (`CACHE_NAME` v435)
 - 🌬️ **Breathing prompts are on to start with.** When your mood isn't stable, the journal now offers a minute of slow breathing without you having to turn it on first. You can still carry on without it. If you'd rather it didn't ask, turn on **🌬️ Stop breathing prompts** in ⚙️ Settings → Advanced → 📓 Journal. If you already turned the prompts off, they stay off. In every language. (`CACHE_NAME` v434)
 - 🩸 **A shorter blood results switch.** On the Stats settings it now just says **🩸 Show blood results**; the line under it already says it's for your charts. In every language. (`CACHE_NAME` v434)

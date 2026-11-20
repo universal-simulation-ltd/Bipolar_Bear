@@ -2126,7 +2126,12 @@
 //   "Are you looking for the chat? Click here" → General. 10 languages
 //   (2026-11-20, James). anonymous.html, js/anonymous.js, css/anonymous.css,
 //   js/shared/i18n.js.
-const CACHE_NAME = 'bipolarbear-v435';
+// v436: 😴 My usual sleep's Use it fills in an hour-wide range around the
+//   last 30 nights' usual (7.5 h → 7–8 h) instead of one value (7.5 to 7.5);
+//   the button says the range ("Use 7–8 h"), and a single-value setting gets
+//   the offer again. 10 languages (2026-11-20, James).
+//   js/shared/sleep-target.js (suggest), js/journal.js.
+const CACHE_NAME = 'bipolarbear-v436';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

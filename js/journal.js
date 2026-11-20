@@ -6225,7 +6225,8 @@ function _tt(k, vars, fallback) {
     // ── 😴 My usual sleep (Journal Options; js/shared/sleep-target.js) ──────
     // Two pickers, From and To, 6–10 h in halves; From = "Not set" clears it.
     // Under them, the median of the last 30 nights (7+ logged) with a Use it
-    // button, since most people don't know their number.
+    // button, since most people don't know their number. It fills in an
+    // hour-wide range around the median (BB.sleepTarget.suggest), not one value.
     function _sleepRecentMedian() {
       const since = Date.now() - 30 * 86400000;
       const v = (_allEntries || []).filter(e => e && e.sleep != null && isFinite(Number(e.sleep)) && Number(e.timestamp) >= since)
@@ -6243,8 +6244,11 @@ function _tt(k, vars, fallback) {
       const opt = (v, sel) => `<option value="${v}"${sel ? ' selected' : ''}>${f(v)} h</option>`;
       const selStyle = 'flex:1 1 0;min-width:0;padding:8px 10px;border:2px solid #e9ecef;border-radius:8px;font-size:0.95em;color:#495057;background:white;';
       const med = _sleepRecentMedian();
-      const medHalf = med != null ? Math.min(10, Math.max(6, Math.round(med * 2) / 2)) : null;
-      const showUse = medHalf != null && !(t && t.lo <= medHalf && medHalf <= t.hi);
+      // Use it fills in a range around that night (7.5 h → 7–8 h), not one value.
+      const sug = med != null ? ST.suggest(med) : null;
+      // Offered unless the setting already is a range holding that night (a
+      // single value from the old Use it, "7.5 to 7.5", still gets the offer).
+      const showUse = sug != null && !(t && t.lo < t.hi && t.lo <= med && med <= t.hi);
       host.innerHTML = `
         <label for="sleepTargetFrom" style="display:block;font-weight:600;color:#495057;font-size:0.95em;">${BB.t('sleepT.settingTitle')}</label>
         <div style="color:var(--text-muted-ink);font-size:0.82em;margin:2px 0 8px;line-height:1.4;">${BB.t('sleepT.settingDesc')}</div>
@@ -6262,7 +6266,7 @@ function _tt(k, vars, fallback) {
         ${t ? '' : `<div style="color:var(--text-muted-ink);font-size:0.8em;margin-top:6px;">${BB.t('sleepT.defaultNote')}</div>`}
         ${med != null ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;color:var(--text-muted-ink);font-size:0.8em;">
             <span>${BB.t('sleepT.hint', { h: f(med) })}</span>
-            ${showUse ? `<button type="button" onclick="_useSleepTargetHint(${medHalf})" class="btn-outline-orange" style="flex:none;padding:4px 10px;background:white;color:var(--brand-ink);border:1.5px solid var(--brand-primary);border-radius:8px;cursor:pointer;font-size:0.95em;font-weight:600;">${BB.t('sleepT.useHint')}</button>` : ''}
+            ${showUse ? `<button type="button" onclick="_useSleepTargetHint(${sug.lo}, ${sug.hi})" class="btn-outline-orange" style="flex:none;padding:4px 10px;background:white;color:var(--brand-ink);border:1.5px solid var(--brand-primary);border-radius:8px;cursor:pointer;font-size:0.95em;font-weight:600;">${BB.t('sleepT.useHint', { r: f(sug.lo) + '–' + f(sug.hi) + ' h' })}</button>` : ''}
           </div>` : ''}`;
     }
     function _onSleepTargetPick() {
@@ -6276,7 +6280,7 @@ function _tt(k, vars, fallback) {
       if (!(hi >= lo)) hi = lo;
       BB.sleepTarget.set(lo, hi);
     }
-    function _useSleepTargetHint(h) { BB.sleepTarget.set(h, h); }
+    function _useSleepTargetHint(lo, hi) { BB.sleepTarget.set(lo, hi != null ? hi : lo); }
     window._onSleepTargetPick = _onSleepTargetPick;
     window._useSleepTargetHint = _useSleepTargetHint;
     // Everything that draws sleep in a band follows the setting at once.

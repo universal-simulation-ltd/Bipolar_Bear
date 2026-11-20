@@ -17,6 +17,8 @@
  *   BB.sleepTarget.bucketOf(h)    → the coarse choice's value for any hours
  *   BB.sleepTarget.labelOf(h)     → "7–9h" for a coarse value, else "7.5h"
  *   BB.sleepTarget.OPTIONS        → the hours the picker offers (6 … 10, halves)
+ *   BB.sleepTarget.suggest(h)     → { lo, hi }: an hour-wide range around a
+ *                                   typical night (7.5 → 7–8), for "Use it"
  *
  * Bands, from the range lo–hi:
  *   very short  ≤ max(lo − 2, 5)   (5 h or less is always very short)
@@ -139,13 +141,23 @@
     return fmt(n) + 'h';
   }
 
+  /** The range "Use it" offers for a typical night: an hour wide, centred on
+   *  it and snapped to halves (7.5 → 7–8, 8 → 7.5–8.5), kept inside 6–10.
+   *  A single value ("7.5 to 7.5") made every other night look off. */
+  function suggest(h) {
+    var n = Number(h);
+    if (!isFinite(n)) return null;
+    var lo = Math.min(MAX - 1, Math.max(MIN, half(n - 0.5)));
+    return { lo: lo, hi: lo + 1 };
+  }
+
   var OPTIONS = [];
   for (var x = MIN; x <= MAX; x += 0.5) OPTIONS.push(x);
 
   BB.sleepTarget = {
     KEY: KEY, OPTIONS: OPTIONS,
     get: get, range: range, set: set, band: band,
-    buckets: buckets, bucketOf: bucketOf, labelOf: labelOf, fmt: fmt,
+    buckets: buckets, bucketOf: bucketOf, labelOf: labelOf, fmt: fmt, suggest: suggest,
   };
 
   // ── strings ────────────────────────────────────────────────────────────────
@@ -156,7 +168,7 @@
       settingDesc: 'How many hours feel right for you. The sleep colours and the Bear’s guesses follow it.',
       from: 'From', to: 'to', notSet: 'Not set',
       defaultNote: 'Not set: 7 to 9 hours counts as usual.',
-      hint: 'Your last 30 nights: usually {h} h.', useHint: 'Use it',
+      hint: 'Your last 30 nights: usually {h} h.', useHint: 'Use {r}',
       usual: 'Your usual',
       moodDetail: 'After {h} h+ sleep: next-day mood avg {hi}  ·  After less than {h} h: {lo}',
     },
@@ -165,7 +177,7 @@
       settingDesc: 'Cuántas horas te sientan bien. Los colores del sueño y las sugerencias del Oso se basan en ello.',
       from: 'De', to: 'a', notSet: 'Sin definir',
       defaultNote: 'Sin definir: de 7 a 9 horas cuenta como habitual.',
-      hint: 'Tus últimas 30 noches: normalmente {h} h.', useHint: 'Usar',
+      hint: 'Tus últimas 30 noches: normalmente {h} h.', useHint: 'Usar {r}',
       usual: 'Tu habitual',
       moodDetail: 'Tras {h} h o más de sueño: ánimo medio al día siguiente {hi}  ·  Tras menos de {h} h: {lo}',
     },
@@ -174,7 +186,7 @@
       settingDesc: 'Le nombre d’heures qui te convient. Les couleurs du sommeil et les suggestions de l’Ours s’y adaptent.',
       from: 'De', to: 'à', notSet: 'Non défini',
       defaultNote: 'Non défini : de 7 à 9 heures compte comme habituel.',
-      hint: 'Tes 30 dernières nuits : en général {h} h.', useHint: 'Utiliser',
+      hint: 'Tes 30 dernières nuits : en général {h} h.', useHint: 'Utiliser {r}',
       usual: 'Ton habitude',
       moodDetail: 'Après {h} h ou plus de sommeil : humeur moyenne le lendemain {hi}  ·  Après moins de {h} h : {lo}',
     },
@@ -183,7 +195,7 @@
       settingDesc: 'Wie viele Stunden sich für dich richtig anfühlen. Die Schlaffarben und die Vorschläge des Bären richten sich danach.',
       from: 'Von', to: 'bis', notSet: 'Nicht festgelegt',
       defaultNote: 'Nicht festgelegt: 7 bis 9 Stunden gelten als üblich.',
-      hint: 'Deine letzten 30 Nächte: meist {h} Std.', useHint: 'Übernehmen',
+      hint: 'Deine letzten 30 Nächte: meist {h} Std.', useHint: '{r} übernehmen',
       usual: 'Dein Normalwert',
       moodDetail: 'Nach {h}+ Std. Schlaf: Stimmung am Folgetag Ø {hi}  ·  Nach weniger als {h} Std.: {lo}',
     },
@@ -192,7 +204,7 @@
       settingDesc: 'Quante ore ti fanno sentire bene. I colori del sonno e i suggerimenti dell’Orso si basano su questo.',
       from: 'Da', to: 'a', notSet: 'Non impostato',
       defaultNote: 'Non impostato: da 7 a 9 ore conta come abituale.',
-      hint: 'Le tue ultime 30 notti: di solito {h} h.', useHint: 'Usa',
+      hint: 'Le tue ultime 30 notti: di solito {h} h.', useHint: 'Usa {r}',
       usual: 'Il tuo solito',
       moodDetail: 'Dopo {h} h o più di sonno: umore medio il giorno dopo {hi}  ·  Dopo meno di {h} h: {lo}',
     },
@@ -201,7 +213,7 @@
       settingDesc: 'Quantas horas te fazem sentir bem. As cores do sono e as sugestões do Urso seguem isso.',
       from: 'De', to: 'a', notSet: 'Não definido',
       defaultNote: 'Não definido: 7 a 9 horas conta como habitual.',
-      hint: 'As tuas últimas 30 noites: normalmente {h} h.', useHint: 'Usar',
+      hint: 'As tuas últimas 30 noites: normalmente {h} h.', useHint: 'Usar {r}',
       usual: 'O teu habitual',
       moodDetail: 'Após {h} h ou mais de sono: humor médio no dia seguinte {hi}  ·  Após menos de {h} h: {lo}',
     },
@@ -210,7 +222,7 @@
       settingDesc: 'Hoeveel uur voor jou goed voelt. De slaapkleuren en de suggesties van de Beer volgen dat.',
       from: 'Van', to: 'tot', notSet: 'Niet ingesteld',
       defaultNote: 'Niet ingesteld: 7 tot 9 uur telt als gewoon.',
-      hint: 'Je laatste 30 nachten: meestal {h} u.', useHint: 'Gebruiken',
+      hint: 'Je laatste 30 nachten: meestal {h} u.', useHint: '{r} gebruiken',
       usual: 'Jouw gewone',
       moodDetail: 'Na {h}+ u slaap: gem. stemming de dag erna {hi}  ·  Na minder dan {h} u: {lo}',
     },
@@ -219,7 +231,7 @@
       settingDesc: 'Ile godzin snu jest dla ciebie w sam raz. Kolory snu i podpowiedzi Misia dopasują się do tego.',
       from: 'Od', to: 'do', notSet: 'Nie ustawiono',
       defaultNote: 'Nie ustawiono: od 7 do 9 godzin liczy się jako zwykle.',
-      hint: 'Twoje ostatnie 30 nocy: zwykle {h} h.', useHint: 'Użyj',
+      hint: 'Twoje ostatnie 30 nocy: zwykle {h} h.', useHint: 'Użyj {r}',
       usual: 'Twoja norma',
       moodDetail: 'Po {h}+ h snu: średni nastrój następnego dnia {hi}  ·  Po mniej niż {h} h: {lo}',
     },
@@ -228,7 +240,7 @@
       settingDesc: 'Hur många timmar som känns rätt för dig. Sömnfärgerna och Björnens förslag följer det.',
       from: 'Från', to: 'till', notSet: 'Inte angivet',
       defaultNote: 'Inte angivet: 7 till 9 timmar räknas som vanligt.',
-      hint: 'Dina senaste 30 nätter: oftast {h} h.', useHint: 'Använd',
+      hint: 'Dina senaste 30 nätter: oftast {h} h.', useHint: 'Använd {r}',
       usual: 'Ditt vanliga',
       moodDetail: 'Efter {h}+ h sömn: snitthumör dagen efter {hi}  ·  Efter mindre än {h} h: {lo}',
     },
@@ -237,7 +249,7 @@
       settingDesc: '你觉得合适的睡眠时长。睡眠颜色和小熊的建议都会据此调整。',
       from: '从', to: '到', notSet: '未设置',
       defaultNote: '未设置：7 到 9 小时算作平常。',
-      hint: '你最近 30 晚：通常 {h} 小时。', useHint: '使用',
+      hint: '你最近 30 晚：通常 {h} 小时。', useHint: '使用 {r}',
       usual: '你的平常',
       moodDetail: '睡眠 {h} 小时以上后：次日平均情绪 {hi}  ·  不足 {h} 小时后：{lo}',
     },
