@@ -1898,11 +1898,11 @@
         <div id="earlyWarnSettingRow"></div>
         <!-- "Don't suggest support when I've had low days" (unticked = on) — js/shared/safety-plan.js -->
         <div id="lowMoodSupportSettingRow"></div>
-        <!-- 🌬️ Breathing prompts (opt-in, unticked by default; synced) — _toggleBreathPrompts in js/journal.js, js/shared/breathing.js -->
+        <!-- 🌬️ Stop breathing prompts (prompts on by default since v434; unticked = on; synced as breathPromptsEnabled) — _toggleBreathPrompts in js/journal.js, js/shared/breathing.js -->
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px;">
           <div>
-            <label for="breathPromptsToggle" style="display: block; font-weight: 600; color: #495057; font-size: 0.95em; cursor: pointer;" data-i18n="breathe.settingTitle">🌬️ Breathing prompts</label>
-            <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="breathe.settingDesc">When your mood isn't stable, the journal offers a breathing exercise. You can carry on without it.</div>
+            <label for="breathPromptsToggle" style="display: block; font-weight: 600; color: #495057; font-size: 0.95em; cursor: pointer;" data-i18n="breathe.settingTitle">🌬️ Stop breathing prompts</label>
+            <div style="color: var(--text-muted-ink); font-size: 0.82em; margin-top: 2px;" data-i18n="breathe.settingDesc">When your mood isn’t stable, the journal offers a breathing exercise. Turn this on if you’d rather it didn’t.</div>
           </div>
           <label class="bb-switch"><input type="checkbox" id="breathPromptsToggle" onchange="_toggleBreathPrompts()"><span class="bb-slider"></span></label>
         </div>
@@ -1950,7 +1950,7 @@
         <div id="bloodChartsRow" style="margin-bottom:16px;text-align:left;">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
             <div style="min-width:0;">
-              <label for="bloodChartsToggle" style="display:block;font-weight:600;color:#495057;font-size:0.95em;cursor:pointer;" data-i18n="blood144.settingTitle">🩸 Show blood results on my charts</label>
+              <label for="bloodChartsToggle" style="display:block;font-weight:600;color:#495057;font-size:0.95em;cursor:pointer;" data-i18n="blood144.settingTitle">🩸 Show blood results</label>
               <div style="color:var(--text-muted-ink);font-size:0.82em;margin-top:2px;line-height:1.4;" data-i18n="blood144.settingDesc">A 🩸 on the day of each result on your life chart and the PDF's mood chart.</div>
             </div>
             <label class="bb-switch"><input type="checkbox" id="bloodChartsToggle" onchange="_onBloodChartsToggle(this)"><span class="bb-slider"></span></label>

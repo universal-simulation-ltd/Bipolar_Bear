@@ -13,14 +13,14 @@
  * one is starred); ▶ Start opens the player on that exercise; the player
  * runs in → out with the circle growing then shrinking and a countdown,
  * Stop resets it, Mute and the length are kept, Escape closes it; the kit
- * still counts 12 sections. The journal: no prompt with the switch off (the
- * default); with it on, a Low mood shows the line on the next step and the
+ * still counts 12 sections. The journal: a Low mood shows the prompt by
+ * default and nothing with "Stop breathing prompts" on; with prompts on, a Low mood shows the line on the next step and the
  * entry carries on past it; ✕ hides it for the entry; Breathe opens the
  * player on the favourite; Stable and spectrum 5 never show it, spectrum 4
  * does; a held-on Low mood with Stable does; the form shows it under the
- * mood buttons; the Settings switch starts unticked and turns it on; the
- * New features sheet lists both 1.46 lines (a link to the kit, a switch
- * that starts off and turns the prompts on); German.
+ * mood buttons; the Settings switch "Stop breathing prompts" starts unticked
+ * and ticking it stops them; the New features sheet lists both 1.46 lines
+ * (a link to the kit, a note with no switch); German.
  *
  *   PLAYWRIGHT_MODULE=file:///…/node_modules/playwright/index.mjs node scripts/test-breathing.mjs
  *   SHOTS=<dir> also saves screenshots.
@@ -128,8 +128,8 @@ console.log('The module');
   assert.deepEqual(r.after, ['box', 'longout', 'even', '478', 'sigh']);
   assert.equal(r.cleared, null);
   assert.equal(r.pat, 'In 4 · Hold 7 · Out 8');
-  assert.equal(r.prompts, false, 'prompts must start off');
-  ok('five exercises; the favourite goes first; tapping it again unstars it; prompts start off');
+  assert.equal(r.prompts, true, 'prompts must start on');
+  ok('five exercises; the favourite goes first; tapping it again unstars it; prompts start on');
   await ctx.close();
 }
 
@@ -256,13 +256,21 @@ console.log('Survival Kit: survival-kit.html#breathing opens the section');
   await ctx.close();
 }
 
-console.log('Journal: the prompt is off until the switch is on');
+console.log('Journal: the prompt is on by default, off with "Stop breathing prompts"');
 {
   const { ctx, page } = await open();
   await pickMood(page, 'low');
   assert.notEqual(await fmStep(page), '', 'no next step');
-  assert.equal(await promptShowing(page), false, 'a prompt with the switch off');
-  ok('switch off (the default): a Low mood shows nothing');
+  assert.equal(await promptShowing(page), true, 'no prompt by default');
+  ok('the default: a Low mood shows the prompt');
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open({ local: { breathPromptsEnabled: '0' } });
+  await pickMood(page, 'low');
+  assert.notEqual(await fmStep(page), '', 'no next step');
+  assert.equal(await promptShowing(page), false, 'a prompt with Stop breathing prompts on');
+  ok('Stop breathing prompts on: a Low mood shows nothing');
   await ctx.close();
 }
 
@@ -368,13 +376,13 @@ console.log('Journal: the form, and the Settings switch');
     t.checked = true; t.dispatchEvent(new Event('change'));
     return { before, label, ls: localStorage.getItem('breathPromptsEnabled') };
   });
-  assert.deepEqual(r, { before: false, label: '🌬️ Breathing prompts', ls: '1' });
+  assert.deepEqual(r, { before: false, label: '🌬️ Stop breathing prompts', ls: '0' });
   await pickMood(page, 'depressed');
   // Depressed brings the "You matter" card first; close it to carry on.
   await page.evaluate(() => { try { _fmDismissDepressedMsg(); } catch (_) {} });
   await sleep(700);
-  assert.equal(await promptShowing(page), true, 'no prompt after turning it on');
-  ok('Settings: 🌬️ Breathing prompts starts unticked; ticking it turns the prompt on');
+  assert.equal(await promptShowing(page), false, 'a prompt after stopping them');
+  ok('Settings: 🌬️ Stop breathing prompts starts unticked; ticking it stops the prompt');
   await ctx.close();
 }
 
@@ -393,19 +401,16 @@ console.log('New features (1.46)');
     link: (document.querySelector('.bbwn-item[data-id="breathing"] .bbwn-link') || {}).getAttribute?.('href'),
     linkTxt: (document.querySelector('.bbwn-item[data-id="breathing"] .bbwn-link') || {}).textContent,
     sw: !!document.querySelector('.bbwn-item[data-id="breathing"] input'),
-    on: document.querySelector('.bbwn-item[data-id="breathPrompts"] input').checked,
+    sw2: !!document.querySelector('.bbwn-item[data-id="breathPrompts"] input'),
   }));
   assert.equal(r.v, 'New in 1.46');
   assert.deepEqual(r.ids, ['breathing', 'breathPrompts']);
   assert.equal(r.link, 'survival-kit.html#breathing');
   assert.equal(r.linkTxt, 'Open them in the Survival Kit →');
   assert.equal(r.sw, false);
-  assert.equal(r.on, false);
+  assert.equal(r.sw2, false);
   await shot(page, 'breathe-whatsnew');
-  await page.click('.bbwn-item[data-id="breathPrompts"] .bbwn-sw input');
-  await sleep(300);
-  assert.deepEqual(await page.evaluate(() => [localStorage.getItem('breathPromptsEnabled'), document.getElementById('breathPromptsToggle').checked]), ['1', true]);
-  ok('the sheet: "Breathing exercises" with a link to the kit, and "Breathing prompts" with a switch that starts off and turns them on');
+  ok('the sheet: "Breathing exercises" with a link to the kit, and "Breathing prompts" as a note (on by default, no switch)');
   assert.deepEqual(page.__errors, []);
   await ctx.close();
 }

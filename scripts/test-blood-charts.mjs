@@ -316,10 +316,10 @@ console.log('New features sheet');
   await page.waitForSelector('.bbwn-back', { timeout: 15000 });
   const rowsOf = () => page.evaluate(() => [...document.querySelectorAll('.bbwn-item')].map(li => ({ id: li.dataset.id, sw: !!li.querySelector('input'), on: !!li.querySelector('input:checked') })));
   const rows46 = await rowsOf();
-  assert.deepEqual(rows46, [{ id: 'breathing', sw: false, on: false }, { id: 'breathPrompts', sw: true, on: false }], 'web 1.46: ' + JSON.stringify(rows46));
-  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.46[\s\S]*Breathing exercises[\s\S]*Breathing prompts in the journal[\s\S]*You can change these any time in Settings/);
+  assert.deepEqual(rows46, [{ id: 'breathing', sw: false, on: false }, { id: 'breathPrompts', sw: false, on: false }], 'web 1.46: ' + JSON.stringify(rows46));
+  assert.match(await page.textContent('.bbwn-sheet'), /New features[\s\S]*New in 1\.46[\s\S]*Breathing exercises[\s\S]*Breathing prompts in the journal/);
   assert.equal(await page.evaluate(() => localStorage.getItem('bbWhatsNewSeen')), '1.46');
-  ok('an updating user sees "New features · New in 1.46" once the journal is idle: breathing, and the prompts switch unticked');
+  ok('an updating user sees "New features · New in 1.46" once the journal is idle: breathing, and the prompts as a note');
   await shot(page, 'whatsnew-en-light');
   await page.click('.bbwn-done');
   // The 1.45 entries (people who missed 1.45 see only 1.46), through the registry.

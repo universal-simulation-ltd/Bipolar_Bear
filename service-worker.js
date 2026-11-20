@@ -2112,7 +2112,15 @@
 //   SETTINGS). From a member's idea (2026-11-19, James). js/shared/sleep-target.js
 //   (new, precached), js/journal.js, js/journal-insights.js, journal.html,
 //   js/shared/secure-store.js, js/index.js, js/survival-kit.js.
-const CACHE_NAME = 'bipolarbear-v433';
+// v434: 🌬️ the journal's breathing prompts are on by default; Settings' switch
+//   is now "Stop breathing prompts" (ticked = off; breathPromptsEnabled '0' =
+//   stopped, unset = on; Reset settings turns them back on). The 1.46 New
+//   features line is a note, no switch. And Stats' 🩸 "Show blood results"
+//   loses "on my charts" (the description already says so). 10 languages
+//   (2026-11-20, James). js/shared/breathing.js, js/journal.js, js/index.js,
+//   js/shared/whats-new.js, js/shared/i18n-breathe.js, js/shared/i18n-blood.js,
+//   journal.html, survival-kit.html.
+const CACHE_NAME = 'bipolarbear-v434';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

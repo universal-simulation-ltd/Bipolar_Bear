@@ -2059,7 +2059,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
               focusedModeEnabled: true, fmConfirmStep: false, elaborateResponsesEnabled: false,
               intentionEnabled: false, incognitoMode: false, moreDataOpenByDefault: false,
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false, earlyWarnEnabled: false,
-              moodSpectrumEnabled: false, wheelModeEnabled: true, breathPromptsEnabled: false,
+              moodSpectrumEnabled: false, wheelModeEnabled: true, breathPromptsEnabled: true,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
               safetyPlanEnc: null,
               onboardingStep: 0, helpedVoted: false, healthSyncEnabled: false,

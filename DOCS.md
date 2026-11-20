@@ -2930,8 +2930,9 @@ deactivate breathing prompts (switch off by default)".
   deep-links to it) but **not** one of the 12 counted sections — it has nothing
   to finish, and the "/ 12" strings in ten languages stay as they are. The tile
   click handler now takes any `[data-sk-open]`, so the banner is a button with it.
-- **The journal's prompt** (`_refreshBreathPrompt` in `js/journal.js`): with
-  **⚙️ Settings → Advanced → 📓 Journal → 🌬️ Breathing prompts** on, a mood
+- **The journal's prompt** (`_refreshBreathPrompt` in `js/journal.js`): unless
+  **⚙️ Settings → Advanced → 📓 Journal → 🌬️ Stop breathing prompts** is on
+  (prompts on by default since v434, James 2026-11-20 — it was opt-in), a mood
   other than Stable — category `stable`, or exactly 5 on the 0–10 spectrum (4
   and 6 do ask) — or a held-on other mood that isn't Stable, shows a small
   dashed line "🌬️ A minute of slow breathing? [Breathe] [✕]": under the
@@ -2940,7 +2941,9 @@ deactivate breathing prompts (switch off by default)".
   it. ✕ hides it for that entry; **Breathe** opens the player over the entry
   (the draft is untouched) and hides it too; the next entry asks again. Never
   while editing an older entry.
-- **The switch** `breathPromptsEnabled` ('1' / '0'; unset = off): synced as
+- **The switch** `breathPromptsEnabled` ('1' / '0'; unset = on since v434 —
+  the Settings switch reads "Stop breathing prompts", so it is bound inverted:
+  ticked = '0'; Reset settings writes `true`): synced as
   `userSettings.breathPromptsEnabled` (read in the journal's auth listener,
   written by `BB.breathing.setPrompts`, which any page can call), cleared on
   logout, on a new user and by Reset settings / Delete all (index.js and
@@ -2948,8 +2951,8 @@ deactivate breathing prompts (switch off by default)".
   also clears `bbBreathFav`, `bbBreathMins`, `bbBreathMute`.
 - **New features (1.46):** `breathing` — a note with a link,
   "Open them in the Survival Kit →" (`survival-kit.html#breathing`; items can
-  now carry `link: { href, labelKey }`), and `breathPrompts` — the switch,
-  starting off. Web users who saw 1.45 get it at once; someone who missed 1.45
+  now carry `link: { href, labelKey }`), and `breathPrompts` — a note (it was
+  a switch starting off until v434; with prompts on by default it has none). Web users who saw 1.45 get it at once; someone who missed 1.45
   sees only 1.46 (as the sheet always has).
 - **Engine fix (same change):** `start()` now marks a new install seen at
   once. It used to wait for the screen to be idle first, so someone tapping

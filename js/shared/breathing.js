@@ -13,7 +13,7 @@
  *   BB.breathing.open({ id })      the player sheet, on `id` or the favourite
  *   BB.breathing.close()
  *   BB.breathing.isOpen()
- *   BB.breathing.promptsOn()       the journal's "Breathing prompts" switch
+ *   BB.breathing.promptsOn()       on unless Settings' "Stop breathing prompts" is on
  *   BB.breathing.setPrompts(on)    writes it here and to userSettings
  *   BB.breathing.renderList(host)  the Survival Kit section's cards
  *
@@ -25,8 +25,8 @@
  * like the journal's other switches).
  *
  * localStorage: bbBreathFav (technique id), bbBreathMins ('1' | '3' | '5'),
- * bbBreathMute ('1' = no sound), breathPromptsEnabled ('1' = on; off until
- * someone turns it on).
+ * bbBreathMute ('1' = no sound), breathPromptsEnabled ('0' = stopped; unset or
+ * '1' = on — on by default since v434, James 2026-11-20).
  */
 (function () {
   'use strict';
@@ -78,7 +78,7 @@
   }
 
   // ── The journal's prompts switch ──────────────────────────────────────
-  function promptsOn() { return lsGet('breathPromptsEnabled') === '1'; }
+  function promptsOn() { return lsGet('breathPromptsEnabled') !== '0'; }
   function setPrompts(on) {
     lsSet('breathPromptsEnabled', on ? '1' : '0');
     try {

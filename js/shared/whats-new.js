@@ -327,16 +327,13 @@
       '1.46': [
         // 🌬️ Breathing (js/shared/breathing.js, 2026-10-26). The exercises are
         // always there: a note with a link to them. The journal's prompts are
-        // off until turned on: the switch is Settings' 🌬️ Breathing prompts.
+        // on by default since v434 (a note, no switch): Settings' 🌬️ Stop
+        // breathing prompts turns them off.
         { id: 'breathing', icon: '🌬️', titleKey: 'breathe.wnTitle', bodyKey: 'breathe.wnBody',
           setting: null, link: { href: 'survival-kit.html#breathing', labelKey: 'breathe.wnLink' },
           applies: function () { return !!BB.breathing; } },
         { id: 'breathPrompts', icon: '📓', titleKey: 'breathe.wnPromptTitle', bodyKey: 'breathe.wnPromptBody',
-          setting: {
-            key: 'breathPromptsEnabled',
-            get: function () { return !!(BB.breathing && BB.breathing.promptsOn()); },
-            set: function (on) { return BB.breathing.setPrompts(on); },
-          },
+          setting: null,
           applies: function () { return !!BB.breathing; } },
       ],
     };

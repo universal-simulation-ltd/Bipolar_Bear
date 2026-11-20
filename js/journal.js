@@ -2199,7 +2199,7 @@ function _tt(k, vars, fallback) {
     function _hasMood() { return selectedMood != null && selectedMood !== ''; }
 
     // ── 🌬️ Breathing prompt (js/shared/breathing.js, James 2026-10-26) ──
-    // With Settings' "Breathing prompts" on (off until turned on), any mood
+    // Unless Settings' "Stop breathing prompts" is on (prompts on by default since v434), any mood
     // but Stable (5) — the main mood or one held on with it — brings a small
     // "A minute of slow breathing?" line: under the summary chips on every
     // focus-mode step after the mood, under the mood buttons in the form.
@@ -2241,7 +2241,8 @@ function _tt(k, vars, fallback) {
     }
     function _toggleBreathPrompts() {
       const chk = document.getElementById('breathPromptsToggle');
-      if (window.BB && BB.breathing) BB.breathing.setPrompts(!!(chk && chk.checked));
+      // The switch is "Stop breathing prompts": ticked = off.
+      if (window.BB && BB.breathing) BB.breathing.setPrompts(!(chk && chk.checked));
       _refreshBreathPrompt();
     }
     window._breathPromptGo = _breathPromptGo;
@@ -2250,7 +2251,7 @@ function _tt(k, vars, fallback) {
     // The New features sheet turns it on too (BB.breathing.setPrompts).
     document.addEventListener('bb:breathprompts', () => {
       const chk = document.getElementById('breathPromptsToggle');
-      if (chk && window.BB && BB.breathing) chk.checked = BB.breathing.promptsOn();
+      if (chk && window.BB && BB.breathing) chk.checked = !BB.breathing.promptsOn();
       _refreshBreathPrompt();
     });
     document.addEventListener('bb:languagechange', () => _refreshBreathPrompt());
@@ -14062,7 +14063,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         // v358: blood results on the charts, and the New features sheet
         // (Reset brings the sheet back).
         'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbWhatsNewSeen',
-        'breathPromptsEnabled', // 🌬️ Breathing prompts (off again)
+        'breathPromptsEnabled', // 🌬️ Breathing prompts (on again)
       ];
       _keys.forEach(k => localStorage.removeItem(k));
       // 😴 My usual sleep back to not set (7–9 h), on the account too.
@@ -14096,7 +14097,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
           customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
           earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
-          breathPromptsEnabled: false,
+          breathPromptsEnabled: true,
         }, { merge: true }).catch(() => {});
       }
       closeSettingsModal();
@@ -14383,7 +14384,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
               achievementToastsEnabled: true, showMoodSuggestion: false, moodLinkingEnabled: false,
               customTrackingFields: [], trackingFields: {}, labelOverrides: {}, deletedTrackers: [],
               earlyWarnEnabled: false, moodSpectrumEnabled: false, wheelModeEnabled: true, disabledSteps: _DEFAULT_DISABLED_STEPS,
-              breathPromptsEnabled: false,
+              breathPromptsEnabled: true,
               safetyPlanEnc: null,
               onboardingStep: 0,
               helpedVoted: false,
@@ -16651,7 +16652,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       if (_wmToggle) _wmToggle.checked = !_wheelMode();
       document.getElementById('moodSuggestionToggle').checked = localStorage.getItem('showMoodSuggestion') === '1';
       const _bpToggle = document.getElementById('breathPromptsToggle');
-      if (_bpToggle) _bpToggle.checked = !!(window.BB && BB.breathing && BB.breathing.promptsOn());
+      if (_bpToggle) _bpToggle.checked = !(window.BB && BB.breathing && BB.breathing.promptsOn());
       if (window.BBInsights) window.BBInsights.syncSettingUI();
       _syncBloodChartsToggle();
       document.getElementById('focusModeToggle').checked = _fmEnabled;
