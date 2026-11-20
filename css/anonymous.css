@@ -421,28 +421,6 @@
       margin: -9px 0 8px;
     }
 
-    .board-tabs { display: flex; gap: 4px; }
-    .board-tab {
-      flex: 1; padding: 10px 0; border-radius: 12px 12px 0 0; border: none;
-      cursor: pointer; font-weight: 700; font-size: 0.8125rem; font-family: inherit;
-      background: rgba(0,0,0,0.1); color: var(--dark);
-      transition: all 0.15s; position: relative;
-    }
-    .board-tab.active { background: var(--cream); color: var(--dark); }
-    /* Larger Text: let a long tab name wrap inside its third of the row. */
-    html.bb-text-large .board-tab { min-width: 0; overflow-wrap: anywhere; padding-left: 4px; padding-right: 4px; }
-
-    /* Unseen-message badge dot */
-    .board-tab.has-badge::after {
-      content: '';
-      /* In the tab's top corner, clear of the label: a long one
-         ("Ankündigungen") fills the tab. */
-      position: absolute; top: 4px; right: 7px;
-      width: 8px; height: 8px;
-      background: #e53935;
-      border-radius: 50%;
-      animation: badge-pulse 1.4s ease-in-out infinite;
-    }
     @keyframes badge-pulse {
       0%, 100% { opacity: 1;   transform: scale(1);   }
       50%       { opacity: 0.4; transform: scale(1.5); }
@@ -644,16 +622,13 @@
       background: #e53935; box-shadow: 0 0 0 2px var(--surface);
       animation: badge-pulse 1.4s ease-in-out infinite;
     }
-    /* Phones (<768px): the bottom bar is the navigation (owner rule
-       2026-11-19, BRANDING.md "On a phone, navigation sits at the bottom"),
-       so the Announcements / General / Wiki strip in the header, which only
-       repeated 📢 💬 📖, goes; the header keeps a little room under it. */
-    @media (max-width: 767.98px) {
-      .board-tabs { display: none; }
-      .board-header { padding-bottom: 12px; }
-    }
-    /* Six buttons on a 320–379px phone: a little smaller and closer so the
-       bar fits inside the 12px gutters. */
+    /* The bottom bar is the board's only navigation on every screen size
+       (James, 2026-11-20; on a phone since 2026-11-19, BRANDING.md "On a
+       phone, navigation sits at the bottom"): no tab strip in the header,
+       which keeps a little room under its last line. */
+    .board-header { padding-bottom: 12px; }
+    /* A 320–379px phone: a little smaller and closer so the bar fits inside
+       the 12px gutters. */
     @media (max-width: 379.98px) {
       .fab-bar { gap: 4px; padding: 8px 10px; }
       .fab-btn { width: 40px; height: 40px; font-size: 1.125rem; }
@@ -1321,10 +1296,8 @@
     html.theme-dark body,
     html.theme-dark #app-shell,
     html.theme-dark .onboard-bg { background: var(--cream); }
-    html.theme-dark .board-tab { background: rgba(255,255,255,0.06); }
     /* The red text buttons in Your Moniker were 2.6–3.8:1 on the dark sheet. */
     html.theme-dark #ms-signout, html.theme-dark #ms-delete { color: #ff8787 !important; }
-    html.theme-dark .board-tab.active { background: var(--cream); }
     html.theme-dark .board-back-btn,
     html.theme-dark .help-btn { background: rgba(255,255,255,0.08); }
     html.theme-dark .card,
@@ -1388,3 +1361,18 @@
   html.is-native .wiki-body > :not(.wiki-card),
   html.is-native .wiki-body > .wiki-card[open] { grid-column: 1 / -1; }
 }
+
+    /* "Are you looking for the chat?" at the top of Announcements (setTab
+       shows it on that tab only; the button goes to the General feed). */
+    .ann-chat-prompt {
+      display: flex; align-items: center; justify-content: center; flex-wrap: wrap;
+      gap: 4px 10px; margin: 12px 16px 0; padding: 10px 14px;
+      background: var(--yellow-bg); border: 1.5px solid rgba(245,200,0,0.25);
+      border-radius: 12px; font-size: 0.8125rem; color: var(--dark); text-align: center;
+    }
+    .ann-chat-go {
+      background: none; border: none; padding: 4px 2px; cursor: pointer;
+      font: inherit; font-weight: 700; color: var(--dark);
+      text-decoration: underline; text-underline-offset: 3px;
+    }
+    html.theme-dark .ann-chat-prompt { border-color: var(--line); }

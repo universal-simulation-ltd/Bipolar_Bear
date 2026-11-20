@@ -798,12 +798,12 @@ async function anonymous(page, out, nb, { topic }) {
     await tap(page, page.locator('#post-list .like-btn[data-id="p1"]'), { after: 1400 })
     await nb.text('heart')
     // The wiki: plain-language notes on treatments, conditions and more.
-    await tap(page, page.locator('.board-tab[data-tab="wiki"]'), { after: 900 })
+    await tap(page, page.locator('#fab-wiki'), { after: 900 })
     await tap(page, shown(page, '.wiki-pill[data-wiki="therapies"]').first(), { after: 800 })
     await tap(page, shown(page, '.wiki-card summary').first(), { after: 2400 })
     await nb.text('wiki')
     // Back on the board: How are you today? Stable, and the day's totals.
-    await tap(page, page.locator('.board-tab[data-tab="general"]'), { after: 900 })
+    await tap(page, page.locator('#fab-gen'), { after: 900 })
     await tap(page, page.locator('#post-list .mood-btn[data-mood=stable]'), { after: 1800 })
     await hold(page, 600)
     await nb.text('checkin')

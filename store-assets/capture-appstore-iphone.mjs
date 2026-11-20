@@ -276,7 +276,7 @@ async function captureAnon(browser, lang) {
     await page.locator('#post-list .mood-btn[data-mood=stable]').click(); await page.waitForTimeout(2600)
     await shot('checkin')
     await board()
-    await page.locator('.board-tab').nth(2).click(); await page.waitForTimeout(1200)
+    await page.locator('#fab-wiki').click(); await page.waitForTimeout(1200)
     // Loved ones → "What to say (and what not to say)": sourced from Mind,
     // not the NHS, so it reads true in every country's store.
     await page.evaluate(() => document.querySelector('.wiki-pill[data-wiki="lovedOnes"]').click())
@@ -289,7 +289,7 @@ async function captureAnon(browser, lang) {
       let el = card.parentElement
       while (el && !(el.scrollHeight > el.clientHeight && /auto|scroll/.test(getComputedStyle(el).overflowY))) el = el.parentElement
       el = el || document.scrollingElement
-      const tabs = Math.max(...[...document.querySelectorAll('.board-tab')].map((t) => t.getBoundingClientRect().bottom))
+      const tabs = document.querySelector('.board-header').getBoundingClientRect().bottom
       el.scrollTop += card.getBoundingClientRect().top - tabs - 14
     })
     await page.waitForTimeout(900)

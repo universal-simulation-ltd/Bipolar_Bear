@@ -2120,7 +2120,13 @@
 //   (2026-11-20, James). js/shared/breathing.js, js/journal.js, js/index.js,
 //   js/shared/whats-new.js, js/shared/i18n-breathe.js, js/shared/i18n-blood.js,
 //   journal.html, survival-kit.html.
-const CACHE_NAME = 'bipolarbear-v434';
+// v435: Bipolar Anonymous: the bottom bar is the board's only navigation
+//   (📢 ✏️/🔍 💬 📖); the header's tab strip is gone on every screen size, and
+//   ℹ️ About + 🔒 privacy moved into the moniker sheet. Announcements opens with
+//   "Are you looking for the chat? Click here" → General. 10 languages
+//   (2026-11-20, James). anonymous.html, js/anonymous.js, css/anonymous.css,
+//   js/shared/i18n.js.
+const CACHE_NAME = 'bipolarbear-v435';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

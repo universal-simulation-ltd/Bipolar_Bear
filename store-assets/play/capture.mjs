@@ -363,7 +363,7 @@ async function anon(browser, tmp, cls, lang) {
     await page.waitForTimeout(900)
     await shot('report', { keep: true })
     await board()
-    await page.locator('.board-tab').nth(2).click(); await page.waitForTimeout(1200)
+    await page.locator('#fab-wiki').click(); await page.waitForTimeout(1200)
     await shot('wikilist')
     await visible(page, '.wiki-card summary').click(); await page.waitForTimeout(1200)
     await shot('wiki')

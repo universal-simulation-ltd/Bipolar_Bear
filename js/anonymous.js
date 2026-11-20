@@ -2710,7 +2710,6 @@ function initBoard() {
   // duplicate click handlers to the Post / SOS / report / delete buttons,
   // which is what caused chat messages to be written twice.
   if (!_boardSetupDone) {
-    setupTabs();
     setupFAB();
     setupCompose();
     setupThread();
@@ -2864,12 +2863,6 @@ function _seedPostCount() {
   _postCountTargets().then(t => BB.anonPostCount.seed(db, profile.monika, t)).catch(() => {});
 }
 
-function setupTabs() {
-  document.querySelectorAll('.board-tab').forEach(btn => {
-    btn.addEventListener('click', () => setTab(btn.dataset.tab));
-  });
-}
-
 // ── Unseen-message helpers ─────────────────────────────────────────
 function stopAllListeners() {
   ['announcements', 'general'].forEach(tab => {
@@ -2996,12 +2989,10 @@ function _postIsUnseen(p, tab) {
 
 function renderTabBadges() {
   ['announcements', 'general'].forEach(tab => {
-    const btn = document.querySelector(`.board-tab[data-tab="${tab}"]`);
     // The admin's announcements tab also flags suggestions waiting on them.
     const waiting = tab === 'announcements' && profile.isAdmin && pendingSuggestionCount() > 0;
     const on = tab !== currentTab && (waiting || tabHasUnseen(tab));
-    if (btn) btn.classList.toggle('has-badge', on);
-    // Same dot on the bottom bar's 📢 / 💬 (the tabs are hidden on a phone).
+    // The dot sits on the bottom bar's 📢 / 💬, the board's only navigation.
     const fab = document.getElementById(tab === 'announcements' ? 'fab-ann' : 'fab-gen');
     if (fab) fab.classList.toggle('has-badge', on);
   });
@@ -3134,12 +3125,8 @@ function commentBtnHtml(p, commentCount) {
 
 function setTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.board-tab').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tab);
-    b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false');
-  });
-  // The bottom bar's 📢 💬 📖 mirror the tabs (on a phone the tab strip is
-  // hidden and the bar is the only way between them, css/anonymous.css).
+  // The bottom bar's 📢 💬 📖 are the board's only navigation (James,
+  // 2026-11-20: the header's tab strip is gone on every screen size).
   [['fab-ann', 'announcements'], ['fab-gen', 'general'], ['fab-wiki', 'wiki']].forEach(([id, t]) => {
     const b = document.getElementById(id);
     if (!b) return;
@@ -3156,6 +3143,8 @@ function setTab(tab) {
   if (wikiSection) wikiSection.style.display = isWiki ? 'block' : 'none';
   if (fabCompose)  fabCompose.style.display  = isWiki ? 'none'  : '';
   if (fabSearch)   fabSearch.style.display   = isWiki ? ''      : 'none';
+  const chatPrompt = document.getElementById('ann-chat-prompt');
+  if (chatPrompt)  chatPrompt.style.display  = tab === 'announcements' ? '' : 'none';
   if (!isWiki) closeWikiSearch();
 
   if (isWiki) {
@@ -6473,9 +6462,9 @@ function setupFAB() {
     openOv('ov-compose');
     setTimeout(() => document.getElementById('compose-ta').focus(), 50);
   });
-  document.getElementById('fab-e2ee').addEventListener('click', () => openOv('ov-e2ee'));
-
-  document.getElementById('fab-home').addEventListener('click', openAbout);
+  // "Are you looking for the chat?" on Announcements → the General feed.
+  const chatGo = document.getElementById('ann-chat-go');
+  if (chatGo) chatGo.addEventListener('click', () => setTab('general'));
 
   const searchBtn = document.getElementById('fab-search');
   if (searchBtn) searchBtn.addEventListener('click', toggleWikiSearch);
@@ -7510,6 +7499,10 @@ function openMonikaSettings() {
 document.getElementById('ms-cancel').addEventListener('click', () => closeOv('ov-monika'));
 document.getElementById('ms-saved-btn').addEventListener('click', openSaved);
 document.getElementById('ms-theme-btn').addEventListener('click', cycleTheme);
+// About and the privacy explainer, off the bottom bar since 2026-11-20. Both
+// sheets come after the moniker sheet in the page, so they open on top of it.
+document.getElementById('ms-about-btn').addEventListener('click', openAbout);
+document.getElementById('ms-privacy-btn').addEventListener('click', () => openOv('ov-e2ee'));
 
 // ── Admin: post as a member (Your Moniker sheet) ──
 // This device only, on purpose — it changes what the next post is signed as,

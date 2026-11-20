@@ -260,11 +260,6 @@
     <!-- Community size. Hidden until js/anonymous.js resolves
          counters/anonUserCount (or its cached value) — never shows a zero. -->
     <div id="member-count" class="member-count" style="display:none;"></div>
-    <div class="board-tabs" role="tablist">
-      <button class="board-tab" id="tab-ann" role="tab" aria-selected="false" data-tab="announcements" data-i18n="anon.board.announcements">📢 Announcements</button>
-      <button class="board-tab active" id="tab-gen" role="tab" aria-selected="true" data-tab="general" data-i18n="anon.board.general">💬 General</button>
-      <button class="board-tab" id="tab-wiki" role="tab" aria-selected="false" data-tab="wiki" data-i18n="anon.board.wiki">📖 Wiki</button>
-    </div>
   </div>
 
   <!-- Pull-to-refresh indicator, grown by setupPullToRefresh() -->
@@ -276,6 +271,13 @@
     <button type="button" id="board-retry" data-i18n="anon.net.retry">Try again</button>
   </div>
 
+  <!-- Announcements only (setTab): people who land here looking for the
+       conversation get one tap to the General feed (James, 2026-11-20). -->
+  <div id="ann-chat-prompt" class="ann-chat-prompt" style="display:none;">
+    <span data-i18n="anon.tips.chatQ">Are you looking for the chat?</span>
+    <button type="button" id="ann-chat-go" class="ann-chat-go" data-i18n="anon.tips.chatLink">Click here</button>
+  </div>
+
   <div id="post-list">
     <div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div><div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div><div class="skel-card"><div class="skel-row"><div class="skel skel-av"></div><div style="flex:1"><div class="skel skel-line" style="width:40%"></div><div class="skel skel-line" style="width:25%;margin:0"></div></div></div><div class="skel skel-line" style="width:92%"></div><div class="skel skel-line" style="width:70%"></div></div>
   </div>
@@ -283,17 +285,16 @@
   <!-- Wiki tab content. Populated in Phase 3. -->
   <div id="wiki-section" style="display:none;"></div>
 
-  <!-- FAB Footer -->
+  <!-- FAB Footer: the board's only navigation (James, 2026-11-20): 📢 ✏️/🔍 💬 📖.
+       About and the privacy explainer live in the moniker sheet. -->
   <div class="fab-footer">
     <div class="fab-hint" id="fab-hint"></div>
     <div class="fab-bar">
-      <button class="fab-btn" id="fab-home"    title="About Bipolar Anonymous" data-i18n-title="anon.tips.about">ℹ️</button>
       <button class="fab-btn" id="fab-ann"     title="Announcements" data-i18n-title="anon.tips.announcements" aria-pressed="false">📢</button>
       <button class="fab-btn-compose" id="fab-compose" title="Write a post" data-i18n-title="anon.tips.compose">✏️</button>
       <button class="fab-btn-compose" id="fab-search" title="Search the wiki" data-i18n-title="anon.tips.search" style="display:none;">🔍</button>
       <button class="fab-btn active" id="fab-gen" title="General Chat" data-i18n-title="anon.tips.general" aria-pressed="true">💬</button>
       <button class="fab-btn" id="fab-wiki"    title="Wiki" data-i18n-title="anon.tips.wiki" aria-pressed="false">📖</button>
-      <button class="fab-btn" id="fab-e2ee"    title="Privacy info" data-i18n-title="anon.tips.privacy">🔒</button>
     </div>
   </div>
 
@@ -454,20 +455,6 @@
   </div>
 </div>
 
-<div id="ov-e2ee" class="overlay hidden">
-  <div class="sheet">
-    <div class="sheet-icon">🔒</div>
-    <div class="sheet-title" style="font-size:1.25rem;font-weight:800;" data-i18n="anon.e2ee.title">Your privacy, explained</div>
-    <div class="sheet-sub" data-i18n="anon.e2ee.sub">Here's exactly how Bipolar Anonymous handles your data:</div>
-    <div class="e2ee-row"><span class="e2ee-row-icon">💬</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.messagesTitle">Posts are public to the community</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.messagesSub">Anyone in the community can read what you post — that's how peer support works. Share only what you're comfortable being seen.</div></div></div>
-    <div class="e2ee-row"><span class="e2ee-row-icon">👤</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.identityTitle">No real identity</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.identitySub">No real name, profile or photo. Your email is only used to send your sign-in code: the code's record holds it until the code is used (an unused code is deleted within 25 hours). Your board profile is filed under a code made from your email with a secret key only our server has, and the address stays on this device to keep you signed in.</div></div></div>
-    <div class="e2ee-row"><span class="e2ee-row-icon">🚫</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.noSellTitle">Never sold</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.noSellSub">We will never sell your data or use it for advertising. A few services run the app for us: Google Firebase (the board and sign-in), Resend (sign-in emails) and Google Cloud Translation (translating posts). The privacy policy says what each one receives.</div></div></div>
-    <div class="e2ee-row"><span class="e2ee-row-icon">🔒</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.secureTitle">Encrypted in transit & at rest</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.secureSub">Your data travels over encrypted connections and is stored encrypted on secure Google Cloud servers.</div></div></div>
-    <p style="text-align:center;font-size:0.8125rem;margin:4px 0 14px;"><a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacyFull">Read the full privacy policy →</a></p>
-    <button class="btn-primary" onclick="closeOv('ov-e2ee')" style="margin-top:6px;" data-i18n="anon.e2ee.gotIt">Got it 👍</button>
-  </div>
-</div>
-
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <!-- OVERLAY: Monika Settings                                       -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -582,6 +569,26 @@
       <div style="flex:1;">
         <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.admin.asMemberTitle">Post as a member</div>
         <div id="ms-asmember-status" style="font-size:0.6875rem;color:var(--muted);margin-top:1px;"></div>
+      </div>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
+    </button>
+
+    <!-- About Bipolar Anonymous (was ℹ️ on the bottom bar until 2026-11-20) -->
+    <button id="ms-about-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
+      <span style="font-size:1.25rem;">ℹ️</span>
+      <div style="flex:1;">
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.tips.about">About Bipolar Anonymous</div>
+        <div style="font-size:0.6875rem;color:var(--muted);margin-top:1px;" data-i18n="anon.tips.aboutSub">What this place is and how it works</div>
+      </div>
+      <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
+    </button>
+
+    <!-- Your privacy, explained (was 🔒 on the bottom bar until 2026-11-20) -->
+    <button id="ms-privacy-btn" style="width:100%;text-align:left;background:var(--yellow-bg);border:1.5px solid rgba(245,200,0,0.18);border-radius:12px;padding:11px 14px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-family:inherit;">
+      <span style="font-size:1.25rem;">🔒</span>
+      <div style="flex:1;">
+        <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);" data-i18n="anon.e2ee.title">Your privacy, explained</div>
+        <div style="font-size:0.6875rem;color:var(--muted);margin-top:1px;" data-i18n="anon.tips.privacySub">How your data is handled</div>
       </div>
       <span style="color:var(--muted);font-size:1rem;font-weight:300;">›</span>
     </button>
@@ -861,6 +868,20 @@
     </p>
 
     <button id="terms-close" class="btn-secondary" style="width:100%;" data-i18n="common.close">Close</button>
+  </div>
+</div>
+
+<div id="ov-e2ee" class="overlay hidden">
+  <div class="sheet">
+    <div class="sheet-icon">🔒</div>
+    <div class="sheet-title" style="font-size:1.25rem;font-weight:800;" data-i18n="anon.e2ee.title">Your privacy, explained</div>
+    <div class="sheet-sub" data-i18n="anon.e2ee.sub">Here's exactly how Bipolar Anonymous handles your data:</div>
+    <div class="e2ee-row"><span class="e2ee-row-icon">💬</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.messagesTitle">Posts are public to the community</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.messagesSub">Anyone in the community can read what you post — that's how peer support works. Share only what you're comfortable being seen.</div></div></div>
+    <div class="e2ee-row"><span class="e2ee-row-icon">👤</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.identityTitle">No real identity</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.identitySub">No real name, profile or photo. Your email is only used to send your sign-in code: the code's record holds it until the code is used (an unused code is deleted within 25 hours). Your board profile is filed under a code made from your email with a secret key only our server has, and the address stays on this device to keep you signed in.</div></div></div>
+    <div class="e2ee-row"><span class="e2ee-row-icon">🚫</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.noSellTitle">Never sold</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.noSellSub">We will never sell your data or use it for advertising. A few services run the app for us: Google Firebase (the board and sign-in), Resend (sign-in emails) and Google Cloud Translation (translating posts). The privacy policy says what each one receives.</div></div></div>
+    <div class="e2ee-row"><span class="e2ee-row-icon">🔒</span><div><div class="e2ee-row-title" data-i18n="anon.e2ee.secureTitle">Encrypted in transit & at rest</div><div class="e2ee-row-sub" data-i18n="anon.e2ee.secureSub">Your data travels over encrypted connections and is stored encrypted on secure Google Cloud servers.</div></div></div>
+    <p style="text-align:center;font-size:0.8125rem;margin:4px 0 14px;"><a class="ink-link" href="https://www.bipolarbear.app/privacy.html" target="_blank" rel="noopener" data-i18n="anon.links.privacyFull">Read the full privacy policy →</a></p>
+    <button class="btn-primary" onclick="closeOv('ov-e2ee')" style="margin-top:6px;" data-i18n="anon.e2ee.gotIt">Got it 👍</button>
   </div>
 </div>
 
