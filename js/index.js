@@ -1997,7 +1997,7 @@ if (window.BB && BB.userCount && BB.userCount.suite) {
           'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbBloodDueReminder', 'bbWhatsNewSeen',
           'breathPromptsEnabled', 'bbBreathFav', 'bbBreathMins', 'bbBreathMute',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
-          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
+          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers', 'bbStarterTrackers',
           'bbPinEnabled', 'bbPinCode', 'bbNativePinEnabled', 'bbGuestNoPin',
           'bbHealthSyncEnabled', 'reminderEnabled', 'reminderTime',
           'journalDefaultToday', 'bbCoffeeFabHidden', 'bbQuickNoteFabHidden', 'bbSecurityFabHidden', 'bbQuickNotes',

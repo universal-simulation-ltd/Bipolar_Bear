@@ -2131,7 +2131,13 @@
 //   the button says the range ("Use 7–8 h"), and a single-value setting gets
 //   the offer again. 10 languages (2026-11-20, James).
 //   js/shared/sleep-target.js (suggest), js/journal.js.
-const CACHE_NAME = 'bipolarbear-v436';
+// v437: new users start with one additional tracker, 💪 My Confidence, a
+//   scale, written as their own tracker (customTrackingFields), not a locked
+//   built-in, so they can rename, retype, switch off or delete it. Seeded once
+//   per device for a new user only (bbStarterTrackers). 10 languages
+//   (2026-11-20, James). js/shared/starter-trackers.js (new; index.html,
+//   journal.html), js/journal.js + js/index.js reset lists.
+const CACHE_NAME = 'bipolarbear-v437';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2198,6 +2204,7 @@ const STATIC_ASSETS = [
   './js/shared/breathing.js',
   './js/shared/i18n-breathe.js',
   './js/shared/sleep-target.js',
+  './js/shared/starter-trackers.js',
   './js/shared/i18n-week.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',

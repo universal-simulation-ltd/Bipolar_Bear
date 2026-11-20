@@ -14062,7 +14062,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         'showMoodSuggestion', 'moreDataOpenByDefault',
         'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
         'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
-        'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
+        'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers', 'bbStarterTrackers',
         'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
         // v358: blood results on the charts, and the New features sheet
         // (Reset brings the sheet back).
@@ -14289,7 +14289,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           'showMoodSuggestion', 'moreDataOpenByDefault',
           'achievementToastsEnabled', 'statsStartDate', 'weeklySummaryEnabled',
           'customiseFormEnabled', 'disabledSteps', 'moodLinkingEnabled', 'moodSpectrumEnabled', 'wheelModeEnabled',
-          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers',
+          'customTrackingFields', 'deletedDefaultCustomFields', 'deletedBuiltinFields', 'deletedCustomTrackers', 'bbStarterTrackers',
           'earlyWarnEnabled', 'bbEarlyWarnSeen', 'bbJournalView', 'bbJournalRange', 'bbMedsHubTab',
           'bbBloodOnCharts', 'bbBloodChartsAsked', 'bbBloodChartTest', 'bbBloodDueReminder', 'bbWhatsNewSeen',
           'breathPromptsEnabled', 'bbBreathFav', 'bbBreathMins', 'bbBreathMute',
