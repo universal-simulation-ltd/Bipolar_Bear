@@ -23,7 +23,7 @@ exports.emailOptOut = require('./email-optout').emailOptOut;
 const RESEND_API_KEY = defineSecret('RESEND_API_KEY');
 
 const REGION          = 'europe-west1';
-const FROM_ADDRESS    = 'Bipolar Anonymous <bipolar@mail.unisim.co.uk>';
+const FROM_ADDRESS    = 'Bipolar Bear <bipolar@mail.unisim.co.uk>';
 // Where admin notifications go (feedback, beta signups, announcement
 // suggestions). Not the admin *account* — that stays inbox@jamesmarkey.co.uk
 // (Firestore rules, ADMIN_EMAIL in js/anonymous.js).
