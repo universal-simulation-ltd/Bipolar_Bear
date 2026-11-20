@@ -494,7 +494,14 @@
         <div id="fmProgressDots" style="display:flex;gap:5px;flex:1;justify-content:center;align-items:center;"></div>
         <button id="fmSkipBtn" onclick="_fmSkip()" style="background:none;border:none;color:var(--text-muted-ink);font-size:0.85em;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent;white-space:nowrap;" data-i18n="journal.mods.fmSkip">Skip →</button>
       </div>
-      <div id="fmStepCounter" style="text-align:center;font-size:0.75em;color:var(--text-muted-ink);margin-bottom:10px;"></div>
+      <!-- "Step 4 of 7"; "Saving draft…" / "✓ Draft saved" (#fmDraftStatus) takes its
+           place on the same line for a moment (showDraftStatus in js/journal.js).
+           It used to sit under the step, where a tall step (three medicine chips,
+           Next, Manage medications) ran over it. -->
+      <div id="fmCounterLine" style="position:relative;margin-bottom:10px;">
+        <div id="fmStepCounter" style="text-align:center;font-size:0.75em;color:var(--text-muted-ink);transition:opacity 0.3s ease;"></div>
+        <div id="fmDraftStatus" style="position:absolute;left:0;right:0;top:0;text-align:center;font-size:0.75em;color:var(--text-muted-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;transition:opacity 0.3s ease;opacity:0;"></div>
+      </div>
 
       <!-- Reduced-motion indicator: hidden by default, revealed purely by the
            prefers-reduced-motion media query in journal.css so it appears
@@ -541,7 +548,6 @@
         <button id="fmDeleteBtn" onclick="_fmDoneDelete()" style="display:none;min-width:52px;height:52px;background:white;color:#ff6b6b;border:2px solid #ff6b6b;border-radius:14px;font-size:1.3em;cursor:pointer;-webkit-tap-highlight-color:transparent;flex-shrink:0;">🗑️</button>
         <button id="fmNextBtn" onclick="_fmNext()" style="flex:1;padding:14px;background:var(--brand-btn);color:white;border:none;border-radius:14px;font-size:1em;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;" data-i18n="journal.mods.fmNext">Next →</button>
       </div>
-      <div id="fmDraftStatus" style="text-align:right;font-size:0.75em;color:var(--text-muted-ink);margin-top:4px;min-height:1em;transition:opacity 0.5s ease;opacity:0;"></div>
 
     </div>
 

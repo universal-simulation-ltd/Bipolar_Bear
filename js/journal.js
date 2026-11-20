@@ -1762,22 +1762,30 @@ function _tt(k, vars, fallback) {
       _draftSaveTimer = setTimeout(saveDraft, 1500);
     }
 
+    // Focus mode shows it in place of "Step 4 of 7" (#fmCounterLine in
+    // journal.html), which fades out while it shows and back after: a line
+    // the step's own content can never run over.
     function showDraftStatus(state) {
       const els = [document.getElementById('draftStatus'), document.getElementById('fmDraftStatus')];
+      const counter = document.getElementById('fmStepCounter');
+      const show = (el, on) => {
+        el.style.opacity = on ? '1' : '0';
+        if (el.id === 'fmDraftStatus' && counter) counter.style.opacity = on ? '0' : '';
+      };
       els.forEach(el => {
         if (!el) return;
         const _t = (k) => (window.BB && BB.t) ? BB.t(k) : k;
+        clearTimeout(el._fadeTimer);
         if (state === 'saving') {
           el.textContent = _t('journal.draft.saving');
-          el.style.opacity = '1';
+          show(el, true);
         } else if (state === 'saved') {
           el.textContent = _t('journal.draft.saved');
-          el.style.opacity = '1';
-          clearTimeout(el._fadeTimer);
-          el._fadeTimer = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+          show(el, true);
+          el._fadeTimer = setTimeout(() => show(el, false), 2500);
         } else {
           el.textContent = '';
-          el.style.opacity = '0';
+          show(el, false);
         }
       });
     }

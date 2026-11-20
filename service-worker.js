@@ -2146,7 +2146,12 @@
 //   js/shared/tracking-manager.js + js/shared/i18n-tracking.js (new;
 //   survival-kit.html), js/survival-kit.js (sign-in load), js/journal.js,
 //   css/survival-kit.css, css/dark.css.
-const CACHE_NAME = 'bipolarbear-v438';
+// v439: focus mode's "Saving draft…" / "✓ Draft saved" shows in place of
+//   "Step 4 of 7" (under the dots) for a moment, instead of under the step,
+//   where a tall step (three medicine chips, Next, Manage medications) ran
+//   over it and it sat beside a chip (2026-11-20, James). journal.html,
+//   js/journal.js showDraftStatus.
+const CACHE_NAME = 'bipolarbear-v439';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
