@@ -20424,6 +20424,34 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       setTimeout(_tryOpenMeds, 600);
     }
 
+    // The Survival Kit's 📈 Additional tracking (js/shared/tracking-manager.js)
+    // hands over what needs the opened entries: ?openTrackData=1 opens 📊
+    // Track Data (changing an answer type); ?openTrackData=<tid> ("c:<id>",
+    // "b:goals" …) also opens that tracker's Stop / Delete sheet, once the
+    // entries have loaded so it can count them (or drop an empty tracker
+    // straight away; after 12 s without them it opens anyway, uncounted).
+    // Never over a PIN lock, the sign-in splash or the
+    // welcome; gives up after 30 s.
+    {
+      const _otd = new URLSearchParams(window.location.search).get('openTrackData');
+      if (_otd) {
+        try { const _u = new URL(window.location.href); _u.searchParams.delete('openTrackData'); history.replaceState(history.state, '', _u.pathname + _u.search + _u.hash); } catch (_) {}
+        const _tdBlockers = ['#guestPinOverlay', '#pinOverlay', '#pinSleepOverlay', '#pinE2eeModal', '#bbPinReauth', '#bbAuthSplash', '#bbWelcomeModal'];
+        const _tdShown = el => { if (!el || !el.getClientRects().length) return false; const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && Number(cs.opacity) > 0.05; };
+        const _tdTid = /^[bc]:[\w-]{1,80}$/.test(_otd) ? _otd : null;
+        const _td0 = Date.now();
+        const _tryOpenTd = () => {
+          if (Date.now() - _td0 > 30000) return;
+          const _busy = document.readyState !== 'complete' || typeof window.showFieldPicker !== 'function'
+            || (_tdTid && !_allEntriesLoaded && Date.now() - _td0 < 12000) || _tdBlockers.some(sel => _tdShown(document.querySelector(sel)));
+          if (_busy) { setTimeout(_tryOpenTd, 400); return; }
+          window.showFieldPicker();
+          if (_tdTid && typeof window._trkOpenSheet === 'function') window._trkOpenSheet(_tdTid);
+        };
+        setTimeout(_tryOpenTd, 600);
+      }
+    }
+
     // Auto-open stats if navigated from Stats FAB
     if (new URLSearchParams(window.location.search).get('openStats') === '1') {
       window.addEventListener('load', () => {

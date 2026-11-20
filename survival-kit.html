@@ -26,11 +26,13 @@
   <script src="js/shared/i18n.js"></script>
   <script src="js/shared/i18n-signin.js"></script>
   <script src="js/shared/i18n-breathe.js"></script>
+  <script src="js/shared/i18n-tracking.js"></script>
   <script src="js/shared/a11y.js"></script>
   <script src="js/shared/pin-guard.js"></script>
   <script src="js/shared/crisis.js"></script>
   <script src="js/shared/safety-plan.js"></script>
   <script src="js/shared/breathing.js"></script>
+  <script src="js/shared/tracking-manager.js"></script>
   <script src="js/shared/version-check.js"></script>
   <script src="js/shared/guest-data.js"></script>
   <script src="js/shared/secure-store.js"></script>
@@ -129,6 +131,7 @@
         <a href="#coping-strategies" class="sk-tab" data-sk-tab="coping-strategies"><span class="sk-tab-ico" aria-hidden="true">🧠</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.coping">Coping</span></a>
         <a href="#breathing" class="sk-tab" data-sk-tab="breathing"><span class="sk-tab-ico" aria-hidden="true">🌬️</span><span class="sk-tab-lbl" data-i18n="breathe.tab">Breathe</span></a>
         <a href="#medications" class="sk-tab" data-sk-tab="medications"><span class="sk-tab-ico" aria-hidden="true">💊</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.meds">Meds</span></a>
+        <a href="#tracking" class="sk-tab" data-sk-tab="tracking"><span class="sk-tab-ico" aria-hidden="true">📈</span><span class="sk-tab-lbl" data-i18n="sktrk.tab">Tracking</span></a>
         <a href="#gratitude" class="sk-tab" data-sk-tab="gratitude"><span class="sk-tab-ico" aria-hidden="true">🙏</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.gratitude">Gratitude</span></a>
         <a href="#goals" class="sk-tab" data-sk-tab="goals"><span class="sk-tab-ico" aria-hidden="true">🎯</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.goals">Goals</span></a>
         <a href="#mind" class="sk-tab" data-sk-tab="mind"><span class="sk-tab-ico" aria-hidden="true">🧩</span><span class="sk-tab-lbl" data-i18n="sk.grid.tab.mind">Mind</span></a>
@@ -178,6 +181,17 @@
         <span class="sk-sos-text">
           <span class="sk-sos-title" data-i18n="breathe.bannerTitle">Breathing exercises</span>
           <span class="sk-sos-sub" data-i18n="breathe.bannerSub">Slow down with a guided breath</span>
+        </span>
+        <span class="sk-sos-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <!-- 📈 Additional tracking (js/shared/tracking-manager.js): the journal's
+           Track Data trackers. Not one of the 12 counted sections. -->
+      <button type="button" class="sk-sos sk-plan sk-trackbn" data-sk-open="tracking">
+        <span class="sk-sos-ico" aria-hidden="true">📈</span>
+        <span class="sk-sos-text">
+          <span class="sk-sos-title" data-i18n="sktrk.bannerTitle">Additional tracking</span>
+          <span class="sk-sos-sub" data-i18n="sktrk.bannerSub">Choose what your journal asks each day</span>
         </span>
         <span class="sk-sos-arrow" aria-hidden="true">›</span>
       </button>
@@ -443,6 +457,24 @@
         <p style="color:var(--text-light);font-size:0.9em;line-height:1.6;margin-bottom:16px;" data-i18n="breathe.intro">Slow breathing can calm your body when your mood is racing or low. Pick an exercise and breathe along with the circle. Star your favourite: it goes first, and the journal opens it.</p>
         <div id="skBreathList"></div>
         <p style="color:var(--text-light);font-size:0.82em;line-height:1.5;margin:14px 2px 0;" data-i18n="breathe.promptNote">When your mood isn’t stable, the journal offers one. To stop that, turn on 🌬️ Stop breathing prompts in the journal's ⚙️ Settings → Advanced → 📓 Journal.</p>
+      </div>
+    </div>
+
+    <!-- ADDITIONAL TRACKING (js/shared/tracking-manager.js renders #skTrackList):
+         the journal's Track Data trackers, on the same storage. Delete and
+         answer-type changes open the journal (journal.html?openTrackData=…).
+         Opened from the 📈 banner, the tab, or survival-kit.html#tracking.
+         Not counted in the 12 sections. -->
+    <div class="section collapsed" id="tracking">
+      <div class="section-header" onclick="toggleSection(this)">
+        <span class="section-icon">📈</span>
+        <h2 data-i18n="sktrk.sectionTitle">Additional tracking</h2>
+        <span style="margin-left:auto;"></span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">
+        <p style="color:var(--text-light);font-size:0.9em;line-height:1.6;margin-bottom:14px;" data-i18n="sktrk.intro">Extra questions your journal asks each day, after mood, energy, sleep and meds. Switch one on to answer it when you log. Switching one off keeps its past answers.</p>
+        <div id="skTrackList"></div>
       </div>
     </div>
 

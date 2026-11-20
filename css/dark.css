@@ -521,3 +521,20 @@ html.theme-dark .bb-breath-prompt .bbp-go { background: #0c8599; }
 html.theme-dark .bb-breath-prompt .bbp-no { color: #a5c9cd; }
 /* 🆘 sheet's 🛟 My safety plan row (fab.js): the plan's dark call-row colours (.bbsp-call). */
 html.theme-dark .bb-crisis-plan { background: #252b45 !important; border-color: #748ffc !important; color: var(--dk-text, #f5ebdd) !important; }
+/* 📈 Additional tracking (js/shared/tracking-manager.js) */
+html.theme-dark .sk-trackbn { color: #ffc078; border-color: #6b4415; }
+html.theme-dark .sk-trackbn .sk-sos-ico { background: #3d2a12; }
+html.theme-dark .sktrk-list, html.theme-dark .sktrk-add { background: var(--dk-surface); }
+html.theme-dark .sktrk-row, html.theme-dark .sktrk-edit { border-bottom-color: var(--dk-line); }
+html.theme-dark .sktrk-emoji-btn, html.theme-dark .sktrk-name, html.theme-dark .sktrk-anyemoji,
+html.theme-dark .sktrk-btn, html.theme-dark .sktrk-type { background: var(--dk-surface-2); border-color: var(--dk-line); color: var(--dk-text); }
+html.theme-dark div.sktrk-name { background: var(--dk-surface-3); color: var(--dk-muted); }
+html.theme-dark .sktrk-type { color: var(--dk-muted); }
+html.theme-dark .sktrk-type.on { background: rgba(255,149,0,0.18); border-color: var(--brand-primary); color: var(--dk-text); }
+html.theme-dark .sktrk-x { background: var(--dk-surface-3); color: var(--dk-text); }
+html.theme-dark .sktrk-emojis { background: var(--dk-surface-2); }
+html.theme-dark .sktrk-del { color: #ff8787; }
+html.theme-dark .sktrk-status { color: #8ce99a; }
+html.theme-dark .sktrk-stepoff { background: #3d2a12; border-color: #6b4415; color: #ffd8a8; }
+html.theme-dark .sktrk-btn-main { background: var(--brand-primary); color: #1c1612; border-color: transparent; }
+html.theme-dark .sktrk-journal { color: #ffc078; }

@@ -1311,3 +1311,63 @@
   .container { padding-bottom: calc(var(--sk-dock-h) + 96px); }
   .section { scroll-margin-top: calc(8px + env(safe-area-inset-top, 0px)); }
 }
+
+/* ── 📈 Additional tracking (js/shared/tracking-manager.js, 2026-11-20) ──
+   The journal's Track Data trackers: rows of [✏️] [name / what it means]
+   [switch], an inline edit row, then Add a tracker. Its banner sits under
+   Breathing in warm amber. */
+.sk-trackbn { color: #8a4b00; border-color: #ffd8a8; box-shadow: 0 3px 12px rgba(232,140,0,0.14); }
+.sk-trackbn .sk-sos-ico { background: #fff4e6; }
+.sk-trackbn .sk-sos-sub { color: #7a5a33; }
+@media (hover: hover) and (pointer: fine) {
+  .sk-trackbn:hover { box-shadow: 0 6px 18px rgba(232,140,0,0.22); }
+}
+.bb-switch { position: relative; display: inline-block; width: 46px; height: 27px; flex-shrink: 0; }
+.bb-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.bb-switch .bb-slider { position: absolute; inset: 0; background: #dee2e6; border-radius: 27px; cursor: pointer; transition: background 0.2s; }
+.bb-switch .bb-slider:before { content: ''; position: absolute; width: 21px; height: 21px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+.bb-switch input:checked + .bb-slider { background: var(--brand-primary); }
+.bb-switch input:checked + .bb-slider:before { transform: translateX(19px); }
+.bb-switch input:focus-visible + .bb-slider { outline: 3px solid var(--orange); outline-offset: 2px; }
+
+#skTrackList { display: flex; flex-direction: column; gap: 14px; }
+.sktrk-list { background: var(--card-bg); border: 1.5px solid var(--border); border-radius: 14px; padding: 2px 12px 2px 4px; }
+.sktrk-row { display: flex; align-items: center; gap: 6px; padding: 8px 0; border-bottom: 1px solid #f1ece4; }
+.sktrk-list > :last-child { border-bottom: none; }
+.sktrk-ico { flex-shrink: 0; width: 40px; height: 40px; border: none; background: none; font-size: 0.95em; cursor: pointer; border-radius: 10px; -webkit-tap-highlight-color: transparent; }
+.sktrk-ico:focus-visible, .sktrk-btn:focus-visible, .sktrk-type:focus-visible, .sktrk-emoji-btn:focus-visible, .sktrk-x:focus-visible, .sktrk-del:focus-visible, .sktrk-journal:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+.sktrk-label { flex: 1; min-width: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sktrk-title { font-size: 0.95em; font-weight: 600; color: var(--text); overflow-wrap: anywhere; line-height: 1.35; }
+.sktrk-sub { font-size: 0.78em; color: var(--text-light); line-height: 1.35; margin-top: 1px; }
+.sktrk-lock { font-size: 0.8em; }
+.sktrk-blank { font-style: italic; font-weight: 500; color: var(--text-light); }
+.sktrk-edit { padding: 10px 0 10px 8px; border-bottom: 1px solid #f1ece4; }
+.sktrk-edit-line { display: flex; align-items: center; gap: 8px; }
+.sktrk-emoji-btn { width: 44px; height: 44px; min-width: 44px; border-radius: 10px; border: 1.5px solid #e9ecef; background: #fff; font-size: 1.25em; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.sktrk-name { flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 1.5px solid #e9ecef; border-radius: 10px; font: inherit; font-size: 0.95em; background: #fff; color: var(--text); outline: none; }
+.sktrk-name:focus { border-color: var(--orange); }
+div.sktrk-name { display: flex; align-items: center; gap: 6px; background: #f1f3f5; color: var(--text-light); }
+div.sktrk-name span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sktrk-locked { opacity: 0.7; }
+.sktrk-x { height: 44px; min-width: 44px; border: none; border-radius: 10px; background: #e9ecef; color: #495057; font-size: 0.9em; cursor: pointer; }
+.sktrk-emojis { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px; margin-top: 8px; background: #f8f9fa; border-radius: 10px; max-height: 180px; overflow-y: auto; }
+.sktrk-emojis[hidden] { display: none; }
+.sktrk-emojis button { font-size: 1.3em; background: none; border: none; width: 40px; height: 40px; cursor: pointer; line-height: 1; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
+.sktrk-anyemoji { flex: 1 1 100%; height: 38px; padding: 0 10px; margin-bottom: 4px; border: 1.5px solid #e9ecef; border-radius: 8px; font: inherit; font-size: 0.88em; background: #fff; color: var(--text); }
+.sktrk-edit-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.sktrk-del { background: none; border: none; color: #c92a2a; font: inherit; font-size: 0.86em; font-weight: 700; padding: 8px 2px; cursor: pointer; }
+.sktrk-note { font-size: 0.8em; color: var(--text-light); line-height: 1.45; margin: 8px 2px 0; }
+.sktrk-delnote { margin-top: 2px; }
+.sktrk-btn { min-height: 40px; padding: 0 16px; border-radius: 10px; border: 1.5px solid #dee2e6; background: #fff; color: var(--text); font: inherit; font-size: 0.88em; font-weight: 700; cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.sktrk-btn-main { height: 44px; background: var(--brand-btn, var(--orange)); border-color: transparent; color: #fff; }
+.sktrk-stepoff { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 14px; border-radius: 12px; background: #fff4e6; border: 1.5px solid #ffd8a8; color: #7a4100; font-size: 0.86em; line-height: 1.45; }
+.sktrk-stepoff span { flex: 1 1 200px; }
+.sktrk-add { background: var(--card-bg); border: 1.5px dashed var(--orange); border-radius: 14px; padding: 12px; }
+.sktrk-add-title { font-size: 0.95em; margin: 0 0 10px; }
+.sktrk-types { display: flex; gap: 6px; margin-top: 10px; }
+.sktrk-type { flex: 1; min-height: 40px; padding: 0 6px; border-radius: 10px; border: 1.5px solid #dee2e6; background: #fff; color: var(--text-light); font: inherit; font-size: 0.84em; font-weight: 700; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.sktrk-type.on { border-color: var(--orange); background: rgba(255,149,0,0.1); color: var(--text); }
+.sktrk-typehelp { margin-top: 6px; }
+.sktrk-status { font-size: 0.84em; color: #2b8a3e; font-weight: 600; margin: 6px 2px 0; }
+.sktrk-status:empty { display: none; }
+.sktrk-journal { align-self: flex-start; background: none; border: none; color: var(--brand-ink, var(--text)); font: inherit; font-size: 0.9em; font-weight: 700; padding: 6px 2px; cursor: pointer; }

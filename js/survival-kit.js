@@ -130,9 +130,15 @@ function _skLocale() {
     // Back bar. The crisis box (#help) stays visible in both views. This is
     // presentation only: section markup, ids and data are unchanged.
     // 'breathing' (js/shared/breathing.js) opens like the rest but isn't one
-    // of the 12 counted in _skUpdateTicks: it has nothing to finish.
-    const _SK_SECTION_IDS = ['mood-scale', 'coping-strategies', 'breathing', 'medications', 'gratitude',
+    // of the 12 counted in _skUpdateTicks: it has nothing to finish. Nor is
+    // 'tracking' (js/shared/tracking-manager.js, the journal's Track Data).
+    const _SK_SECTION_IDS = ['mood-scale', 'coping-strategies', 'breathing', 'tracking', 'medications', 'gratitude',
       'goals', 'mind', 'books', 'media', 'memories', 'faq', 'steps', 'spiritual'];
+    // Info-only sections, counted once opened (_skMarkVisited). Declared here,
+    // not by the ticks below: a deep link (survival-kit.html#breathing) opens
+    // its section while the page script is still running, and reading a
+    // const before its line threw and stopped the rest of this file.
+    const _SK_INFO_IDS = ['mood-scale', 'books', 'media', 'spiritual'];
     let _skOpenId = null;
     // The tab a closed drawer leaves lit (James, 2026-10-20: people work
     // through the sections one after another, so closing a drawer stays on
@@ -654,7 +660,8 @@ function _skLocale() {
 
     // ── SECTION COMPLETION TICKS ──
     // Info-only sections (nothing to fill in) the user has opened on this device.
-    const _SK_INFO_IDS = ['mood-scale', 'books', 'media', 'spiritual'];
+    // (_SK_INFO_IDS is declared up by _SK_SECTION_IDS: a deep link opens its
+    // section before this point runs.)
     function _skVisitedList() {
       try { const v = JSON.parse(localStorage.getItem('bbSkVisited') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
     }
@@ -2550,6 +2557,33 @@ function _skLocale() {
               localStorage.setItem('survivalGratitude', JSON.stringify(d.survivalGratitude));
               renderGratitude();
             }
+            // 📈 Additional tracking: the journal's trackers, read the way
+            // js/journal.js reads them on sign-in (keep the two in step).
+            if (Array.isArray(d.deletedTrackers)) {
+              let _dead = [];
+              try { _dead = JSON.parse(localStorage.getItem('deletedCustomTrackers') || '[]'); } catch (_) {}
+              if (!Array.isArray(_dead)) _dead = [];
+              d.deletedTrackers.forEach(id => { if (typeof id === 'string' && !_dead.includes(id)) _dead.push(id); });
+              localStorage.setItem('deletedCustomTrackers', JSON.stringify(_dead));
+              _dead.forEach(id => { localStorage.removeItem('trackCustom_' + id); localStorage.removeItem('_labelOverride_trackCustom_' + id); });
+            }
+            if (d.trackingFields && typeof d.trackingFields === 'object') {
+              let _deadT = [];
+              try { _deadT = JSON.parse(localStorage.getItem('deletedCustomTrackers') || '[]') || []; } catch (_) {}
+              Object.entries(d.trackingFields).forEach(([key, val]) => {
+                if (key.startsWith('trackCustom_') && _deadT.includes(key.slice('trackCustom_'.length))) return;
+                localStorage.setItem(key, val);
+              });
+            }
+            if (d.customTrackingFields !== undefined) localStorage.setItem('customTrackingFields', JSON.stringify(d.customTrackingFields));
+            if (d.labelOverrides && typeof d.labelOverrides === 'object') {
+              Object.entries(d.labelOverrides).forEach(([key, val]) => {
+                if (val) localStorage.setItem('_labelOverride_' + key, val);
+                else localStorage.removeItem('_labelOverride_' + key);
+              });
+            }
+            if (Array.isArray(d.disabledSteps)) localStorage.setItem('disabledSteps', JSON.stringify(d.disabledSteps));
+            if (window.BB && BB.trackingManager) BB.trackingManager.render();
             } // end !_skSkipOverwrite
             // The section ticks were computed at page load, when localStorage was
             // still empty on a freshly signed-in device — so every section read as

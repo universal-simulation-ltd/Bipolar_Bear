@@ -2137,7 +2137,16 @@
 //   per device for a new user only (bbStarterTrackers). 10 languages
 //   (2026-11-20, James). js/shared/starter-trackers.js (new; index.html,
 //   journal.html), js/journal.js + js/index.js reset lists.
-const CACHE_NAME = 'bipolarbear-v437';
+// v438: the Survival Kit has a 📈 Additional tracking section (tab, banner
+//   under Breathing, #tracking): the journal's Track Data trackers on the same
+//   storage — switch each on / off, rename + emoji, add one with its answer
+//   type, the ➕ Additional step's switch when it's off. Delete… and answer-
+//   type changes open the journal (journal.html?openTrackData=1 | <tid>),
+//   since they need the opened entries. 10 languages (2026-11-20, James).
+//   js/shared/tracking-manager.js + js/shared/i18n-tracking.js (new;
+//   survival-kit.html), js/survival-kit.js (sign-in load), js/journal.js,
+//   css/survival-kit.css, css/dark.css.
+const CACHE_NAME = 'bipolarbear-v438';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2203,6 +2212,8 @@ const STATIC_ASSETS = [
   './js/shared/i18n-awareness.js',
   './js/shared/breathing.js',
   './js/shared/i18n-breathe.js',
+  './js/shared/tracking-manager.js',
+  './js/shared/i18n-tracking.js',
   './js/shared/sleep-target.js',
   './js/shared/starter-trackers.js',
   './js/shared/i18n-week.js',
