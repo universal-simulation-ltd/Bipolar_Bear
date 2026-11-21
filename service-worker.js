@@ -2169,7 +2169,9 @@
 //   phone (<768px), labelled, instead of the top-right corner (BRANDING.md
 //   "On a phone, navigation sits at the bottom", 2026-11-21); it steps aside
 //   when 🧰 is already on the dock. journal.html, css/journal.css, fab.js.
-const CACHE_NAME = 'bipolarbear-v443';
+// v444: _APP_VERSION 1.49 for the Bear 1.49 (70) / Anonymous 1.46 (54) store
+//   builds (2026-11-21). js/shared/brand-config.js.
+const CACHE_NAME = 'bipolarbear-v444';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
