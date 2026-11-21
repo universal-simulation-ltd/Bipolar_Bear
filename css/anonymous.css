@@ -1362,6 +1362,12 @@
   html.is-native .wiki-body > .wiki-card[open] { grid-column: 1 / -1; }
 }
 
+    /* "Announcements" / "Wiki" at the top of those pages (_paintPageTitle). */
+    .board-page-title {
+      margin: 14px 16px 0; font-size: 1.375rem; font-weight: 800; line-height: 1.2;
+      color: var(--dark); letter-spacing: -0.01em;
+    }
+    .ann-ext-link { text-decoration: none; }
     /* "Are you looking for the chat?" at the top of Announcements (setTab
        shows it on that tab only; the button goes to the General feed). */
     .ann-chat-prompt {

@@ -2156,7 +2156,13 @@
 //   hours, and your check-in lasts 24 hours (anonMoodCheckin, deployed
 //   2026-11-21). js/anonymous.js, js/journal.js, js/shared/i18n.js (wording,
 //   10 languages).
-const CACHE_NAME = 'bipolarbear-v440';
+// v441: Bipolar Anonymous: "Announcements" / "Wiki" titles at the top of those
+//   pages (not the chat), and inside the Bipolar Bear app, where the store
+//   card is hidden, a "provided free of charge by UNI·SIM" card with the
+//   UNI·SIM logo linking to the Everyday Apps on unisim.co.uk (2026-11-21,
+//   James). anonymous.html, js/anonymous.js, css/anonymous.css,
+//   js/shared/i18n.js, images/announcements/unisim-free.jpg (new).
+const CACHE_NAME = 'bipolarbear-v441';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

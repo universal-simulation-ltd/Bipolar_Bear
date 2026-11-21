@@ -3157,6 +3157,7 @@ function setTab(tab) {
   if (fabSearch)   fabSearch.style.display   = isWiki ? ''      : 'none';
   const chatPrompt = document.getElementById('ann-chat-prompt');
   if (chatPrompt)  chatPrompt.style.display  = tab === 'announcements' ? '' : 'none';
+  _paintPageTitle();
   if (!isWiki) closeWikiSearch();
 
   if (isWiki) {
@@ -3171,6 +3172,17 @@ function setTab(tab) {
   renderPosts(tab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
   renderTabBadges();
 }
+
+// "Announcements" / "Wiki" at the top of those two pages (James, 2026-11-21);
+// the chat has none. Repainted on a language change too.
+function _paintPageTitle() {
+  const el = document.getElementById('board-page-title');
+  if (!el) return;
+  const key = currentTab === 'announcements' ? 'anon.tips.announcements' : currentTab === 'wiki' ? 'anon.tips.wiki' : null;
+  el.style.display = key ? '' : 'none';
+  if (key) el.textContent = _wt(key);
+}
+document.addEventListener('bb:languagechange', () => { try { _paintPageTitle(); } catch (e) {} });
 
 // ─────────────────────────────────────────────────────────────────
 // Wiki tab
@@ -5018,13 +5030,24 @@ const BEAR_STORE_LINKS = {
   appStore:   'https://apps.apple.com/gb/app/bipolar-bear/id6766637453',
   googlePlay: 'https://play.google.com/store/apps/details?id=com.bipolarbear.app',
 };
+const UNISIM_APPS_URL = 'https://www.unisim.co.uk/#apps';
 const ANN_IMAGE_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'sv', 'zh'];
 //
 // Order (James, 2026-11-19): the welcome first, then the Bear card.
 function builtInAnnouncements() {
   const welcome = { id: 'ann1', isAnnouncement: true, text: _wt('anon.feed.annWelcome'), timestamp: null };
   const inBearApp = !_isAnonymousApp && !!(window.isNative && window.isNative());
-  if (inBearApp) return [welcome];
+  // Inside the Bear app the store card would be pointless, so in its place:
+  // who provides the app, free, and the Everyday Apps section of the UNI·SIM
+  // home page (James, 2026-11-21). Not /everyday: that is a pricing page, and
+  // a store app never links to pricing (Docs_UNI_SIM/store-listings §8).
+  if (inBearApp) return [welcome, {
+    id: 'ann-unisim', isAnnouncement: true, timestamp: null,
+    text: _wt('anon.feed.annUnisim'),
+    image: 'images/announcements/unisim-free.jpg',
+    imageAlt: _wt('anon.feed.annUnisimAlt'),
+    link: { href: UNISIM_APPS_URL, label: _wt('anon.feed.annUnisimLink') },
+  }];
   const lang = (window.BB && BB.i18n) ? String(BB.i18n.getLang() || 'en').split('-')[0] : 'en';
   return [welcome, {
     id: 'ann-bear-stores', isAnnouncement: true, timestamp: null,
@@ -6252,6 +6275,7 @@ function renderAnnouncement(p) {
     <div class="post-text" data-tt>${esc(p.text)}</div>
     ${p.image ? `<img class="ann-image" src="${esc(p.image)}" alt="${esc(p.imageAlt || '')}" width="1024" height="500" loading="lazy" decoding="async">` : ''}
     ${p.storeLinks ? _storeBadgesHtml(p.storeLinks) : ''}
+    ${p.link ? `<a class="ann-wiki-link ann-ext-link" href="${esc(p.link.href)}" target="_blank" rel="noopener">${esc(p.link.label)} ↗</a>` : ''}
     ${wikiBtn}
   </div>`;
 }
