@@ -1585,6 +1585,38 @@
       .logout-btn:hover { background: rgba(255,255,255,0.35); }
     }
 
+    /* The 🧰 Survival Kit button (#survivalNavBtn). 768px and up it is the
+       round header button it always was; on a phone it sits just above the
+       dock, on the right, with its name (BRANDING.md "On a phone, navigation
+       sits at the bottom", 2026-11-21). The page's bottom padding (body 80px +
+       .app-content 88px) already keeps the end of the page clear of it. */
+    .sk-nav-btn {
+      background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 50%; width: 38px; height: 38px; min-width: 38px; min-height: 38px;
+      padding: 0; box-sizing: border-box; display: inline-flex; align-items: center;
+      justify-content: center; gap: 6px; font-size: 1.2em; cursor: pointer; line-height: 1;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0; font-family: inherit;
+    }
+    .sk-nav-label { display: none; }
+    @media (max-width: 767px) {
+      .sk-nav-btn {
+        position: fixed; right: 12px; bottom: 92px; z-index: 44;
+        width: auto; height: 40px; min-height: 40px; padding: 0 14px 0 11px;
+        border-radius: 999px; background: #fff; border: 1.5px solid #ffe0b2;
+        color: var(--brand-ink); font-size: 1.05em;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+      }
+      .sk-nav-label { display: inline; font-size: 0.8em; font-weight: 700; }
+      html.is-android .sk-nav-btn {
+        bottom: calc(92px + max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px)));
+      }
+      html.bb-dock-survival .sk-nav-btn { display: none !important; }
+      html.theme-dark .sk-nav-btn {
+        background: var(--dk-surface); border-color: rgba(255,255,255,0.14);
+        color: var(--dk-text, #f5ede6); box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+      }
+    }
+
     .app-content {
       display: none;
       padding-top: env(safe-area-inset-top, 0px);

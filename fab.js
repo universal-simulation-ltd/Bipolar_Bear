@@ -939,6 +939,7 @@
       if (_chat) _chat.style.display = 'none';
       _placedDefaults = new Set();
       _placedAutoExtras = new Set();
+      document.documentElement.classList.remove('bb-dock-survival');
       return;
     }
 
@@ -1043,6 +1044,11 @@
       _slotOccupied[s] = true;
       _placedAutoExtras.add(_ex.id);
     });
+
+    // 🧰 on the dock: the journal's own phone Survival Kit button (which sits
+    // just above the dock) steps aside rather than show the same thing twice.
+    const _skDock = document.getElementById('survivalExtraFab');
+    document.documentElement.classList.toggle('bb-dock-survival', !!_skDock && _skDock.style.display === 'flex');
 
     // Placeholder dots for truly empty slots
     for (let s = 1; s <= 4; s++) {

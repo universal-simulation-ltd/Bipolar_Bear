@@ -175,7 +175,10 @@
           </div>
         </div>
         <div style="margin-left:auto;position:relative;">
-          <button id="survivalNavBtn" onclick="_survivalNavClick()" title="Survival Kit" data-i18n-title="journal.mods.survivalKitTip" style="background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:50%;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:1.2em;cursor:pointer;line-height:1;-webkit-tap-highlight-color:transparent;flex-shrink:0;">🧰</button>
+          <!-- On a phone (<768px) css/journal.css lifts this out of the header to
+               just above the dock, labelled, in thumb reach (BRANDING.md "On a
+               phone, navigation sits at the bottom"). 768px and up: here. -->
+          <button type="button" id="survivalNavBtn" class="sk-nav-btn" onclick="_survivalNavClick()" title="Survival Kit" data-i18n-title="journal.mods.survivalKitTip"><span aria-hidden="true">🧰</span><span class="sk-nav-label" data-i18n="journal.mods.survivalKitTip">Survival Kit</span></button>
         </div>
       </div>
         <div class="empty-space"></div>

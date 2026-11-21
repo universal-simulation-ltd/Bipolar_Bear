@@ -2165,7 +2165,11 @@
 // v442: that card's picture now shows the Universal PDF, QR, Jukebox and
 //   Images icons under the UNI·SIM logo (2026-11-21, James); renamed
 //   images/announcements/unisim-apps.jpg so no cache keeps the old one.
-const CACHE_NAME = 'bipolarbear-v442';
+// v443: the journal's 🧰 Survival Kit button moves to just above the dock on a
+//   phone (<768px), labelled, instead of the top-right corner (BRANDING.md
+//   "On a phone, navigation sits at the bottom", 2026-11-21); it steps aside
+//   when 🧰 is already on the dock. journal.html, css/journal.css, fab.js.
+const CACHE_NAME = 'bipolarbear-v443';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
