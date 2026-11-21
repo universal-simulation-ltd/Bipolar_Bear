@@ -2162,7 +2162,10 @@
 //   UNI·SIM logo linking to the Everyday Apps on unisim.co.uk (2026-11-21,
 //   James). anonymous.html, js/anonymous.js, css/anonymous.css,
 //   js/shared/i18n.js, images/announcements/unisim-free.jpg (new).
-const CACHE_NAME = 'bipolarbear-v441';
+// v442: that card's picture now shows the Universal PDF, QR, Jukebox and
+//   Images icons under the UNI·SIM logo (2026-11-21, James); renamed
+//   images/announcements/unisim-apps.jpg so no cache keeps the old one.
+const CACHE_NAME = 'bipolarbear-v442';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -5044,7 +5044,7 @@ function builtInAnnouncements() {
   if (inBearApp) return [welcome, {
     id: 'ann-unisim', isAnnouncement: true, timestamp: null,
     text: _wt('anon.feed.annUnisim'),
-    image: 'images/announcements/unisim-free.jpg',
+    image: 'images/announcements/unisim-apps.jpg',
     imageAlt: _wt('anon.feed.annUnisimAlt'),
     link: { href: UNISIM_APPS_URL, label: _wt('anon.feed.annUnisimLink') },
   }];
