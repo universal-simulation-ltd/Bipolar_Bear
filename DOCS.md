@@ -3163,6 +3163,20 @@ James, 2026-11-03, six requests at once. Test: `scripts/test-anon-board-1103.mjs
   something in it, only for `source: 'board'`, and at most `MOOD_MAX_CHANGES`
   (5) a day per account (`changes` on the `bbAnonMoodSeen` marker). An answer
   without `moved` (an undeployed server, the cap) puts the card back.
+- **Rolling 24 hours (2026-11-21, v440):** the check-in no longer resets at
+  UK midnight. Totals sit in hourly buckets in `bbAnonMood` (id `h` + UTC
+  `YYYY-MM-DDTHH`, with `hour` / `at` / `bear` fields) and the board adds up the
+  current hour and the 23 before it. A check-in lasts 24 hours: the marker is
+  `bbAnonMoodSeen/r_<uid>` = `{ at, hour, via, day, changes }` (still no mood),
+  and a change moves the count inside that check-in's own hour, so it doesn't
+  live longer; `MOOD_MAX_CHANGES` is per check-in. The device keeps
+  `Anon_mood = { at, mood }` (an older `{ day, mood }` lasts to that UK day's
+  end). The bear is the newest one inside the window, else a new one in this
+  hour while fewer than 3 real check-ins. Check-ins from the switchover day
+  under the old per-day doc + `<day>_<uid>` marker count until that day ends
+  (`MOOD_LEGACY_LAST_DAY`). Trade-off: with hourly totals, someone with
+  database access could match a marker's hour to that hour's total in a quiet
+  hour; clients can read neither collection.
   ⚠️ **Owner-gated:** `firebase deploy --only functions:anonMoodCheckin` and
   `firebase deploy --only firestore:rules`. Until then the change says
   "Couldn't check in" and reply hearts are refused (and put back).

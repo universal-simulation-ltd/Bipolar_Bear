@@ -2543,8 +2543,8 @@ function _tt(k, vars, fallback) {
     // true (Anon_journalCheckin '1'); never on by default.
     // Only an entry for today or yesterday counts, and only its mood category
     // leaves the device — into the board's daily totals, where the server keeps
-    // no record of who picked what. One check-in per account per UK day; the
-    // server ignores any after the first.
+    // no record of who picked what. One check-in per account per 24 hours; the
+    // server ignores any inside that.
     async function _anonJournalCheckin(entry) {
       try {
         if (!currentUser) return;
@@ -2561,8 +2561,9 @@ function _tt(k, vars, fallback) {
         if (typeof firebase === 'undefined' || !firebase.app || typeof firebase.app().functions !== 'function') return;
         const res = await firebase.app().functions('europe-west1').httpsCallable('anonMoodCheckin')({ mood: cat, source: 'journal' });
         // Same device as the board (inside Bipolar Bear): let it say "You: …".
-        if (res && res.data && res.data.via === 'journal' && res.data.day) {
-          BB.storage.set('Anon_mood', JSON.stringify({ day: res.data.day, mood: cat }));
+        // A check-in lasts 24 hours from res.data.at (the board's rolling window).
+        if (res && res.data && res.data.via === 'journal' && (res.data.at || res.data.day)) {
+          BB.storage.set('Anon_mood', JSON.stringify(res.data.at ? { at: res.data.at, mood: cat } : { day: res.data.day, mood: cat }));
         }
       } catch (e) { console.warn('[journal] board check-in skipped', e); }
     }

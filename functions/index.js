@@ -1383,7 +1383,7 @@ exports.translateAnonTexts = onCall(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Board interactions: reactions, polls, the daily mood check-in
+// Board interactions: reactions, polls, the mood check-in
 // ═══════════════════════════════════════════════════════════════════════════
 // Written through callables (Admin SDK) rather than client writes, so none of
 // them needs a Firestore rules change — clients already read post docs, which
@@ -1391,8 +1391,11 @@ exports.translateAnonTexts = onCall(
 //
 // Privacy follows likes: only totals are stored. Which posts you reacted to,
 // and how you voted, stay in localStorage on your device. The mood check-in
-// keeps one "this session has checked in today" marker so it counts once — the
-// marker holds no mood, and sweepAnonMoodSeen deletes it two days later.
+// keeps one "this account checked in at <time>" marker so it counts once in 24
+// hours — the marker holds no mood, and sweepAnonMoodSeen deletes it a day or
+// two later. The totals are hourly (for the rolling 24-hour board), so in a
+// quiet hour the marker's time and that hour's total could be matched by
+// someone with database access; clients can read neither collection.
 
 const REACTION_KINDS  = ['hug', 'same', 'strong'];
 // The board check-in uses Bipolar Bear's own five moods (30 Sep 2026), so a
@@ -1644,19 +1647,34 @@ exports.voteAnonPoll = onCall(
   }
 );
 
-// ── Daily mood check-in ──────────────────────────────────────────────────────
-// { mood?, source? } → { day, counts, checkedIn, via, bear }. With no mood it just
-// reads today's totals (the board shows them once you've checked in). One
-// check-in per account per UK day; a second is ignored rather than moved, which
-// is what lets the marker carry no mood at all. source: 'journal' is Bipolar
-// Bear checking in for a linked account after a journal entry is saved — the
-// marker then says so (still no mood), so the board can explain the tick.
-// { mood, from } changes today's check-in (James, 2026-11-03: tap another bear
-// on the scale). As with poll votes, the device says what it picked before,
-// because the marker doesn't know; `from` comes off that total and `mood` goes
-// on. Capped at MOOD_MAX_CHANGES a day per account so it can't be used to
-// drain a total. Answers moved: true when it did.
-const MOOD_MAX_CHANGES = 5;
+// ── Mood check-in (rolling 24 hours) ─────────────────────────────────────────
+// { mood?, source? } → { day, at, counts, checkedIn, via, bear }. With no mood it
+// just reads the totals (the board shows them once you've checked in).
+// Since 2026-11-21 the board counts the LAST 24 HOURS rather than the UK day
+// (James: "use the last 24 hours instead of resetting each day"), so it never
+// empties at midnight. Totals are kept in hourly buckets (MOOD_COL, id
+// moodHour()); the board adds up the current hour and the 23 before it. A check-
+// in lasts 24 hours: one per account per 24 hours, and a second inside that is
+// ignored rather than moved. The marker (MOOD_SEEN_COL, id r_<uid>) holds when
+// you checked in, never the mood. source: 'journal' is Bipolar Bear checking in
+// for a linked account after a journal entry is saved — the marker then says so,
+// so the board can explain the tick.
+// { mood, from } changes your check-in (James, 2026-11-03: tap another bear on
+// the scale). As with poll votes, the device says what it picked before,
+// because the marker doesn't know; `from` comes off that hour's total and
+// `mood` goes on in the same hour, so the change doesn't extend its life.
+// Capped at MOOD_MAX_CHANGES per check-in so it can't be used to drain a total.
+// Answers moved: true when it did.
+const MOOD_MAX_CHANGES  = 5;
+const MOOD_WINDOW_HOURS = 24;
+const HOUR_MS           = 60 * 60 * 1000;
+// Hourly bucket id, in UTC so a clock change never folds two hours into one.
+function moodHour(ms) { return 'h' + new Date(ms).toISOString().slice(0, 13); }
+// The day the board switched to rolling totals. Check-ins made earlier that UK
+// day sit in the old per-day doc (id = the day) with an old `<day>_<uid>`
+// marker; they still count, and still block a second check-in, until that day
+// ends, as they would have before. After it this reads nothing.
+const MOOD_LEGACY_LAST_DAY = '2026-11-21';
 exports.anonMoodCheckin = onCall(
   { region: REGION, invoker: 'public' },
   async (request) => {
@@ -1674,61 +1692,110 @@ exports.anonMoodCheckin = onCall(
       const us = await db.collection('userSettings').doc(request.auth.uid).get();
       if (!(us.exists && us.get('anonProfile.journalCheckin') === true)) mood = null;
     }
-    const day      = boardDay();
-    const totalRef = db.collection(MOOD_COL).doc(day);
-    const seenRef  = db.collection(MOOD_SEEN_COL).doc(`${day}_${request.auth.uid}`);
+    const now      = Date.now();
+    const day      = boardDay(new Date(now));
+    const hourIds  = [];
+    for (let i = MOOD_WINDOW_HOURS - 1; i >= 0; i--) hourIds.push(moodHour(now - i * HOUR_MS));
+    const nowHour  = hourIds[hourIds.length - 1];
+    const col      = db.collection(MOOD_COL);
+    const seenRef  = db.collection(MOOD_SEEN_COL).doc(`r_${request.auth.uid}`);
+    const legacyDay = day <= MOOD_LEGACY_LAST_DAY ? day : null;
     const out = await db.runTransaction(async (tx) => {
-      const [totSnap, seenSnap] = await Promise.all([tx.get(totalRef), tx.get(seenRef)]);
-      const doc = totSnap.exists ? totSnap.data() : {};
+      const refs = hourIds.map((id) => col.doc(id));
+      if (legacyDay) refs.push(col.doc(legacyDay), db.collection(MOOD_SEEN_COL).doc(`${legacyDay}_${request.auth.uid}`));
+      const snaps = await tx.getAll(seenRef, ...refs);
+      const seenSnap = snaps[0];
+      const hourSnaps = snaps.slice(1, 1 + hourIds.length);
+      const legacySnap = legacyDay ? snaps[1 + hourIds.length] : null;
+      const legacySeen = legacyDay ? snaps[2 + hourIds.length] : null;
+      // What each doc holds, folding the first release's moods into today's.
+      const read = (snap) => {
+        const doc = snap && snap.exists ? snap.data() : {};
+        const c = {};
+        MOOD_KINDS.forEach((k) => { c[k] = Number(doc[k] || 0); });
+        Object.keys(MOOD_LEGACY).forEach((old) => {
+          if (!MOOD_KINDS.includes(old)) c[MOOD_LEGACY[old]] += Number(doc[old] || 0);
+        });
+        return c;
+      };
       const counts = {};
-      MOOD_KINDS.forEach((k) => { counts[k] = Number(doc[k] || 0); });
-      // Fold today's old-style totals into the new moods (read-side only).
-      Object.keys(MOOD_LEGACY).forEach((old) => {
-        if (!MOOD_KINDS.includes(old)) counts[MOOD_LEGACY[old]] += Number(doc[old] || 0);
+      MOOD_KINDS.forEach((k) => { counts[k] = 0; });
+      const byId = {};
+      hourSnaps.forEach((snap, i) => {
+        const c = read(snap);
+        byId[hourIds[i]] = snap.exists ? snap.data() : {};
+        MOOD_KINDS.forEach((k) => { counts[k] += c[k]; });
       });
-      let checkedIn = seenSnap.exists;
-      let seenVia   = seenSnap.exists ? (seenSnap.data().via || 'board') : null;
-      const write   = {};
+      if (legacySnap && legacySnap.exists) {
+        const c = read(legacySnap);
+        byId[legacyDay] = legacySnap.data();
+        MOOD_KINDS.forEach((k) => { counts[k] += c[k]; });
+      }
+      // Your check-in, if it's still inside the window (or from earlier today
+      // under the old per-day scheme).
+      const seen = seenSnap.exists ? seenSnap.data() : null;
+      const seenAt = seen ? Number(seen.at || 0) : 0;
+      let mine = null;   // { ref id the check-in is counted in, data }
+      if (seen && seenAt > now - MOOD_WINDOW_HOURS * HOUR_MS && hourIds.includes(seen.hour)) {
+        mine = { id: seen.hour, data: seen, ref: seenRef, at: seenAt };
+      } else if (legacySeen && legacySeen.exists) {
+        mine = { id: legacyDay, data: legacySeen.data(), ref: legacySeen.ref, at: null };
+      }
+      let checkedIn = !!mine;
+      let seenVia   = mine ? (mine.data.via || 'board') : null;
+      let at        = mine ? mine.at : null;
+      const writes  = {};   // doc id → fields
+      const add = (id, fields) => { writes[id] = Object.assign(writes[id] || {}, fields); };
       let moved     = false;
       if (mood !== null && !checkedIn) {
         counts[mood] += 1;
-        Object.assign(write, { [mood]: admin.firestore.FieldValue.increment(1), day });
-        tx.set(seenRef, { day, via });
+        add(nowHour, { [mood]: admin.firestore.FieldValue.increment(1), hour: nowHour, at: admin.firestore.Timestamp.fromMillis(now - (now % HOUR_MS)) });
+        tx.set(seenRef, { at: now, hour: nowHour, via, day });
         checkedIn = true;
         seenVia = via;
+        at = now;
       } else if (mood !== null && checkedIn && via === 'board' && from && from !== mood
-                 && Number(seenSnap.data().changes || 0) < MOOD_MAX_CHANGES) {
-        // Only what was really counted under `from` today can come off it.
-        if (Number(doc[from] || 0) > 0) {
+                 && Number(mine.data.changes || 0) < MOOD_MAX_CHANGES) {
+        // Only what was really counted under `from` in that hour can come off it.
+        const held = byId[mine.id] || {};
+        if (Number(held[from] || 0) > 0) {
           counts[from] = Math.max(0, counts[from] - 1);
-          write[from] = admin.firestore.FieldValue.increment(-1);
+          add(mine.id, { [from]: admin.firestore.FieldValue.increment(-1) });
         }
         counts[mood] += 1;
-        Object.assign(write, { [mood]: admin.firestore.FieldValue.increment(1), day });
-        tx.set(seenRef, { changes: admin.firestore.FieldValue.increment(1) }, { merge: true });
+        add(mine.id, { [mood]: admin.firestore.FieldValue.increment(1) });
+        tx.set(mine.ref, { changes: admin.firestore.FieldValue.increment(1) }, { merge: true });
         moved = true;
       }
+      // The bear: the newest one inside the window, else a fresh one in this
+      // hour while there are fewer than MOOD_BEAR_UNTIL real check-ins.
       const real = MOOD_KINDS.reduce((n, k) => n + counts[k], 0);
-      let bear = MOOD_KINDS.includes(doc.bear) ? doc.bear : null;
+      let bear = null;
+      for (let i = hourIds.length - 1; i >= 0 && !bear; i--) {
+        const b = (byId[hourIds[i]] || {}).bear;
+        if (MOOD_KINDS.includes(b)) bear = b;
+      }
+      if (!bear && legacyDay && MOOD_KINDS.includes((byId[legacyDay] || {}).bear)) bear = byId[legacyDay].bear;
       if (real < MOOD_BEAR_UNTIL) {
         if (!bear) {
           bear = MOOD_KINDS[Math.floor(Math.random() * MOOD_KINDS.length)];
-          Object.assign(write, { bear, day });
+          add(nowHour, { bear, hour: nowHour, at: admin.firestore.Timestamp.fromMillis(now - (now % HOUR_MS)) });
         }
         counts[bear] += 1;
       } else {
         bear = null;
       }
-      if (Object.keys(write).length) tx.set(totalRef, write, { merge: true });
+      Object.keys(writes).forEach((id) => tx.set(col.doc(id), writes[id], { merge: true }));
       // `bear` lets the client drop it from its optimistic count at the same
       // moment the server does, so the third check-in doesn't flicker.
-      return { counts, checkedIn, via: seenVia, bear, moved };
+      return { counts, checkedIn, via: seenVia, bear, moved, at };
     });
     return { day, ...out };
   }
 );
 
-// The check-in markers are only needed for the day they belong to.
+// The check-in markers are only needed for the 24 hours they last (each keeps
+// the UK day it was made, so this clears it a day or two later).
 exports.sweepAnonMoodSeen = onSchedule(
   { schedule: '30 3 * * *', timeZone: 'Europe/London', region: REGION },
   async () => {

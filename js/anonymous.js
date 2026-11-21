@@ -1464,8 +1464,9 @@ async function votePoll(id, option) {
   _repaintCard(id);
 }
 
-// The daily check-in on the greeting card. One tap, once a day; afterwards the
-// card shows how the board as a whole is doing. Only totals are stored.
+// The check-in on the greeting card. One tap, lasting 24 hours; afterwards the
+// card shows how the board has been over the last 24 hours (a rolling window
+// since 2026-11-21, so it never empties at midnight). Only totals are stored.
 // The five moods are Bipolar Bear's own (same names, bears and colours as the
 // journal), so a member with a linked Bipolar Bear account is checked in by
 // their journal entry — see _journalCheckin() here and _anonJournalCheckin()
@@ -1488,12 +1489,20 @@ function _ukDay() {
   try { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date()); }
   catch (e) { return new Date().toISOString().slice(0, 10); }
 }
-function _myMood() {
+// A check-in lasts 24 hours (2026-11-21: the board counts the last 24 hours,
+// not the UK day). Anon_mood = { at: ms, mood }; one saved before that change
+// is { day, mood } and lasts until that UK day ends, as it did.
+const MOOD_WINDOW_MS = 24 * 60 * 60 * 1000;
+function _myMoodRec() {
   try {
     const m = JSON.parse(BB.storage.get('Anon_mood') || 'null');
-    return m && m.day === _ukDay() && MOODS.some(x => x.k === m.mood) ? m.mood : null;
+    if (!m || !MOODS.some(x => x.k === m.mood)) return null;
+    const live = m.at ? (Date.now() - m.at < MOOD_WINDOW_MS && m.at <= Date.now() + 60000) : m.day === _ukDay();
+    return live ? m : null;
   } catch (e) { return null; }
 }
+function _myMood() { const m = _myMoodRec(); return m ? m.mood : null; }
+function _saveMyMood(mood, at) { try { BB.storage.set('Anon_mood', JSON.stringify({ at: at || Date.now(), mood })); } catch (e) {} }
 // Settings (Your Moniker sheet). Both default ON; stored as '0' when off.
 function _moodAskShown()     { return BB.storage.get('Anon_moodAsk') !== '0'; }
 // Opt-in (2026-10-12): off unless the member turned it on. The server checks
@@ -1602,7 +1611,7 @@ async function loadMood() {
     const jm = !res.checkedIn && !_myMood() ? _journalMoodForToday() : null;
     if (jm) {
       res = await _callFn('anonMoodCheckin', { mood: jm, source: 'journal' });
-      if (res.via === 'journal') { try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: jm })); } catch (e) {} }
+      if (res.via === 'journal') _saveMyMood(jm, res.at);
     }
     Object.assign(_moodState, { ready: true, failed: false, counts: res.counts || {}, bear: res.bear || null, checkedIn: !!res.checkedIn, via: res.via || null, day: res.day || '' });
   } catch (e) {
@@ -1617,7 +1626,7 @@ async function loadMood() {
 async function checkInMood(kind) {
   if (!MOODS.some(m => m.k === kind) || _myMood()) return;
   const prev = Object.assign({}, _moodState);
-  try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
+  _saveMyMood(kind);
   const counts = Object.assign({}, _moodState.counts);
   counts[kind] = num(counts[kind], 0) + 1;
   let bear = _moodState.bear;
@@ -1629,6 +1638,7 @@ async function checkInMood(kind) {
   try {
     const res = await _callFn('anonMoodCheckin', { mood: kind });
     Object.assign(_moodState, { counts: res.counts || counts, bear: res.counts ? (res.bear || null) : bear, checkedIn: true, via: res.via || 'board', day: res.day || '' });
+    if (res.at) _saveMyMood(kind, res.at);
     if (kind === 'stable') _maybeAskForReview();
   } catch (e) {
     console.warn('[Anonymous] mood check-in failed', e);
@@ -1644,13 +1654,15 @@ async function checkInMood(kind) {
 // that can't (not yet deployed, or the day's changes used up) answers without
 // moved: true, and the card goes back to how it was.
 async function changeMood(kind) {
-  const from = _myMood();
+  const rec = _myMoodRec();
+  const from = rec ? rec.mood : null;
   if (!from || kind === from || !MOODS.some(m => m.k === kind) || _moodState.changing) return;
   const prev = Object.assign({}, _moodState, { counts: Object.assign({}, _moodState.counts) });
   const counts = Object.assign({}, _moodState.counts);
   counts[from] = Math.max(0, num(counts[from], 0) - 1);
   counts[kind] = num(counts[kind], 0) + 1;
-  try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: kind })); } catch (e) {}
+  // A change keeps the check-in's time, so it still ends when the first did.
+  try { BB.storage.set('Anon_mood', JSON.stringify(Object.assign({}, rec, { mood: kind }))); } catch (e) {}
   Object.assign(_moodState, { counts, via: 'board', flashAt: Date.now(), changing: true });
   _haptic('success');
   _repaintMood();
@@ -1660,7 +1672,7 @@ async function changeMood(kind) {
     Object.assign(_moodState, { counts: res.counts || counts, bear: res.bear || null, day: res.day || _moodState.day });
   } catch (e) {
     console.warn('[Anonymous] mood change failed', e);
-    try { BB.storage.set('Anon_mood', JSON.stringify({ day: _ukDay(), mood: from })); } catch (_) {}
+    try { BB.storage.set('Anon_mood', JSON.stringify(rec)); } catch (_) {}
     Object.assign(_moodState, prev);
     showHint(_wt('anon.ux.moodFailed'));
   }

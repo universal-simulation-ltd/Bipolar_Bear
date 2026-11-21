@@ -2151,7 +2151,12 @@
 //   where a tall step (three medicine chips, Next, Manage medications) ran
 //   over it and it sat beside a chip (2026-11-20, James). journal.html,
 //   js/journal.js showDraftStatus.
-const CACHE_NAME = 'bipolarbear-v439';
+// v440: Bipolar Anonymous's check-in counts the last 24 hours instead of
+//   resetting at UK midnight: the board adds up hourly totals for the last 24
+//   hours, and your check-in lasts 24 hours (anonMoodCheckin, deployed
+//   2026-11-21). js/anonymous.js, js/journal.js, js/shared/i18n.js (wording,
+//   10 languages).
+const CACHE_NAME = 'bipolarbear-v440';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
