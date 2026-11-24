@@ -365,5 +365,20 @@
     <p data-i18n-html="fix143.privFooter">© 2026 Bipolar Bear · <a href="index.html">Home</a> · <a href="mailto:bipolar@unisim.co.uk">Contact</a></p>
   </footer>
 
+  <!-- Opened from the Bipolar Anonymous iPhone app (?app=ios): the three lines
+       that name Android / Google Play take their iPhone wording, since an
+       iPhone app may not point at another platform (App Store guideline
+       2.3.10, App Review 2026-11-24). Runs before i18n's DOMContentLoaded. -->
+  <script>
+    if (/[?&]app=ios\b/.test(location.search)) {
+      ['privacy.s1p1', 'privacy.glanceIntro', 'privacy.s7li1'].forEach(function (k) {
+        document.querySelectorAll('[data-i18n="' + k + '"],[data-i18n-html="' + k + '"]').forEach(function (el) {
+          var a = el.hasAttribute('data-i18n-html') ? 'data-i18n-html' : 'data-i18n';
+          el.setAttribute(a, k + 'Ios');
+        });
+      });
+    }
+  </script>
+
 </body>
 </html>

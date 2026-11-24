@@ -79,7 +79,8 @@ let sosTargetName   = '';
 let sosTargetPost    = ''; // post id the SOS is about (the team's email links to it)
 let sosTargetComment = ''; // comment id, when the SOS came from a reply
 let reportTargetId  = '';
-let muteTargetName  = '';
+let blockTargetName  = '';
+let blockTargetMeta  = null; // {postId, commentId, text} the block came from (for the moderators' report)
 let adminDeleteId    = '';
 let adminBanName     = '';
 let selfDeleteId     = '';
@@ -164,15 +165,18 @@ function _saveCommentReactions() {
 // reaction" gates.
 function _reacted(p) { return (p.likes || 0) + (p.supports || 0) > 0; }
 
-// Muted users set (persisted, device-local). Posts and comments from these
-// monikas are hidden from the feed on this device only — nothing is written
-// to Firestore. Apple's UGC guideline (1.2) requires a user-level block in
-// addition to per-post reporting.
-const mutedUsers = new Set(
+// Blocked people (persisted, device-local). Posts and comments from these
+// monikas leave this device's feed and open thread at once. Blocking also
+// files a report (type 'block' in bbAnonReports, which onAnonReportCreated
+// emails to the moderators) naming the post or comment it came from: Apple's
+// UGC guideline 1.2 wants a block that removes the content instantly AND
+// tells the developer (App Review, 2026-11-24). Until 1.47 this was "Mute";
+// the storage key stays 'Anon_muted' so earlier mutes carry over as blocks.
+const blockedUsers = new Set(
   JSON.parse(BB.storage.get('Anon_muted') || '[]')
 );
-function saveMuted() {
-  BB.storage.set('Anon_muted', JSON.stringify([...mutedUsers]));
+function saveBlocked() {
+  BB.storage.set('Anon_muted', JSON.stringify([...blockedUsers]));
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -571,25 +575,34 @@ function closeOv(id) { document.getElementById(id).classList.add('hidden'); }
 // ─────────────────────────────────────────────────────────────────
 // About overlay + home navigation helper
 // ─────────────────────────────────────────────────────────────────
-function openAbout() { renderMutedList(); openOv('ov-about'); }
+function openAbout() { renderBlockedList(); openOv('ov-about'); }
 
-// "Muted users" section of the About sheet — hidden when nothing is muted.
-function renderMutedList() {
+// The privacy policy is Bipolar Bear's web page, which says the apps are on
+// Android and Google Play too. Opened from the iPhone app it gets ?app=ios,
+// and privacy.html then shows its iPhone wording (App Store guideline 2.3.10).
+if (_isIOSApp()) {
+  document.querySelectorAll('a[href="https://www.bipolarbear.app/privacy.html"]').forEach(a => {
+    a.href = 'https://www.bipolarbear.app/privacy.html?app=ios';
+  });
+}
+
+// "Blocked people" section of the About sheet — hidden when nobody is blocked.
+function renderBlockedList() {
   const wrap = document.getElementById('about-muted-wrap');
   const listEl = document.getElementById('about-muted-list');
   if (!wrap || !listEl) return;
-  if (!mutedUsers.size) { wrap.style.display = 'none'; return; }
+  if (!blockedUsers.size) { wrap.style.display = 'none'; return; }
   wrap.style.display = '';
-  listEl.innerHTML = [...mutedUsers].map(n => `
+  listEl.innerHTML = [...blockedUsers].map(n => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
-      <span>🙈 [${esc(n)}]</span>
+      <span>🚫 [${esc(n)}]</span>
       <button class="btn-secondary" data-unmute="${esc(n)}" style="padding:4px 12px;font-size:0.75rem;">${esc(_wt('anon.mute.unmute'))}</button>
     </div>`).join('');
   listEl.querySelectorAll('[data-unmute]').forEach(btn => {
     btn.addEventListener('click', () => {
-      mutedUsers.delete(btn.dataset.unmute);
-      saveMuted();
-      renderMutedList();
+      blockedUsers.delete(btn.dataset.unmute);
+      saveBlocked();
+      renderBlockedList();
       renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
     });
   });
@@ -1146,11 +1159,11 @@ document.getElementById('help-close').addEventListener('click', () => closeOv('o
 // ─────────────────────────────────────────────────────────────────
 // The ⋯ action sheet (posts and comments)
 // ─────────────────────────────────────────────────────────────────
-// Each card still renders its moderation buttons (SOS / report / mute / the
+// Each card still renders its moderation buttons (SOS / report / block / the
 // admin tools), hidden inside .post-more-items, so the handlers that were
 // already bound to them keep working. The sheet lists them and, on a tap,
 // clicks the real button — one code path, whichever way the member got there.
-const _DANGER_ACTIONS = ['delete', 'ban', 'report', 'selfdelete', 'cdelete', 'cban', 'creport', 'cselfdelete'];
+const _DANGER_ACTIONS = ['delete', 'ban', 'report', 'mute', 'selfdelete', 'cdelete', 'cban', 'creport', 'cmute', 'cselfdelete'];
 let _actionTargets = [];
 function openActions(card) {
   if (!card) return;
@@ -2738,6 +2751,7 @@ function initBoard() {
     loadMood();
     _refreshMemberCount();
     _countAnonMember();
+    _flushBlockReports(); // a block's report that couldn't be sent earlier
     // "(N live)" — report this session as live and count the others. Once per
     // page: initBoard() is reachable from several paths (boot, verify success,
     // meds yes/no) and a second heartbeat loop would double-count this session.
@@ -5026,6 +5040,10 @@ function announcementFeed() {
 // graphic (images/announcements/bear-stores-<lang>.jpg) plus App Store and
 // Google Play badges that open the listings. Hidden inside the Bipolar Bear
 // phone app itself, where it would be telling people to get the app they're in.
+// In the Bipolar Anonymous iPhone app only the App Store badge and an
+// iPhone-only text show: App Review refused 1.46 under 2.3.10 for Google Play
+// references (2026-11-24). Android and the web keep both. The picture carries
+// no store name, so it stays.
 const BEAR_STORE_LINKS = {
   appStore:   'https://apps.apple.com/gb/app/bipolar-bear/id6766637453',
   googlePlay: 'https://play.google.com/store/apps/details?id=com.bipolarbear.app',
@@ -5034,6 +5052,12 @@ const UNISIM_APPS_URL = 'https://www.unisim.co.uk/#apps';
 const ANN_IMAGE_LANGS = ['en', 'es', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'sv', 'zh'];
 //
 // Order (James, 2026-11-19): the welcome first, then the Bear card.
+//
+// Inside an iPhone / iPad shell (Capacitor platform 'ios'): nothing that names
+// another platform's store may show there (App Store guideline 2.3.10).
+function _isIOSApp() {
+  try { return !!(window.isIOS && window.isIOS()); } catch (_) { return false; }
+}
 function builtInAnnouncements() {
   const welcome = { id: 'ann1', isAnnouncement: true, text: _wt('anon.feed.annWelcome'), timestamp: null };
   const inBearApp = !_isAnonymousApp && !!(window.isNative && window.isNative());
@@ -5049,12 +5073,13 @@ function builtInAnnouncements() {
     link: { href: UNISIM_APPS_URL, label: _wt('anon.feed.annUnisimLink') },
   }];
   const lang = (window.BB && BB.i18n) ? String(BB.i18n.getLang() || 'en').split('-')[0] : 'en';
+  const iosApp = _isIOSApp();
   return [welcome, {
     id: 'ann-bear-stores', isAnnouncement: true, timestamp: null,
-    text: _wt('anon.feed.annBearStores'),
+    text: _wt(iosApp ? 'anon.feed.annBearStoresIos' : 'anon.feed.annBearStores'),
     image: `images/announcements/bear-stores-${ANN_IMAGE_LANGS.includes(lang) ? lang : 'en'}.jpg`,
     imageAlt: _wt('anon.feed.annBearStoresAlt'),
-    storeLinks: BEAR_STORE_LINKS,
+    storeLinks: iosApp ? { appStore: BEAR_STORE_LINKS.appStore } : BEAR_STORE_LINKS,
   }];
 }
 
@@ -5068,7 +5093,7 @@ function _storeBadgesHtml(links) {
       <path fill="#fff" transform="translate(14,10) scale(1.35)" d="M18.71,19.5C17.88,20.74 17,21.95 15.66,21.97C14.32,22 13.89,21.18 12.37,21.18C10.84,21.18 10.37,21.95 9.1,22C7.79,22.05 6.8,20.68 5.96,19.47C4.25,17 2.94,12.45 4.7,9.39C5.57,7.87 7.13,6.91 8.82,6.88C10.1,6.86 11.32,7.75 12.11,7.75C12.89,7.75 14.37,6.68 15.92,6.84C16.57,6.87 18.39,7.1 19.56,8.82C19.47,8.88 17.39,10.1 17.41,12.63C17.44,15.65 20.06,16.66 20.09,16.67C20.06,16.74 19.67,18.11 18.71,19.5M13,3.5C13.73,2.67 14.94,2.04 15.94,2C16.07,3.17 15.6,4.35 14.9,5.19C14.21,6.04 13.07,6.7 11.95,6.61C11.8,5.46 12.36,4.26 13,3.5Z"/>
       <text x="56" y="23" fill="#fff" font-family="Nunito,sans-serif" font-size="10" font-weight="600" letter-spacing="0.5">Download on the</text>
       <text x="55" y="44" fill="#fff" font-family="Nunito,sans-serif" font-size="21" font-weight="800" letter-spacing="-0.3">App Store</text></svg></a>`;
-  const google = `<a class="ann-store-badge" href="${esc(links.googlePlay)}" target="_blank" rel="noopener"
+  const google = !links.googlePlay ? '' : `<a class="ann-store-badge" href="${esc(links.googlePlay)}" target="_blank" rel="noopener"
       aria-label="${esc(_wt('anon.feed.annGooglePlay'))}" title="${esc(_wt('anon.feed.annGooglePlay'))}">
     <svg viewBox="0 0 180 56" aria-hidden="true"><rect x="1" y="1" width="178" height="54" rx="12" fill="#000" stroke="rgba(255,255,255,0.22)"/>
       <g transform="translate(15,13) scale(1.3)">
@@ -5384,7 +5409,7 @@ async function openThread(postId) {
       // decrement that never landed) can't leave the post pulsing forever.
       markThreadSeen(postId, Math.max(snap.docs.length, num(post.commentCount, 0)));
       const comments = snap.docs.map(d => _maskAdmin({ id: d.id, ...d.data() }))
-        .filter(c => !c.name || (!mutedUsers.has(c.name) && !isBanned(c.name)));
+        .filter(c => !c.name || (!blockedUsers.has(c.name) && !isBanned(c.name)));
       _threadDocs = { post: localPosts.find(p => p.id === postId) || post, comments };
       const el = document.getElementById('thread-comments-list');
       // Measure before the innerHTML swap — afterwards the old scroll position
@@ -5599,7 +5624,7 @@ function renderComment(c) {
   const reportBtn = !isMine && !isBot
     ? `<button class="icon-btn" data-creport title="${esc(_wt('anon.modbtn.reportComment'))}">🚨</button>` : '';
   const muteBtn = !isMine && !isBot
-    ? `<button class="icon-btn" data-cmute title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : '';
+    ? `<button class="icon-btn" data-cmute title="${esc(_wt('anon.modbtn.muteUser'))}">🚫</button>` : '';
   return `<div class="comment-card" data-cid="${esc(c.id)}" data-author="${esc(c.name)}">
     ${isMine ? '' : '<span class="swipe-cue">↩️</span>'}
     <div class="comment-header">
@@ -5680,7 +5705,7 @@ const _threadMentions = new Map();                // postId → [{ref, name}] pi
 function _threadPeople() {
   const out = [], seen = new Set([profile.monika]);
   const add = (ref, d) => {
-    if (!d || !d.name || d.isBot || seen.has(d.name) || mutedUsers.has(d.name) || isBanned(d.name)) return;
+    if (!d || !d.name || d.isBot || seen.has(d.name) || blockedUsers.has(d.name) || isBanned(d.name)) return;
     seen.add(d.name);
     out.push({ ref, name: d.name, initials: d.initials || initials(d.name), grad1: d.grad1, grad2: d.grad2 });
   };
@@ -5824,10 +5849,10 @@ function setupThread() {
     const author = card.dataset.author || '';
     const d = btn.dataset;
     if ('cmute' in d) {
-      muteTargetName = author;
-      document.getElementById('mute-body').innerHTML =
-        _wt('anon.mute.bodyNamed', { name: `<strong>[${esc(author)}]</strong>` });
-      openOv('ov-mute');
+      openBlock(author, {
+        postId: commentTargetId, commentId: cid,
+        text: card.querySelector('.comment-text')?.textContent || '',
+      });
     } else if ('csos' in d) {
       sosTargetName = author;
       sosTargetPost = commentTargetId;
@@ -6022,7 +6047,7 @@ function renderPosts(posts) {
   // name (see topicAuthor) that could otherwise collide with a muted/banned
   // monika and silently hide the topic on that device.
   posts = posts.filter(p => p.isTopic || p.wasTopic || p.isSuggestion || !p.name ||
-    (!mutedUsers.has(p.name) && !isBanned(p.name)));
+    (!blockedUsers.has(p.name) && !isBanned(p.name)));
   // Final safety net: never surface more than one "Today's topic" card, no matter
   // which caller assembled `posts`. assembleGeneralPosts already dedupes, but the
   // optimistic-compose path (and any future render path) can hand us the raw
@@ -6098,13 +6123,13 @@ function renderPosts(posts) {
       openOv('ov-report');
     });
   });
-  // Mute buttons
+  // Block buttons
   list.querySelectorAll('[data-mute]').forEach(btn => {
     btn.addEventListener('click', () => {
-      muteTargetName = btn.dataset.mute;
-      document.getElementById('mute-body').innerHTML =
-        _wt('anon.mute.bodyNamed', { name: `<strong>[${esc(muteTargetName)}]</strong>` });
-      openOv('ov-mute');
+      const card = btn.closest('.post-card');
+      const pid = (card && card.dataset.pid) || '';
+      const post = localPosts.find(p => p.id === pid);
+      openBlock(btn.dataset.mute, { postId: pid, commentId: '', text: post ? post.text : '' });
     });
   });
   // Self-delete buttons
@@ -6373,7 +6398,7 @@ function renderPost(p) {
       ${moreMenuHtml(`${selfDeleteBtn}${pinBtn}${deleteBtn}${banBtn}`
         + (p.name !== profile.monika ? `<button class="icon-btn" data-sos="${esc(p.name)}" title="${esc(_wt('anon.modbtn.sosFlag'))}">🆘</button>`
           + `<button class="icon-btn" data-report="${esc(p.id)}" title="${esc(_wt('anon.modbtn.reportPost'))}">🚨</button>`
-          + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🙈</button>` : ''))}
+          + `<button class="icon-btn" data-mute="${esc(p.name)}" title="${esc(_wt('anon.modbtn.muteUser'))}">🚫</button>` : ''))}
     </div>
   </div>`;
 }
@@ -7134,6 +7159,84 @@ async function _sendModerationFlag(doc, okKey) {
   return ok;
 }
 
+// ── Block ────────────────────────────────────────────────────────
+// Ask before blocking `name`. `meta` = {postId, commentId, text}: the post or
+// reply the member blocked them from, sent to the moderators with the report.
+function openBlock(name, meta) {
+  if (!name) return;
+  blockTargetName = name;
+  blockTargetMeta = meta || null;
+  document.getElementById('mute-body').innerHTML =
+    _wt('anon.mute.bodyNamed', { name: `<strong>[${esc(name)}]</strong>` });
+  openOv('ov-mute');
+}
+
+// Take a just-blocked person out of the open thread straight away, rather
+// than waiting for the next snapshot. Blocking the thread's own author
+// closes the thread: there is nothing of theirs left to read.
+function _dropBlockedFromThread(name) {
+  if (!commentTargetId) return;
+  if (_threadDocs.post && _threadDocs.post.name === name) { closeThread(); return; }
+  _threadDocs.comments = _threadDocs.comments.filter(c => c.name !== name);
+  const el = document.getElementById('thread-comments-list');
+  if (!el) return;
+  el.querySelectorAll('.comment-card').forEach(card => {
+    if (card.dataset.author === name) card.remove();
+  });
+  if (!el.querySelector('.comment-card')) el.innerHTML = _emptyHtml(_wt('anon.ui.noComments'), true);
+}
+
+// The block's report to the moderators (bbAnonReports → onAnonReportCreated
+// emails them). The block itself is already done on this device, so the
+// member is not asked to try again: a report that can't be written now
+// (offline) waits on the device and goes on the next board open or when the
+// connection comes back.
+const BLOCK_PENDING_KEY = 'Anon_blockReportsPending';
+function _pendingBlockReports() {
+  try { return JSON.parse(BB.storage.get(BLOCK_PENDING_KEY) || '[]'); } catch (_) { return []; }
+}
+async function _writeBlockReport(doc) {
+  if (!db) return false;
+  try {
+    await _ensureAuthSession();
+    await Promise.race([
+      db.collection(BB_BRAND.collections.reports).add({
+        ...doc, timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 12000)),
+    ]);
+  } catch (e) {
+    console.warn('[Anonymous] block report not sent yet', e && (e.code || e.message));
+    return false;
+  }
+  // Like a post report: keep the post past the 7-day sweep for the moderators.
+  if (doc.postId && !doc.commentId) {
+    db.collection(BB_BRAND.collections.posts).doc(doc.postId).update({ reported: true }).catch(() => {});
+  }
+  return true;
+}
+async function _sendBlockReport(doc) {
+  if (await _writeBlockReport(doc)) return true;
+  const q = _pendingBlockReports();
+  q.push(doc);
+  BB.storage.set(BLOCK_PENDING_KEY, JSON.stringify(q.slice(-20)));
+  return false;
+}
+let _flushingBlocks = false;
+async function _flushBlockReports() {
+  if (_flushingBlocks) return;
+  const q = _pendingBlockReports();
+  if (!q.length) return;
+  _flushingBlocks = true;
+  try {
+    const left = [];
+    for (const doc of q) if (!(await _writeBlockReport(doc))) left.push(doc);
+    if (left.length) BB.storage.set(BLOCK_PENDING_KEY, JSON.stringify(left));
+    else BB.storage.remove(BLOCK_PENDING_KEY);
+  } finally { _flushingBlocks = false; }
+}
+window.addEventListener('online', () => { _flushBlockReports(); });
+
 // ─────────────────────────────────────────────────────────────────
 // Overlay button wiring
 // ─────────────────────────────────────────────────────────────────
@@ -7206,16 +7309,30 @@ function setupOverlayActions() {
     });
   });
 
-  // Mute
-  document.getElementById('mute-cancel').addEventListener('click', () => closeOv('ov-mute'));
+  // Block (was Mute until 1.47): their posts and comments leave this device's
+  // feed and the open thread at once, and the moderators get a report.
+  document.getElementById('mute-cancel').addEventListener('click', () => {
+    closeOv('ov-mute'); blockTargetName = ''; blockTargetMeta = null;
+  });
   document.getElementById('mute-confirm').addEventListener('click', () => {
     closeOv('ov-mute');
-    if (!muteTargetName) return;
-    mutedUsers.add(muteTargetName);
-    saveMuted();
+    const name = blockTargetName, meta = blockTargetMeta || {};
+    blockTargetName = ''; blockTargetMeta = null;
+    if (!name) return;
+    blockedUsers.add(name);
+    saveBlocked();
     renderPosts(currentTab === 'general' ? assembleGeneralPosts(localPosts) : announcementFeed());
-    showHint(_wt('anon.toast.mutedNamed', { name: `[${muteTargetName}]` }));
-    muteTargetName = '';
+    _dropBlockedFromThread(name);
+    showHint(_wt('anon.toast.mutedNamed', { name: `[${name}]` }));
+    _haptic('success');
+    const doc = {
+      type: 'block', reason: 'Blocked by a member',
+      targetName: name, postName: name, postText: String(meta.text || '').slice(0, 2000),
+      reportedBy: profile.monika, adminEmail: ADMIN_EMAIL,
+    };
+    if (meta.postId) doc.postId = meta.postId;
+    if (meta.commentId) { doc.commentId = meta.commentId; doc.kind = 'comment'; }
+    _sendBlockReport(doc);
   });
 
   // Self delete

@@ -389,16 +389,16 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<!-- OVERLAY: Mute user                                             -->
+<!-- OVERLAY: Block a person (was Mute until 1.47)                -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 <div id="ov-mute" class="overlay hidden">
   <div class="sheet">
-    <div class="sheet-icon">🙈</div>
-    <div class="sheet-title" data-i18n="anon.mute.title">Mute this user?</div>
-    <div class="sheet-sub" id="mute-body" data-i18n="anon.mute.body">All their posts and comments will be hidden on this device. You can unmute them any time from the About screen.</div>
+    <div class="sheet-icon">🚫</div>
+    <div class="sheet-title" data-i18n="anon.mute.title">Block this person?</div>
+    <div class="sheet-sub" id="mute-body" data-i18n="anon.mute.body">Their posts and comments disappear for you straight away, and our moderators are told so they can check what they wrote. You can unblock them any time from the About screen.</div>
     <div class="btn-row">
       <button class="btn-secondary" id="mute-cancel" style="flex:1" data-i18n="common.cancel">Cancel</button>
-      <button class="btn-danger" id="mute-confirm" data-i18n="anon.mute.confirm">Mute 🙈</button>
+      <button class="btn-danger" id="mute-confirm" data-i18n="anon.mute.confirm">Block 🚫</button>
     </div>
   </div>
 </div>
@@ -853,16 +853,16 @@
       🔒 &nbsp;Respect privacy — never share personal details, yours or others'<br>
       🚫 &nbsp;No objectionable content: hate, harassment, threats, spam, explicit material<br>
       🚨 &nbsp;Report anything that breaks these rules — every report is reviewed<br>
-      🙈 &nbsp;Mute anyone you'd rather not hear from
+      🚫 &nbsp;Block anyone abusive: their posts disappear for you and our moderators are told
     </div>
 
     <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.terms.modTitle">Moderation</div>
-    <p style="font-size:0.75rem;color:var(--dark);line-height:1.6;margin-bottom:16px;" data-i18n="anon.terms.modBody">Reported content is reviewed and acted on within 24 hours, and anything that breaks the rules is removed. A zero-tolerance breach means a permanent ban; any other breach means a temporary ban. You can remove your own posts at any time, and mute anyone with "Mute this user" in the ⋯ menu on their post (unmute them from the About screen).</p>
+    <p style="font-size:0.75rem;color:var(--dark);line-height:1.6;margin-bottom:16px;" data-i18n="anon.terms.modBody">Reported content is reviewed and acted on within 24 hours, and anything that breaks the rules is removed. A zero-tolerance breach means a permanent ban; any other breach means a temporary ban. You can remove your own posts at any time. To block someone, use "Block this person" in the ⋯ menu on their post: their posts and comments disappear for you straight away and our moderators are told (unblock them from the About screen).</p>
 
     <div style="background:var(--yellow-bg);border-radius:12px;padding:12px 14px;margin-bottom:18px;">
       <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;" data-i18n="anon.terms.reportTitle">Report a problem</div>
       <p style="font-size:0.8125rem;color:var(--dark);line-height:1.6;margin:0;">
-        <span data-i18n="anon.terms.reportBody">To report inappropriate content or an abusive user, use 🚨 Report in the ⋯ menu on any post, or email us:</span>
+        <span data-i18n="anon.terms.reportBody">To report inappropriate content or an abusive user, use 🚨 Report or 🚫 Block in the ⋯ menu on any post, or email us:</span>
         <a class="ink-link" href="mailto:bipolar@unisim.co.uk?subject=Bipolar%20Anonymous%20%E2%80%94%20report">bipolar@unisim.co.uk</a>
       </p>
     </div>
@@ -907,7 +907,7 @@
         🔒 &nbsp;Respect others' privacy — don't share personal details<br>
         🆘 &nbsp;Use the SOS flag if you're genuinely worried about someone<br>
         🚨 &nbsp;Report posts that break the rules — reviewed within 24 hours<br>
-        🙈 &nbsp;Mute anyone you'd rather not hear from — their posts disappear for you
+        🚫 &nbsp;Block anyone abusive: their posts disappear for you and our moderators are told
       </div>
       <div style="margin-top:12px;font-size:0.75rem;color:var(--dark);line-height:1.6;">
         <button type="button" id="about-terms-link" class="ink-link" data-i18n="anon.about.viewTerms">View full Terms</button>
@@ -924,10 +924,10 @@
         💬 &nbsp;<strong>Comment</strong> — read replies and join the conversation (pulses when there are new replies)<br>
         🆘 &nbsp;<strong>SOS</strong> — quietly alert a moderator if you're worried about someone<br>
         🚨 &nbsp;<strong>Report</strong> — flag a post that breaks the rules — reviewed within 24 hours<br>
-        🙈 &nbsp;<strong>Mute</strong> — hide everything from a user, just on your device<br>
+        🚫 &nbsp;<strong>Block</strong> — hide everything from someone straight away and let the moderators know<br>
         🗑️ &nbsp;<strong>Remove</strong> — delete one of your own posts (shown faintly on your posts)
       </div>
-      <div style="margin-top:10px;font-size:0.75rem;color:var(--muted);line-height:1.6;" data-i18n="anon.ux.aboutMore">Tap ⋯ on a post, or press and hold it, for Save, SOS, Report and Mute. Swipe a reply to the right to answer it.</div>
+      <div style="margin-top:10px;font-size:0.75rem;color:var(--muted);line-height:1.6;" data-i18n="anon.ux.aboutMore">Tap ⋯ on a post, or press and hold it, for Save, SOS, Report and Block. Swipe a reply to the right to answer it.</div>
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);">
         <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;" data-i18n="anon.about.moderatorsTitle">Moderators only</div>
         <div style="font-size:0.8125rem;color:var(--dark);line-height:1.8;" data-i18n-html="anon.about.moderatorsList">
@@ -939,7 +939,7 @@
     </div>
 
     <div id="about-muted-wrap" style="background:var(--yellow-bg);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:none;">
-      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.mutedTitle">Muted users</div>
+      <div style="font-size:0.6875rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;" data-i18n="anon.about.mutedTitle">Blocked people</div>
       <div id="about-muted-list" style="font-size:0.8125rem;color:var(--dark);"></div>
     </div>
 

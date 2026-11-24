@@ -950,6 +950,13 @@ exports.onAnonSuggestionCreated = onDocumentCreated(
 // of flag, the reason a member picked, and the post (and comment) id with a
 // link that opens the thread. Never the post text or anyone's moniker: email
 // is not where a member's words should end up (privacy.html §6, Resend).
+//
+// 🚫 Block (type 'block', from 1.47 / web v445): a member blocked whoever
+// wrote a post or reply. Their device hides that person at once; this tells
+// the moderators which post or comment it came from so they can review what
+// the blocked person wrote (App Store guideline 1.2, App Review 2026-11-24).
+// The blocked moniker stays in the bbAnonReports doc (targetName), not the
+// email, for the same reason as above.
 const REPORT_REASONS = ['Unkind or rude', 'Misinformation', 'Spam', 'Other'];
 const BOARD_ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
 
@@ -959,10 +966,12 @@ exports.onAnonReportCreated = onDocumentCreated(
     const r = event.data && event.data.data();
     if (!r) return;
     const isSos   = r.type === 'sos';
+    const isBlock = r.type === 'block';
     const postId  = BOARD_ID_RE.test(String(r.postId || '')) ? String(r.postId) : '';
     const comment = BOARD_ID_RE.test(String(r.commentId || '')) ? String(r.commentId) : '';
     // Only the fixed reasons the sheet offers; anything else reads as Other.
-    const reason  = isSos ? '' : (REPORT_REASONS.includes(r.reason) ? r.reason : 'Other');
+    const reason  = isSos ? '' : isBlock ? 'Blocked by a member'
+      : (REPORT_REASONS.includes(r.reason) ? r.reason : 'Other');
     const what    = comment ? 'comment' : (postId ? 'post' : 'member');
     const link    = postId
       ? `https://bipolaranonymous.app/anonymous.html?post=${encodeURIComponent(postId)}`
@@ -970,13 +979,17 @@ exports.onAnonReportCreated = onDocumentCreated(
 
     const subject = isSos
       ? `[Bipolar Anonymous] 🆘 SOS flag${postId ? ` (post ${postId})` : ''}`
-      : `[Bipolar Anonymous] 🚨 ${what === 'comment' ? 'Comment' : 'Post'} reported: ${reason}${postId ? ` (post ${postId})` : ''}`;
+      : isBlock
+        ? `[Bipolar Anonymous] 🚫 Member blocked from a ${what === 'comment' ? 'comment' : 'post'}${postId ? ` (post ${postId})` : ''}`
+        : `[Bipolar Anonymous] 🚨 ${what === 'comment' ? 'Comment' : 'Post'} reported: ${reason}${postId ? ` (post ${postId})` : ''}`;
     const lines = [
       isSos
         ? `A member is worried about someone on the board and sent an SOS flag. Please check in on them.`
-        : `A member reported a ${what} on the board. Please review it within 24 hours.`,
+        : isBlock
+          ? `A member blocked the author of a ${what} on the board, so that person's posts and comments are hidden for them. Please review what the blocked person wrote within 24 hours and remove it or ban them if it breaks the rules. Their moniker is in the report doc (targetName).`
+          : `A member reported a ${what} on the board. Please review it within 24 hours.`,
       '',
-      `Type: ${isSos ? 'SOS' : 'Report'}`,
+      `Type: ${isSos ? 'SOS' : isBlock ? 'Block' : 'Report'}`,
     ];
     if (reason)  lines.push(`Reason: ${reason}`);
     lines.push(`Post: ${postId || 'not given (sent from an older app build)'}`);
@@ -995,7 +1008,7 @@ exports.onAnonReportCreated = onDocumentCreated(
       console.error('[onAnonReportCreated] Resend error:', JSON.stringify(error));
       return;
     }
-    console.log(`[onAnonReportCreated] emailed ${isSos ? 'sos' : 'report'} (${event.params.reportId})`);
+    console.log(`[onAnonReportCreated] emailed ${isSos ? 'sos' : isBlock ? 'block' : 'report'} (${event.params.reportId})`);
   }
 );
 

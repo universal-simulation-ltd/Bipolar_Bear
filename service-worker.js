@@ -2177,7 +2177,15 @@
 //   skipped one not on that day's list → Taken). Before, the only in-between
 //   answer was Unsure for everything (2026-11-24, James). js/journal.js
 //   _afMedNames / _afMedFields; strings reused (medSome.some, meds.whichMissed).
-const CACHE_NAME = 'bipolarbear-v445';
+// v446: Bipolar Anonymous 1.47 for App Review (1.46 refused 2026-11-24):
+//   🙈 Mute becomes 🚫 Block, which also files a report (bbAnonReports type
+//   'block', emailed to the moderators by onAnonReportCreated) and drops the
+//   person's replies from the open thread at once; in the iPhone app the Bear
+//   store card shows only the App Store badge and iPhone-only text, and the
+//   privacy links add ?app=ios, where privacy.html swaps its three Android /
+//   Google Play lines. anonymous.html, js/anonymous.js, js/shared/i18n.js
+//   (10 languages), privacy.html, functions/index.js.
+const CACHE_NAME = 'bipolarbear-v446';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
