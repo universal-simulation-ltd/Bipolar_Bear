@@ -1176,7 +1176,10 @@ Writes:   signed in → one encrypted Firestore batch (max 30 days, well under
                       the 500-write limit)
           guest     → encrypted localStorage, behind the same first-save PIN
                       gate as saveAndOpenJournal()
-          No other field is filled: medication, notes, goals etc. stay empty.
+          Medication and the trackers come from "Fill in the rest" (below);
+          notes, intention etc. stay empty.
+          [Correction 2026-11-24: this line said medication stayed empty; the
+          "Fill in the rest" step has asked for it since 2026-10-21.]
 
 Marking:  every entry carries autoFilled:true → an AUTO badge in the entry list,
           "Auto-filled estimate" in the PDF export and an Auto-filled column in
@@ -1184,6 +1187,18 @@ Marking:  every entry carries autoFilled:true → an AUTO badge in the entry lis
           A guess must never read as something the user reported — least of all
           in the PDF a clinician sees.
 ```
+
+**🤏 Some in "Fill in the rest" (2026-11-24).** The medication row offers Not
+taken / Unsure / 🤏 Some / Taken; Some only with two or more medicines (one
+medicine skipped is just Not taken). Under Some, `BBMeds.chipsHtml` lists the
+medicines and a tap marks one skipped (`_afAskMedToggle`, `_afAsk.skip`, keyed
+by lower-cased name). The bulk sheet lists every medicine on the list on any
+included day (`_afMedNames`); the one-day fill lists the day's own. Each day
+then gets `_afMedFields(namesForDay(day))`: skipped ones `missed`, the rest
+`taken`, `medSome: true`, no `medAmounts` (no doses asked). A day where none of
+the skipped medicines was on that day's list saves as Taken; all skipped saves
+as Not taken; Some with nothing marked saves as Some with no details, exactly
+as the Some sheet does. `medication` stays the single answer for older builds.
 
 **One-day fill — yesterday, from the first step.** The same idea for the day
 the journal is already pointed at, rather than a run of gaps:

@@ -7932,9 +7932,20 @@ function _tt(k, vars, fallback) {
         (tagged && a.suggested === m ? `<span style="display:block;font-size:0.82em;font-weight:700;color:var(--brand-ink);margin-top:2px;">${_esc(BB.t('journal.autofill.askSuggested'))}</span>` : ''))).join(''));
 
       if (a.showMed) {
+        // 🤏 Some (2026-11-24, James): "a way to say some medications were
+        // skipped instead of just unsure for all". Offered with two or more
+        // medicines; the chips under it say which were skipped.
+        const names = _afMedNames();
+        const opts = [['not-taken', 'journal.med.notTaken'], ['unsure', 'journal.med.unsure']];
+        if (names.length >= 2) opts.push(['some', 'medSome.some']);
+        opts.push(['taken', 'journal.med.taken']);
         html += head(_esc(BB.t('journal.label.medication')));
-        html += row([['not-taken', 'journal.med.notTaken'], ['unsure', 'journal.med.unsure'], ['taken', 'journal.med.taken']]
-          .map(([v, k]) => pill(a.med === v, `_afAskPick('med','${v}')`, _esc(BB.t(k)))).join(''));
+        html += row(opts.map(([v, k]) => pill(a.med === v, `_afAskPick('med','${v}')`, _esc(BB.t(k)))).join(''));
+        if (a.med === 'some' && names.length >= 2 && window.BBMeds) {
+          const doses = {};
+          names.forEach(n => { doses[n] = a.skip[_afMedKey(n)] ? 'missed' : 'taken'; });
+          html += `<div style="margin:-4px 0 14px;">${BBMeds.chipsHtml(names, doses, '_afAskMedToggle', { ask: true })}</div>`;
+        }
       }
 
       if (a.rows.length) {
@@ -7947,6 +7958,72 @@ function _tt(k, vars, fallback) {
       if (a.showMed || a.rows.length)
         html += `<p style="font-size:0.78em;color:var(--text-muted-ink);line-height:1.45;margin:0 0 4px;">${_esc(BB.t('journal.autofill.askClear'))}</p>`;
       return html;
+    }
+
+    /** A Some answer already on the form: its skipped medicines, for the chips. */
+    function _afSkipFrom(med, doses) {
+      const out = {};
+      if (med === 'some' && doses) Object.keys(doses).forEach(n => { if (doses[n] === 'missed') out[_afMedKey(n)] = true; });
+      return out;
+    }
+
+    function _afMedKey(n) { return String(n == null ? '' : n).trim().toLowerCase().replace(/\s+/g, ' '); }
+
+    /**
+     * The medicines the 🤏 Some chips list: the day's own (focus mode), or
+     * every medicine on the list on any of the days being filled (a list
+     * can change inside the gap; each day only records its own medicines).
+     */
+    function _afMedNames() {
+      const a = _afAsk;
+      if (!a || !window.BBMeds) return [];
+      if (a.where === 'day') return _medNamesNow();
+      const seen = new Set(), out = [];
+      (_autoFillPlan || []).filter(p => p.include).forEach(p => {
+        let names = [];
+        try { names = BBMeds.namesForDay(p.key); } catch (e) {}
+        names.forEach(n => { const k = _afMedKey(n); if (k && !seen.has(k)) { seen.add(k); out.push(n); } });
+      });
+      return out;
+    }
+
+    /** A 🤏 Some chip: flip that medicine between taken and skipped. */
+    function _afAskMedToggle(i) {
+      const a = _afAsk;
+      const n = _afMedNames()[i];
+      if (!a || n == null) return;
+      const k = _afMedKey(n);
+      if (a.skip[k]) delete a.skip[k]; else a.skip[k] = true;
+      const body = document.getElementById('afAskBody-' + a.where);
+      if (body) body.innerHTML = _afAskHtml();
+    }
+    window._afAskMedToggle = _afAskMedToggle;
+
+    /**
+     * The entry's medication fields for the sheet's answer on a day whose
+     * medicines are `names`. Some: the skipped ones missed, the rest taken —
+     * all taken that day → Taken, all skipped → Not taken, nothing marked →
+     * Some with no detail (as the Some sheet saves it). `medication` stays
+     * the single answer older builds read.
+     */
+    function _afMedFields(names) {
+      const a = _afAsk || {};
+      const med = a.med || null;
+      const plain = v => {
+        let medDoses = null;
+        try { if (v && window.BBMeds) medDoses = BBMeds.dosesForAnswer(v, names); } catch (e) {}
+        return { medication: v, medDoses, medSome: null, medAmounts: null };
+      };
+      if (med !== 'some') return plain(med);
+      const skip = a.skip || {};
+      const noDetail = { medication: 'not-taken', medDoses: null, medSome: true, medAmounts: null };
+      if (!Object.keys(skip).length || !names.length || !window.BBMeds) return noDetail;
+      const doses = {};
+      names.forEach(n => { doses[n] = skip[_afMedKey(n)] ? 'missed' : 'taken'; });
+      const missed = names.filter(n => doses[n] === 'missed').length;
+      if (missed === 0) return plain('taken');
+      if (missed === names.length) return { medication: 'not-taken', medDoses: doses, medSome: null, medAmounts: null };
+      return { medication: 'not-taken', medDoses: doses, medSome: true, medAmounts: null };
     }
 
     /** Mood is required (tapping it again keeps it); everything else toggles off. */
@@ -8071,7 +8148,7 @@ function _tt(k, vars, fallback) {
         where: 'day', steps, sleepH, suggested: cat, perDay: false,
         mood: _afSuggestionOn() ? cat : (cur === 'good' ? 'stable' : cur),
         showMed: !_getDisabledSteps().includes('medication'),
-        med: selectedMedication || null,
+        med: selectedMedication || null, skip: _afSkipFrom(selectedMedication, selectedMedDoses),
         rows, ans: Object.fromEntries(rows.map(r => [r.key, _afField(r.key)]))
       };
       nativeHaptic('success');
@@ -8121,7 +8198,14 @@ function _tt(k, vars, fallback) {
         _fmSleepClear      = false;
         _sleepHealthSynced = true;
       }
-      if (a.showMed) _medSetAnswer(a.med);
+      if (a.showMed) {
+        if (a.med === 'some') {
+          const f = _afMedFields(_medNamesNow());
+          selectedMedication = f.medSome ? 'some' : f.medication;
+          selectedMedDoses   = f.medDoses;
+          selectedMedAmounts = null;
+        } else _medSetAnswer(a.med);
+      }
       a.rows.forEach(r => _afField(r.key, a.ans[r.key] || null));
       _fmDayFillSnapshot = { mood: selectedMood, energy: selectedEnergy, sleep: selectedSleep };
       _afAsk = null;
@@ -16114,7 +16198,7 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
       if (!_afAsk || _afAsk.where !== 'bulk') {
         _afAsk = {
           where: 'bulk', suggested: null, perDay: _afSuggestionOn(), mood: null,
-          showMed: !_getDisabledSteps().includes('medication'), med: null,
+          showMed: !_getDisabledSteps().includes('medication'), med: null, skip: {},
           rows: _afAskRows(), ans: {}
         };
       }
@@ -16158,8 +16242,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
     function _buildAutoFilledEntry(plan) {
       const a = _afAsk || { ans: {} };
       const ans = k => a.ans[k] || null;
-      let medDoses = null;
-      try { if (a.med && window.BBMeds) medDoses = BBMeds.dosesForAnswer(a.med, BBMeds.namesForDay(plan.key)); } catch (e) {}
+      let names = [];
+      try { if (a.med && window.BBMeds) names = BBMeds.namesForDay(plan.key); } catch (e) {}
+      const med = _afMedFields(names);
       const custom = {};
       Object.keys(a.ans).forEach(k => { if (k.startsWith('custom:') && a.ans[k]) custom[k.slice(7)] = a.ans[k]; });
       const date = new Date(plan.date);
@@ -16173,8 +16258,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
         energy: plan.energy,
         sleep: plan.sleep,
         sleepQuality: null,
-        medication: a.med || null,
-        medDoses,
+        medication: med.medication,
+        medDoses: med.medDoses,
+        ...(med.medSome ? { medSome: true, medAmounts: null } : {}),
         goals: ans('goals'),
         alcohol: ans('alcohol'),
         exercise: ans('exercise'),

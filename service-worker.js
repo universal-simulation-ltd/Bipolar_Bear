@@ -2171,7 +2171,13 @@
 //   when 🧰 is already on the dock. journal.html, css/journal.css, fab.js.
 // v444: _APP_VERSION 1.49 for the Bear 1.49 (70) / Anonymous 1.46 (54) store
 //   builds (2026-11-21). js/shared/brand-config.js.
-const CACHE_NAME = 'bipolarbear-v444';
+// v445: auto-fill's "Fill in the rest" offers 🤏 Some on the medication row
+//   (two or more medicines): tap the medicines that were skipped and each
+//   filled day records them (medSome + medDoses; all skipped → Not taken, the
+//   skipped one not on that day's list → Taken). Before, the only in-between
+//   answer was Unsure for everything (2026-11-24, James). js/journal.js
+//   _afMedNames / _afMedFields; strings reused (medSome.some, meds.whichMissed).
+const CACHE_NAME = 'bipolarbear-v445';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
