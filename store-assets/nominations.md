@@ -29,7 +29,7 @@ end-to-end encrypted; Bipolar Bear is not a medical device.
 
 - **Name:** World Bipolar Day: Bipolar Bear and Bipolar Anonymous
 - **Publish:** 23–31 March 2027 · **Supplemental material:** https://www.bipolarbear.app/
-- **In-App Events: DRAFTS in ASC (2026-11-02)**, "World Bipolar Day", badge
+- **In-App Events: made 2026-11-02, IN APP REVIEW since 2026-11-25**, "World Bipolar Day", badge
   Special Event, all territories, shown from 11 March, running 25–31 March 2027
   (the app's own countdown, DOCS §2.33, v396): **Bear `6829691851`**,
   **Anonymous `6829691972`** (`asc-app-events.mjs`; en-GB only so far).
