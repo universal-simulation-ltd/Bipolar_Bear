@@ -29,7 +29,14 @@ end-to-end encrypted; Bipolar Bear is not a medical device.
 
 - **Name:** World Bipolar Day: Bipolar Bear and Bipolar Anonymous
 - **Publish:** 23–31 March 2027 · **Supplemental material:** https://www.bipolarbear.app/
-- **In-App Events: made 2026-11-02, IN APP REVIEW since 2026-11-25**, "World Bipolar Day", badge
+- **Other languages (2026-11-25): text + localised images READY, not on the events.** Apple
+  APPROVED both events (en-GB only) the same day, and an approved event refuses new
+  localizations (409 `STATE_ERROR.ADD_LOCALIZATION_NOT_ALLOWED`). The 10 other locales'
+  card + details images (the real app in each language on 30 March) are in
+  `app-events/wbd-2027/<locale>/` (`build-wbd-images.mjs`), and the text plus uploader is
+  `app-events/asc-wbd-locales.mjs`. To use them: new events in all 11 locales, approved,
+  then swapped into the World Bipolar Day nomination (James's call: it is already submitted).
+- **In-App Events: made 2026-11-02, APPROVED 2026-11-25 (en-GB only)**, "World Bipolar Day", badge
   Special Event, all territories, shown from 11 March, running 25–31 March 2027
   (the app's own countdown, DOCS §2.33, v396): **Bear `6829691851`**,
   **Anonymous `6829691972`** (`asc-app-events.mjs`; en-GB only so far).
