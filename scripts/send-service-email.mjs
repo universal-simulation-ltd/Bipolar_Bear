@@ -6,7 +6,10 @@
 //   node scripts/send-service-email.mjs <email.json> --test a@x.com,b@y.com
 //   node scripts/send-service-email.mjs <email.json> --send-all
 //
-// <email.json> is { "subject": "...", "paras": ["...", "- bullet\n- bullet", ...] }.
+// <email.json> is { "subject": "...", "paras": ["...", "- bullet\n- bullet", ...] },
+// plus an optional "askReview": true, which ends the email with REVIEW_PARA (both
+// stores' review links; 2026-11-25, James: more store reviews). Opt in per email:
+// leave it off a "sorry, here's a fix" email.
 // Recipients: every Firebase Auth email except our own and test accounts,
 // de-duplicated, minus anyone who opted out. Every email carries its own
 // unsubscribe link and RFC 8058 one-click headers (functions/email-optout.js,
@@ -33,6 +36,11 @@ if (!file || !['--count', '--test', '--send-all'].includes(mode)) {
   process.exit(2);
 }
 const mail = JSON.parse(fs.readFileSync(file, 'utf8'));
+// Asking is fine on both stores; offering anything for a review, or asking only
+// people who liked the app, is not (Apple 5.6.3, Google Play's review policy).
+const REVIEW_PARA = 'If Bipolar Bear helps you, a short review helps other people living with bipolar find it: '
+  + 'App Store https://apps.apple.com/app/id6766637453?action=write-review or Google Play https://play.google.com/store/apps/details?id=com.bipolarbear.app';
+if (mail.askReview) mail.paras = [...mail.paras, REVIEW_PARA];
 
 const secret = (name) => execFileSync('npx', ['-y', 'firebase-tools@latest', 'functions:secrets:access', name, '--project', PROJECT],
   { cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim().split('\n').pop();

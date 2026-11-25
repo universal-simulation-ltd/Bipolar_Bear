@@ -2112,7 +2112,9 @@ account holders: one email per person through Resend, from
 bipolar@mail.unisim.co.uk, with replies to bipolar@unisim.co.uk. It leaves out
 our own and test addresses, de-duplicates, and skips anyone who opted out.
 Always run `--count` and `--test` before `--send-all`. The email text lives
-outside this public repo.
+outside this public repo. Add `"askReview": true` to the email's JSON to end it
+with a short line asking for a store review, with both stores' links
+(2026-11-25); leave it off emails about a problem.
 
 Every email has an Unsubscribe footer and RFC 8058 `List-Unsubscribe` /
 `List-Unsubscribe-Post` headers. The link goes to the `emailOptOut` function
