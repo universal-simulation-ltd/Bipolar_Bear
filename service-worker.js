@@ -2195,7 +2195,12 @@
 //   The overall medication card now compares answered days only. New
 //   js/journal-medlink.js + js/shared/i18n-medlink.js (precached),
 //   journal.html, js/journal.js.
-const CACHE_NAME = 'bipolarbear-v447';
+// v448: "leave a review" links, inside the phone apps only (James, 2026-11-25:
+//   more store reviews): a line in Bipolar Bear's Send Feedback sheet that
+//   opens the existing review card, and a block in Bipolar Anonymous's About
+//   sheet with that store's write-a-review link. New js/shared/i18n-rate.js
+//   (precached), fab.js, anonymous.html, js/anonymous.js.
+const CACHE_NAME = 'bipolarbear-v448';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2260,6 +2265,7 @@ const STATIC_ASSETS = [
   './js/shared/whats-new.js',
   './js/shared/awareness.js',
   './js/shared/i18n-awareness.js',
+  './js/shared/i18n-rate.js',
   './js/shared/breathing.js',
   './js/shared/i18n-breathe.js',
   './js/shared/tracking-manager.js',

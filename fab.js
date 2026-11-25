@@ -581,6 +581,9 @@
           <h3 style="margin-bottom:4px;color:#333;" data-i18n="feedback.title">Share Feedback</h3>
           <p id="bbFbMeta" style="font-size:0.78em;color:var(--text-muted-ink);margin-bottom:4px;"></p>
           <p style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:6px;" data-i18n="feedback.subtitle">Help us make Bipolar Bear better.</p>
+          <!-- Phone apps only (shown by openFabFeedback): the review card, for
+               anyone who came here to say something nice (2026-11-25). -->
+          <p id="bbFbReviewLine" style="display:none;margin:0 0 8px;"><button type="button" onclick="closeFabFeedback();openReviewModal()" style="background:none;border:none;padding:4px 0;color:var(--brand-ink);font-weight:600;font-size:0.85em;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;" data-i18n="rate.bearLink">⭐ Enjoying Bipolar Bear? Leave a review</button></p>
           <p style="font-size:0.85em;color:var(--text-muted-ink);margin-bottom:16px;"><span data-i18n="feedback.orEmail">Or email us at</span> <a href="mailto:bipolar@unisim.co.uk" style="color:var(--brand-ink);font-weight:600;text-decoration:none;">bipolar@unisim.co.uk</a></p>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
             <button class="bb-fb-type-btn" id="bbFbTypeSupport" onclick="selectFabFeedbackType('support')">🙋 <span data-i18n="feedback.typeSupport">Support</span></button>
@@ -1582,6 +1585,9 @@
     const _msg = document.getElementById('bbFbMessage');
     const _err = document.getElementById('bbFbError');
     document.querySelectorAll('.bb-fb-type-btn').forEach(b => b.classList.remove('selected'));
+    // The "leave a review" line: phone apps only — a store review means nothing on the web.
+    const _revLine = document.getElementById('bbFbReviewLine');
+    if (_revLine) _revLine.style.display = (window.BB && BB.platform && BB.platform.isNative()) ? '' : 'none';
     if (_msg) _msg.value = '';
     if (_err) { _err.style.display = 'none'; _err.textContent = ''; }
     if (_meta) {

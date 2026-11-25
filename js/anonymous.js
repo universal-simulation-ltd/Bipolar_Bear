@@ -575,7 +575,26 @@ function closeOv(id) { document.getElementById(id).classList.add('hidden'); }
 // ─────────────────────────────────────────────────────────────────
 // About overlay + home navigation helper
 // ─────────────────────────────────────────────────────────────────
-function openAbout() { renderBlockedList(); openOv('ov-about'); }
+function openAbout() { renderBlockedList(); _fillAboutReview(); openOv('ov-about'); }
+
+// The About sheet's "leave a review" block (2026-11-25): only in the Bipolar
+// Anonymous phone app. The board inside Bipolar Bear has Bear's own line in its
+// Send Feedback sheet (fab.js), and a review means nothing on the web. The App
+// Store opens straight on the review form (?action=write-review); Play has no
+// such parameter, so its listing is the nearest.
+function _fillAboutReview() {
+  const box = document.getElementById('about-review');
+  const link = document.getElementById('about-review-link');
+  if (!box || !link) return;
+  const P = window.BB && BB.platform;
+  const anon = !!(window.BB && BB.isAnonymousApp && BB.isAnonymousApp());
+  if (!P || !P.isNative() || !anon) { box.style.display = 'none'; return; }
+  const ios = P.isIOS();
+  link.href = ios ? 'https://apps.apple.com/app/id6768005853?action=write-review'
+                  : 'https://play.google.com/store/apps/details?id=com.bipolaranonymous.app';
+  link.textContent = BB.t ? BB.t(ios ? 'rate.appStore' : 'rate.googlePlay') : (ios ? '⭐ Review on the App Store' : '⭐ Review on Google Play');
+  box.style.display = '';
+}
 
 // The privacy policy is Bipolar Bear's web page, which says the apps are on
 // Android and Google Play too. Opened from the iPhone app it gets ?app=ios,

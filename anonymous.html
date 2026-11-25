@@ -41,6 +41,7 @@
   <script src="js/shared/debug.js"></script>
   <script src="js/shared/firebase-config.js"></script>
   <script src="js/shared/i18n.js"></script>
+  <script src="js/shared/i18n-rate.js"></script>
   <script src="js/shared/i18n-awareness.js"></script>
   <script src="js/shared/awareness.js"></script>
   <script src="js/shared/a11y.js"></script>
@@ -949,6 +950,14 @@
         BipolarBear is a free mood journal and survival kit for people with bipolar disorder — track mood, energy, sleep and medication daily.
       </p>
       <a href="https://bipolarbear.app" target="_blank" rel="noopener" style="display:block;background:var(--yellow);color:var(--on-yellow);font-weight:700;font-size:0.8125rem;border-radius:10px;padding:11px;text-align:center;text-decoration:none;" data-i18n="anon.about.discover">🐻 Discover BipolarBear →</a>
+    </div>
+
+    <!-- Leave a review: phone apps only, with that store's link (js/anonymous.js
+         openAbout; 2026-11-25). -->
+    <div id="about-review" style="display:none;background:var(--yellow-bg);border-radius:12px;padding:14px 16px;margin-bottom:18px;text-align:center;">
+      <div style="font-weight:700;font-size:0.9375rem;color:var(--dark);margin-bottom:6px;" data-i18n="rate.anonTitle">Enjoying Bipolar Anonymous?</div>
+      <p style="font-size:0.8125rem;color:var(--dark);line-height:1.6;margin:0 0 12px;" data-i18n="rate.anonBody">A review helps other people living with bipolar find this space. It only takes a moment.</p>
+      <a id="about-review-link" href="#" target="_blank" rel="noopener" style="display:block;background:var(--yellow);color:var(--on-yellow);font-weight:700;font-size:0.8125rem;border-radius:10px;padding:11px;text-align:center;text-decoration:none;"></a>
     </div>
 
     <button id="about-close" class="btn-secondary" style="width:100%;" data-i18n="anon.about.close">Close</button>

@@ -106,6 +106,7 @@ const SHARED_MODULES = [
   'js/shared/firebase-config.js',
   'js/shared/i18n.js',
   'js/shared/i18n-awareness.js',
+  'js/shared/i18n-rate.js',
   'js/shared/awareness.js',
   'js/shared/a11y.js',
   'js/shared/crisis.js',
