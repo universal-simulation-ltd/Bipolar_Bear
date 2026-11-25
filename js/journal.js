@@ -9840,8 +9840,10 @@ function _tt(k, vars, fallback) {
       }
 
       // ── 4. Medication → mood ──
-      const medTaken  = sorted.filter(e => e.medication === 'taken' || !e.medication);
-      const medMissed = sorted.filter(e => e.medication && e.medication !== 'taken');
+      // Answered days only (2026-11-25): an unanswered day used to count as
+      // taken and Unsure as missed.
+      const medTaken  = sorted.filter(e => e.medication === 'taken');
+      const medMissed = sorted.filter(e => e.medication === 'not-taken');
       if (medMissed.length >= 5 && medTaken.length >= 5) {
         const avgT = medTaken.reduce((s, e)  => s + ms(e.mood), 0) / medTaken.length;
         const avgM = medMissed.reduce((s, e) => s + ms(e.mood), 0) / medMissed.length;
@@ -9859,6 +9861,17 @@ function _tt(k, vars, fallback) {
         }
         results.push(ins('💊', T('medTitle'), text, accent));
       }
+
+      // ── 4b. Each medicine on its own: days not taken vs taken (2026-11-25,
+      // js/journal-medlink.js, DOCS §2.35). Plain text with the person's own
+      // medicine names: `plain` makes the popup escape it; `meds` lets the
+      // PDF drop it with the Medicines section.
+      try {
+        if (window.BBMedLink) {
+          BBMedLink.insights(sorted).forEach(c => results.push(Object.assign(
+            ins('💊', c.title, c.text, c.found ? '#667eea' : '#adb5bd', c.detail), { plain: true, meds: true })));
+        }
+      } catch (e) { console.warn('Per-medicine insights failed', e); }
 
       // ── 5. Consecutive low-sleep runs ──
       let runCount = 0, afterRunTotal = 0, afterRunN = 0, runLen = 0;
@@ -10103,9 +10116,9 @@ function _tt(k, vars, fallback) {
           <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;margin-bottom:10px;border-radius:12px;background:#f8f9fa;border-left:4px solid ${i.accent};">
             <div style="font-size:1.4em;line-height:1.2;flex-shrink:0;">${i.icon}</div>
             <div>
-              <div style="font-weight:700;font-size:0.95em;margin-bottom:3px;">${i.title}</div>
-              <div style="font-size:0.85em;color:#495057;line-height:1.5;">${i.text}</div>
-              ${i.detail ? `<div style="margin-top:4px;font-size:0.8em;color:#888;">${i.detail}</div>` : ''}
+              <div style="font-weight:700;font-size:0.95em;margin-bottom:3px;">${i.plain ? _esc(i.title) : i.title}</div>
+              <div style="font-size:0.85em;color:#495057;line-height:1.5;">${i.plain ? _esc(i.text) : i.text}</div>
+              ${i.detail ? `<div style="margin-top:4px;font-size:0.8em;color:#888;">${i.plain ? _esc(i.detail) : i.detail}</div>` : ''}
             </div>
           </div>
         `).join('');
@@ -13240,7 +13253,9 @@ ${BB.t('t143.j.labelColon', { label: BB.t('journal.label.medication') })} ${_esc
           const pdfSorted = [...entries].sort((a, b) => new Date(a.date) - new Date(b.date));
           // Left out in the sheet: none at all, or the ones about a left-out tracker.
           const pdfInsights = (!leaveOut.insights && pdfSorted.length >= 7 ? computeInsights(pdfSorted) : [])
-            .filter(ins => !ins.tracker || _trackerShown(ins.tracker));
+            .filter(ins => !ins.tracker || _trackerShown(ins.tracker))
+            // Per-medicine cards go with the Medicines section's "Leave out".
+            .filter(ins => !(ins.meds && leaveOut.meds));
 
           if (pdfInsights.length > 0) {
             if (doc.internal.getNumberOfPages() === 1 || y > pageH - 50) { doc.addPage(); y = margin; } else { y += 4; }

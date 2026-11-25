@@ -2185,7 +2185,17 @@
 //   privacy links add ?app=ios, where privacy.html swaps its three Android /
 //   Google Play lines. anonymous.html, js/anonymous.js, js/shared/i18n.js
 //   (10 languages), privacy.html, functions/index.js.
-const CACHE_NAME = 'bipolarbear-v446';
+// v447: 💊 Personalised feedback looks at each medicine on its own: for a
+//   medicine with 5+ days not taken and 5+ taken in the period, a card sets
+//   the days it wasn't taken beside the days it was (that day and the day
+//   after: mood, sleep the night after, sleep quality, energy, anxiety,
+//   stress, irritability), with counts, only clear differences (Fisher /
+//   permutation p <= 0.1), and "a pattern, not proof; talk to your
+//   prescriber". Worked out on the device from medDoses (2026-11-25, James).
+//   The overall medication card now compares answered days only. New
+//   js/journal-medlink.js + js/shared/i18n-medlink.js (precached),
+//   journal.html, js/journal.js.
+const CACHE_NAME = 'bipolarbear-v447';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2209,6 +2219,7 @@ const STATIC_ASSETS = [
   './js/journal-insights.js',
   './js/journal-week.js',
   './js/journal-meds.js',
+  './js/journal-medlink.js',
   './js/survival-kit.js',
   './js/anonymous.js',
 
@@ -2256,6 +2267,7 @@ const STATIC_ASSETS = [
   './js/shared/sleep-target.js',
   './js/shared/starter-trackers.js',
   './js/shared/i18n-week.js',
+  './js/shared/i18n-medlink.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',
 

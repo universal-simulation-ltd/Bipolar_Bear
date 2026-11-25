@@ -3206,6 +3206,62 @@ James, 2026-11-03, six requests at once. Test: `scripts/test-anon-board-1103.mjs
   plugin too, shares its 3-ask budget rather than adding its own). Apple/Google
   decide if the card shows; nothing learns whether it did.
 
+### 2.35 💊 Each medicine on its own in Personalised feedback (2026-11-25, v447)
+
+James, 2026-11-25: "I've been only taking 2 out of 3 of my medications, and
+I've been skipping the quetiapine. So it'd be good to see in the feedback a
+correlation between not taking quetiapine and anything else that's changed, as
+opposed to just looking at medication as a whole."
+
+- **No new recording.** The data was already there: `medDoses`
+  (`{name: 'taken' | 'missed'}`, §2.23) on every day answered Taken, Not taken
+  + "Which did you miss?", or 🤏 Some (§2.30). Only those days count; an older
+  day with the single answer can't say which medicine was missed. A lower dose
+  counts as taken. Auto-filled days (§2.13) never count, as the day or the day
+  after. Nothing about the entry shape changed.
+- **Where:** a card per medicine in **Personalised feedback** (the AI Bear
+  button), straight after the overall 💊 medication card, for the range picked
+  (1M … All); and in the PDF's Personalised insights (left out with the
+  Medicines section's **Leave out**, `leaveOut.meds`). `computeInsights` in
+  `js/journal.js` calls `BBMedLink.insights(sorted)`; the cards are plain text
+  with the person's medicine names (`plain: true`, escaped by the popup).
+- **Code:** `js/journal-medlink.js` (`BBMedLink.analyse(entries)` → numbers
+  only; `insights(entries)` → translated title / text / detail). Uses
+  `BBMeds.dosesOf`, so it loads after `js/journal-meds.js`. Strings
+  `medLink.*` in `js/shared/i18n-medlink.js` (10 languages, machine
+  translated). Worked out on the device; nothing is sent or stored.
+- **Rules** (also in the module's header): a medicine needs 5+ days not taken
+  and 5+ taken in the range; a comparison needs 4+ days with an answer on each
+  side. Measured on the day and on the day after (the more significant one is
+  shown, never both): elevated / manic, low / depressed, stable (dropped beside
+  an elevated or low line for the same day), energy, high anxiety, high
+  stress, irritable; sleep hours and bad sleep quality only for the night
+  after (an entry's sleep is last night's, so that is the next day's entry).
+  Yes / no outcomes need a 20-point gap, the larger side 2+ days and Fisher's
+  exact p ≤ 0.1; averages need 30 min of sleep / 1 point of energy and a seeded
+  permutation test (2000) p ≤ 0.1, so the same journal always says the same.
+  At most 3 sentences, smallest p first. Every sentence gives both counts
+  ("on 7 of 12 days after a day you didn't take it, and on 4 of 28 days after a
+  day you did") or both averages; never better / worse, never "because".
+  Another medicine not taken on 60%+ (and 3+) of the same days → "these days
+  can't tell the medicines apart". Enough data but nothing clear → "No clear
+  difference yet". Every card ends with the counts it's based on and "a
+  pattern in your journal, not proof … Talk to your prescriber before
+  changing how you take any medicine." Never a "needs more skipped days" line.
+- **Same change:** the overall medication card (#4) compares Taken days with
+  Not taken days only; an unanswered day used to count as taken and Unsure as
+  missed.
+- Tests: `node scripts/test-med-link.js` (no browser: the quetiapine → short
+  night / elevated next day pattern with exact counts, the minimum, no
+  difference, old and auto-filled days left out, skipped together, a renamed
+  spelling, Fisher's test against a hand-worked value, the English sentences,
+  a name with `{med}` / `$&` kept as typed, no telling-off words, every key in
+  ten languages with matching placeholders) and
+  `PLAYWRIGHT_MODULE=… node scripts/test-med-link.mjs` (6 checks through the
+  real journal.html as a guest at 390 px: the card's sentences and caution, no
+  card for a medicine always taken, an HTML medicine name escaped, no request
+  leaves the page, no sideways scroll, German).
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow
