@@ -1,8 +1,10 @@
 # App Store featuring nominations — Bipolar Bear and Bipolar Anonymous
 
-**2026-11-21: the two App Enhancements nominations are SUBMITTED** (publish
-from 14 Dec 2026; the World Bipolar Day one stays a draft until its In-App
-Events are approved). Originally three DRAFTS created 2026-11-02 through the API. Nothing reaches Apple until **Submit** is pressed: ASC → Apps
+**ALL SUBMITTED.** The two App Enhancements nominations on 2026-11-21 (publish
+from 14 Dec 2026); the World Bipolar Day one on 2026-11-25, with both In-App
+Events attached, and the two events sent for App Review the same day (deep links:
+Bear `bipolarbear://open`, Anonymous `https://www.bipolaranonymous.app/`, as the
+Anonymous app has no URL scheme; Apple refuses an event without one). Originally three DRAFTS created 2026-11-02 through the API. Nothing reaches Apple until **Submit** is pressed: ASC → Apps
 → Featuring → Nominations, open each draft, check it, press Submit. Apple wants
 at least 3 weeks' notice; up to 3 months ahead widens the chance.
 
