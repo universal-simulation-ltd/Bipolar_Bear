@@ -5630,6 +5630,7 @@ function renderThreadHeader(p) {
     </div>
     <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(tidyText(p.text))}</div>
     ${_postImageHtml(p)}
+    ${_postAudioHtml(p)}
     ${pollHtml(p, true)}
   </div>`;
 }
@@ -6454,6 +6455,7 @@ function renderPost(p) {
     </div>
     <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(tidyText(p.text))}</div>
     ${_postImageHtml(p)}
+    ${_postAudioHtml(p)}
     ${pollHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(p.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}"${p.name === profile.monika ? ` data-self="true" aria-disabled="true" style="opacity:0.35;cursor:default;" title="${esc(_wt('anon.modbtn.cannotLikeOwn'))}"` : ''}>
@@ -6583,6 +6585,7 @@ function setupFAB() {
     setComposeMode();
     resetComposePoll();
     resetComposePhoto();
+    resetComposeSong();
     // A post you started and closed comes back (see _composeDraftKey).
     const draft = _composeDrafts.get(_composeDraftKey()) || '';
     document.getElementById('compose-ta').value = draft;
@@ -6762,7 +6765,122 @@ function _openPhoto(src, alt) {
   openOv('ov-photo');
 }
 
+// ── Songs on admin posts (James, 2026-11-26) ──
+// The admin (posting as Bipolar Bear Admin) may add one song to a post, e.g.
+// a weekly song; members can play it but not add one. It is a LINK to a
+// streaming service, not a hosted file: hosting a song would mean copying
+// someone's music, while Spotify / Apple Music / YouTube / SoundCloud hold the
+// licence to play it. Written only by the adminAnonPost callable, which checks
+// the link the same way (functions/index.js songLink); firestore.rules refuse
+// `audio` on any device-written post. Nothing from the service loads until a
+// reader taps Play, which swaps in that service's own player; "Open in …"
+// opens the service (its app, or the browser) for anyone whose player won't
+// play inside the app.
+function songLink(raw) {
+  let u;
+  try { u = new URL(String(raw || '').trim()); } catch (_) { return null; }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+  const host = u.hostname.toLowerCase().replace(/^www\.|^m\./, '');
+  const seg = u.pathname.split('/').filter(Boolean);
+  const ID = /^[A-Za-z0-9_-]{6,64}$/;
+  if (host === 'open.spotify.com') {
+    const s2 = seg[0] && /^intl-/.test(seg[0]) ? seg.slice(1) : seg;
+    if (['track', 'album', 'playlist', 'episode', 'show'].includes(s2[0]) && ID.test(s2[1] || '')) {
+      return { service: 'Spotify', url: `https://open.spotify.com/${s2[0]}/${s2[1]}`,
+               embed: `https://open.spotify.com/embed/${s2[0]}/${s2[1]}`, h: s2[0] === 'track' || s2[0] === 'episode' ? 152 : 352 };
+    }
+    return null;
+  }
+  if (host === 'music.apple.com') {
+    if (/^[a-z]{2}$/.test(seg[0] || '') && ['album', 'playlist', 'song'].includes(seg[1]) && seg.length >= 3
+        && seg.slice(2).every(x => /^[A-Za-z0-9._~%-]{1,120}$/.test(x))) {
+      const i = u.searchParams.get('i');
+      const q = i && /^\d{1,20}$/.test(i) ? '?i=' + i : '';
+      const path = '/' + seg.join('/') + q;
+      return { service: 'Apple Music', url: 'https://music.apple.com' + path,
+               embed: 'https://embed.music.apple.com' + path, h: q || seg[1] === 'song' ? 175 : 450 };
+    }
+    return null;
+  }
+  let yt = '';
+  if (host === 'youtu.be') yt = seg[0] || '';
+  else if (host === 'youtube.com' || host === 'music.youtube.com') {
+    if (seg[0] === 'watch') yt = u.searchParams.get('v') || '';
+    else if (seg[0] === 'shorts' || seg[0] === 'embed' || seg[0] === 'live') yt = seg[1] || '';
+  }
+  if (yt) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(yt)) return null;
+    return { service: 'YouTube', url: 'https://www.youtube.com/watch?v=' + yt,
+             embed: 'https://www.youtube-nocookie.com/embed/' + yt + '?playsinline=1&rel=0', h: 0 };
+  }
+  if (host === 'soundcloud.com' || host === 'on.soundcloud.com') {
+    if (seg.length >= 1 && seg.length <= 3 && seg.every(x => /^[A-Za-z0-9_-]{1,100}$/.test(x))) {
+      const url = `https://${host}/${seg.join('/')}`;
+      return { service: 'SoundCloud', url,
+               embed: 'https://w.soundcloud.com/player/?visual=false&show_comments=false&url=' + encodeURIComponent(url), h: 166 };
+    }
+  }
+  return null;
+}
+window.songLink = songLink;
+function _postAudioHtml(p) {
+  if (!p || p.deleted || !p.isAdmin || !p.audio) return '';
+  const s = songLink(p.audio.url);
+  if (!s) return '';
+  return `<div class="post-audio" data-audio-box>`
+    + `<button type="button" class="post-audio-play" data-audio-play="${esc(s.url)}">${esc(_wt('anon.ux.audioPlay', { service: s.service }))}</button>`
+    + `<a class="post-audio-open" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">${esc(_wt('anon.ux.audioOpen', { service: s.service }))}</a>`
+    + `</div>`;
+}
+// Delegated, in the capture phase, so a tap on the player never opens the
+// thread under it. Re-renders put the button back (a new snapshot), which
+// stops the song: the same as scrolling a feed away.
+document.addEventListener('click', e => {
+  const btn = e.target.closest && e.target.closest('[data-audio-play]');
+  if (!btn) return;
+  e.stopPropagation(); e.preventDefault();
+  const s = songLink(btn.dataset.audioPlay);
+  if (!s) return;
+  const f = document.createElement('iframe');
+  f.className = 'post-audio-frame' + (s.h ? '' : ' is-video');
+  f.src = s.embed;
+  if (s.h) f.height = String(s.h);
+  f.title = s.service;
+  f.loading = 'lazy';
+  f.setAttribute('allow', 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture');
+  f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  f.setAttribute('allowfullscreen', '');
+  btn.replaceWith(f);
+}, true);
+document.addEventListener('click', e => {
+  if (e.target.closest && e.target.closest('.post-audio-open, .post-audio-frame')) e.stopPropagation();
+}, true);
+let _composeSong = '';   // the admin's song link while one is attached
+function _songAllowed() { return composeMode() === 'post' && _postingAsAdmin(currentTab); }
+function resetComposeSong() {
+  _composeSong = '';
+  const box = document.getElementById('compose-song');
+  const tog = document.getElementById('compose-song-toggle');
+  if (!box || !tog) return;
+  box.style.display = 'none';
+  document.getElementById('compose-song-url').value = '';
+  tog.textContent = _wt('anon.ux.audioAdd');
+  tog.style.display = _songAllowed() ? '' : 'none';
+}
+
 function setupCompose() {
+  // Song link (admin only): open the box, paste, remove.
+  const songTog = document.getElementById('compose-song-toggle');
+  const songUrl = document.getElementById('compose-song-url');
+  songTog.addEventListener('click', () => {
+    const box = document.getElementById('compose-song');
+    if (box.style.display !== 'none') { resetComposeSong(); return; }
+    box.style.display = '';
+    songTog.textContent = _wt('anon.ux.audioRemove');
+    songUrl.focus();
+  });
+  songUrl.addEventListener('input', () => { _composeSong = songUrl.value.trim(); });
+
   // Picture: pick, preview, describe, remove.
   const photoTog  = document.getElementById('compose-photo-toggle');
   const photoFile = document.getElementById('compose-photo-file');
@@ -6832,12 +6950,15 @@ function setupCompose() {
       post.disabled = false;
       return;
     }
+    const song = _songAllowed() && _composeSong ? songLink(_composeSong) : null;
+    if (_songAllowed() && _composeSong && !song) { showHint(_wt('anon.ux.audioBad')); return; }
     const pollOpts = composeMode() === 'post' ? _composePollOptions() : null;
     if (pollOpts) {
       const distinct = new Set(pollOpts.map(o => o.toLowerCase())).size === pollOpts.length;
       if (pollOpts.length < 2 || !distinct) { showHint(_wt('anon.ux.pollNeedTwo')); return; }
       if (pollOpts.some(o => findBlockedTerm(o))) { showHint(_wt('anon.toast.postObjectionable')); return; }
     }
+    if (pollOpts && song) { showHint(_wt('anon.ux.audioNoPoll')); return; }
     _posting = true;
     post.disabled = true;
     const draftKey = _composeDraftKey();
@@ -6875,6 +6996,7 @@ function setupCompose() {
       timestamp: now,
     };
     if (asAdmin) Object.assign(entry, _adminAuthorFields());
+    if (song && asAdmin) entry.audio = { url: song.url };
     if (pollOpts) entry.poll = { options: pollOpts, votes: pollOpts.map(() => 0) };
     if (photo) {
       entry.image = { w: photo.w, h: photo.h };
@@ -6908,10 +7030,12 @@ function setupCompose() {
           // one once legacyAdminClients() is off.
           const res = await _callFn('adminAnonPost', {
             kind: 'post', text, tab: currentTab,
+            ...(song ? { audio: song.url } : {}),
             ...(photo ? { image: { data: photo.data, w: photo.w, h: photo.h }, imageAlt: photoAlt } : {}),
           });
           docId = res.id || null;
           if (photo && docId) { _postImgUrls.set(docId, photo.url); resetComposePhoto(true); }
+          if (song) resetComposeSong();
         } else {
           await _ensureAuthSession(); // the post records its author's owner stamp
           const ref = db.collection(BB_BRAND.collections.posts).doc();

@@ -188,6 +188,7 @@ service cloud.firestore {
           && incoming().get('wasTopic', false) == false
           && !('poll' in incoming())               // polls: createAnonPoll callable
           && !('image' in incoming())              // pictures: adminAnonPost, announcements only
+          && !('audio' in incoming())              // songs: adminAnonPost only (2026-11-26)
           && textSizeOk()
           && incoming().get('timestamp', null) == request.time;
       }

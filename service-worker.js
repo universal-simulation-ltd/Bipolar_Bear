@@ -2205,7 +2205,13 @@
 //   near the limit (rules keep 10,000 for older builds); line breaks show as
 //   typed (blank runs collapse, ends trimmed, 30 lines at most). css/
 //   anonymous.css, js/anonymous.js, firestore.rules, functions (poll text 2,000).
-const CACHE_NAME = 'bipolarbear-v449';
+// v450: Bipolar Anonymous: the admin (as Bipolar Bear Admin) can add a song
+//   to a post, as a Spotify / Apple Music / YouTube / SoundCloud link (James,
+//   2026-11-26). Members tap Play for the service's own player (nothing loads
+//   before that) or Open in …. adminAnonPost checks the link; rules refuse
+//   `audio` on device-written posts. anonymous.html, css/anonymous.css,
+//   js/anonymous.js, js/shared/i18n.js (10 languages), functions, rules.
+const CACHE_NAME = 'bipolarbear-v450';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

@@ -347,6 +347,9 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
         await assertFails(r2.set({ ...base, text: 'x'.repeat(10001), owner: ownerStamp('a1', r2.path) }));
         const r3 = db.collection('bbAnonPosts').doc();
         await assertFails(r3.set({ ...base, text: 42, owner: ownerStamp('a1', r3.path) }));
+        // Songs are the admin's, through adminAnonPost only (2026-11-26).
+        const r4 = db.collection('bbAnonPosts').doc();
+        await assertFails(r4.set({ ...base, text: 'tune', audio: { url: 'https://open.spotify.com/track/abcdefgh' }, owner: ownerStamp('a1', r4.path) }));
         await seed(env, { 'bbAnonPosts/p9': postDoc() });
         const c1 = db.collection('bbAnonPosts/p9/comments').doc();
         const cb = { name: 'Robin', likes: 0, timestamp: FV.serverTimestamp() };

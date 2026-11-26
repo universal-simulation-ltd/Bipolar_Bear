@@ -1569,6 +1569,57 @@ function annImage(d) {
   const alt = String(d.imageAlt == null ? '' : d.imageAlt).trim().slice(0, 300);
   return { buf, meta: { w, h }, alt };
 }
+// A song on an admin post (James, 2026-11-26): a link to Spotify, Apple
+// Music, YouTube or SoundCloud, never a hosted file (music copyright). The
+// same parser as songLink in js/anonymous.js; keep the two in step. Only
+// `audio: { url }` (the tidied link) is stored; the device builds the player.
+function songLink(raw) {
+  let u;
+  try { u = new URL(String(raw || '').trim()); } catch (_) { return null; }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return null;
+  const host = u.hostname.toLowerCase().replace(/^www\.|^m\./, '');
+  const seg = u.pathname.split('/').filter(Boolean);
+  const ID = /^[A-Za-z0-9_-]{6,64}$/;
+  if (host === 'open.spotify.com') {
+    const s2 = seg[0] && /^intl-/.test(seg[0]) ? seg.slice(1) : seg;
+    if (['track', 'album', 'playlist', 'episode', 'show'].includes(s2[0]) && ID.test(s2[1] || '')) {
+      return { service: 'Spotify', url: `https://open.spotify.com/${s2[0]}/${s2[1]}`,
+               embed: `https://open.spotify.com/embed/${s2[0]}/${s2[1]}`, h: s2[0] === 'track' || s2[0] === 'episode' ? 152 : 352 };
+    }
+    return null;
+  }
+  if (host === 'music.apple.com') {
+    if (/^[a-z]{2}$/.test(seg[0] || '') && ['album', 'playlist', 'song'].includes(seg[1]) && seg.length >= 3
+        && seg.slice(2).every(x => /^[A-Za-z0-9._~%-]{1,120}$/.test(x))) {
+      const i = u.searchParams.get('i');
+      const q = i && /^\d{1,20}$/.test(i) ? '?i=' + i : '';
+      const path = '/' + seg.join('/') + q;
+      return { service: 'Apple Music', url: 'https://music.apple.com' + path,
+               embed: 'https://embed.music.apple.com' + path, h: q || seg[1] === 'song' ? 175 : 450 };
+    }
+    return null;
+  }
+  let yt = '';
+  if (host === 'youtu.be') yt = seg[0] || '';
+  else if (host === 'youtube.com' || host === 'music.youtube.com') {
+    if (seg[0] === 'watch') yt = u.searchParams.get('v') || '';
+    else if (seg[0] === 'shorts' || seg[0] === 'embed' || seg[0] === 'live') yt = seg[1] || '';
+  }
+  if (yt) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(yt)) return null;
+    return { service: 'YouTube', url: 'https://www.youtube.com/watch?v=' + yt,
+             embed: 'https://www.youtube-nocookie.com/embed/' + yt + '?playsinline=1&rel=0', h: 0 };
+  }
+  if (host === 'soundcloud.com' || host === 'on.soundcloud.com') {
+    if (seg.length >= 1 && seg.length <= 3 && seg.every(x => /^[A-Za-z0-9_-]{1,100}$/.test(x))) {
+      const url = `https://${host}/${seg.join('/')}`;
+      return { service: 'SoundCloud', url,
+               embed: 'https://w.soundcloud.com/player/?visual=false&show_comments=false&url=' + encodeURIComponent(url), h: 166 };
+    }
+  }
+  return null;
+}
+
 exports.adminAnonPost = onCall(
   { region: REGION, invoker: 'public' },
   async (request) => {
@@ -1613,11 +1664,18 @@ exports.adminAnonPost = onCall(
     if (tab !== 'general' && tab !== 'announcements') throw new HttpsError('invalid-argument', 'No such tab.');
     const image = annImage(d);
     if (image && tab !== 'announcements') throw new HttpsError('invalid-argument', 'Only announcements carry a picture.');
+    let audio = null;
+    if (d.audio != null && d.audio !== '') {
+      const song = songLink(d.audio);
+      if (!song) throw new HttpsError('invalid-argument', 'That song link can\'t be used.');
+      audio = { url: song.url };
+    }
     const ref = db.collection(POSTS).doc();
     const batch = db.batch();
     batch.set(ref, {
       ...P.adminLabel('post'), text, tab, isAdmin: true, likes: 0, isSystem: false, timestamp: now,
       ...(image ? { image: image.meta, ...(image.alt ? { imageAlt: image.alt } : {}) } : {}),
+      ...(audio ? { audio } : {}),
     });
     if (image) batch.set(db.collection(POST_IMAGES).doc(ref.id), { data: image.buf, createdAt: now });
     batch.set(P.adminAuthoredRef(ref.path), P.adminAuthoredDoc(ref.path, uid));

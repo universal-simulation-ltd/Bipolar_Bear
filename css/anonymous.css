@@ -1203,6 +1203,16 @@
     /* ── Announcement pictures (admin only, announcements tab) ── */
     .compose-photo { margin-bottom: 10px; }
     .compose-photo img { display: block; width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; background: var(--surface-2); margin-bottom: 8px; }
+    /* A song on an admin post (2026-11-26): Play swaps in the service's player. */
+    .compose-song .bb-input { margin-bottom: 8px; }
+    .post-audio { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
+    .post-audio-play {
+      padding: 9px 16px; border-radius: 22px; border: 1.5px solid var(--yellow-dark);
+      background: var(--yellow-bg, #fff8d6); color: var(--dark); font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer;
+    }
+    .post-audio-open { font-size: 0.75rem; font-weight: 600; color: var(--yellow-ink, var(--yellow-dark)); }
+    .post-audio-frame { display: block; width: 100%; border: 0; border-radius: 12px; background: var(--surface-2, #f4f1e6); }
+    .post-audio-frame.is-video { aspect-ratio: 16 / 9; height: auto; }
     .post-img {
       display: block; width: 100%; max-height: 420px; margin: 10px 0 4px; padding: 0; border: 0;
       border-radius: 14px; overflow: hidden; background: var(--surface-2); cursor: zoom-in;

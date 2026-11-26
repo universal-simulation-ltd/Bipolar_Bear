@@ -331,6 +331,12 @@
     </div>
     <input type="file" id="compose-photo-file" accept="image/*" hidden>
     <button type="button" id="compose-photo-toggle" class="poll-toggle" style="display:none;" data-i18n="anon.ux.photoAdd">🖼️ Add a picture</button>
+    <!-- Optional song link (admin only, posting as Bipolar Bear Admin; 2026-11-26).
+         Sent with the adminAnonPost callable, which checks the link. -->
+    <div id="compose-song" class="compose-song" style="display:none;">
+      <input type="url" id="compose-song-url" class="bb-input" maxlength="500" inputmode="url" autocomplete="off" placeholder="Paste a Spotify, Apple Music, YouTube or SoundCloud link" data-i18n-placeholder="anon.ux.audioPlaceholder">
+    </div>
+    <button type="button" id="compose-song-toggle" class="poll-toggle" style="display:none;" data-i18n="anon.ux.audioAdd">🎵 Add a song</button>
     <div class="btn-row">
       <button class="btn-secondary" id="compose-cancel" style="flex:1" data-i18n="anon.compose.cancel">Cancel</button>
       <button class="btn-primary"   id="compose-post"   style="flex:2" disabled data-i18n="anon.compose.post">Post 🐻</button>
