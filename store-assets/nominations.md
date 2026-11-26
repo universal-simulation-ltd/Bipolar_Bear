@@ -29,6 +29,12 @@ end-to-end encrypted; Bipolar Bear is not a medical device.
 
 - **Name:** World Bipolar Day: Bipolar Bear and Bipolar Anonymous
 - **Publish:** 23–31 March 2027 · **Supplemental material:** https://www.bipolarbear.app/
+- **NEW all-language events (James, 2026-11-26: "New events, all languages"): SUBMITTED
+  2026-11-26, WAITING_FOR_REVIEW.** Bear **`6839770780`**, Anonymous **`6839770925`**
+  (reference name "World Bipolar Day 2027 (all languages)", 11 locales, 22 images each,
+  settings copied from the old events; `app-events/asc-wbd-new-events.mjs`, ids in
+  `app-events/wbd-new-ids.json`). **Next, once both are APPROVED:** swap them into the World
+  Bipolar Day nomination in place of the old en-GB events below. The old events stay as they are.
 - **Other languages (2026-11-25): text + localised images READY, not on the events.** Apple
   APPROVED both events (en-GB only) the same day, and an approved event refuses new
   localizations (409 `STATE_ERROR.ADD_LOCALIZATION_NOT_ALLOWED`). The 10 other locales'

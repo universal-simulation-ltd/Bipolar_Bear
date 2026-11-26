@@ -110,7 +110,7 @@ async function upload(locId, file, type) {
     if (!res.ok) throw new Error(`upload part ${res.status}`);
   }
   await api('PATCH', `/v1/appEventScreenshots/${r.data.id}`, { data: { type: 'appEventScreenshots', id: r.data.id,
-    attributes: { uploaded: true, sourceFileChecksum: md5 } } });
+    attributes: { uploaded: true } } });
   return r.data.id;
 }
 
