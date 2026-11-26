@@ -1427,7 +1427,7 @@ const MOOD_BEAR_UNTIL = 3;
 const BANNED_COL      = 'bbAnonBanned';     // doc id = lowercased monika
 const POLL_MAX_OPTS   = 4;
 const POLL_OPT_CHARS  = 60;
-const POLL_TEXT_CHARS = 1000;
+const POLL_TEXT_CHARS = 2000;   // the apps' TEXT_MAX (js/anonymous.js), 2026-11-24
 
 function requireAuth(request) {
   if (!request.auth || !request.auth.uid) {

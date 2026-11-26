@@ -2200,7 +2200,12 @@
 //   opens the existing review card, and a block in Bipolar Anonymous's About
 //   sheet with that store's write-a-review link. New js/shared/i18n-rate.js
 //   (precached), fab.js, anonymous.html, js/anonymous.js.
-const CACHE_NAME = 'bipolarbear-v448';
+// v449: Bipolar Anonymous post fixes (James, 2026-11-24): the bottom bar has
+//   an outline; posts and replies stop at 2,000 characters with a live count
+//   near the limit (rules keep 10,000 for older builds); line breaks show as
+//   typed (blank runs collapse, ends trimmed, 30 lines at most). css/
+//   anonymous.css, js/anonymous.js, firestore.rules, functions (poll text 2,000).
+const CACHE_NAME = 'bipolarbear-v449';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

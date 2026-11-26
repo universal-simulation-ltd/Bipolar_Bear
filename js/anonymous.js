@@ -792,6 +792,49 @@ function esc(str) {
   return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// Posts and replies keep the line breaks they were typed with (James,
+// 2026-11-24), within sensible limits: runs of blank lines become one, blank
+// lines at either end go, and past TEXT_MAX_LINES the rest joins the last line.
+// .post-text / .comment-text render it with `white-space: pre-line`, so the
+// text stays escaped plain text (no <br> spliced into HTML). Applied on save
+// and again on display, for posts written before this or by other builds.
+// TEXT_MAX is the box's limit for posts and replies alike; firestore.rules
+// keeps a far higher one (10,000) while store builds without the counter are
+// still about.
+const TEXT_MAX = 2000;
+const TEXT_MAX_LINES = 30;
+function tidyText(str) {
+  let lines = String(str || '').replace(/\r\n?/g, '\n').split('\n').map(l => l.replace(/\s+$/, ''));
+  lines = lines.filter((l, i) => l !== '' || (i > 0 && lines[i - 1] !== ''));
+  while (lines.length && lines[0].trim() === '') lines.shift();
+  while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+  if (lines.length > TEXT_MAX_LINES) {
+    lines = lines.slice(0, TEXT_MAX_LINES - 1).concat(lines.slice(TEXT_MAX_LINES - 1).filter(Boolean).join(' '));
+  }
+  return lines.join('\n');
+}
+// A live "1,850 / 2,000" under a box once it nears TEXT_MAX; the box's
+// maxlength stops it at the limit.
+function _bindTextCount(ta) {
+  if (!ta || ta._countBound) return;
+  ta._countBound = true;
+  ta.maxLength = TEXT_MAX;
+  const out = document.createElement('div');
+  out.className = 'ta-count';
+  out.setAttribute('aria-live', 'polite');
+  ta.insertAdjacentElement('afterend', out);
+  const fmt = n => n.toLocaleString();
+  const upd = () => {
+    const n = ta.value.length;
+    out.hidden = n < TEXT_MAX * 0.85;
+    out.textContent = fmt(n) + ' / ' + fmt(TEXT_MAX);
+    out.classList.toggle('at-max', n >= TEXT_MAX);
+  };
+  ta.addEventListener('input', upd);
+  ta._updCount = upd;
+  upd();
+}
+
 // Whitelist a hex colour for inline `style=` interpolation. Anything that
 // doesn't match a plain `#rgb`/`#rrggbb`/`#rrggbbaa` falls back to the
 // default — prevents Firestore-stored gradients from breaking out of the
@@ -1310,6 +1353,7 @@ function _replyTo(author) {
   if (_who) _rememberMention(_who);
   const tag = '@' + author + ' ';
   if (!ta.value.startsWith(tag)) ta.value = tag + ta.value.replace(/^@\S+\s/, '');
+  if (ta._updCount) ta._updCount();
   document.getElementById('thread-send').disabled = !ta.value.trim();
   _keepCommentDraft();
   _fitThreadTa();
@@ -5229,7 +5273,7 @@ function renderSuggestion(x) {
       </div>
       <span class="post-time">${x.timestamp ? timeAgo(x.timestamp) : _wt('anon.time.now')}</span>
     </div>
-    <div class="post-text" data-tt>${esc(x.text || '')}</div>
+    <div class="post-text" data-tt>${esc(tidyText(x.text))}</div>
     ${actions ? `<div class="sugg-actions">${actions}</div>` : ''}
   </div>`;
 }
@@ -5395,6 +5439,7 @@ async function openThread(postId) {
 
   const ta = document.getElementById('thread-ta');
   ta.value = _commentDrafts.get(postId) || '';
+  if (ta._updCount) ta._updCount();
   document.getElementById('thread-send').disabled = !ta.value.trim();
 
   openOv('ov-thread');
@@ -5562,7 +5607,7 @@ function renderThreadHeader(p) {
         </div>
         <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
       </div>
-      <div class="post-text" data-tt>${esc(p.text)}</div>
+      <div class="post-text" data-tt>${esc(tidyText(p.text))}</div>
     </div>`;
   }
   const g1 = safeColor(p.grad1, YELLOW_LT);
@@ -5583,7 +5628,7 @@ function renderThreadHeader(p) {
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
-    <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(p.text)}</div>
+    <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(tidyText(p.text))}</div>
     ${_postImageHtml(p)}
     ${pollHtml(p, true)}
   </div>`;
@@ -5747,7 +5792,7 @@ function _mentionNameNow(m) {
 }
 /** A reply's text, escaped, with its tags in bold under today's names. */
 function _commentTextHtml(c) {
-  let html = esc(c.text || '');
+  let html = esc(tidyText(c.text));
   const ms = Array.isArray(c.mentions) ? c.mentions.filter(m => m && typeof m.name === 'string' && m.name && typeof m.ref === 'string') : [];
   if (!ms.length) return html;
   // Longest first, so "@Sam" can't take the front off "@Samantha". Each
@@ -5805,6 +5850,7 @@ function _pickMention(ref) {
   const before = ta.value.slice(0, q.start), after = ta.value.slice(q.start + 1 + q.q.length);
   const ins = '@' + person.name + ' ';
   ta.value = before + ins + after.replace(/^ /, '');
+  if (ta._updCount) ta._updCount();
   const caret = before.length + ins.length;
   try { ta.setSelectionRange(caret, caret); } catch (_) {}
   _rememberMention(person);
@@ -5819,6 +5865,7 @@ function setupThread() {
   const ta      = document.getElementById('thread-ta');
   const sendBtn = document.getElementById('thread-send');
 
+  _bindTextCount(ta);
   ta.addEventListener('input', () => { sendBtn.disabled = !ta.value.trim(); _keepCommentDraft(); _fitThreadTa(); _mentionActive = 0; _showMentions(); });
   // @ tags: the list follows the caret; ↑ ↓ Enter / Tab pick, Escape closes.
   ta.setAttribute('aria-autocomplete', 'list');
@@ -5906,7 +5953,7 @@ function setupThread() {
   let _sending = false;
   sendBtn.addEventListener('click', async () => {
     if (_sending) return;
-    const text = ta.value.trim();
+    const text = tidyText(ta.value).slice(0, TEXT_MAX);
     if (!text || !commentTargetId) return;
     if (_writeBlockedOffline()) return;
     // Banned users can't comment (Apple UGC 1.2).
@@ -5990,6 +6037,7 @@ function setupThread() {
     if (sent) {
       _haptic('success');
       ta.value = '';
+      if (ta._updCount) ta._updCount();
       _commentDrafts.clear();
       _fitThreadTa();
       // A reply is posting too — often a member's first contribution — so
@@ -6284,7 +6332,7 @@ function renderArchivedTopic(p) {
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
-    <div class="post-text" data-tt>${esc(p.text)}</div>
+    <div class="post-text" data-tt>${esc(tidyText(p.text))}</div>
     ${pollHtml(p)}
     <div class="post-actions">
       <button class="like-btn ${liked ? 'liked' : ''}" data-id="${esc(p.id)}" data-likes="${likes}" data-author="${esc(a.name)}" aria-pressed="${liked}" aria-label="${esc(_wt('a11y.likes', { count: likes }))}">
@@ -6316,7 +6364,7 @@ function renderAnnouncement(p) {
       <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,${YELLOW_LT},${YELLOW_DARK});display:flex;align-items:center;justify-content:center;font-size:1rem;">🐻</div>
       <div style="font-size:0.8125rem;font-weight:700;color:var(--dark);">BipolarBear</div>
     </div>
-    <div class="post-text" data-tt>${esc(p.text)}</div>
+    <div class="post-text" data-tt>${esc(tidyText(p.text))}</div>
     ${p.image ? `<img class="ann-image" src="${esc(p.image)}" alt="${esc(p.imageAlt || '')}" width="1024" height="500" loading="lazy" decoding="async">` : ''}
     ${p.storeLinks ? _storeBadgesHtml(p.storeLinks) : ''}
     ${p.link ? `<a class="ann-wiki-link ann-ext-link" href="${esc(p.link.href)}" target="_blank" rel="noopener">${esc(p.link.label)} ↗</a>` : ''}
@@ -6404,7 +6452,7 @@ function renderPost(p) {
       </div>
       <span class="post-time">${p.timestamp ? timeAgo(p.timestamp) : _wt('anon.time.now')}</span>
     </div>
-    <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(p.text)}</div>
+    <div class="post-text" data-tt${_medLinkable(p) ? ' data-medlink' : ''}>${esc(tidyText(p.text))}</div>
     ${_postImageHtml(p)}
     ${pollHtml(p)}
     <div class="post-actions">
@@ -6538,6 +6586,7 @@ function setupFAB() {
     // A post you started and closed comes back (see _composeDraftKey).
     const draft = _composeDrafts.get(_composeDraftKey()) || '';
     document.getElementById('compose-ta').value = draft;
+    { const cta = document.getElementById('compose-ta'); if (cta._updCount) cta._updCount(); }
     document.getElementById('compose-post').disabled = !draft.trim();
     openOv('ov-compose');
     setTimeout(() => document.getElementById('compose-ta').focus(), 50);
@@ -6761,6 +6810,7 @@ function setupCompose() {
   const ta   = document.getElementById('compose-ta');
   const post = document.getElementById('compose-post');
 
+  _bindTextCount(ta);
   ta.addEventListener('input', () => { post.disabled = !ta.value.trim(); _keepComposeDraft(); });
 
   document.getElementById('compose-cancel').addEventListener('click', () => closeOv('ov-compose'));
@@ -6768,7 +6818,7 @@ function setupCompose() {
   let _posting = false;
   post.addEventListener('click', async () => {
     if (_posting) return; // guard against double-tap / re-entrant clicks
-    const text = ta.value.trim();
+    const text = tidyText(ta.value).slice(0, TEXT_MAX);
     if (!text) return;
     if (_writeBlockedOffline()) return;
     // Banned users can't post (Apple UGC 1.2 — ejected users stay out).
@@ -6889,6 +6939,7 @@ function setupCompose() {
         showHint(_wt(pollOpts ? 'anon.ux.pollFailed' : 'anon.net.postFailed'));
         _postImgUrls.delete(optimisticId);   // the picture stays attached for another go
         ta.value = text;
+        if (ta._updCount) ta._updCount();
         _composeDrafts.set(draftKey, text);
         post.disabled = false;
         openOv('ov-compose');

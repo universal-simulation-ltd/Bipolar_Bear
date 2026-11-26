@@ -169,6 +169,13 @@ service cloud.firestore {
 
       function isTopicDoc() { return resource.data.get('isTopic', false) == true; }
 
+      // The apps stop a post or reply at 2,000 characters (TEXT_MAX in
+      // js/anonymous.js, 2026-11-24). This stays far higher while store builds
+      // without that limit are still about, so their long posts don't fail.
+      function textSizeOk() {
+        return !('text' in incoming()) || (incoming().text is string && incoming().text.size() <= 10000);
+      }
+
       function createShapeOk() {
         return adminFlagOk()
           && (incoming().get('tab', '') != 'announcements' || isAdmin())
@@ -181,6 +188,7 @@ service cloud.firestore {
           && incoming().get('wasTopic', false) == false
           && !('poll' in incoming())               // polls: createAnonPoll callable
           && !('image' in incoming())              // pictures: adminAnonPost, announcements only
+          && textSizeOk()
           && incoming().get('timestamp', null) == request.time;
       }
 
@@ -253,6 +261,7 @@ service cloud.firestore {
           && incoming().get('timestamp', null) == request.time
           && incoming().get('likes', 0) == 0
           && incoming().get('supports', 0) == 0
+          && textSizeOk()
           && ownerOnCreate(commentPath())
           && !authorBanned(incoming().get('name', ''));
         // 💛 and ❤️‍🩹 on a reply (2026-11-03): one step at a time, nothing else.

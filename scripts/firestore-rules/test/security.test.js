@@ -338,6 +338,23 @@ for (const mode of ['legacy', 'strict', 'adminStrict']) {
         assert.ok(!('uid' in snap.data()));
       });
 
+      it('post and reply text: far above the apps\' 2,000, refused past 10,000', async () => {
+        const db = who.anon('a1');
+        const base = { name: 'Robin', tab: 'general', isAdmin: false, likes: 0, timestamp: FV.serverTimestamp() };
+        const r1 = db.collection('bbAnonPosts').doc();
+        await assertSucceeds(r1.set({ ...base, text: 'x'.repeat(10000), owner: ownerStamp('a1', r1.path) }));
+        const r2 = db.collection('bbAnonPosts').doc();
+        await assertFails(r2.set({ ...base, text: 'x'.repeat(10001), owner: ownerStamp('a1', r2.path) }));
+        const r3 = db.collection('bbAnonPosts').doc();
+        await assertFails(r3.set({ ...base, text: 42, owner: ownerStamp('a1', r3.path) }));
+        await seed(env, { 'bbAnonPosts/p9': postDoc() });
+        const c1 = db.collection('bbAnonPosts/p9/comments').doc();
+        const cb = { name: 'Robin', likes: 0, timestamp: FV.serverTimestamp() };
+        await assertSucceeds(c1.set({ ...cb, text: 'line one\nline two', owner: ownerStamp('a1', c1.path) }));
+        const c2 = db.collection('bbAnonPosts/p9/comments').doc();
+        await assertFails(c2.set({ ...cb, text: 'x'.repeat(10001), owner: ownerStamp('a1', c2.path) }));
+      });
+
       strictOnly('posts without an owner can only be removed by the admin or the sweep', async () => {
         await assertFails(who.anon('anyone').doc('bbAnonPosts/legacy').delete());
         await assertFails(who.anon('anyone').doc('bbAnonPosts/legacy').update({ name: 'Mallory' }));
