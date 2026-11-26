@@ -2216,7 +2216,10 @@
 //   "closer to stable", never "higher"; auto-filled days left out of every
 //   card; new sleep quality → mood card. New js/shared/i18n-steady.js
 //   (precached), journal.html, js/journal.js, js/journal-insights.js.
-const CACHE_NAME = 'bipolarbear-v451';
+// v452: Bipolar Anonymous fills a 440pt iPhone Pro Max (the board was capped
+//   at 430px, leaving a bar each side; also why the App Store iPhone shots
+//   looked wrong). css/anonymous.css.
+const CACHE_NAME = 'bipolarbear-v452';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

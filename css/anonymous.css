@@ -42,9 +42,12 @@
       position: relative;
     }
 
+    /* Full width on every phone (it was capped at 430px, which left a 5pt
+       bar each side on a 440pt iPhone Pro Max, and in the App Store shots;
+       2026-11-26). At 520px+ the desktop frame below takes over. */
     #app-shell {
       width: 100%;
-      max-width: 430px;
+      max-width: 100%;
       height: 100vh; height: 100dvh;
       position: relative;
       overflow: hidden;
