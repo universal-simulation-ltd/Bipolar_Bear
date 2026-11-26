@@ -9741,7 +9741,17 @@ function _tt(k, vars, fallback) {
         return dx2 && dy2 ? num / Math.sqrt(dx2 * dy2) : null;
       }
 
+      // Auto-filled days (§2.13) are guesses, not answers: left out of every
+      // card, as 🗓️ Your week already does (2026-11-26).
+      sorted = sorted.filter(e => !e.autoFilled);
       const ms = (mood) => _moodScore(mood);
+      // Distance from stable (0–2): the mood, medication, steps, exercise,
+      // outside and sleep-quality cards compare this, so "better" means closer
+      // to stable and an elevated day is never good news (2026-11-26, DOCS
+      // §2.36; strings in js/shared/i18n-steady.js).
+      const off = (mood) => Math.abs(ms(mood) - 3);
+      const S = (k, v) => BB.t('steady.' + k, v);
+      const avgOff = (arr) => arr.reduce((t, e) => t + off(e.mood), 0) / arr.length;
       // Convert numeric mood score (1–6) to a readable label
       const moodLabel = n => {
         const v = parseFloat(n);
@@ -9788,10 +9798,11 @@ function _tt(k, vars, fallback) {
         const next = new Date(e.date);
         next.setDate(next.getDate() + 1);
         const k = next.toISOString().slice(0, 10);
-        if (dateMap[k] && e.sleep != null) lagMood.push({ sleep: e.sleep, nextMood: ms(dateMap[k].mood) });
+        if (dateMap[k] && e.sleep != null) lagMood.push({ sleep: e.sleep, nextMood: ms(dateMap[k].mood), nextOff: off(dateMap[k].mood) });
       });
       if (lagMood.length >= 8) {
-        const r = pearson(lagMood.map(p => p.sleep), lagMood.map(p => p.nextMood));
+        // Sleep against next-day DISTANCE from stable: r < 0 = steadier.
+        const r = pearson(lagMood.map(p => p.sleep), lagMood.map(p => p.nextOff));
         if (r !== null && Math.abs(r) >= 0.1) {
           // Split at the bottom of 😴 My usual sleep (7 h when not set).
           const _split = BB.sleepTarget.range().lo;
@@ -9805,9 +9816,9 @@ function _tt(k, vars, fallback) {
               ? BB.t('sleepT.moodDetail', { h: BB.sleepTarget.fmt(_split), hi: msFmt(avgHi), lo: msFmt(avgLo) })
               : T('sleepMoodDetail', { hi: msFmt(avgHi), lo: msFmt(avgLo) });
           }
-          const accent = r >= 0.3 ? '#51cf66' : r <= -0.3 ? '#ff6b6b' : '#adb5bd';
+          const accent = r <= -0.3 ? '#51cf66' : r >= 0.3 ? 'var(--brand-primary)' : '#adb5bd';
           results.push(ins('😴', T('sleepMoodTitle'),
-            T(r >= 0 ? 'sleepMoodPos' : 'sleepMoodNeg', { strength: strength(r), r: r.toFixed(2) }),
+            S(r <= 0 ? 'sleepMoodSteady' : 'sleepMoodUnsteady', { strength: strength(r), r: r.toFixed(2) }),
             accent, detail));
         }
       }
@@ -9845,18 +9856,18 @@ function _tt(k, vars, fallback) {
       const medTaken  = sorted.filter(e => e.medication === 'taken');
       const medMissed = sorted.filter(e => e.medication === 'not-taken');
       if (medMissed.length >= 5 && medTaken.length >= 5) {
-        const avgT = medTaken.reduce((s, e)  => s + ms(e.mood), 0) / medTaken.length;
-        const avgM = medMissed.reduce((s, e) => s + ms(e.mood), 0) / medMissed.length;
-        const diff = avgT - avgM;
+        // Positive = closer to stable on the days it was taken.
+        const diff = avgOff(medMissed) - avgOff(medTaken);
+        const cnt = { d: Math.abs(diff).toFixed(1), a: medTaken.length, b: medMissed.length };
         let text, accent;
         if (diff > 0.3) {
-          text   = T('medHigher', { d: Math.abs(diff).toFixed(1), a: medTaken.length, b: medMissed.length });
+          text   = S('medSteady', cnt);
           accent = '#51cf66';
         } else if (diff < -0.3) {
-          text   = T('medLower', { d: Math.abs(diff).toFixed(1) });
+          text   = S('medUnsteady', cnt);
           accent = '#ff6b6b';
         } else {
-          text   = T('medSame', { d: Math.abs(diff).toFixed(1) });
+          text   = S('medSame', cnt);
           accent = '#adb5bd';
         }
         results.push(ins('💊', T('medTitle'), text, accent));
@@ -9910,11 +9921,13 @@ function _tt(k, vars, fallback) {
       // ── 7. Steps → mood ──
       const withSteps = sorted.filter(e => e.steps != null && e.steps > 0);
       if (withSteps.length >= 10) {
-        const r = pearson(withSteps.map(e => e.steps), withSteps.map(e => ms(e.mood)));
-        if (r !== null && Math.abs(r) >= 0.15) {
+        // Steps against distance from stable. Only "steadier" is said: nothing
+        // here should put anyone off walking (as 🗓️ Your week).
+        const r = pearson(withSteps.map(e => e.steps), withSteps.map(e => off(e.mood)));
+        if (r !== null && r <= -0.15) {
           results.push(ins('👟', T('stepsTitle'),
-            T(r >= 0 ? 'stepsPos' : 'stepsNeg', { strength: strength(r), r: r.toFixed(2) }),
-            r >= 0.2 ? '#51cf66' : '#adb5bd'));
+            S('stepsSteady', { strength: strength(r), r: r.toFixed(2) }),
+            r <= -0.2 ? '#51cf66' : '#adb5bd'));
         }
       }
 
@@ -9922,15 +9935,12 @@ function _tt(k, vars, fallback) {
       const exercisedDays = sorted.filter(e => e.exercise === 'yes');
       const noExerciseDays = sorted.filter(e => e.exercise === 'no');
       if (exercisedDays.length >= 5 && noExerciseDays.length >= 5) {
-        const avgEx  = exercisedDays.reduce((s, e) => s + ms(e.mood), 0) / exercisedDays.length;
-        const avgNoEx = noExerciseDays.reduce((s, e) => s + ms(e.mood), 0) / noExerciseDays.length;
-        const diff = avgEx - avgNoEx;
-        if (Math.abs(diff) >= 0.3) {
+        // Closer to stable on exercise days, or nothing (never discourage it).
+        const diff = avgOff(noExerciseDays) - avgOff(exercisedDays);
+        if (diff >= 0.3) {
           results.push(ins('🏋️', T('exerciseTitle'),
-            diff > 0
-              ? T('exercisePos', { d: diff.toFixed(1), a: exercisedDays.length, b: noExerciseDays.length })
-              : T('exerciseNeg', { d: Math.abs(diff).toFixed(1) }),
-            diff > 0 ? '#51cf66' : '#adb5bd'));
+            S('exerciseSteady', { d: diff.toFixed(1), a: exercisedDays.length, b: noExerciseDays.length }),
+            '#51cf66'));
         }
       }
 
@@ -10024,15 +10034,12 @@ function _tt(k, vars, fallback) {
       const outsideDays  = sorted.filter(e => e.outside === 'yes');
       const insideDays   = sorted.filter(e => e.outside === 'no');
       if (outsideDays.length >= 4 && insideDays.length >= 4) {
-        const avgOut = outsideDays.reduce((s, e) => s + ms(e.mood), 0) / outsideDays.length;
-        const avgIn  = insideDays.reduce((s, e) => s + ms(e.mood), 0) / insideDays.length;
-        const diff   = avgOut - avgIn;
-        if (Math.abs(diff) >= 0.3) {
+        // Closer to stable on days outside, or nothing (as exercise).
+        const diff = avgOff(insideDays) - avgOff(outsideDays);
+        if (diff >= 0.3) {
           results.push(ins('🌤️', T('outsideTitle'),
-            diff > 0
-              ? T('outsidePos', { d: diff.toFixed(1), a: msFmt(avgOut.toFixed(1)), b: msFmt(avgIn.toFixed(1)) })
-              : T('outsideNeg', { d: Math.abs(diff).toFixed(1) }),
-            diff > 0 ? '#51cf66' : '#adb5bd'));
+            S('outsideSteady', { d: diff.toFixed(1), a: outsideDays.length, b: insideDays.length }),
+            '#51cf66'));
         }
       }
 
@@ -10051,6 +10058,25 @@ function _tt(k, vars, fallback) {
             diff > 0.5 ? 'var(--brand-primary)' : '#ff6b6b'));
         }
       }
+
+      // ── 15. Sleep quality → same-day mood (2026-11-26) ──
+      // An entry's sleep quality is last night's, so this is the day after.
+      // Said only when poor nights were followed by days further from stable.
+      const badNights  = sorted.filter(e => e.sleepQuality === 'bad');
+      const goodNights = sorted.filter(e => e.sleepQuality === 'good');
+      if (badNights.length >= 4 && goodNights.length >= 4) {
+        const diff = avgOff(badNights) - avgOff(goodNights);
+        if (diff >= 0.3) {
+          results.push(ins('🛏️', S('sqTitle'),
+            S('sqText', { d: diff.toFixed(1), a: badNights.length, b: goodNights.length }),
+            'var(--brand-primary)'));
+        }
+      }
+
+      // The cards judged by distance from stable say so once, on the first.
+      const _steadyIcons = ['😴', '💊', '👟', '🏋️', '🌤️', '🛏️'];
+      const _firstSteady = results.find(r => _steadyIcons.includes(r.icon) && !r.plain);
+      if (_firstSteady) _firstSteady.detail = _firstSteady.detail ? _firstSteady.detail + '  ·  ' + S('note') : S('note');
 
       return results;
     }
@@ -10102,9 +10128,11 @@ function _tt(k, vars, fallback) {
       }
 
       const insights = computeInsights(sorted);
+      // The count leaves out auto-filled days, as the cards do (2026-11-26).
+      const _nAnswered = sorted.filter(e => !e.autoFilled).length;
       const _basis = _week + `<div style="font-size:0.8em;color:var(--text-muted-ink);text-align:center;margin-bottom:12px;padding:6px 12px;background:#f8f9fa;border-radius:8px;">${_fbRange === 'all'
-        ? BB.t('journal.feedback.basedAll', { n: sorted.length })
-        : BB.t('journal.feedback.basedDays', { days: _fbRange, n: sorted.length })}</div>`;
+        ? BB.t('journal.feedback.basedAll', { n: _nAnswered })
+        : BB.t('journal.feedback.basedDays', { days: _fbRange, n: _nAnswered })}</div>`;
 
       if (insights.length === 0) {
         body.innerHTML = _basis + `<div style="text-align:center;padding:30px 0;color:var(--text-muted-ink);">

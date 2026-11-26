@@ -2211,7 +2211,12 @@
 //   before that) or Open in …. adminAnonPost checks the link; rules refuse
 //   `audio` on device-written posts. anonymous.html, css/anonymous.css,
 //   js/anonymous.js, js/shared/i18n.js (10 languages), functions, rules.
-const CACHE_NAME = 'bipolarbear-v450';
+// v451: Personalised feedback judged by distance from stable (DOCS §2.36):
+//   the sleep → mood, medication, steps, exercise and outside cards say
+//   "closer to stable", never "higher"; auto-filled days left out of every
+//   card; new sleep quality → mood card. New js/shared/i18n-steady.js
+//   (precached), journal.html, js/journal.js, js/journal-insights.js.
+const CACHE_NAME = 'bipolarbear-v451';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.
@@ -2285,6 +2290,7 @@ const STATIC_ASSETS = [
   './js/shared/starter-trackers.js',
   './js/shared/i18n-week.js',
   './js/shared/i18n-medlink.js',
+  './js/shared/i18n-steady.js',
   './js/shared/bear-arcade.js',
   './js/shared/a11y.js',
 

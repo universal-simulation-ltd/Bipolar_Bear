@@ -250,7 +250,7 @@
     // 😴 My usual sleep, when set, wins over the median: an hour or more under
     // the bottom of the range is short (8–8.5 h → 7 h counts), and under 6 h
     // always is.
-    var t = window.BB && BB.sleepTarget && BB.sleepTarget.get();
+    var t = root.BB && root.BB.sleepTarget && root.BB.sleepTarget.get();
     if (t) return sleep <= t.lo - 1 || sleep < 6;
     if (base != null) return sleep <= base - 1.5 || (base >= 6.5 && sleep < 6);
     return sleep < 6;

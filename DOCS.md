@@ -3264,6 +3264,70 @@ opposed to just looking at medication as a whole."
   card for a medicine always taken, an HTML medicine name escaped, no request
   leaves the page, no sideways scroll, German).
 
+### 2.36 Personalised feedback judged by distance from stable (2026-11-26, v451)
+
+From the 2026-11-25 list of further enrichments (backlog). Built: the first
+three below. **Not built, for James:** early-warning combos (short nights plus
+irritability or high energy before an elevated run): it needs his wording on
+alarm and false alarms.
+
+- **Distance from stable.** The older cards in `computeInsights`
+  (`js/journal.js`) compared raw mood scores, so "higher" (elevated) read as
+  good news in green. They now compare `off = |moodScore − 3|` (0–2), as
+  🗓️ Your week does: sleep → next-day mood (sleep against next-day `off`;
+  green only for "closer to stable"), medication (taken vs not taken,
+  closer / further / about the same), steps, exercise and getting outside
+  (said only when those days were closer to stable, never the other way, so
+  nothing discourages them). The first such card carries one line: "Closer to
+  stable is the goal here…". The anxiety, stress, irritability, alcohol,
+  smoking, low-sleep-run and weekday cards are unchanged.
+- **Auto-filled days (§2.13) are left out of every card**, and out of the
+  "Based on … N entries" count.
+- **🛏️ Sleep quality → same-day mood (new card #15):** 4+ nights rated bad and
+  4+ rated good; shown only when the days after a bad night were 0.3+ further
+  from stable. An entry's sleep quality is last night's.
+- Strings: `js/shared/i18n-steady.js` (`steady.*`, 10 languages, machine
+  translated; the `{strength}` sentences reuse each language's existing noun so
+  the strength word agrees). The old `t143.ins.med*/exercise*/steps*/outside*/
+  sleepMood{Pos,Neg}` strings are no longer used. Also fixed:
+  `node scripts/test-your-week.js` (`isShortNight` read `window` in Node).
+- Tests: `PLAYWRIGHT_MODULE=… node scripts/test-steady.mjs` (11 checks: the
+  elevated-on-medication journal reads "further from stable", no exercise card
+  when exercise days were less steady, outside and sleep-quality cards, auto
+  days left out, de / pl / zh, ten languages with matching placeholders).
+
+### 2.37 Bipolar Anonymous: dock outline, post length, line breaks, songs (2026-11-24/26, v449–450)
+
+- **Bottom bar outline** (`.fab-bar`, 1.5px, yellow-tinted in light and dark).
+- **2,000 characters** for posts and replies (`TEXT_MAX` in `js/anonymous.js`;
+  longest real post on 2026-11-26 was 1,468, reply 1,369). The box's
+  `maxlength` stops it; a "1,850 / 2,000" count shows from 85%.
+  `firestore.rules` caps `text` at **10,000** (`textSizeOk`) so older store
+  builds, which have no limit, keep working; lower it only once most people
+  are on 1.47+ builds with the counter. `createAnonPoll`'s cap went 1,000 →
+  2,000; `adminAnonPost` stays 10,000.
+- **Line breaks** (`tidyText`): runs of blank lines → one, blank lines at the
+  ends trimmed, past 30 lines the rest joins line 30. Applied on save and on
+  display; `.post-text` / `.comment-text` use `white-space: pre-line`, so the
+  text stays escaped plain text. Store builds up to 1.46/1.47 show a post's
+  lines run together (they have no pre-line); nothing breaks.
+- **🎵 Songs on admin posts** (James, 2026-11-26): only the admin posting as
+  Bipolar Bear Admin; a Spotify / Apple Music / YouTube / SoundCloud **link**,
+  not a hosted file (hosting a song would copy someone's music; the services
+  hold the licence). `songLink()` (same parser in `js/anonymous.js` and
+  `functions/index.js`) accepts only those hosts and well-formed ids and builds
+  the embed URL; `adminAnonPost({ audio })` stores `audio: { url }`;
+  `firestore.rules` refuse `audio` on any device-written post. The card shows
+  "▶ Play on …" (tap swaps in the service's own player; nothing third-party
+  loads before the tap) and "Open in …". A poll and a song can't share a post.
+  Reports, deletion and the 7-day sweep act on the post as before. Signed-out
+  listeners get Spotify's 30-second preview; "Open in Spotify" plays it all.
+  **Not checked on a phone:** whether the embeds play inside the iPhone /
+  Android WebView (YouTube embeds can refuse app WebViews); "Open in …" is the
+  fallback. Not built: hosted audio for the admin's own recordings.
+- Tests: `scripts/test-anon-post-limits.mjs` (12), `scripts/test-anon-songs.mjs`
+  (11), the rules suite (`scripts/firestore-rules`, 223).
+
 ## 3. Algorithm Flowcharts
 
 ### 3.1 Entry Save Flow
