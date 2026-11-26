@@ -18,7 +18,11 @@ import path from 'node:path';
 import { api } from '/Users/jamesmarkey/Github/UNISIM/Docs_UNI_SIM/store-kit/asc.mjs';
 
 const DIR = path.join(path.dirname(new URL(import.meta.url).pathname), 'wbd-2027');
-const EVENTS = { bear: '6829691851', anon: '6829691972' };
+// WBD_EVENTS=wbd-new-ids.json uses the new all-language events made by
+// asc-wbd-new-events.mjs (2026-11-26); without it, the old approved ones.
+const EVENTS = process.env.WBD_EVENTS
+  ? JSON.parse(readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), process.env.WBD_EVENTS), 'utf8'))
+  : { bear: '6829691851', anon: '6829691972' };
 
 // [name ≤30, short ≤50, long ≤120] per app per locale.
 const T = {

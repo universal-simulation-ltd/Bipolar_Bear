@@ -2992,8 +2992,9 @@ deactivate breathing prompts (switch off by default)".
 ### 2.32 🗓️ Your week (2026-10-27, v386)
 
 James, 2026-10-27: a short story of the week, worked out on the device, after
-deciding against sending journal data to an AI service (the parked
-`claude/weekly-insight` branch). "Need to be careful it doesn't say things like
+deciding against sending journal data to an AI service (the weekly insight
+by Claude: DROPPED by James on 2026-11-26, its `claude/weekly-insight`
+branch deleted; nothing of it is on `main`). "Need to be careful it doesn't say things like
 'drinking made your mood improve', nothing that's telling off but equally
 nothing that could be seen as nudging someone to drink or drugs."
 
