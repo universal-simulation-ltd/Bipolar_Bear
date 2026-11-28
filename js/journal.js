@@ -7443,7 +7443,7 @@ function _tt(k, vars, fallback) {
       if (_prevFmNotes) { const _notesEl = document.getElementById('notes'); if (_notesEl) _notesEl.value = _prevFmNotes.value; }
       // Content
       const _fmContentEl = document.getElementById('fmContent');
-      _fmContentEl.innerHTML = _fmRenderContent(step);
+      _fmContentEl.innerHTML = _fmRenderContent(step) + _fmHealthOfferHtml(step);
       // Hero steps: flex column so the hero centres and the wheel/input sits
       // low; wire up the slider-wheel after layout. Notes has no wheel but
       // shares the hero layout (its own class opts out of the bottom raise —
@@ -8092,6 +8092,82 @@ function _tt(k, vars, fallback) {
       return `<button type="button" onclick="_fmAutoFillDay()" ${_fmDayFillBusy ? 'disabled' : ''}
         style="width:100%;padding:11px 16px;margin-top:16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;${_fmDayFillBusy ? 'opacity:0.6;' : ''}">${label}</button>`;
     }
+
+    /**
+     * "Fill this in from Health Connect / Apple Health" — a link under the
+     * sleep and energy steps for someone on a phone who has never switched
+     * health sync on. The only other way in is ⚙️ Settings → Mobile Settings,
+     * which a person filling in the journal has no reason to open (a user asked
+     * for fitness-tracker linking on 2026-11-28 while it was already there).
+     *
+     * Shown on the native build only, while sync is off, until it is used or
+     * hidden with ✕. Not on a sleep step whose night hasn't happened: there is
+     * nothing to fill in yet.
+     */
+    let _fmHealthOfferBusy = false;
+    function _fmHealthOfferHtml(step) {
+      if (!step || (step.id !== 'sleep' && step.id !== 'energy')) return '';
+      if (!isNative() || BB.storage.get('HealthSyncEnabled') === '1') return '';
+      if (BB.storage.get('HealthOfferDismissed') === '1') return '';
+      if (step.id === 'sleep' && _sleepNotYet()) return '';
+      const source = isIOS() ? 'Apple Health' : 'Health Connect';
+      const label = _fmHealthOfferBusy ? BB.t('journal.sync.offerBusy') : BB.t('journal.sync.offer', { source });
+      return `<div id="fmHealthOffer" style="display:flex;align-items:center;gap:6px;margin-top:16px;">
+          <button type="button" onclick="_fmConnectHealth()" ${_fmHealthOfferBusy ? 'disabled' : ''}
+            style="flex:1;padding:11px 16px;background:rgba(255,149,0,0.08);border:2px solid rgba(255,149,0,0.35);border-radius:12px;color:var(--brand-ink);font-weight:600;font-size:0.88em;cursor:pointer;-webkit-tap-highlight-color:transparent;${_fmHealthOfferBusy ? 'opacity:0.6;' : ''}">${label}</button>
+          <button type="button" onclick="_fmDismissHealthOffer()" aria-label="${BB.t('journal.sync.offerHide')}"
+            style="min-width:44px;min-height:44px;background:none;border:none;color:var(--text-muted-ink);font-size:1em;cursor:pointer;-webkit-tap-highlight-color:transparent;">✕</button>
+        </div>`;
+    }
+
+    function _fmDismissHealthOffer() {
+      BB.storage.set('HealthOfferDismissed', '1');
+      document.getElementById('fmHealthOffer')?.remove();
+    }
+    window._fmDismissHealthOffer = _fmDismissHealthOffer;
+
+    /**
+     * The offer's tap. It goes straight to the OS permission sheet with nothing
+     * in between (Apple 5.1.1(iv), same as _toggleHealthSync), and switches sync
+     * on only once access is actually given, so refusing leaves the offer where
+     * it was instead of a setting that is on and does nothing.
+     */
+    async function _fmConnectHealth() {
+      if (_fmHealthOfferBusy || window._healthSyncInProgress) return;
+      const Health = getPlugin('HealthPlugin');
+      if (!Health) return;
+      const stepId = _fmSteps[_fmStepIndex]?.id;
+      _fmHealthOfferBusy = true;
+      window._healthSyncInProgress = true;
+      _renderFocusedStep();
+      try {
+        await _requestHealthAccessInteractive();
+        let granted = false;
+        try {
+          const ck = await Health.checkHealthPermissions({ permissions: ['READ_SLEEP', 'READ_STEPS'] });
+          granted = !!(ck?.permissions?.READ_SLEEP || ck?.permissions?.READ_STEPS);
+        } catch (e) {}
+        if (granted) {
+          BB.storage.set('HealthSyncEnabled', '1');
+          const chk = document.getElementById('healthSyncToggle');
+          if (chk) chk.checked = true;
+          if (window.db && window.currentUser) {
+            window.db.collection('userSettings').doc(window.currentUser.uid)
+              .set({ healthSyncEnabled: true }, { merge: true }).catch(() => {});
+          }
+          // Auto mode: access was just given, so neither import asks again.
+          if (stepId === 'sleep') await importSleepFromHealth(true);
+          else if (stepId === 'energy') await importStepsFromHealth(true);
+        }
+      } catch (e) {
+        BB.log('health offer: connect failed', e);
+      } finally {
+        setTimeout(() => { window._healthSyncInProgress = false; }, 800);
+        _fmHealthOfferBusy = false;
+        if (_fmActive) _renderFocusedStep();
+      }
+    }
+    window._fmConnectHealth = _fmConnectHealth;
 
     async function _fmAutoFillDay() {
       if (_fmDayFillBusy || !_fmCanAutoFillDay()) return;

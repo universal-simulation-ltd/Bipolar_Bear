@@ -2219,7 +2219,11 @@
 // v452: Bipolar Anonymous fills a 440pt iPhone Pro Max (the board was capped
 //   at 430px, leaving a bar each side; also why the App Store iPhone shots
 //   looked wrong). css/anonymous.css.
-const CACHE_NAME = 'bipolarbear-v452';
+// v453: the sleep and energy steps offer "Fill this in from Health Connect /
+//   Apple Health" on the phone apps while health sync is off (it was only in
+//   Settings → Mobile Settings). js/journal.js (_fmHealthOfferHtml,
+//   _fmConnectHealth), js/shared/i18n.js (10 languages).
+const CACHE_NAME = 'bipolarbear-v453';
 
 /**
  * Files that should be available offline. Each entry is precached on `install`.

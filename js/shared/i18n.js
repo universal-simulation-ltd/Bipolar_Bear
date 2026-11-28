@@ -1322,6 +1322,9 @@
           generic: 'Synced from Health',
           steps: '{n} steps',
           bestGuess: 'Best guess from your health data',
+          offer: '📱 Fill this in from {source}',
+          offerBusy: 'Connecting…',
+          offerHide: 'Hide this',
         },
         field: {
           goals: '🏅 Goals',
@@ -3718,6 +3721,9 @@
           generic: 'Sincronizado desde Salud',
           steps: '{n} pasos',
           bestGuess: 'Mejor estimación según tus datos de salud',
+          offer: '📱 Rellenar desde {source}',
+          offerBusy: 'Conectando…',
+          offerHide: 'Ocultar',
         },
         energy: {
           notEnough: '💀 Insuficiente',
@@ -6019,6 +6025,9 @@
           generic: 'Synchronisé depuis Santé',
           steps: '{n} pas',
           bestGuess: "Meilleure estimation d'après tes données de santé",
+          offer: '📱 Remplir depuis {source}',
+          offerBusy: 'Connexion…',
+          offerHide: 'Masquer',
         },
         sleepQualityAdd: '+ Ajouter la qualité du sommeil',
         sleepBand: {
@@ -7980,6 +7989,9 @@
           generic: 'Aus Health synchronisiert',
           steps: '{n} Schritte',
           bestGuess: 'Beste Schätzung aus deinen Gesundheitsdaten',
+          offer: '📱 Aus {source} ausfüllen',
+          offerBusy: 'Verbinde…',
+          offerHide: 'Ausblenden',
         },
         energy: {
           notEnough: '💀 Zu wenig',
@@ -10103,6 +10115,9 @@
           generic: 'Sincronizzato da Salute',
           steps: '{n} passi',
           bestGuess: 'Stima basata sui tuoi dati sulla salute',
+          offer: '📱 Compila da {source}',
+          offerBusy: 'Connessione…',
+          offerHide: 'Nascondi',
         },
         energy: {
           notEnough: '💀 Troppo poca',
@@ -12226,6 +12241,9 @@
           generic: 'Sincronizado da Saúde',
           steps: '{n} passos',
           bestGuess: 'Melhor estimativa a partir dos teus dados de saúde',
+          offer: '📱 Preencher a partir do {source}',
+          offerBusy: 'A ligar…',
+          offerHide: 'Ocultar',
         },
         energy: {
           notEnough: '💀 Insuficiente',
@@ -14349,6 +14367,9 @@
           generic: 'Gesynchroniseerd uit Gezondheid',
           steps: '{n} stappen',
           bestGuess: 'Beste schatting op basis van je gezondheidsgegevens',
+          offer: '📱 Invullen vanuit {source}',
+          offerBusy: 'Verbinden…',
+          offerHide: 'Verbergen',
         },
         energy: {
           notEnough: '💀 Niet genoeg',
@@ -16476,6 +16497,9 @@
           generic: 'Zsynchronizowano z Health',
           steps: 'Kroki: {n}',
           bestGuess: 'Najlepsze przybliżenie na podstawie Twoich danych zdrowotnych',
+          offer: '📱 Uzupełnij z {source}',
+          offerBusy: 'Łączenie…',
+          offerHide: 'Ukryj',
         },
         energy: {
           notEnough: '💀 Za mało',
@@ -18603,6 +18627,9 @@
           generic: 'Synkat från Hälsa',
           steps: '{n} steg',
           bestGuess: 'Bästa gissning utifrån dina hälsodata',
+          offer: '📱 Fyll i från {source}',
+          offerBusy: 'Ansluter…',
+          offerHide: 'Dölj',
         },
         energy: {
           notEnough: '💀 Inte tillräckligt',
@@ -20724,6 +20751,9 @@
           generic: '已从健康同步',
           steps: '{n} 步',
           bestGuess: '根据你的健康数据做出的最佳估计',
+          offer: '📱 从 {source} 填入',
+          offerBusy: '正在连接…',
+          offerHide: '隐藏',
         },
         energy: {
           notEnough: '💀 不够',

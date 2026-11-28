@@ -821,6 +821,13 @@ Permissions: READ_SLEEP, READ_STEPS (requested only on a deliberate user
           action — toggle on, or Import button — per Apple Guideline 5.1.1(iv);
           Health Connect also caps repeat prompts, then routes to its settings)
 
+Entry points: ⚙️ Settings → Mobile Settings toggle (_toggleHealthSync), and,
+          while sync is off on a native build, a "Fill this in from Health
+          Connect / Apple Health" button under the focused sleep and energy
+          steps (_fmHealthOfferHtml → _fmConnectHealth). The button goes
+          straight to the OS sheet and sets HealthSyncEnabled only if access
+          is given; ✕ sets HealthOfferDismissed (this device only).
+
 Steps:    importStepsFromHealth() → queryAggregated({dataType:'steps', bucket:'day'})
 Sleep:    importSleepFromHealth() → queryLatestSample({dataType:'sleep'})
           value is minutes-asleep (asleep stages only; InBed/Awake filtered out)
