@@ -353,6 +353,12 @@ async function anon(browser, tmp, cls, lang) {
   try {
     await board()
     await shot('feed')
+    // Help: the crisis lines sheet behind the top bar's button (the App Store's 08-help).
+    if (cls === 'phone') {
+      await page.locator('#board-help-btn').click(); await page.waitForTimeout(1200)
+      await shot('help')
+      await board()
+    }
     // How are you today? Stable: the board answers with today's totals.
     await page.locator('#post-list .mood-btn[data-mood=stable]').click(); await page.waitForTimeout(2200)
     await shot('checkin', { keep: true })

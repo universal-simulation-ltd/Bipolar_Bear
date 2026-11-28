@@ -44,14 +44,14 @@ const SETS = {
   bear: {
     phone: [['01-hero', 'hero-open', ['home', 'mood']], ['02-hero', 'hero-close', ['mood']], ['03-patterns', 'feature', ['feedback']],
       ['04-sleep', 'feature', ['sleep']], ['05-survivalkit', 'feature', ['kit']], ['06-safetyplan', 'feature', ['plan']],
-      ['07-anonymous', 'feature', ['board']], ['08-privacy', 'privacy', ['pin']]],
+      ['07-pin', 'privacy', ['pin']], ['08-anonymous', 'feature', ['board']]],
     tablet: [['01-journal', 'feature', ['mood']], ['02-patterns', 'feature', ['feedback']], ['03-survivalkit', 'feature', ['kit']],
       ['04-coping', 'feature', ['coping']], ['05-safetyplan', 'feature', ['plan']], ['06-anonymous', 'feature', ['board']]],
   },
   anon: {
-    phone: [['01-hero', 'hero-open', ['feed', 'checkin']], ['02-hero', 'hero-close', ['checkin']], ['03-moniker', 'feature', ['monika']],
+    phone: [['01-hero', 'hero-open', ['feed', 'thread']], ['02-hero', 'hero-close', ['thread']], ['03-moniker', 'feature', ['monika']],
       ['04-ask', 'feature', ['thread-dark']], ['05-wiki', 'feature', ['wiki']], ['06-report', 'feature', ['report']],
-      ['07-topic', 'feature', ['thread']], ['08-dark', 'feature', ['feed-dark']]],
+      ['07-checkin', 'feature', ['checkin']], ['08-help', 'feature', ['help']]],
     tablet: [['01-board', 'feature', ['feed']], ['02-checkin', 'feature', ['checkin']], ['03-ask', 'feature', ['thread-dark']],
       ['04-wiki', 'feature', ['wiki']], ['05-moniker', 'feature', ['monika']], ['06-report', 'feature', ['report']]],
   },
@@ -208,10 +208,10 @@ function heroOpen(app, lang, s, t, ground) {
 function heroClose(app, lang, s, t, ground) {
   const bears = app === 'bear' ? ['manic', 'elevated', 'good', 'stable', 'low', 'depressed'].map((m, i) =>
     `<img class="bearf" src="${R(`images/moods/${m}.png`)}" style="width:${230 - i * 6}px;left:${930 - (i % 2) * 150}px;top:${700 + i * 250}px;transform:rotate(${i % 2 ? 8 : -6}deg)">`).join('')
-    // Anonymous: the board's check-in as the capture shows it, today's
-    // (invented) totals per mood, no words to translate.
-    : [['manic', 2], ['elevated', 9], ['stable', 38], ['low', 14], ['depressed', 5]].map(([m, n], i) =>
-      `<div style="position:absolute;right:${i % 2 ? 170 : 90}px;top:${1120 + i * 240}px;display:flex;align-items:center;gap:26px;background:#fff;border-radius:999px;padding:16px 50px 16px 18px;box-shadow:0 20px 40px -18px rgba(120,90,0,.55)${m === 'stable' ? ';outline:8px solid rgba(255,255,255,.55)' : ''}"><img src="${R(`images/moods/${m}.png`)}" style="width:150px;height:150px"><b style="font-size:76px;font-weight:900;color:#3d2c00">${n}</b></div>`).join('')
+    // Anonymous: the people who reply, as initials on discs (made-up, no words
+    // to translate), the same picture the App Store hero uses (2026-11-28).
+    : [['SH', '#a855f7'], ['SW', '#f59e0b'], ['HA', '#4caf50'], ['WB', '#ec4899'], ['CF', '#06b6d4']].map(([n, c], i) =>
+      `<div style="position:absolute;right:${90 + i * 105}px;top:${760 + i * 290}px;width:230px;height:230px;border-radius:50%;background:${c};border:10px solid #fff;box-sizing:border-box;display:flex;align-items:center;justify-content:center;font:800 88px Nunito,sans-serif;color:#fff;box-shadow:0 24px 44px -18px rgba(120,90,0,.6)">${n}</div>`).join('')
   return page(app, ground, `
     <div class="glow" style="left:500px;top:900px;width:1400px;height:1400px"></div>
     <div class="head" data-fit="420" style="left:420px;right:90px;top:200px;text-align:right;font-size:${s.t.size || 118}px">${rich(s.t.head)}</div>

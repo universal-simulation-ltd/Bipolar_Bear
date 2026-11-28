@@ -1,5 +1,5 @@
 {
- "_comment": "Every word on the Google Play graphics (build.mjs), per app and Play language. head: the headline (\\n breaks a line, *word* is the accent colour); cap: the line under it (on 08-privacy, the big line under the lock); chips: what the app does, hot = the highlighted one; foot: the footnote; ground: orange | yellow | cream | white | dark. tNN are the tablet screens (7\" and 10\"). fg: the feature graphic. The survival-kit word and the moniker word are the app's own in each language (js/shared/i18n.js: Survival-Kit in German, kit de survie in French, Moniker everywhere), chips use the app's own tab and wiki names, and every language speaks to the reader as du/tu/tú/você/jij/ty/你.",
+ "_comment": "Every word on the Google Play graphics (build.mjs), per app and Play language. head: the headline (\\n breaks a line, *word* is the accent colour); cap: the line under it (on 07-pin, the big line under the lock); chips: what the app does, hot = the highlighted one; foot: the footnote; ground: orange | yellow | cream | white | dark. tNN are the tablet screens (7\" and 10\"). fg: the feature graphic. The survival-kit word and the moniker word are the app's own in each language (js/shared/i18n.js: Survival-Kit in German, kit de survie in French, Moniker everywhere), chips use the app's own tab and wiki names, and every language speaks to the reader as du/tu/tú/você/jij/ty/你.",
  "bear": {
   "en": {
    "lockup": {
@@ -76,7 +76,13 @@
      "hot": 1,
      "foot": "Saved on your phone, there even offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Full privacy.",
+     "cap": "Encrypted on\nyour phone",
+     "foot": "Private journal: only you can read it"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Share your thoughts,\nnot your identity",
      "cap": "People who actually get it",
@@ -87,12 +93,6 @@
      ],
      "hot": 0,
      "foot": "An anonymous board, moderated"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Full privacy.",
-     "cap": "Encrypted on\nyour phone",
-     "foot": "Private journal: only you can read it"
     },
     "t01-journal": {
      "ground": "orange",
@@ -241,7 +241,13 @@
      "hot": 1,
      "foot": "Guardado en tu móvil, disponible sin conexión"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Privacidad total.",
+     "cap": "Cifrado en\ntu móvil",
+     "foot": "Diario privado: solo tú puedes leerlo"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Comparte lo que piensas,\nno quién eres",
      "cap": "Gente que de verdad te entiende",
@@ -252,12 +258,6 @@
      ],
      "hot": 0,
      "foot": "Un tablón anónimo y moderado"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Privacidad total.",
-     "cap": "Cifrado en\ntu móvil",
-     "foot": "Diario privado: solo tú puedes leerlo"
     },
     "t01-journal": {
      "ground": "orange",
@@ -406,7 +406,13 @@
      "hot": 1,
      "foot": "Enregistré sur ton téléphone, même hors ligne"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Confidentialité\ntotale.",
+     "cap": "Chiffré sur\nton téléphone",
+     "foot": "Journal privé : toi seul peux le lire"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Partage tes pensées,\npas ton identité",
      "cap": "Des gens qui te comprennent vraiment",
@@ -417,12 +423,6 @@
      ],
      "hot": 0,
      "foot": "Un espace anonyme et modéré"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Confidentialité\ntotale.",
-     "cap": "Chiffré sur\nton téléphone",
-     "foot": "Journal privé : toi seul peux le lire"
     },
     "t01-journal": {
      "ground": "orange",
@@ -571,7 +571,13 @@
      "hot": 1,
      "foot": "Auf deinem Handy gespeichert, auch offline da"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Volle Privatsphäre.",
+     "cap": "Verschlüsselt auf\ndeinem Handy",
+     "foot": "Privates Tagebuch: nur du kannst es lesen"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Teile deine Gedanken,\nnicht deine Identität",
      "cap": "Menschen, die dich wirklich verstehen",
@@ -582,12 +588,6 @@
      ],
      "hot": 0,
      "foot": "Ein anonymes, moderiertes Forum"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Volle Privatsphäre.",
-     "cap": "Verschlüsselt auf\ndeinem Handy",
-     "foot": "Privates Tagebuch: nur du kannst es lesen"
     },
     "t01-journal": {
      "ground": "orange",
@@ -736,7 +736,13 @@
      "hot": 1,
      "foot": "Salvato sul tuo telefono, anche offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Privacy totale.",
+     "cap": "Cifrato sul\ntuo telefono",
+     "foot": "Diario privato: solo tu puoi leggerlo"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Condividi i pensieri,\nnon la tua identità",
      "cap": "Persone che ti capiscono davvero",
@@ -747,12 +753,6 @@
      ],
      "hot": 0,
      "foot": "Una bacheca anonima e moderata"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Privacy totale.",
-     "cap": "Cifrato sul\ntuo telefono",
-     "foot": "Diario privato: solo tu puoi leggerlo"
     },
     "t01-journal": {
      "ground": "orange",
@@ -901,7 +901,13 @@
      "hot": 1,
      "foot": "Guardado no teu telemóvel, mesmo offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Privacidade total.",
+     "cap": "Encriptado no\nteu telemóvel",
+     "foot": "Diário privado: só tu o podes ler"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Partilha o que pensas,\nnão quem és",
      "cap": "Pessoas que te percebem mesmo",
@@ -912,12 +918,6 @@
      ],
      "hot": 0,
      "foot": "Um fórum anónimo e moderado"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Privacidade total.",
-     "cap": "Encriptado no\nteu telemóvel",
-     "foot": "Diário privado: só tu o podes ler"
     },
     "t01-journal": {
      "ground": "orange",
@@ -1066,7 +1066,13 @@
      "hot": 1,
      "foot": "Salvo no seu celular, até offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Privacidade total.",
+     "cap": "Criptografado\nno seu celular",
+     "foot": "Diário privado: só você pode ler"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Compartilhe o que pensa,\nnão quem você é",
      "cap": "Pessoas que entendem você de verdade",
@@ -1077,12 +1083,6 @@
      ],
      "hot": 0,
      "foot": "Um fórum anônimo e moderado"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Privacidade total.",
-     "cap": "Criptografado\nno seu celular",
-     "foot": "Diário privado: só você pode ler"
     },
     "t01-journal": {
      "ground": "orange",
@@ -1231,7 +1231,13 @@
      "hot": 1,
      "foot": "Bewaard op je telefoon, ook offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Volledige privacy.",
+     "cap": "Versleuteld op\nje telefoon",
+     "foot": "Privé dagboek: alleen jij kunt het lezen"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Deel je gedachten,\nniet je identiteit",
      "cap": "Mensen die je echt begrijpen",
@@ -1242,12 +1248,6 @@
      ],
      "hot": 0,
      "foot": "Een anoniem, gemodereerd forum"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Volledige privacy.",
-     "cap": "Versleuteld op\nje telefoon",
-     "foot": "Privé dagboek: alleen jij kunt het lezen"
     },
     "t01-journal": {
      "ground": "orange",
@@ -1396,7 +1396,13 @@
      "hot": 1,
      "foot": "Zapisany w telefonie, dostępny też offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Pełna prywatność.",
+     "cap": "Szyfrowane na\ntwoim telefonie",
+     "foot": "Prywatny dziennik: tylko ty go przeczytasz"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Dziel się myślami,\nnie tożsamością",
      "cap": "Ludzie, którzy naprawdę rozumieją",
@@ -1407,12 +1413,6 @@
      ],
      "hot": 0,
      "foot": "Anonimowe, moderowane forum"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Pełna prywatność.",
-     "cap": "Szyfrowane na\ntwoim telefonie",
-     "foot": "Prywatny dziennik: tylko ty go przeczytasz"
     },
     "t01-journal": {
      "ground": "orange",
@@ -1561,7 +1561,13 @@
      "hot": 1,
      "foot": "Sparad i din telefon, även offline"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "Full integritet.",
+     "cap": "Krypterad i\ndin telefon",
+     "foot": "Privat dagbok: bara du kan läsa den"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "Dela dina tankar,\ninte din identitet",
      "cap": "Människor som verkligen förstår",
@@ -1572,12 +1578,6 @@
      ],
      "hot": 0,
      "foot": "Ett anonymt, modererat forum"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "Full integritet.",
-     "cap": "Krypterad i\ndin telefon",
-     "foot": "Privat dagbok: bara du kan läsa den"
     },
     "t01-journal": {
      "ground": "orange",
@@ -1726,7 +1726,13 @@
      "hot": 1,
      "foot": "保存在你的手机上，离线也能打开"
     },
-    "07-anonymous": {
+    "07-pin": {
+     "ground": "dark",
+     "head": "完全私密。",
+     "cap": "在你的手机上\n加密",
+     "foot": "私密日记：只有你能读取"
+    },
+    "08-anonymous": {
      "ground": "yellow",
      "head": "分享想法，\n不暴露身份",
      "cap": "真正懂你的人",
@@ -1737,12 +1743,6 @@
      ],
      "hot": 0,
      "foot": "匿名且有人管理的社区"
-    },
-    "08-privacy": {
-     "ground": "dark",
-     "head": "完全私密。",
-     "cap": "在你的手机上\n加密",
-     "foot": "私密日记：只有你能读取"
     },
     "t01-journal": {
      "ground": "orange",
@@ -1833,9 +1833,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "How are\nyou today?",
-     "cap": "Check in, and see how the board is feeling",
-     "foot": "Only the day's totals are kept, never who picked what"
+     "head": "Real people\nwho get it",
+     "foot": "Post anonymously and get honest replies from people living the same highs and lows."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -1887,26 +1886,25 @@
      "hot": 1,
      "foot": "Help is never far away"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "A new topic\n*every day*",
-     "cap": "Small wins, shared",
+     "head": "Check in.\n*You're not alone.*",
+     "cap": "See how the board is feeling today",
      "chips": [
-      "💬 Reply",
-      "💛 Like",
-      "🙈 Stay anonymous"
+      "🐻 One tap",
+      "📊 Today's totals",
+      "🙈 Never who picked what"
      ],
-     "hot": 0,
-     "foot": "Join in, or just read along"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Light or dark,\n*your choice*",
-     "cap": "Easy on the eyes at night",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Help, the moment\nyou need it",
+     "cap": "Crisis lines for where you live",
      "chips": [
-      "🌙 Dark",
-      "☀️ Light",
-      "📱 Like your phone"
+      "📞 Call in one tap",
+      "🌍 Your country's lines",
+      "🛟 Always in the top bar"
      ],
      "hot": 0
     },
@@ -1989,9 +1987,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "¿Cómo estás\nhoy?",
-     "cap": "Haz tu registro y mira cómo está el tablón",
-     "foot": "Solo se guardan los totales del día, nunca quién eligió qué"
+     "head": "Gente real\nque te entiende",
+     "foot": "Publica en anonimato y recibe respuestas sinceras de quienes viven los mismos altibajos."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2043,26 +2040,25 @@
      "hot": 1,
      "foot": "La ayuda nunca está lejos"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Un tema nuevo\n*cada día*",
-     "cap": "Pequeños logros, compartidos",
+     "head": "Cuéntanos cómo estás.\n*No estás solo.*",
+     "cap": "Mira cómo se siente hoy la comunidad",
      "chips": [
-      "💬 Responde",
-      "💛 Me gusta",
-      "🙈 Sin nombre"
+      "🐻 Un toque",
+      "📊 Los totales de hoy",
+      "🙈 Nunca quién eligió qué"
      ],
-     "hot": 0,
-     "foot": "Participa o simplemente lee"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Claro u oscuro,\n*tú eliges*",
-     "cap": "Descansa la vista por la noche",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Ayuda en cuanto\nla necesites",
+     "cap": "Líneas de crisis de donde vives",
      "chips": [
-      "🌙 Oscuro",
-      "☀️ Claro",
-      "📱 Como tu móvil"
+      "📞 Llama con un toque",
+      "🌍 Las líneas de tu país",
+      "🛟 Siempre en la barra superior"
      ],
      "hot": 0
     },
@@ -2145,9 +2141,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Comment vas‑tu\naujourd’hui ?",
-     "cap": "Dis comment tu vas et vois l’humeur du forum",
-     "foot": "Seuls les totaux du jour sont gardés, jamais qui a choisi quoi"
+     "head": "Des gens qui\ncomprennent",
+     "foot": "Publie anonymement et reçois des réponses sincères de gens qui vivent les mêmes hauts et bas."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2199,26 +2194,25 @@
      "hot": 1,
      "foot": "L'aide n'est jamais loin"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Un nouveau sujet\n*chaque jour*",
-     "cap": "Des petites victoires, partagées",
+     "head": "Dis comment tu vas.\n*Tu n'es pas seul.*",
+     "cap": "Vois comment va la communauté aujourd’hui",
      "chips": [
-      "💬 Répondre",
-      "💛 J'aime",
-      "🙈 Rester anonyme"
+      "🐻 Un seul geste",
+      "📊 Les chiffres du jour",
+      "🙈 Jamais qui a choisi quoi"
      ],
-     "hot": 0,
-     "foot": "Participe, ou lis simplement"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Clair ou sombre,\n*à toi de choisir*",
-     "cap": "Doux pour les yeux le soir",
+    "08-help": {
+     "ground": "yellow",
+     "head": "De l'aide dès que\ntu en as besoin",
+     "cap": "Les lignes d’écoute de ton pays",
      "chips": [
-      "🌙 Sombre",
-      "☀️ Clair",
-      "📱 Comme ton téléphone"
+      "📞 Appelle en un geste",
+      "🌍 Les numéros de ton pays",
+      "🛟 Toujours dans la barre du haut"
      ],
      "hot": 0
     },
@@ -2301,9 +2295,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Wie geht es\ndir heute?",
-     "cap": "Sag, wie es dir geht, und sieh die Stimmung im Forum",
-     "foot": "Gespeichert werden nur die Tagessummen, nie wer was gewählt hat"
+     "head": "Echte Menschen,\ndie dich verstehen",
+     "foot": "Poste anonym und bekomm ehrliche Antworten von Menschen mit denselben Hochs und Tiefs."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2355,26 +2348,25 @@
      "hot": 1,
      "foot": "Hilfe ist nie weit"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Jeden Tag\n*ein neues Thema*",
-     "cap": "Kleine Erfolge, geteilt",
+     "head": "Sag, wie es dir geht.\n*Du bist nicht allein.*",
+     "cap": "Sieh, wie es der Community heute geht",
      "chips": [
-      "💬 Antworten",
-      "💛 Gefällt mir",
-      "🙈 Anonym bleiben"
+      "🐻 Ein Tipp",
+      "📊 Die Zahlen von heute",
+      "🙈 Nie, wer was gewählt hat"
      ],
-     "hot": 0,
-     "foot": "Mach mit oder lies einfach mit"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Hell oder dunkel,\n*du entscheidest*",
-     "cap": "Angenehm für die Augen am Abend",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Hilfe, sobald du\nsie brauchst",
+     "cap": "Krisentelefone für dein Land",
      "chips": [
-      "🌙 Dunkel",
-      "☀️ Hell",
-      "📱 Wie dein Handy"
+      "📞 Mit einem Tipp anrufen",
+      "🌍 Die Nummern deines Landes",
+      "🛟 Immer oben in der Leiste"
      ],
      "hot": 0
     },
@@ -2457,9 +2449,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Come stai\noggi?",
-     "cap": "Di’ come stai e guarda l’umore della bacheca",
-     "foot": "Si conservano solo i totali del giorno, mai chi ha scelto cosa"
+     "head": "Persone vere\nche capiscono",
+     "foot": "Pubblica in anonimato e ricevi risposte sincere da chi vive gli stessi alti e bassi."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2511,26 +2502,25 @@
      "hot": 1,
      "foot": "L'aiuto non è mai lontano"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Un nuovo argomento\n*ogni giorno*",
-     "cap": "Piccole vittorie, condivise",
+     "head": "Di’ come stai.\n*Non sei solo.*",
+     "cap": "Guarda come sta oggi la community",
      "chips": [
-      "💬 Rispondi",
-      "💛 Mi piace",
-      "🙈 Resta anonimo"
+      "🐻 Un tocco",
+      "📊 I totali di oggi",
+      "🙈 Mai chi ha scelto cosa"
      ],
-     "hot": 0,
-     "foot": "Partecipa, o leggi soltanto"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Chiaro o scuro,\n*scegli tu*",
-     "cap": "Riposante per gli occhi di sera",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Aiuto, appena\nne hai bisogno",
+     "cap": "Linee di crisi del tuo Paese",
      "chips": [
-      "🌙 Scuro",
-      "☀️ Chiaro",
-      "📱 Come il tuo telefono"
+      "📞 Chiama con un tocco",
+      "🌍 I numeri del tuo Paese",
+      "🛟 Sempre nella barra in alto"
      ],
      "hot": 0
     },
@@ -2613,9 +2603,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Como estás\nhoje?",
-     "cap": "Diz como estás e vê o humor do fórum",
-     "foot": "Só se guardam os totais do dia, nunca quem escolheu o quê"
+     "head": "Pessoas reais\nque percebem",
+     "foot": "Publica anonimamente e recebe respostas sinceras de quem vive os mesmos altos e baixos."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2667,26 +2656,25 @@
      "hot": 1,
      "foot": "A ajuda nunca está longe"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Um tema novo\n*todos os dias*",
-     "cap": "Pequenas vitórias, partilhadas",
+     "head": "Diz como estás.\n*Não estás sozinho.*",
+     "cap": "Vê como está hoje a comunidade",
      "chips": [
-      "💬 Responder",
-      "💛 Gosto",
-      "🙈 Anónimo"
+      "🐻 Um toque",
+      "📊 Os totais de hoje",
+      "🙈 Nunca quem escolheu o quê"
      ],
-     "hot": 0,
-     "foot": "Participa ou limita-te a ler"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Claro ou escuro,\n*tu escolhes*",
-     "cap": "Descansa os olhos à noite",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Ajuda assim que\nprecisares",
+     "cap": "Linhas de crise do sítio onde vives",
      "chips": [
-      "🌙 Escuro",
-      "☀️ Claro",
-      "📱 Como o teu telemóvel"
+      "📞 Liga com um toque",
+      "🌍 As linhas do teu país",
+      "🛟 Sempre na barra de cima"
      ],
      "hot": 0
     },
@@ -2769,9 +2757,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Como você\nestá hoje?",
-     "cap": "Diga como está e veja o humor do fórum",
-     "foot": "Só os totais do dia são guardados, nunca quem escolheu o quê"
+     "head": "Pessoas reais\nque entendem",
+     "foot": "Poste anonimamente e receba respostas sinceras de quem vive os mesmos altos e baixos."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2823,26 +2810,25 @@
      "hot": 1,
      "foot": "A ajuda nunca está longe"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Um tema novo\n*todo dia*",
-     "cap": "Pequenas vitórias, compartilhadas",
+     "head": "Conte como você está.\n*Você não está sozinho.*",
+     "cap": "Veja como a comunidade está hoje",
      "chips": [
-      "💬 Responder",
-      "💛 Curtir",
-      "🙈 Anônimo"
+      "🐻 Um toque",
+      "📊 Os totais de hoje",
+      "🙈 Nunca quem escolheu o quê"
      ],
-     "hot": 0,
-     "foot": "Participe ou só leia"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Claro ou escuro,\n*você escolhe*",
-     "cap": "Descanso para os olhos à noite",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Ajuda na hora\nem que você precisar",
+     "cap": "Linhas de apoio de onde você mora",
      "chips": [
-      "🌙 Escuro",
-      "☀️ Claro",
-      "📱 Como seu celular"
+      "📞 Ligue com um toque",
+      "🌍 As linhas do seu país",
+      "🛟 Sempre na barra de cima"
      ],
      "hot": 0
     },
@@ -2925,9 +2911,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Hoe gaat het\nvandaag?",
-     "cap": "Zeg hoe het gaat en zie de stemming op het forum",
-     "foot": "Alleen de totalen van de dag worden bewaard, nooit wie wat koos"
+     "head": "Echte mensen\ndie het snappen",
+     "foot": "Post anoniem en krijg eerlijke antwoorden van mensen met dezelfde pieken en dalen."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -2979,26 +2964,25 @@
      "hot": 1,
      "foot": "Hulp is nooit ver weg"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Elke dag\n*een nieuw onderwerp*",
-     "cap": "Kleine overwinningen, gedeeld",
+     "head": "Laat weten hoe het gaat.\n*Je bent niet alleen.*",
+     "cap": "Zie hoe het vandaag met de community gaat",
      "chips": [
-      "💬 Reageren",
-      "💛 Vind ik leuk",
-      "🙈 Anoniem blijven"
+      "🐻 Eén tik",
+      "📊 De totalen van vandaag",
+      "🙈 Nooit wie wat koos"
      ],
-     "hot": 0,
-     "foot": "Doe mee, of lees gewoon mee"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Licht of donker,\n*jij kiest*",
-     "cap": "Rustig voor je ogen in de avond",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Hulp zodra\nje die nodig hebt",
+     "cap": "Crisislijnen voor waar je woont",
      "chips": [
-      "🌙 Donker",
-      "☀️ Licht",
-      "📱 Zoals je telefoon"
+      "📞 Bel met één tik",
+      "🌍 De lijnen van jouw land",
+      "🛟 Altijd in de bovenbalk"
      ],
      "hot": 0
     },
@@ -3081,9 +3065,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Jak się dziś\nczujesz?",
-     "cap": "Zaznacz swój nastrój i zobacz, jak czuje się forum",
-     "foot": "Zapisujemy tylko sumy z dnia, nigdy kto co wybrał"
+     "head": "Prawdziwi ludzie,\nktórzy rozumieją",
+     "foot": "Pisz anonimowo i dostawaj szczere odpowiedzi od ludzi z tymi samymi wzlotami i upadkami."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -3135,26 +3118,25 @@
      "hot": 1,
      "foot": "Pomoc nigdy nie jest daleko"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Nowy temat\n*każdego dnia*",
-     "cap": "Małe sukcesy, wspólnie",
+     "head": "Daj znać, jak się czujesz.\n*Nie jesteś sam.*",
+     "cap": "Zobacz, jak dziś czuje się społeczność",
      "chips": [
-      "💬 Odpowiedz",
-      "💛 Polub",
-      "🙈 Zostań anonimowy"
+      "🐻 Jedno dotknięcie",
+      "📊 Dzisiejsze podsumowanie",
+      "🙈 Nigdy, kto co wybrał"
      ],
-     "hot": 0,
-     "foot": "Dołącz albo po prostu czytaj"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Jasny czy ciemny,\n*ty wybierasz*",
-     "cap": "Łagodny dla oczu wieczorem",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Pomoc, gdy tylko\njej potrzebujesz",
+     "cap": "Telefony zaufania tam, gdzie mieszkasz",
      "chips": [
-      "🌙 Ciemny",
-      "☀️ Jasny",
-      "📱 Jak w telefonie"
+      "📞 Zadzwoń jednym dotknięciem",
+      "🌍 Numery Twojego kraju",
+      "🛟 Zawsze na górnym pasku"
      ],
      "hot": 0
     },
@@ -3237,9 +3219,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "Hur mår du\ni dag?",
-     "cap": "Säg hur du mår och se hur forumet mår",
-     "foot": "Bara dagens summor sparas, aldrig vem som valde vad"
+     "head": "Riktiga människor\nsom förstår",
+     "foot": "Posta anonymt och få ärliga svar från människor med samma toppar och dalar."
     },
     "03-moniker": {
      "ground": "yellow",
@@ -3291,26 +3272,25 @@
      "hot": 1,
      "foot": "Hjälpen är aldrig långt borta"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "Ett nytt ämne\n*varje dag*",
-     "cap": "Små segrar, delade",
+     "head": "Säg hur du mår.\n*Du är inte ensam.*",
+     "cap": "Se hur gemenskapen mår i dag",
      "chips": [
-      "💬 Svara",
-      "💛 Gilla",
-      "🙈 Förbli anonym"
+      "🐻 Ett tryck",
+      "📊 Dagens siffror",
+      "🙈 Aldrig vem som valde vad"
      ],
-     "hot": 0,
-     "foot": "Var med, eller läs bara"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "Ljust eller mörkt,\n*du väljer*",
-     "cap": "Skonsamt för ögonen på kvällen",
+    "08-help": {
+     "ground": "yellow",
+     "head": "Hjälp så fort\ndu behöver den",
+     "cap": "Krislinjer där du bor",
      "chips": [
-      "🌙 Mörkt",
-      "☀️ Ljust",
-      "📱 Som din telefon"
+      "📞 Ring med ett tryck",
+      "🌍 Ditt lands linjer",
+      "🛟 Alltid i översta fältet"
      ],
      "hot": 0
     },
@@ -3393,9 +3373,8 @@
     },
     "02-hero": {
      "ground": "yellow",
-     "head": "你今天\n感觉怎么样？",
-     "cap": "说说你今天的状态，看看大家感觉如何",
-     "foot": "只保存当天的总数，绝不记录谁选了什么"
+     "head": "真实的人，\n真正懂你",
+     "foot": "匿名发帖，收获正在经历 同样起伏的人的真诚回复。"
     },
     "03-moniker": {
      "ground": "yellow",
@@ -3447,26 +3426,25 @@
      "hot": 1,
      "foot": "帮助从不遥远"
     },
-    "07-topic": {
+    "07-checkin": {
      "ground": "cream",
-     "head": "每天\n*一个新话题*",
-     "cap": "分享小小的进步",
+     "head": "说说你今天怎么样。\n*你并不孤单。*",
+     "cap": "看看大家今天的状态",
      "chips": [
-      "💬 回复",
-      "💛 点赞",
-      "🙈 保持匿名"
+      "🐻 轻点一下",
+      "📊 今日统计",
+      "🙈 绝不显示谁选了什么"
      ],
-     "hot": 0,
-     "foot": "参与讨论，或只是看看"
+     "hot": 0
     },
-    "08-dark": {
-     "ground": "dark",
-     "head": "浅色或深色，\n*由你决定*",
-     "cap": "夜晚看着更舒服",
+    "08-help": {
+     "ground": "yellow",
+     "head": "需要时，\n帮助就在这里",
+     "cap": "你所在地区的危机热线",
      "chips": [
-      "🌙 深色",
-      "☀️ 浅色",
-      "📱 跟随手机"
+      "📞 一键拨打",
+      "🌍 你所在国家的热线",
+      "🛟 始终在顶部栏"
      ],
      "hot": 0
     },
